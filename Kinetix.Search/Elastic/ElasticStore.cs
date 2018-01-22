@@ -24,6 +24,7 @@ namespace Kinetix.Search.Elastic
         private const int ClusterSize = 2000;
 
         private const string MissingGroupPrefix = "_Missing";
+        private const string GroupAggs = "groupAggs";
 
         /// <summary>
         /// Nom de l'aggrégation des top hits pour le groupement.
@@ -87,7 +88,6 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore{TDocument}.CreateDocumentType" />
         public void CreateDocumentType()
         {
-
             _logger.LogInformation("Create Document type : " + _documentTypeName);
 
             var client = GetClient();
@@ -167,7 +167,7 @@ namespace Kinetix.Search.Elastic
                     }
                     return x;
                 });
-                res.CheckStatus(_logger, "Bulk");
+               res.CheckStatus(_logger, "Bulk");
             }
         }
 
@@ -201,13 +201,11 @@ namespace Kinetix.Search.Elastic
             /* Tri */
             var sortDef = GetSortDefinition(input);
 
-            /* Requête de filtrage. */
-            var textSubQuery = GetTextSubQuery(input);
-            var securitySubQuery = GetSecuritySubQuery(input);
-            var facetSubQuery = GetFacetSelectionSubQuery(input);
-            var filterSubQuery = GetFilterSubQuery(input);
-            var filterQuery = _builder.BuildAndQuery(textSubQuery, securitySubQuery, facetSubQuery, filterSubQuery);
+            /* Requêtes de filtrage. */
+            var filterQuery = GetFilterQuery(input);
             var hasFilter = !string.IsNullOrEmpty(filterQuery);
+            var postFilterQuery = GetPostFilterSubQuery(input);
+            var hasPostFilter = !string.IsNullOrEmpty(postFilterQuery);
 
             /* Facettage. */
             var facetDefList = GetFacetDefinitionList(input);
@@ -244,9 +242,13 @@ namespace Kinetix.Search.Elastic
                     /* Critère de filtrage. */
                     if (hasFilter)
                     {
-                        s.Query(q =>
-                                q.QueryString(qs => qs
-                                    .Query(filterQuery)));
+                        s.Query(q => q.QueryString(qs => qs.Query(filterQuery)));
+                    }
+
+                    /* Critère de post-filtrage. */
+                    if (hasPostFilter)
+                    {
+                        s.PostFilter(q => q.QueryString(qs => qs.Query(postFilterQuery)));
                     }
 
                     /* Aggrégations. */
@@ -259,22 +261,31 @@ namespace Kinetix.Search.Elastic
                                 /* Facettage. */
                                 foreach (var facetDef in facetDefList)
                                 {
-                                    GetHandler(facetDef).DefineAggregation(a, facetDef, portfolio);
+                                    GetHandler(facetDef).DefineAggregation(a, facetDef, facetDefList, input.ApiInput.Facets, portfolio);
                                 }
                             }
                             if (hasGroup)
                             {
                                 /* Groupement. */
-                                a.Terms(groupFieldName, st => st
-                                    .Field(groupFieldName)
-                                    .Size(10)
-                                    .Aggregations(g => g
-                                        .TopHits(_topHitName, x => x.Size(10))));
-                                /* Groupement pour les valeurs nulles */
-                                a.Missing(groupFieldName + MissingGroupPrefix, st => st
-                                    .Field(groupFieldName)
-                                    .Aggregations(g => g
-                                        .TopHits(_topHitName, x => x.Size(10))));
+                                a.Filter(GroupAggs, f =>
+                                {
+
+                                    /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
+                                    if (hasPostFilter)
+                                    {
+                                        f.Filter(q => q.QueryString(qs => qs.Query(postFilterQuery)));
+                                    }
+
+                                    return f.Aggregations(aa => aa
+                                        /* Groupement. */
+                                        .Terms(groupFieldName, st => st
+                                            .Field(groupFieldName)
+                                            .Aggregations(g => g.TopHits(_topHitName, x => x.Size(input.GroupSize))))
+                                        /* Groupement pour les valeurs nulles */
+                                        .Missing(groupFieldName + MissingGroupPrefix, st => st
+                                            .Field(groupFieldName)
+                                            .Aggregations(g => g.TopHits(_topHitName, x => x.Size(input.GroupSize)))));
+                                });
                             }
                             return a;
                         });
@@ -296,25 +307,30 @@ namespace Kinetix.Search.Elastic
                     {
                         Code = facetDef.Code,
                         Label = facetDef.Label,
+                        IsMultiSelectable = facetDef.IsMultiSelectable,
                         Values = GetHandler(facetDef).ExtractFacetItemList(aggs, facetDef, res.Total)
                     });
                 }
             }
 
-            /* Ajout des facettes manquantes */
+            /* Ajout des valeurs de facettes manquantes (cas d'une valeur demandée par le client non trouvée par la recherche.) */
             if (input.ApiInput.Facets != null)
             {
                 foreach (var facet in input.ApiInput.Facets)
                 {
-                    var facetItems = facetListOutput.First(f => f.Code == facet.Key).Values;
-                    if (!facetItems.Any(f => f.Code == facet.Value))
+                    var facetItems = facetListOutput.Single(f => f.Code == facet.Key).Values;
+                    /* On ajoute un FacetItem par valeur non trouvée, avec un compte de 0. */
+                    foreach (var value in facet.Value)
                     {
-                        facetItems.Add(new FacetItem
+                        if (!facetItems.Any(f => f.Code == value))
                         {
-                            Code = facet.Value,
-                            Label = facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(facet.Value),
-                            Count = 0
-                        });
+                            facetItems.Add(new FacetItem
+                            {
+                                Code = value,
+                                Label = facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(value),
+                                Count = 0
+                            });
+                        }
                     }
                 }
             }
@@ -325,7 +341,7 @@ namespace Kinetix.Search.Elastic
             if (hasGroup)
             {
                 /* Groupement. */
-                var bucket = (BucketAggregate)res.Aggregations[groupFieldName];
+                var bucket = (BucketAggregate)res.Aggs.Filter(GroupAggs).Aggregations[groupFieldName];
                 foreach (KeyedBucket<object> group in bucket.Items)
                 {
                     var list = ((TopHitsAggregate)group.Aggregations[_topHitName]).Documents<TDocument>().ToList();
@@ -339,7 +355,7 @@ namespace Kinetix.Search.Elastic
                 }
 
                 /* Groupe pour les valeurs null. */
-                var nullBucket = (SingleBucketAggregate)res.Aggregations[groupFieldName + MissingGroupPrefix];
+                var nullBucket = (SingleBucketAggregate)res.Aggs.Filter(GroupAggs).Aggregations[groupFieldName + MissingGroupPrefix];
                 var nullTopHitAgg = (TopHitsAggregate)nullBucket.Aggregations[_topHitName];
                 var nullDocs = nullTopHitAgg.Documents<TDocument>().ToList();
                 if (nullDocs.Any())
@@ -347,7 +363,7 @@ namespace Kinetix.Search.Elastic
                     groupResultList.Add(new GroupResult<TDocument>
                     {
                         Code = FacetConst.NullValue,
-                        Label = input.FacetQueryDefinition.FacetNullValueLabel,
+                        Label = input.FacetQueryDefinition.FacetNullValueLabel ?? "focus.search.results.missing",
                         List = nullDocs,
                         TotalCount = (int)nullBucket.DocCount
                     });
@@ -383,8 +399,8 @@ namespace Kinetix.Search.Elastic
                 throw new ArgumentNullException(nameof(input));
             }
 
-            /* Requête de filtrage. */
-            string filterQuery = GetFilterQuery(input);
+            /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
+            var filterQuery = _builder.BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
             var hasFilter = !string.IsNullOrEmpty(filterQuery);
 
             var res = this.GetClient()
@@ -398,15 +414,13 @@ namespace Kinetix.Search.Elastic
                     /* Critère de filtrage. */
                     if (hasFilter)
                     {
-                        s.Query(q =>
-                                q.QueryString(qs => qs
-                                    .Query(filterQuery)));
+                        s.Query(q => q.QueryString(qs => qs.Query(filterQuery)));
                     }
 
                     return s;
                 });
 
-            res.CheckStatus(_logger, "AdvancedCount");
+             res.CheckStatus(_logger, "AdvancedCount");
 
             return res.Count;
         }
@@ -420,9 +434,9 @@ namespace Kinetix.Search.Elastic
         {
             var textSubQuery = GetTextSubQuery(input);
             var securitySubQuery = GetSecuritySubQuery(input);
-            var facetSubQuery = GetFacetSelectionSubQuery(input);
             var filterSubQuery = GetFilterSubQuery(input);
-            return _builder.BuildAndQuery(textSubQuery, securitySubQuery, facetSubQuery, filterSubQuery);
+            var monoValuedFacetsSubQuery = GetFacetSelectionSubQuery(input);
+            return _builder.BuildAndQuery(textSubQuery, securitySubQuery, filterSubQuery, monoValuedFacetsSubQuery);
         }
 
         /// <summary>
@@ -501,7 +515,7 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <summary>
-        /// Créé la sous-requête le filtrage par sélection de facette.
+        /// Créé la sous-requête le filtrage par sélection de facette non multi-sélectionnables.
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
@@ -513,18 +527,75 @@ namespace Kinetix.Search.Elastic
                 return string.Empty;
             }
 
-            var facetSubQueryList =
-                facetList.Select(f =>
+            /* Créé une sous-requête par facette. */
+            var facetSubQueryList = facetList
+                .Select(f =>
                 {
-                    /* Récupère la définition de la facette. */
-                    var def = input.FacetQueryDefinition.Facets.Single(x => x.Code == f.Key);
-                    /* Créé une sous-requête par facette. */
-                    string s = f.Value;
-                    return GetHandler(def).CreateFacetSubQuery(s, def, input.Portfolio);
-                }).ToArray();
+                    /* Récupère la définition de la facette non multi-sélectionnable. */
+                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == false && x.Code == f.Key);
+                    if (def == null)
+                    {
+                        return null;
+                    }
 
-            /* Concatène en "ET" toutes les sous-requêtes. */
-            return _builder.BuildAndQuery(facetSubQueryList);
+                    /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur. */
+                    var s = f.Value[0];
+                    return GetHandler(def).CreateFacetSubQuery(s, def, input.Portfolio);
+                })
+                .Where(f => f != null)
+                .ToArray();
+
+            if (facetSubQueryList.Any())
+            {
+                /* Concatène en "ET" toutes les sous-requêtes. */
+                return _builder.BuildAndQuery(facetSubQueryList);
+            }
+            else
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Créé la sous-requête de post-filtrage pour les facettes multi-sélectionnables.
+        /// </summary>
+        /// <param name="input">Entrée.</param>
+        /// <returns>Sous-requête.</returns>
+        private string GetPostFilterSubQuery(AdvancedQueryInput input)
+        {
+            var facetList = input.ApiInput.Facets;
+            if (facetList == null || !facetList.Any())
+            {
+                return string.Empty;
+            }
+
+            /* Créé une sous-requête par facette */
+            var facetSubQueryList = facetList
+                .Select(f =>
+                {
+                    /* Récupère la définition de la facette multi-sélectionnable. */
+                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == true && x.Code == f.Key);
+                    if (def == null)
+                    {
+                        return null;
+                    }
+
+                    var handler = GetHandler(def);
+                    /* On fait un "OR" sur toutes les valeurs sélectionnées. */
+                    return _builder.BuildOrQuery(f.Value.Select(s => handler.CreateFacetSubQuery(s, def, input.Portfolio)).ToArray());
+                })
+                .Where(f => f != null)
+                .ToArray();
+
+            if (facetSubQueryList.Any())
+            {
+                /* Concatène en "ET" toutes les sous-requêtes. */
+                return _builder.BuildAndQuery(facetSubQueryList);
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
 
         /// <summary>
@@ -682,7 +753,7 @@ namespace Kinetix.Search.Elastic
 
             return this;
         }
-
+        
         /// <summary>
         /// Définition de tri.
         /// </summary>
