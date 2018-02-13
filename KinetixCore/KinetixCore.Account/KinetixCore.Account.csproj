@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Company>Klee Group</Company>
+    <Product>KinetixCore.Account</Product>
+    <Copyright>Copyright 2018</Copyright>
+    <Authors>Klee Group</Authors>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="6.2.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KinetixCore.ComponentModel\KinetixCore.ComponentModel.csproj" />
+    <ProjectReference Include="..\KinetixCore.Security\KinetixCore.Security.csproj" />
+  </ItemGroup>
+
+</Project>
