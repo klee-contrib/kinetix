@@ -10,7 +10,7 @@ namespace Kinetix.Web.Filters
     /// <summary>
     /// Filtre pour gérer la culture dans la Web API.
     /// </summary>
-    public class CultureFilter : IActionFilter
+    public class CultureFilter : IResourceFilter
     {
         /// <summary>
         /// Nom de l'entête HTTP contenant le code de la culture.
@@ -22,16 +22,12 @@ namespace Kinetix.Web.Filters
         /// </summary>
         private const string DefaultCultureCode = "fr-FR";
 
-        public void OnActionExecuted(ActionExecutedContext context)
+        public void OnResourceExecuted(ResourceExecutedContext context)
         {
             // RAS.
         }
 
-        /// <summary>
-        /// Action.
-        /// </summary>
-        /// <param name="context">Current context.</param>
-        public void OnActionExecuting(ActionExecutingContext context)
+        public void OnResourceExecuting(ResourceExecutingContext context)
         {
             context.HttpContext.Request.Headers.TryGetValue(CultureHeaderCode, out var cultureList);
 

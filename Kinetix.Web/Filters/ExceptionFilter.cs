@@ -9,13 +9,13 @@ namespace Kinetix.Web.Filters
     /// <summary>
     /// Filtre pour gérer les exceptions.
     /// </summary>
-    public class ExceptionFilter : ExceptionFilterAttribute
+    public class ExceptionFilter : IExceptionFilter
     {
         /// <summary>
         /// A chaque exception.
         /// </summary>
         /// <param name="context">Contexte de l'exception.</param>
-        public override void OnException(ExceptionContext context)
+        public void OnException(ExceptionContext context)
         {
             var msg = GetExceptionMessage(context.Exception);
             if (msg != null)
