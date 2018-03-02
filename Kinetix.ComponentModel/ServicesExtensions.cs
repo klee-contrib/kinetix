@@ -7,10 +7,12 @@ namespace Kinetix.ComponentModel
     /// </summary>
     public static class ServiceExtensions
     {
-        public static void AddComponentModel<DomainMetadata>(this IServiceCollection services)
+        public static IServiceCollection AddComponentModel<DomainMetadata>(this IServiceCollection services)
         {
             services.AddSingleton<IDomainManager, DomainManager<DomainMetadata>>();
             services.AddSingleton<BeanDescriptor>();
+
+            return services;
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Kinetix.Services
 {
     public static class ServiceExtensions
     {
-        public static void AddServices(this IServiceCollection services, ILogger logger, params Assembly[] serviceAssemblies)
+        public static IServiceCollection AddServices(this IServiceCollection services, ILogger logger, params Assembly[] serviceAssemblies)
         {
             services.AddSingleton<CacheManager>();
 
@@ -57,6 +57,8 @@ namespace Kinetix.Services
                     return referenceManager;
                 });
             }
+
+            return services;
         }
     }
 }
