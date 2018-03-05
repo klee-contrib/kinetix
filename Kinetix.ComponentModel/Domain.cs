@@ -76,10 +76,9 @@ namespace Kinetix.ComponentModel
             if (dataType.IsGenericType && typeof(Nullable<>).Equals(dataType.GetGenericTypeDefinition()))
             {
                 dataType = dataType.GetGenericArguments()[0];
-                if (!dataType.IsPrimitive && !typeof(decimal).Equals(dataType)
-                        && !typeof(DateTime).Equals(dataType) && !typeof(Guid).Equals(dataType) && !typeof(TimeSpan).Equals(dataType))
+                if (!dataType.IsValueType)
                 {
-                    throw new ArgumentException(dataType + "? is not a primitive Type");
+                    throw new ArgumentException(dataType + " is not a value type");
                 }
             }
             else if (!typeof(string).Equals(dataType) && !typeof(byte[]).Equals(dataType)
