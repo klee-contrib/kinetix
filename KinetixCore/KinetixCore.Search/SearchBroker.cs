@@ -2,7 +2,7 @@
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Contract;
 using Kinetix.Search.Model;
-
+using KinetixCore.Monitoring;
 
 namespace Kinetix.Search
 {
@@ -19,9 +19,14 @@ namespace Kinetix.Search
 
         private ISearchStore<TDocument> _store;
 
-        public SearchBroker(ISearchStore<TDocument> store)
+        private IAnalyticsManager _analyticsManager;
+
+        public static readonly string CATEGORY = "search";
+
+        public SearchBroker(ISearchStore<TDocument> store, IAnalyticsManager analyticsManager)
         {
             _store = store;
+            _analyticsManager = analyticsManager;
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.CreateDocumentType" />
@@ -33,31 +38,46 @@ namespace Kinetix.Search
         /// <inheritdoc cref="ISearchBroker{TDocument}.Get" />
         public TDocument Get(string id)
         {
-            return _store.Get(id);
+            TDocument ret = default(TDocument);
+            _analyticsManager.Trace(CATEGORY, "/Get/" + _store.IndexName, tracer => {
+                ret = _store.Get(id);
+            });
+            return ret;
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.Put" />
         public void Put(TDocument document)
         {
-            _store.Put(document);
+            _analyticsManager.Trace(CATEGORY, "/Put/" + _store.IndexName, tracer => {
+                _store.Put(document);
+            });
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.PutAll" />
         public void PutAll(IEnumerable<TDocument> documentList)
         {
-            _store.PutAll(documentList);
+            _analyticsManager.Trace(CATEGORY, "/PutAll/" + _store.IndexName, tracer => {
+                _store.PutAll(documentList);
+            });
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.Remove" />
         public void Remove(string id)
         {
-            _store.Remove(id);
+            _analyticsManager.Trace(CATEGORY, "/Remove/" + _store.IndexName, tracer => {
+                _store.Remove(id);
+            });
+
+            
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.Flush" />
         public void Flush()
         {
-            _store.Flush();
+            _analyticsManager.Trace(CATEGORY, "/Flush/" + _store.IndexName, tracer => {
+                _store.Flush();
+            });
+            
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.Query" />

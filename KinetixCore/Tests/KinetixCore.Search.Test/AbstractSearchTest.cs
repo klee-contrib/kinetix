@@ -29,7 +29,7 @@ namespace KinetixCore.Caching.Test
 
             IServiceCollection serviceCollection = new ServiceCollection();
             serviceCollection.AddOptions();
-            serviceCollection.AddLogging(builder => builder.AddLog4Net("log4net.config"));
+            //serviceCollection.AddLogging(builder => builder.AddLog4Net("log4net.config"));
             serviceCollection.AddSearch(DataSourceName);
 
             serviceCollection.Configure<SearchConfig>(sc =>

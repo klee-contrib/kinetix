@@ -16,6 +16,12 @@ namespace Kinetix.Search.Contract
         void CreateDocumentType();
 
         /// <summary>
+        /// Récupère le nom de l'index.
+        /// </summary>
+        /// <returns>Le nom de l'index.</returns>
+        string IndexName { get; }
+        
+        /// <summary>
         /// Obtient un document à partir de son ID.
         /// </summary>
         /// <param name="id">ID du document.</param>

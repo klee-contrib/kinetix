@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KinetixCore.Monitoring\KinetixCore.Monitoring.csproj" />
     <ProjectReference Include="..\KinetixCore.Services\KinetixCore.Services.csproj" />
   </ItemGroup>
 

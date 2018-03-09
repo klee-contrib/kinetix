@@ -75,6 +75,7 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         private string _indexName;
 
+
         public ElasticStore(ILogger<ElasticStore<TDocument>> logger, DocumentDescriptor documentDescriptor, ElasticManager elasticManager)
         {
             _definition = documentDescriptor.GetDefinition(typeof(TDocument));
@@ -105,6 +106,9 @@ namespace Kinetix.Search.Elastic
 
             res.CheckStatus(_logger, "Map");
         }
+
+        /// <inheritdoc cref="ISearchStore{TDocument}.GetIndexName" />
+        public string IndexName => _indexName;
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Get" />
         public TDocument Get(string id)

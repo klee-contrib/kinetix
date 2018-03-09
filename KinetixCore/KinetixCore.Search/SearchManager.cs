@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Kinetix.Search.Contract;
 using Microsoft.Extensions.DependencyInjection;
+using KinetixCore.Monitoring;
 
 namespace Kinetix.Search
 {
@@ -53,7 +54,7 @@ namespace Kinetix.Search
                     return (ISearchBroker<T>)broker;
                 }
 
-                var searchBroker = new SearchBroker<T>(_provider.GetService<ISearchStore<T>>().RegisterDataSource(dsName));
+                var searchBroker = new SearchBroker<T>(_provider.GetService<ISearchStore<T>>().RegisterDataSource(dsName), _provider.GetService<IAnalyticsManager>());
                 _brokerMap[key] = searchBroker;
                 return searchBroker;
             }
