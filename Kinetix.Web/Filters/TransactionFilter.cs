@@ -6,7 +6,7 @@ namespace Kinetix.Web.Filters
     /// <summary>
     /// Filtre pour gérer la transaction dans MVC.
     /// </summary>
-    public class TransactionFilter<TDbContext> : IActionFilter
+    public class TransactionFilter<TDbContext> : IResourceFilter
         where TDbContext : DbContext
     {
         private readonly TDbContext _context;
@@ -19,7 +19,7 @@ namespace Kinetix.Web.Filters
             _context = context;
         }
 
-        public void OnActionExecuted(ActionExecutedContext context)
+        public void OnResourceExecuted(ResourceExecutedContext context)
         {
             _context.Database.CommitTransaction();
         }
@@ -28,7 +28,7 @@ namespace Kinetix.Web.Filters
         /// Action.
         /// </summary>
         /// <param name="context">Current context.</param>
-        public void OnActionExecuting(ActionExecutingContext context)
+        public void OnResourceExecuting(ResourceExecutingContext context)
         {
             _context.Database.BeginTransaction();
         }

@@ -6,12 +6,14 @@ namespace Kinetix.Web
 {
     public static class ServiceExtensions
     {
-        public static void AddWeb<TDbContext>(this IServiceCollection services)
+        public static IServiceCollection AddWeb<TDbContext>(this IServiceCollection services)
             where TDbContext : DbContext
         {
             services.AddTransient<CultureFilter>();
             services.AddTransient<ExceptionFilter>();
             services.AddTransient<TransactionFilter<TDbContext>>();
+
+            return services;
         }
     }
 }
