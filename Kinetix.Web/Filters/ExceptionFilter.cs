@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Kinetix.ComponentModel.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.EntityFrameworkCore;
 
 namespace Kinetix.Web.Filters
 {
@@ -26,12 +27,16 @@ namespace Kinetix.Web.Filters
 
         private IActionResult GetExceptionMessage(Exception exception)
         {
-            switch (exception.GetType().Name)
+            switch (exception)
             {
-                case "EntityException":
-                    return EntityExceptionHandler(exception as EntityException);
-                case "ConstraintException":
-                    return ConstraintExceptionHandler(exception as ConstraintException);
+                case EntityException ee:
+                    return EntityExceptionHandler(ee);
+                case ConstraintException ce:
+                    return ConstraintExceptionHandler(ce);
+                ////case DbEntityValidationException eve:
+                ////    return DbEntityValidationExceptionHandler(eve);
+                case DbUpdateException due:
+                    return DbUpdateExceptionExceptionHandler(due);
                 default:
                     return DefaultExceptionHandler(exception);
             }
@@ -75,6 +80,16 @@ namespace Kinetix.Web.Filters
 
             return new ObjectResult(errorDico) { StatusCode = 400 };
         }
+        private IActionResult DbUpdateExceptionExceptionHandler(DbUpdateException exception)
+        {
+            var errorDico = new Dictionary<string, object>
+            {
+                [EntityException.GlobalErrorKey] = new List<string> { exception.InnerException.Message }
+            };
+
+            return new ObjectResult(errorDico) { StatusCode = 400 };
+        }
+
 
         /// <summary>
         /// Security exception handler method.
