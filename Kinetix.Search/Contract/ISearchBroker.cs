@@ -57,8 +57,9 @@ namespace Kinetix.Search.Contract
         /// </summary>
         /// <param name="text">Texte à chercher.</param>
         /// <param name="security">Filtrage de périmètre de sécurité.</param>
-        /// <returns>Documents trouvés.</returns>
-        IEnumerable<TDocument> Query(string text, string security = null);
+        /// <param name="top">Nombre de résultats désirés.</param>
+        /// <returns>Documents trouvés et le nombre total de résultats .</returns>
+        (IEnumerable<TDocument> data, int totalCount) Query(string text, string security = null, int top = 10);
 
         /// <summary>
         /// Effectue une recherche avancé.

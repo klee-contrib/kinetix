@@ -38,7 +38,7 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Nombre total d'éléments.
         /// </summary>
-        public long? TotalCount
+        public int? TotalCount
         {
             get;
             set;

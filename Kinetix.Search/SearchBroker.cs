@@ -11,11 +11,6 @@ namespace Kinetix.Search
     /// <typeparam name="TDocument">Type du document.</typeparam>
     public class SearchBroker<TDocument> : ISearchBroker<TDocument>
     {
-        /// <summary>
-        /// Nombre de résultat par défaut pour une query.
-        /// </summary>
-        private const int QueryDefaultSize = 10;
-
         private ISearchStore<TDocument> _store;
 
         public SearchBroker(ISearchStore<TDocument> store)
@@ -60,11 +55,11 @@ namespace Kinetix.Search
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.Query" />
-        public IEnumerable<TDocument> Query(string text, string security = null)
+        public (IEnumerable<TDocument> data, int totalCount) Query(string text, string security = null, int top = 10)
         {
             if (string.IsNullOrEmpty(text))
             {
-                return new List<TDocument>();
+                return (new List<TDocument>(), 0);
             }
 
             var input = new AdvancedQueryInput
@@ -76,12 +71,12 @@ namespace Kinetix.Search
                         Query = text
                     },
                     Skip = 0,
-                    Top = QueryDefaultSize
+                    Top = top
                 },
                 Security = security
             };
             var output = _store.AdvancedQuery(input);
-            return output.List;
+            return (output.List, output.TotalCount.Value);
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.AdvancedQuery" />

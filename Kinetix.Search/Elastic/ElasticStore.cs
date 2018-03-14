@@ -167,7 +167,7 @@ namespace Kinetix.Search.Elastic
                     }
                     return x;
                 });
-               res.CheckStatus(_logger, "Bulk");
+                res.CheckStatus(_logger, "Bulk");
             }
         }
 
@@ -385,7 +385,7 @@ namespace Kinetix.Search.Elastic
                 Facets = facetListOutput,
                 Groups = groupResultList,
                 Query = apiInput,
-                TotalCount = res.Total
+                TotalCount = (int)res.Total
             };
 
             return output;
@@ -420,7 +420,7 @@ namespace Kinetix.Search.Elastic
                     return s;
                 });
 
-             res.CheckStatus(_logger, "AdvancedCount");
+            res.CheckStatus(_logger, "AdvancedCount");
 
             return res.Count;
         }
@@ -753,7 +753,7 @@ namespace Kinetix.Search.Elastic
 
             return this;
         }
-        
+
         /// <summary>
         /// Définition de tri.
         /// </summary>
