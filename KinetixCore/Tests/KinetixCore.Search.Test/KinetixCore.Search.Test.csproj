@@ -4,6 +4,16 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
+
+    <Version>0.0.1</Version>
+
+    <AssemblyVersion>0.0.1.0</AssemblyVersion>
+
+    <Company>Klee Group</Company>
+
+    <Authors>Klee Group</Authors>
+
+    <Copyright>Klee Group 2018</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
