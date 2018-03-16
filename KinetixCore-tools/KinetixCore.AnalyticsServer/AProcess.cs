@@ -25,7 +25,7 @@ namespace KinetixCore.AnalyticsServer
             this.SubProcesses = subProcesses;
         }
 
-        public long DurationMillis() => (End - Start) / TimeSpan.TicksPerMillisecond;
+        public long DurationMillis() => End - Start;
 
     }
 }

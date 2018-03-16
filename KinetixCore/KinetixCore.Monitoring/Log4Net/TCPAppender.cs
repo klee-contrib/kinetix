@@ -27,6 +27,7 @@ using log4net.Core;
 using System.Threading;
 using Newtonsoft.Json;
 using log4net.Appender;
+using System.Diagnostics;
 
 namespace Kinetix.Monitoring.Appender
 {
@@ -407,17 +408,19 @@ namespace Kinetix.Monitoring.Appender
         {
             try
             {
-                TcpClient client = new TcpClient();
-
-                client.BeginConnect(
-                    this.RemoteHostname,
-                    this.RemotePort,
-                    this.ConnectionEstablishedCallback,
-                    new AsyncLoggingData()
-                    {
-                        Client = client,
-                        LoggingEvent = loggingEvent
-                    });
+                if (_canConnect > 0)
+                {
+                    TcpClient client = new TcpClient();
+                    client.BeginConnect(
+                        this.RemoteHostname,
+                        this.RemotePort,
+                        this.ConnectionEstablishedCallback,
+                        new AsyncLoggingData()
+                        {
+                            Client = client,
+                            LoggingEvent = loggingEvent
+                        });
+                }
 
             }
             catch (Exception ex)
@@ -529,17 +532,21 @@ namespace Kinetix.Monitoring.Appender
         {
             try
             {
-                this.m_client = new TcpClient(this.RemoteHostname, this.RemotePort);
+                using (TcpClient client = new TcpClient(this.RemoteHostname, this.RemotePort))
+                {
+                    Debug.Assert(client.Connected);
+                }
+                Interlocked.Increment(ref _canConnect);
             }
             catch (Exception ex)
             {
                 ErrorHandler.Error(
                     "Could not initialize the TcpClient connection on port " +
-                    this.LocalPort.ToString(NumberFormatInfo.InvariantInfo) + ".",
+                    this.RemotePort.ToString(NumberFormatInfo.InvariantInfo) + ".",
                     ex,
                     ErrorCode.GenericFailure);
 
-                this.m_client = null;
+                Interlocked.Decrement(ref _canConnect);
             }
         }
 
@@ -553,10 +560,9 @@ namespace Kinetix.Monitoring.Appender
         private static int _failedConnectionCount = 0;
 
         /// <summary>
-        /// The IP address of the remote host or multicast group to which 
-        /// the logging event will be sent.
+        /// The number of failed connections.
         /// </summary>
-        private IPAddress m_remoteAddress;
+        private static int _canConnect = 0;
 
         /// <summary>
         /// The hostname of the remote host to which 
@@ -579,12 +585,6 @@ namespace Kinetix.Monitoring.Appender
         /// The TCP port number from which the <see cref="TcpClient" /> will communicate.
         /// </summary>
         private int m_localPort;
-
-        /// <summary>
-        /// The <see cref="TcpClient" /> instance that will be used for sending the 
-        /// logging events.
-        /// </summary>
-        private TcpClient m_client;
 
         /// <summary>
         /// The encoding to use for the packet.

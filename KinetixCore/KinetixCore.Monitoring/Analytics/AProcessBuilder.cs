@@ -4,10 +4,12 @@ using System.Diagnostics;
 
 namespace KinetixCore.Monitoring
 {
+    /// <summary>
+    /// Process to hold monitoring data.
+    /// </summary>
     public class AProcessBuilder {
 
         private string myCategory;
-
         private DateTime start;
         private string myName;
         private IDictionary<string, double> measures;
@@ -15,7 +17,12 @@ namespace KinetixCore.Monitoring
 
         private IList<AProcess> subProcesses;
 
-       internal AProcessBuilder(string category, string name) {
+        /// <summary>
+        /// Process builder
+        /// </summary>
+        /// <param name="category"></param>
+        /// <param name="name"></param>
+        internal AProcessBuilder(string category, string name) {
             myCategory = category;
             myName = name;
 

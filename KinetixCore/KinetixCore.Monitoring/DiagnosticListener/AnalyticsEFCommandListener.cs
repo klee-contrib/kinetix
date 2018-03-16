@@ -6,9 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
-using System.Linq;
 using Newtonsoft.Json;
-using System.Collections;
 using System.Data.Common;
 
 namespace KinetixCore.Monitoring
@@ -17,6 +15,7 @@ namespace KinetixCore.Monitoring
     {
         private readonly IAnalyticsManager _analyticsManager;
         private static readonly string MS_EF_CORE = "Microsoft.EntityFrameworkCore";
+        private static readonly string MODIFIED_ROW = "nbModifiedRow";
 
         public AnalyticsEFCommandListener(IAnalyticsManager analyticsManager)
         {
@@ -26,6 +25,7 @@ namespace KinetixCore.Monitoring
         public AnalyticsEFCommandListener()
         {
         }
+
 
         /// <summary>
         /// Provides the observer with new data.
@@ -46,7 +46,7 @@ namespace KinetixCore.Monitoring
                     {
                         hash = md5.ComputeHash(Encoding.ASCII.GetBytes(commandData.Command.CommandText));
                     }
-                    // We take only the first 8 bytes
+                    // We take only the first 8 bytes and we convert it to hexadecimal
                     StringBuilder sbHashId = new StringBuilder();
                     for (int i=0; i<8; i++)
                     {
@@ -78,18 +78,18 @@ namespace KinetixCore.Monitoring
                         if (commandExecutedData.Result.GetType() == typeof(int))
                         {
                             // ExecuteNonQuery
-                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure("nbModifiedRow", (int)commandExecutedData.Result));
+                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure(MODIFIED_ROW, (int)commandExecutedData.Result));
                         }
                         else if (commandExecutedData.Result.GetType() == typeof(RelationalDataReader))
                         {
                             // RelationalDataReader
                             RelationalDataReader rdr = (RelationalDataReader)commandExecutedData.Result;
-                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure("nbModifiedRow", (int) rdr.DbDataReader.RecordsAffected));
+                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure(MODIFIED_ROW, (int) rdr.DbDataReader.RecordsAffected));
                         }
                         else
                         {
                             // ExecuteScalar
-                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure("nbModifiedRow", 1));
+                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure(MODIFIED_ROW, 1));
                         }
                     }
                 }
@@ -113,18 +113,18 @@ namespace KinetixCore.Monitoring
                 if (result.GetType() == typeof(int))
                 {
                     // ExecuteNonQuery
-                    tracer.SetMeasure("nbModifiedRow", (int) result);
+                    tracer.SetMeasure(MODIFIED_ROW, (int) result);
                 }
                 else if (result.GetType() == typeof(RelationalDataReader))
                 {
                     // RelationalDataReader
                     RelationalDataReader rdr = (RelationalDataReader)result;
 
-                    tracer.SetMeasure("nbModifiedRow", rdr.DbDataReader.RecordsAffected);
+                    tracer.SetMeasure(MODIFIED_ROW, rdr.DbDataReader.RecordsAffected);
                 } else
                 {
                     // ExecuteScalar
-                    tracer.SetMeasure("nbModifiedRow", 1);
+                    tracer.SetMeasure(MODIFIED_ROW, 1);
                 }
             }
             

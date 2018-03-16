@@ -112,7 +112,7 @@ namespace KinetixCore.Monitoring
                 var log = new JObject();
                 log.Add("AppName", appName);
                 log.Add("Host", localHostName);
-                log.Add("LogEvent", JObject.FromObject(obj));
+                log.Add("Event", JObject.FromObject(obj));
 
                 logger.LogInformation(JsonConvert.SerializeObject(log));
             }

@@ -1,62 +1,85 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using KinetixCore.Monitoring.Analytics;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace KinetixCore.Monitoring
 {
     public static class MonitoringExtensions 
     {
 
+        /// <summary>
+        /// Add Main Monitoring 
+        /// </summary>
+        /// <param name="services">DI ServicesCollection</param>
         public static void AddMonitoring(this IServiceCollection services)
         {
             services.AddSingleton<IAnalyticsManager, AnalyticsManager>();
             services.AddSingleton<IProcessAnalytics, ProcessAnalytics>();
             services.AddSingleton<IProcessAnalyticsTracer, ProcessAnalyticsTracer>();
             services.AddSingleton<AnalyticsEFCommandListener>();
-            services.AddSingleton<AnalyticsActionFilter>(); 
+            services.AddSingleton<AnalyticsActionFilter>();
+
         }
 
+        /// <summary>
+        /// Add Remote Socket connector for Monitoring
+        /// </summary>
+        /// <param name="services">DI ServicesCollection</param>
         public static void AddRemoteSocketConnectorMonitoring(this IServiceCollection services)
         {
             services.AddSingleton<IHostedService, SocketLoggerAnalyticsConnectorPluginTask>();
-            //services.AddSingleton<SocketLoggerAnalyticsConnectorPlugin>();
-
             services.AddSingleton<IAnalyticsConnectorPlugin, SocketLoggerAnalyticsConnectorPlugin>();
         }
 
+        /// <summary>
+        /// Add Remote Socket connector for Monitoring
+        /// </summary>
+        /// <param name="services">DI ServicesCollection</param>
         public static void AddSimpleLoggerAnalyticsConnectorMonitoring(this IServiceCollection services)
         {
             services.AddSingleton<IAnalyticsConnectorPlugin, LoggerAnalyticsConnectorPlugin>();
         }
 
-        public static void UseMonitoring(this IApplicationBuilder builder)
-        {
-            builder.UseMiddleware<AnalyticsMiddleware>();
-        }
 
-        public static void AddAnalyticsCommandListener(this IApplicationBuilder builder, DiagnosticListener diagnosticListener, IServiceProvider provider)
-        {
-            // TODO : Remove this method
-            AnalyticsEFCommandListener listener = provider.GetService<AnalyticsEFCommandListener>();
-            diagnosticListener.SubscribeWithAdapter(listener);
-            diagnosticListener.Subscribe(listener);
-        }
-
-        public static void AddAnalytics(this MvcOptions builder)
+        /// <summary>
+        /// Add Analytics Action Filter to intercept REST/MVC Calls
+        /// </summary>
+        /// <param name="builder">MvcOptions builder</param>
+        public static void AddRestAnalyticsFilter(this MvcOptions builder)
         {
             builder.Filters.AddService<AnalyticsActionFilter>();
         }
 
-        public static T AddAnalyticsEFCommandListener<T>(this T options, IServiceProvider provider)
+
+        /// <summary>
+        /// Use Entity Framework Command Listener to monotre SQL requests
+        /// </summary>
+        /// <param name="builder">The Application Builder</param>
+        /// <param name="provider">The DI Service Provider</param>
+        /// <returns></returns>
+        public static IApplicationBuilder UseAnalyticsEFCommandListener(this IApplicationBuilder builder, IServiceProvider provider)
         {
             AnalyticsEFCommandListener listener = provider.GetService<AnalyticsEFCommandListener>();
             DiagnosticListener.AllListeners.Subscribe(listener);
-            return options;
+            return builder;
         }
+
+        /// <summary>
+        /// Add Analytics Middleware to intercept all HTTPs calls
+        /// </summary>
+        /// <param name="builder">The Application Builder</param>
+        public static void UseUrlMonitoring(this IApplicationBuilder builder)
+        {
+            builder.UseMiddleware<AnalyticsMiddleware>();
+        }
+
     }
     
 }
