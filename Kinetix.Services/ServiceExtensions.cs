@@ -22,17 +22,30 @@ namespace Kinetix.Services
                 {
                     foreach (var type in module.GetTypes())
                     {
-                        if (type.GetCustomAttributes(typeof(RegisterImplAttribute), false).Length > 0)
+                        var registerImplAttribute = type.GetCustomAttribute<RegisterImplAttribute>(false);
+                        if (registerImplAttribute != null)
                         {
                             var hasContract = false;
                             foreach (var interfaceType in type.GetInterfaces())
                             {
-                                if (interfaceType.GetCustomAttributes(typeof(RegisterContractAttribute), false).Length > 0)
+                                if (interfaceType.GetCustomAttribute<RegisterContractAttribute>(false) != null)
                                 {
                                     logger?.LogDebug("Enregistrement du service " + interfaceType.FullName);
 
                                     contractTypes.Add(interfaceType);
-                                    services.AddTransient(interfaceType, type);
+                                    switch (registerImplAttribute.Lifetime)
+                                    {
+                                        case ServiceLifetime.Scoped:
+                                            services.AddTransient(interfaceType, type);
+                                            break;
+                                        case ServiceLifetime.Singleton:
+                                            services.AddSingleton(interfaceType, type);
+                                            break;
+                                        case ServiceLifetime.Transient:
+                                            services.AddScoped(interfaceType, type);
+                                            break;
+                                    }
+
                                     hasContract = true;
                                 }
                             }
@@ -45,7 +58,7 @@ namespace Kinetix.Services
                     }
                 }
 
-                services.AddSingleton<IReferenceManager, ReferenceManager>(provider =>
+                services.AddScoped<IReferenceManager, ReferenceManager>(provider =>
                 {
                     var referenceManager = new ReferenceManager(provider);
 

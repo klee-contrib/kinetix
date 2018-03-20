@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Services.Annotations
 {
@@ -8,5 +9,11 @@ namespace Kinetix.Services.Annotations
     [AttributeUsage(AttributeTargets.Class)]
     public sealed class RegisterImplAttribute : Attribute
     {
+        public ServiceLifetime Lifetime { get; private set; }
+
+        public RegisterImplAttribute(ServiceLifetime lifetime = ServiceLifetime.Transient)
+        {
+            Lifetime = lifetime;
+        }
     }
 }
