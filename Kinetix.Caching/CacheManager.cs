@@ -78,7 +78,7 @@ namespace Kinetix.Caching
         /// <returns>Cache.</returns>
         private Cache CreateCache(string cacheName)
         {
-            if (_cacheConfig.Caches != null && _cacheConfig.Caches.TryGetValue(cacheName, out var element))
+            if (_cacheConfig != null && _cacheConfig.TryGetValue(cacheName, out var element))
             {
                 var cache = new Cache(_logger, cacheName, element);
                 cache.Init();

@@ -331,7 +331,7 @@ namespace Kinetix.Services
             if (entry == null)
             {
                 entry = BuildReferenceEntry<TReferenceType>(referenceName);
-                _cacheManager.GetCache(region).Put(new Element(referenceName ?? typeof(TReferenceType).FullName, entry));
+                cache.Put(new Element(referenceName ?? typeof(TReferenceType).FullName, entry));
             }
 
             return entry;

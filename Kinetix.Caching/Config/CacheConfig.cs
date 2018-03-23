@@ -2,8 +2,7 @@
 
 namespace Kinetix.Caching.Config
 {
-    public class CacheConfig
+    public class CacheConfig : Dictionary<string, CacheConfigItem>
     {
-        public IDictionary<string, CacheConfigItem> Caches { get; set; }
     }
 }
