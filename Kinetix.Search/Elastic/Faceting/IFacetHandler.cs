@@ -44,6 +44,6 @@ namespace Kinetix.Search.Elastic.Faceting
         /// <param name="facetDef">Définition de la facette.</param>
         /// <param name="total">Nombre total de résultats.</param>
         /// <returns>Sortie des facettes.</returns>
-        ICollection<FacetItem> ExtractFacetItemList(AggregationsHelper aggs, IFacetDefinition facetDef, long total);
+        ICollection<FacetItem> ExtractFacetItemList(AggregateDictionary aggs, IFacetDefinition facetDef, long total);
     }
 }

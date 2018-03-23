@@ -53,7 +53,7 @@ namespace Kinetix.Search.Elastic.Faceting
         }
 
         /// <inheritdoc />
-        public ICollection<FacetItem> ExtractFacetItemList(Nest.AggregationsHelper aggs, IFacetDefinition facetDef, long total)
+        public ICollection<FacetItem> ExtractFacetItemList(Nest.AggregateDictionary aggs, IFacetDefinition facetDef, long total)
         {
             var facetOutput = new List<FacetItem>();
             /* Valeurs renseignées. */

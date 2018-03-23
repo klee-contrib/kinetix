@@ -300,7 +300,7 @@ namespace Kinetix.Search.Elastic
             var facetListOutput = new List<FacetOutput>();
             if (hasFacet)
             {
-                var aggs = res.Aggs;
+                var aggs = res.Aggregations;
                 foreach (var facetDef in facetDefList)
                 {
                     facetListOutput.Add(new FacetOutput
@@ -341,10 +341,10 @@ namespace Kinetix.Search.Elastic
             if (hasGroup)
             {
                 /* Groupement. */
-                var bucket = (BucketAggregate)res.Aggs.Filter(GroupAggs).Aggregations[groupFieldName];
+                var bucket = (BucketAggregate)res.Aggregations.Filter(GroupAggs).Aggregations[groupFieldName];
                 foreach (KeyedBucket<object> group in bucket.Items)
                 {
-                    var list = ((TopHitsAggregate)group.Aggregations[_topHitName]).Documents<TDocument>().ToList();
+                    var list = ((TopHitsAggregate)group[_topHitName]).Documents<TDocument>().ToList();
                     groupResultList.Add(new GroupResult<TDocument>
                     {
                         Code = group.Key.ToString(),
@@ -355,7 +355,7 @@ namespace Kinetix.Search.Elastic
                 }
 
                 /* Groupe pour les valeurs null. */
-                var nullBucket = (SingleBucketAggregate)res.Aggs.Filter(GroupAggs).Aggregations[groupFieldName + MissingGroupPrefix];
+                var nullBucket = (SingleBucketAggregate)res.Aggregations.Filter(GroupAggs).Aggregations[groupFieldName + MissingGroupPrefix];
                 var nullTopHitAgg = (TopHitsAggregate)nullBucket.Aggregations[_topHitName];
                 var nullDocs = nullTopHitAgg.Documents<TDocument>().ToList();
                 if (nullDocs.Any())
