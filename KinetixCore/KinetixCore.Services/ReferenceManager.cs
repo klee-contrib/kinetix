@@ -10,6 +10,7 @@ using Kinetix.ComponentModel.Annotations;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Autofac;
 
 namespace Kinetix.Services
 {
@@ -23,7 +24,7 @@ namespace Kinetix.Services
 
         private readonly BeanDescriptor _beanDescriptor;
         private readonly CacheManager _cacheManager;
-        private readonly IServiceProvider _provider;
+        private readonly IComponentContext _componentContext;
         private readonly ILogger<ReferenceManager> _logger;
 
         private readonly IDictionary<string, Accessor> _referenceAccessors = new Dictionary<string, Accessor>();
@@ -32,12 +33,12 @@ namespace Kinetix.Services
         /// Constructeur.
         /// </summary>
         /// <param name="provider">Service provider.</param>
-        public ReferenceManager(IServiceProvider provider)
+        public ReferenceManager(IComponentContext cc)
         {
-            _beanDescriptor = provider.GetService<BeanDescriptor>();
-            _cacheManager = provider.GetService<CacheManager>();
-            _logger = provider.GetService<ILogger<ReferenceManager>>();
-            _provider = provider;
+            _beanDescriptor = cc.Resolve<BeanDescriptor>();
+            _cacheManager = cc.Resolve<CacheManager>();
+            _logger = cc.Resolve<ILogger<ReferenceManager>>();
+            _componentContext = cc;
         }
 
         /// <inheritdoc cref="IReferenceManager.FlushCache" />
@@ -351,7 +352,7 @@ namespace Kinetix.Services
 
             var accessor = _referenceAccessors[referenceName ?? typeof(TReferenceType).FullName];
 
-            var service = _provider.GetService(accessor.ContractType);
+            var service = _componentContext.Resolve(accessor.ContractType);
             var list = accessor.Method.Invoke(service, null);
 
             var coll = list as ICollection<TReferenceType>;

@@ -9,6 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.2" />
+    <PackageReference Include="Autofac.Extras.DynamicProxy" Version="4.4.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0" />
   </ItemGroup>
@@ -16,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\KinetixCore.Caching\KinetixCore.Caching.csproj" />
     <ProjectReference Include="..\KinetixCore.ComponentModel\KinetixCore.ComponentModel.csproj" />
+    <ProjectReference Include="..\KinetixCore.Monitoring\KinetixCore.Monitoring.csproj" />
   </ItemGroup>
 
 </Project>

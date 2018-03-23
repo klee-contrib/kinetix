@@ -83,38 +83,54 @@ namespace Kinetix.Search
         /// <inheritdoc cref="ISearchBroker{TDocument}.Query" />
         public IEnumerable<TDocument> Query(string text, string security = null)
         {
-            if (string.IsNullOrEmpty(text))
-            {
-                return new List<TDocument>();
-            }
 
-            var input = new AdvancedQueryInput
+            ICollection<TDocument> results = _analyticsManager.TraceWithReturn(CATEGORY, "/Query/" + _store.IndexName, tracer =>
             {
-                ApiInput = new QueryInput
+                if (string.IsNullOrEmpty(text))
                 {
-                    Criteria = new Criteria
+                    return new List<TDocument>();
+                }
+
+                var input = new AdvancedQueryInput
+                {
+                    ApiInput = new QueryInput
                     {
-                        Query = text
+                        Criteria = new Criteria
+                        {
+                            Query = text
+                        },
+                        Skip = 0,
+                        Top = QueryDefaultSize
                     },
-                    Skip = 0,
-                    Top = QueryDefaultSize
-                },
-                Security = security
-            };
-            var output = _store.AdvancedQuery(input);
-            return output.List;
+                    Security = security
+                };
+                var output = _store.AdvancedQuery(input);
+                return output.List;
+
+            });
+
+            return results;
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.AdvancedQuery" />
         public QueryOutput<TDocument> AdvancedQuery(AdvancedQueryInput input)
         {
-            return _store.AdvancedQuery(input);
+            QueryOutput<TDocument> results = _analyticsManager.TraceWithReturn(CATEGORY, "/AdvancedQuery/" + _store.IndexName, tracer => {
+                return _store.AdvancedQuery(input);
+            });
+
+            return results;
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.AdvancedCount" />
         public long AdvancedCount(AdvancedQueryInput input)
         {
-            return _store.AdvancedCount(input);
+
+            long count = _analyticsManager.TraceWithReturn(CATEGORY, "/AdvancedCount/" + _store.IndexName, tracer => {
+                return _store.AdvancedCount(input);
+            });
+
+            return count;
         }
     }
 }

@@ -32,7 +32,7 @@ namespace KinetixCore.Monitoring
             }
         }
 
-        public O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action, Action<AProcess> onCloseConsumer) where O : class
+        public O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action, Action<AProcess> onCloseConsumer)
         {
             using (ProcessAnalyticsTracer tracer = CreateTracer(category, name, onCloseConsumer))
             {

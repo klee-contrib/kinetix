@@ -5,14 +5,19 @@ using Kinetix.Caching;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using KinetixCore.Monitoring;
+using KinetixCore.Monitoring.Analytics;
+using Autofac;
+using Autofac.Extras.DynamicProxy;
+using Kinetix.Services;
 
 namespace Kinetix.Services
 {
     public static class ServiceExtensions
     {
-        public static void AddServices(this IServiceCollection services, ILogger logger, params Assembly[] serviceAssemblies)
+        public static void AddServices(this ContainerBuilder builder, ILogger logger, params Assembly[] serviceAssemblies)
         {
-            services.AddSingleton<CacheManager>();
+            builder.RegisterType<CacheManager>();
 
             var contractTypes = new List<Type>();
 
@@ -25,6 +30,25 @@ namespace Kinetix.Services
                         if (type.GetCustomAttributes(typeof(RegisterImplAttribute), false).Length > 0)
                         {
                             var hasContract = false;
+
+                            // Analytics attributes will be looked on RegisterImpl Class only.
+                            var proxyAnalytics = false;
+                            if (type.GetCustomAttributes(typeof(AnalyticsAttribute), false).Length > 0)
+                            {
+                                proxyAnalytics = true;
+                            }
+                            else
+                            {
+                                foreach (var method in type.GetMethods())
+                                {
+                                    if (method.GetCustomAttributes(typeof(AnalyticsAttribute), false).Length > 0)
+                                    {
+                                        proxyAnalytics = true;
+                                        break;
+                                    }
+                                }
+                            }
+
                             foreach (var interfaceType in type.GetInterfaces())
                             {
                                 if (interfaceType.GetCustomAttributes(typeof(RegisterContractAttribute), false).Length > 0)
@@ -32,22 +56,32 @@ namespace Kinetix.Services
                                     logger?.LogDebug("Enregistrement du service " + interfaceType.FullName);
 
                                     contractTypes.Add(interfaceType);
-                                    services.AddTransient(interfaceType, type);
+                                    if (proxyAnalytics)
+                                    {
+                                        builder.RegisterType(type)
+                                               .As(interfaceType)
+                                               .EnableInterfaceInterceptors()
+                                               .InterceptedBy(typeof(AnalyticsProxy));
+                                    }
+                                    else
+                                    {
+                                        builder.RegisterType(type).As(interfaceType);
+                                    }
                                     hasContract = true;
                                 }
                             }
 
                             if (!hasContract)
                             {
-                                services.AddTransient(type);
+                                builder.RegisterType(type);
                             }
                         }
                     }
                 }
 
-                services.AddSingleton<IReferenceManager, ReferenceManager>(provider =>
+                builder.Register(cc =>
                 {
-                    var referenceManager = new ReferenceManager(provider);
+                    var referenceManager = new ReferenceManager(cc);
 
                     foreach (var interfaceType in contractTypes)
                     {
@@ -55,8 +89,10 @@ namespace Kinetix.Services
                     }
 
                     return referenceManager;
-                });
+                }).As<IReferenceManager>();
+
             }
+
         }
     }
 }

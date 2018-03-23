@@ -24,7 +24,7 @@ namespace KinetixCore.Monitoring
         /// <param name="name">the name of the process</param>
         /// <param name="action">the action to execute within the tracer</param>
         /// <returns>the result of the traced function</returns>
-        O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action) where O : class;
+        O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action);
 
         /// <summary>
         /// Return the current tracer if it has been created before

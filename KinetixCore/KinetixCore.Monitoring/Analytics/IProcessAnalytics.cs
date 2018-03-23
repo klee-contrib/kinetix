@@ -26,7 +26,7 @@ namespace KinetixCore.Monitoring
         /// <param name="action">the action to execute within the tracer</param>
         /// <param name="onCloseConsumer">action to execute on closing</param>
         /// <returns>the result of the traced function</returns>
-        O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action, Action<AProcess> onCloseConsumer) where O : class;
+        O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action, Action<AProcess> onCloseConsumer);
 
         /// <summary>
         /// Return the current tracer if it has been created before

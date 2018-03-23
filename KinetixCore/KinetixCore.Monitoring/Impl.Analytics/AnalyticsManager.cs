@@ -24,7 +24,7 @@ namespace KinetixCore.Monitoring
             _processAnalytics.Trace(category, name, action, OnClose);
         }
 
-        public O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action) where O : class
+        public O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action)
         {
             return _processAnalytics.TraceWithReturn(category, name, action, OnClose);
         }

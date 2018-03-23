@@ -25,7 +25,7 @@ namespace KinetixCore.Monitoring
             services.AddSingleton<IProcessAnalyticsTracer, ProcessAnalyticsTracer>();
             services.AddSingleton<AnalyticsEFCommandListener>();
             services.AddSingleton<AnalyticsActionFilter>();
-
+            services.AddSingleton<AnalyticsProxy>();
         }
 
         /// <summary>
