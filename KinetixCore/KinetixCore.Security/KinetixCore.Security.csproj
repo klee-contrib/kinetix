@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <Company>Klee Group</Company>
     <Authors>Klee Group</Authors>
     <Copyright>Klee Group 2018</Copyright>
@@ -13,4 +13,12 @@
     <PackageReference Include="Microsoft.AspnetCore.Http" Version="2.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="dotnet pack instructions">
+    <Content Include="$(OutputPath)KinetixCore.Security.pdb">
+      <Pack>true</Pack>
+      <PackagePath>lib/netstandard2.0</PackagePath>
+    </Content>
+  </ItemGroup>
+  
+  
 </Project>

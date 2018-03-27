@@ -6,6 +6,8 @@ echo "Building and Packaging Solution"
 #$MSBUILD\msbuild.exe "KinetixCore.sln" "-t:Clean,pack" "-logger:FileLogger,Microsoft.Build.Engine;logfile=build.log"
 dotnet msbuild "KinetixCore.sln" "-t:Clean,pack" "-p:Configuration=Release"
 
+#dotnet pack "KinetixCore.sln" 
+
 if [ $? != 0 ] 
 then
 	echo "Build Failed"

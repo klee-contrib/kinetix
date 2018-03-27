@@ -26,22 +26,10 @@ namespace KinetixCore.Monitoring.Test
             serviceCollection.AddMonitoring();
             serviceCollection.AddRemoteSocketConnectorMonitoring();
 
-
-            //WebHost.CreateDefaultBuilder().UseStartup<Startup>().Build();
             WebHost.CreateDefaultBuilder().Build();
-
-            //WebHost.CreateDefaultBuilder().UseStartup<Startup>().Build();
 
             BuildServiceProvider(serviceCollection);
         }
 
-        [TestMethod]
-        public void TestMethod1()
-        {
-            CancellationToken ct = new CancellationToken();
-
-            Thread.Sleep(60_000);
-
-        }
     }
 }

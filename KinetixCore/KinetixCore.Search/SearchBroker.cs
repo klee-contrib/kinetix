@@ -83,7 +83,6 @@ namespace Kinetix.Search
         /// <inheritdoc cref="ISearchBroker{TDocument}.Query" />
         public IEnumerable<TDocument> Query(string text, string security = null)
         {
-
             ICollection<TDocument> results = _analyticsManager.TraceWithReturn(CATEGORY, "/Query/" + _store.IndexName, tracer =>
             {
                 if (string.IsNullOrEmpty(text))
