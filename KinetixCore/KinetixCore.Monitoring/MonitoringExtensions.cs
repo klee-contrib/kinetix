@@ -18,7 +18,7 @@ namespace KinetixCore.Monitoring
         /// Add Main Monitoring 
         /// </summary>
         /// <param name="services">DI ServicesCollection</param>
-        public static void AddMonitoring(this IServiceCollection services)
+        public static IServiceCollection AddMonitoring(this IServiceCollection services)
         {
             services.AddSingleton<IAnalyticsManager, AnalyticsManager>();
             services.AddSingleton<IProcessAnalytics, ProcessAnalytics>();
@@ -26,25 +26,28 @@ namespace KinetixCore.Monitoring
             services.AddSingleton<AnalyticsEFCommandListener>();
             services.AddSingleton<AnalyticsActionFilter>();
             services.AddSingleton<AnalyticsProxy>();
+            return services;
         }
 
         /// <summary>
         /// Add Remote Socket connector for Monitoring
         /// </summary>
         /// <param name="services">DI ServicesCollection</param>
-        public static void AddRemoteSocketConnectorMonitoring(this IServiceCollection services)
+        public static IServiceCollection AddRemoteSocketConnectorMonitoring(this IServiceCollection services)
         {
             services.AddSingleton<IHostedService, SocketLoggerAnalyticsConnectorPluginTask>();
             services.AddSingleton<IAnalyticsConnectorPlugin, SocketLoggerAnalyticsConnectorPlugin>();
+            return services;
         }
 
         /// <summary>
         /// Add Remote Socket connector for Monitoring
         /// </summary>
         /// <param name="services">DI ServicesCollection</param>
-        public static void AddSimpleLoggerAnalyticsConnectorMonitoring(this IServiceCollection services)
+        public static IServiceCollection AddSimpleLoggerAnalyticsConnectorMonitoring(this IServiceCollection services)
         {
             services.AddSingleton<IAnalyticsConnectorPlugin, LoggerAnalyticsConnectorPlugin>();
+            return services;
         }
 
 
@@ -75,9 +78,10 @@ namespace KinetixCore.Monitoring
         /// Add Analytics Middleware to intercept all HTTPs calls
         /// </summary>
         /// <param name="builder">The Application Builder</param>
-        public static void UseUrlMonitoring(this IApplicationBuilder builder)
+        public static IApplicationBuilder UseUrlMonitoring(this IApplicationBuilder builder)
         {
             builder.UseMiddleware<AnalyticsMiddleware>();
+            return builder;
         }
 
     }

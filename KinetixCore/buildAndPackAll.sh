@@ -4,7 +4,7 @@
 
 echo "Building and Packaging Solution"
 #$MSBUILD\msbuild.exe "KinetixCore.sln" "-t:Clean,pack" "-logger:FileLogger,Microsoft.Build.Engine;logfile=build.log"
-dotnet msbuild "KinetixCore.sln" "-t:Clean,pack" "-p:Configuration=Release"
+dotnet msbuild "KinetixCore.sln" "-t:Clean,pack" "-p:Configuration=Release" "-p:SourceLinkCreate=true"
 
 #dotnet pack "KinetixCore.sln" 
 

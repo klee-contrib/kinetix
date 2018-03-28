@@ -9,7 +9,7 @@ namespace Kinetix.Web
         {
             services.AddTransient<CultureFilter>();
             services.AddTransient<ExceptionFilter>();
-            services.AddTransient<TransactionMiddleware>();
+            //services.AddTransient<TransactionMiddleware>();
             return services;
         }
     }

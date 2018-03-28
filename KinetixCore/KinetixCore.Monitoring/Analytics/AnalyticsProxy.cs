@@ -4,12 +4,16 @@ using Castle.DynamicProxy;
 
 namespace KinetixCore.Monitoring.Analytics
 {
+    /// <summary>
+    /// Proxy for Analytics Attributes. This proxy trace methods executions.
+    /// </summary>
     public class AnalyticsProxy : IInterceptor
     {
         private IAnalyticsManager _analyticsManager;
 
         public AnalyticsProxy(IAnalyticsManager analyticsManager)
         {
+
             _analyticsManager = analyticsManager;
         }
 

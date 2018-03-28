@@ -3,21 +3,22 @@ using System.Collections.Generic;
 using System.Reflection;
 using Kinetix.Caching;
 using Kinetix.Services.Annotations;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using KinetixCore.Monitoring;
 using KinetixCore.Monitoring.Analytics;
 using Autofac;
 using Autofac.Extras.DynamicProxy;
-using Kinetix.Services;
+using Autofac.Builder;
+using KinetixCore.Database;
 
 namespace Kinetix.Services
 {
     public static class ServiceExtensions
     {
+
         public static void AddServices(this ContainerBuilder builder, ILogger logger, params Assembly[] serviceAssemblies)
         {
             builder.RegisterType<CacheManager>();
+            builder.RegisterType<TransactionalProxy>();
 
             var contractTypes = new List<Type>();
 
@@ -31,23 +32,9 @@ namespace Kinetix.Services
                         {
                             var hasContract = false;
 
-                            // Analytics attributes will be looked on RegisterImpl Class only.
-                            var proxyAnalytics = false;
-                            if (type.GetCustomAttributes(typeof(AnalyticsAttribute), false).Length > 0)
-                            {
-                                proxyAnalytics = true;
-                            }
-                            else
-                            {
-                                foreach (var method in type.GetMethods())
-                                {
-                                    if (method.GetCustomAttributes(typeof(AnalyticsAttribute), false).Length > 0)
-                                    {
-                                        proxyAnalytics = true;
-                                        break;
-                                    }
-                                }
-                            }
+                            // Analytics and Transactional attributes will be looked on RegisterImpl Class only.
+                            bool proxyAnalytics = HasMethodOrClassAttribute(type, typeof(AnalyticsAttribute));
+                            bool proxyTransactional = HasMethodOrClassAttribute(type, typeof(TransactionalAttribute));
 
                             foreach (var interfaceType in type.GetInterfaces())
                             {
@@ -56,17 +43,24 @@ namespace Kinetix.Services
                                     logger?.LogDebug("Enregistrement du service " + interfaceType.FullName);
 
                                     contractTypes.Add(interfaceType);
-                                    if (proxyAnalytics)
+
+                                    IRegistrationBuilder<object, ConcreteReflectionActivatorData, SingleRegistrationStyle> rb = builder
+                                                   .RegisterType(type)
+                                                   .As(interfaceType);
+
+                                    if (proxyAnalytics || proxyTransactional)
                                     {
-                                        builder.RegisterType(type)
-                                               .As(interfaceType)
-                                               .EnableInterfaceInterceptors()
-                                               .InterceptedBy(typeof(AnalyticsProxy));
+                                        rb.EnableInterfaceInterceptors();
+                                        if (proxyAnalytics)
+                                        {
+                                            rb.InterceptedBy(typeof(AnalyticsProxy));
+                                        }
+                                        if (proxyTransactional)
+                                        {
+                                            rb.InterceptedBy(typeof(TransactionalProxy));
+                                        }
                                     }
-                                    else
-                                    {
-                                        builder.RegisterType(type).As(interfaceType);
-                                    }
+                                    
                                     hasContract = true;
                                 }
                             }
@@ -93,6 +87,29 @@ namespace Kinetix.Services
 
             }
 
+        }
+
+
+        private static bool HasMethodOrClassAttribute(Type type, Type attribute)
+        {
+            var attributeFound = false;
+            if (type.GetCustomAttributes(attribute, false).Length > 0)
+            {
+                attributeFound = true;
+            }
+            else
+            {
+                foreach (var method in type.GetMethods())
+                {
+                    if (method.GetCustomAttributes(attribute, false).Length > 0)
+                    {
+                        attributeFound = true;
+                        break;
+                    }
+                }
+            }
+
+            return attributeFound;
         }
     }
 }

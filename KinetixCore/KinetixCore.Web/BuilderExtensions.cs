@@ -14,7 +14,7 @@ namespace Kinetix.Web
 
         public static void UseWeb(this IApplicationBuilder builder)
         {
-            builder.UseMiddleware<TransactionMiddleware>();
+            //builder.UseMiddleware<TransactionMiddleware>();
         }
     }
 }

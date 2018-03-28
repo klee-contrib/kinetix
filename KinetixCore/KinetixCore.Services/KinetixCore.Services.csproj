@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\KinetixCore.Caching\KinetixCore.Caching.csproj" />
     <ProjectReference Include="..\KinetixCore.ComponentModel\KinetixCore.ComponentModel.csproj" />
+    <ProjectReference Include="..\KinetixCore.Database\KinetixCore.Database.csproj" />
   </ItemGroup>
 
   <ItemGroup Label="dotnet pack instructions">
