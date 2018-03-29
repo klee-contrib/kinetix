@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>KinetixCore.Database</AssemblyName>
     <RootNamespace>KinetixCore.Database</RootNamespace>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <Company>Klee Group</Company>
     <Authors>Klee Group</Authors>
     <Copyright>Klee Group 2018</Copyright>
