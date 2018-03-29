@@ -8,6 +8,8 @@
     <Company>Klee Group</Company>
     <Authors>Klee Group</Authors>
     <Copyright>Klee Group 2018</Copyright>
+    
+    <ProjectGuid>{6019785B-9681-4091-BF3F-9CE429522F1E}</ProjectGuid>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,6 +6,7 @@
     <Company>Klee Group</Company>
     <Authors>Klee Group</Authors>
     <Copyright>Klee Group 2018</Copyright>
+    <ProjectGuid>{6B8AD711-D62C-4330-9550-16A46BDE9927}</ProjectGuid>
   </PropertyGroup>
 
   <ItemGroup>
