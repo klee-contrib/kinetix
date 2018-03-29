@@ -11,9 +11,10 @@
   <ItemGroup>
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.2" />
     <PackageReference Include="Autofac.Extras.DynamicProxy" Version="4.4.0" />
-    <PackageReference Include="KinetixCore.Monitoring" Version="0.0.3" />
+    <PackageReference Include="KinetixCore.Monitoring" Version="0.0.7" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.1" />
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,11 +23,5 @@
     <ProjectReference Include="..\KinetixCore.Database\KinetixCore.Database.csproj" />
   </ItemGroup>
 
-  <ItemGroup Label="dotnet pack instructions">
-    <Content Include="$(OutputPath)KinetixCore.Services.pdb">
-      <Pack>true</Pack>
-      <PackagePath>lib/netstandard2.0</PackagePath>
-    </Content>
-  </ItemGroup>
 
 </Project>

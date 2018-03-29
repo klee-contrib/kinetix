@@ -12,17 +12,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.0.0" />
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\KinetixCore.ComponentModel\KinetixCore.ComponentModel.csproj" />
   </ItemGroup>
 
-  <ItemGroup Label="dotnet pack instructions">
-    <Content Include="$(OutputPath)KinetixCore.Web.pdb">
-      <Pack>true</Pack>
-      <PackagePath>lib/netstandard2.0</PackagePath>
-    </Content>
-  </ItemGroup>
   
 </Project>

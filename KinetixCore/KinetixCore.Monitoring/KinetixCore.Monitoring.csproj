@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.0.5</Version>
-    <AssemblyVersion>0.0.5.0</AssemblyVersion>
-    <FileVersion>0.0.5.0</FileVersion>
+    <Version>0.0.7</Version>
+    <AssemblyVersion>0.0.7.0</AssemblyVersion>
+    <FileVersion>0.0.7.0</FileVersion>
     <Company>Klee Group</Company>
     <Authors>Klee Group</Authors>
     <Copyright>Klee Group 2018</Copyright>
@@ -19,17 +19,17 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.DiagnosticAdapter" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.0" PrivateAssets="All" />
-    <PackageReference Include="SourceLink.Test" Version="2.7.4" PrivateAssets="all" />
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.0" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="log4net.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+   
   </ItemGroup>
 
 </Project>
