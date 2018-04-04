@@ -36,13 +36,13 @@ namespace Kinetix.Services
                                     switch (registerImplAttribute.Lifetime)
                                     {
                                         case ServiceLifetime.Scoped:
-                                            services.AddTransient(interfaceType, type);
+                                            services.AddScoped(interfaceType, type);
                                             break;
                                         case ServiceLifetime.Singleton:
                                             services.AddSingleton(interfaceType, type);
                                             break;
                                         case ServiceLifetime.Transient:
-                                            services.AddScoped(interfaceType, type);
+                                            services.AddTransient(interfaceType, type);
                                             break;
                                     }
 
@@ -52,7 +52,18 @@ namespace Kinetix.Services
 
                             if (!hasContract)
                             {
-                                services.AddTransient(type);
+                                switch (registerImplAttribute.Lifetime)
+                                {
+                                    case ServiceLifetime.Scoped:
+                                        services.AddScoped(type);
+                                        break;
+                                    case ServiceLifetime.Singleton:
+                                        services.AddSingleton(type);
+                                        break;
+                                    case ServiceLifetime.Transient:
+                                        services.AddTransient(type);
+                                        break;
+                                }
                             }
                         }
                     }
