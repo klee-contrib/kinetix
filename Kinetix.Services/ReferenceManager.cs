@@ -40,6 +40,9 @@ namespace Kinetix.Services
             _provider = provider;
         }
 
+        /// <inheritdoc />
+        public IEnumerable<Type> ReferenceTypes => _referenceAccessors.Values.Select(accessor => accessor.ReferenceType).Distinct();
+
         /// <inheritdoc cref="IReferenceManager.FlushCache" />
         public void FlushCache(Type referenceType = null, string referenceName = null)
         {
@@ -60,6 +63,12 @@ namespace Kinetix.Services
             where TReferenceType : new()
         {
             return GetReferenceEntry<TReferenceType>(referenceName).List;
+        }
+
+        /// <inheritdoc cref="IReferenceManager.GetReferenceList(Type, string)" /
+        public ICollection<object> GetReferenceList(Type type, string referenceName = null)
+        {
+            return GetReferenceEntry(type, referenceName).List;
         }
 
         /// <inheritdoc cref="IReferenceManager.GetReferenceList{TReferenceType}(Func{TReferenceType, bool}, string)" />
@@ -252,11 +261,10 @@ namespace Kinetix.Services
         /// Construit l'entrée pour le cache de référence.
         /// </summary>
         /// <returns>Entrée du cache.</returns>
-        private ReferenceEntry<TReferenceType> BuildReferenceEntry<TReferenceType>(string referenceName = null)
-            where TReferenceType : new()
+        private ReferenceEntry<object> BuildReferenceEntry(Type type, string referenceName = null)
         {
-            var referenceList = InvokeReferenceAccessor<TReferenceType>(referenceName);
-            return new ReferenceEntry<TReferenceType>(referenceList, _beanDescriptor.GetDefinition(typeof(TReferenceType)));
+            var referenceList = InvokeReferenceAccessor(type, referenceName);
+            return new ReferenceEntry<object>(referenceList, _beanDescriptor.GetDefinition(type));
         }
 
         /// <summary>
@@ -309,29 +317,40 @@ namespace Kinetix.Services
         private ReferenceEntry<TReferenceType> GetReferenceEntry<TReferenceType>(string referenceName = null)
             where TReferenceType : new()
         {
-            var region = GetCacheRegionByType(typeof(TReferenceType));
-            ReferenceEntry<TReferenceType> entry = null;
+            return GetReferenceEntry(typeof(TReferenceType), referenceName) as ReferenceEntry<TReferenceType>;
+        }
+
+        /// <summary>
+        /// Retourne l'entrée du cache pour le type de référence.
+        /// </summary>
+        /// <param name="type">Le type.</param>
+        /// <param name="referenceName">Nom de la liste à utiliser.</param>
+        /// <returns>Entrée du cache.</returns>
+        private ReferenceEntry<object> GetReferenceEntry(Type type, string referenceName = null)
+        {
+            var region = GetCacheRegionByType(type);
+            ReferenceEntry<object> entry = null;
 
             var cache = _cacheManager.GetCache(region);
 
             if (cache == null)
             {
-                entry = BuildReferenceEntry<TReferenceType>(referenceName);
+                entry = BuildReferenceEntry(type, referenceName);
                 _logger.LogWarning("Impossible d'établir une connexion avec le cache, la valeur est cherchée en base");
             }
             else
             {
-                var element = cache.Get(referenceName ?? typeof(TReferenceType).FullName);
+                var element = cache.Get(referenceName ?? type.FullName);
                 if (element != null)
                 {
-                    entry = element.Value as ReferenceEntry<TReferenceType>;
+                    entry = element.Value as ReferenceEntry<object>;
                 }
             }
 
             if (entry == null)
             {
-                entry = BuildReferenceEntry<TReferenceType>(referenceName);
-                cache.Put(new Element(referenceName ?? typeof(TReferenceType).FullName, entry));
+                entry = BuildReferenceEntry(type, referenceName);
+                cache.Put(new Element(referenceName ?? type.FullName, entry));
             }
 
             return entry;
@@ -340,27 +359,22 @@ namespace Kinetix.Services
         /// <summary>
         /// Retourne la liste de référence du type referenceType.
         /// </summary>
+        /// <param name="type">Type.</param>
         /// <param name="referenceName">Nom de la liste à utiliser.</param>
         /// <returns>Liste de référence.</returns>
-        private ICollection<TReferenceType> InvokeReferenceAccessor<TReferenceType>(string referenceName = null)
+        private ICollection<object> InvokeReferenceAccessor(Type type, string referenceName = null)
         {
-            if (!_referenceAccessors.ContainsKey(typeof(TReferenceType).FullName))
+            if (!_referenceAccessors.ContainsKey(type.FullName))
             {
-                throw new ArgumentException("Pas d'accesseur disponible pour le type " + typeof(TReferenceType).Name);
+                throw new ArgumentException("Pas d'accesseur disponible pour le type " + type.Name);
             }
 
-            var accessor = _referenceAccessors[referenceName ?? typeof(TReferenceType).FullName];
+            var accessor = _referenceAccessors[referenceName ?? type.FullName];
 
             var service = _provider.GetService(accessor.ContractType);
             var list = accessor.Method.Invoke(service, null);
 
-            var coll = list as ICollection<TReferenceType>;
-            if (coll == null)
-            {
-                throw new ArgumentException(list.GetType().Name);
-            }
-
-            return coll;
+            return ((ICollection)list).Cast<object>().ToList();
         }
     }
 }

@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kinetix.ComponentModel\Kinetix.ComponentModel.csproj" />
+    <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
   </ItemGroup>
 
 </Project>

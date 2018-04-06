@@ -1,4 +1,6 @@
-﻿using Kinetix.Web.Filters;
+﻿using System.Linq;
+using Kinetix.Services;
+using Kinetix.Web.Filters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +14,11 @@ namespace Kinetix.Web
             services.AddTransient<CultureFilter>();
             services.AddTransient<ExceptionFilter>();
             services.AddTransient<TransactionFilter<TDbContext>>();
+
+            if (!services.Any(service => service.ServiceType == typeof(IReferenceManager)))
+            {
+                services.AddSingleton<IReferenceManager, ReferenceManager>();
+            }
 
             return services;
         }

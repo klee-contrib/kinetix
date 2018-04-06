@@ -10,6 +10,11 @@ namespace Kinetix.Services
     public interface IReferenceManager
     {
         /// <summary>
+        /// Types de référence disponibles dans le ReferenceManager.
+        /// </summary>
+        IEnumerable<Type> ReferenceTypes { get; }
+
+        /// <summary>
         /// Vide le cache.
         /// </summary>
         /// <param name="referenceType">Type de la référence.</param>
@@ -24,6 +29,14 @@ namespace Kinetix.Services
         /// <returns>Liste de référence.</returns>
         ICollection<TReferenceType> GetReferenceList<TReferenceType>(string referenceName = null)
             where TReferenceType : new();
+
+        /// <summary>
+        /// Retourne la liste de référence du type demandé.
+        /// </summary>
+        /// <param name="type">Type de la liste de référence.</typeparam>
+        /// <param name="referenceName">Nom de la liste de référence à utiliser.</param>
+        /// <returns>Liste de référence.</returns>
+        ICollection<object> GetReferenceList(Type type, string referenceName = null);
 
         /// <summary>
         /// Retourne les éléments de la liste de référence du type TReference correspondant au prédicat.
