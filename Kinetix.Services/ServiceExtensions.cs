@@ -26,8 +26,6 @@ namespace Kinetix.Services
                 return assemblies.Concat(GetReferencedAssemblies(referencedAssemblies)).Distinct();
             }
 
-            services.AddMemoryCache();
-
             var contractTypes = new List<Type>();
 
             foreach (var type in GetReferencedAssemblies(new[] { Assembly.GetEntryAssembly() }).SelectMany(x => x.GetExportedTypes()))
@@ -74,19 +72,20 @@ namespace Kinetix.Services
                         }
                     }
                 }
-
-                services.AddScoped<IReferenceManager, ReferenceManager>(provider =>
-                {
-                    var referenceManager = new ReferenceManager(provider, staticListCacheDuration, referenceListCacheDuration);
-
-                    foreach (var interfaceType in contractTypes)
-                    {
-                        referenceManager.RegisterAccessors(interfaceType);
-                    }
-
-                    return referenceManager;
-                });
             }
+
+            services.AddMemoryCache();
+            services.AddScoped<IReferenceManager, ReferenceManager>(provider =>
+            {
+                var referenceManager = new ReferenceManager(provider, staticListCacheDuration, referenceListCacheDuration);
+
+                foreach (var interfaceType in contractTypes)
+                {
+                    referenceManager.RegisterAccessors(interfaceType);
+                }
+
+                return referenceManager;
+            });
 
             return services;
         }
