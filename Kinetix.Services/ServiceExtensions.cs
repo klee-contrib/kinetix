@@ -1,77 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using Kinetix.Caching;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Services
 {
     public static class ServiceExtensions
     {
-        public static IServiceCollection AddServices(this IServiceCollection services, ILogger logger, params Assembly[] serviceAssemblies)
+        public static IServiceCollection AddServices(this IServiceCollection services, string assemblyPrefix, TimeSpan? staticListCacheDuration = null, TimeSpan? referenceListCacheDuration = null)
         {
-            services.AddSingleton<CacheManager>();
+            IEnumerable<AssemblyName> GetReferencedAssemblyNames(Assembly assembly) =>
+                assembly.GetReferencedAssemblies().Where(name => name.FullName.StartsWith(assemblyPrefix));
+
+            IEnumerable<Assembly> GetReferencedAssemblies(IEnumerable<Assembly> assemblies)
+            {
+                var referencedAssemblies = assemblies.SelectMany(GetReferencedAssemblyNames).Select(Assembly.Load);
+
+                if (!referencedAssemblies.Any())
+                {
+                    return new List<Assembly>();
+                }
+
+                return assemblies.Concat(GetReferencedAssemblies(referencedAssemblies)).Distinct();
+            }
+
+            services.AddMemoryCache();
 
             var contractTypes = new List<Type>();
 
-            foreach (var assembly in serviceAssemblies)
+            foreach (var type in GetReferencedAssemblies(new[] { Assembly.GetEntryAssembly() }).SelectMany(x => x.GetExportedTypes()))
             {
-                foreach (var module in assembly.GetModules())
+                var registerImplAttribute = type.GetCustomAttribute<RegisterImplAttribute>();
+                if (registerImplAttribute != null)
                 {
-                    foreach (var type in module.GetTypes())
+                    var hasContract = false;
+                    foreach (var interfaceType in type.GetInterfaces())
                     {
-                        var registerImplAttribute = type.GetCustomAttribute<RegisterImplAttribute>(false);
-                        if (registerImplAttribute != null)
+                        if (interfaceType.GetCustomAttribute<RegisterContractAttribute>() != null)
                         {
-                            var hasContract = false;
-                            foreach (var interfaceType in type.GetInterfaces())
+                            contractTypes.Add(interfaceType);
+                            switch (registerImplAttribute.Lifetime)
                             {
-                                if (interfaceType.GetCustomAttribute<RegisterContractAttribute>(false) != null)
-                                {
-                                    logger?.LogDebug("Enregistrement du service " + interfaceType.FullName);
-
-                                    contractTypes.Add(interfaceType);
-                                    switch (registerImplAttribute.Lifetime)
-                                    {
-                                        case ServiceLifetime.Scoped:
-                                            services.AddScoped(interfaceType, type);
-                                            break;
-                                        case ServiceLifetime.Singleton:
-                                            services.AddSingleton(interfaceType, type);
-                                            break;
-                                        case ServiceLifetime.Transient:
-                                            services.AddTransient(interfaceType, type);
-                                            break;
-                                    }
-
-                                    hasContract = true;
-                                }
+                                case ServiceLifetime.Scoped:
+                                    services.AddScoped(interfaceType, type);
+                                    break;
+                                case ServiceLifetime.Singleton:
+                                    services.AddSingleton(interfaceType, type);
+                                    break;
+                                case ServiceLifetime.Transient:
+                                    services.AddTransient(interfaceType, type);
+                                    break;
                             }
 
-                            if (!hasContract)
-                            {
-                                switch (registerImplAttribute.Lifetime)
-                                {
-                                    case ServiceLifetime.Scoped:
-                                        services.AddScoped(type);
-                                        break;
-                                    case ServiceLifetime.Singleton:
-                                        services.AddSingleton(type);
-                                        break;
-                                    case ServiceLifetime.Transient:
-                                        services.AddTransient(type);
-                                        break;
-                                }
-                            }
+                            hasContract = true;
+                        }
+                    }
+
+                    if (!hasContract)
+                    {
+                        switch (registerImplAttribute.Lifetime)
+                        {
+                            case ServiceLifetime.Scoped:
+                                services.AddScoped(type);
+                                break;
+                            case ServiceLifetime.Singleton:
+                                services.AddSingleton(type);
+                                break;
+                            case ServiceLifetime.Transient:
+                                services.AddTransient(type);
+                                break;
                         }
                     }
                 }
 
                 services.AddScoped<IReferenceManager, ReferenceManager>(provider =>
                 {
-                    var referenceManager = new ReferenceManager(provider);
+                    var referenceManager = new ReferenceManager(provider, staticListCacheDuration, referenceListCacheDuration);
 
                     foreach (var interfaceType in contractTypes)
                     {

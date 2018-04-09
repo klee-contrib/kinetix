@@ -5,111 +5,97 @@ using System.Linq.Expressions;
 namespace Kinetix.Services
 {
     /// <summary>
-    /// Contrat du manager de référence
-    /// <summary>
+    /// Manager pour les listes de référence.
+    /// </summary>
     public interface IReferenceManager
     {
         /// <summary>
-        /// Types de référence disponibles dans le ReferenceManager.
+        /// La liste des types de référence du manager.
         /// </summary>
         IEnumerable<Type> ReferenceTypes { get; }
 
         /// <summary>
-        /// Vide le cache.
+        /// Vide le cache de référence.
         /// </summary>
-        /// <param name="referenceType">Type de la référence.</param>
-        /// <param name="referenceName">Nom de la référence.</param>
-        void FlushCache(Type referenceType = null, string referenceName = null);
+        /// <param name="type">Le type de la référence à vider (laisser vide pour tout vider).</param>
+        /// <param name="referenceName">Le nom de la liste de référence à vider.</param>
+        void FlushCache(Type type = null, string referenceName = null);
 
         /// <summary>
-        /// Retourne la liste de référence du type TReferenceType.
+        /// Récupère une liste de référence.
         /// </summary>
-        /// <typeparam name="TReferenceType">Type de la liste de référence.</typeparam>
-        /// <param name="referenceName">Nom de la liste de référence à utiliser.</param>
-        /// <returns>Liste de référence.</returns>
-        ICollection<TReferenceType> GetReferenceList<TReferenceType>(string referenceName = null)
-            where TReferenceType : new();
-
-        /// <summary>
-        /// Retourne la liste de référence du type demandé.
-        /// </summary>
-        /// <param name="type">Type de la liste de référence.</typeparam>
-        /// <param name="referenceName">Nom de la liste de référence à utiliser.</param>
-        /// <returns>Liste de référence.</returns>
+        /// <param name="type">Le type de la liste de référence.</param>
+        /// <param name="referenceName">Le nom de la liste de référence</param>
+        /// <returns></returns>
         ICollection<object> GetReferenceList(Type type, string referenceName = null);
 
         /// <summary>
-        /// Retourne les éléments de la liste de référence du type TReference correspondant au prédicat.
+        /// Récupère une liste de référence.
         /// </summary>
-        /// <typeparam name="TReference">Type de la liste de référence.</typeparam>
-        /// <param name="predicate">Prédicat de filtrage.</param>
-        /// <param name="referenceName">Nom de la liste de référence.</param>
-        /// <returns>Ensemble des éléments.</returns>
-        ICollection<TReferenceType> GetReferenceList<TReferenceType>(Func<TReferenceType, bool> predicate, string referenceName = null)
-            where TReferenceType : new();
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="referenceName">Le nom de la liste de référence</param>
+        ICollection<T> GetReferenceList<T>(string referenceName = null);
 
         /// <summary>
-        /// Retourne la liste de référence du type TReferenceType à partir d'un objet de critères.
+        /// Récupère une liste de référence.
         /// </summary>
-        /// <typeparam name="TReferenceType">Type de la liste de référence.</typeparam>
-        /// <param name="criteria">Objet contenant les critères.</param>
-        /// <returns>Les éléments de la liste qui correspondent aux critères.</returns>
-        ICollection<TReferenceType> GetReferenceListByCriteria<TReferenceType>(TReferenceType criteria)
-            where TReferenceType : new();
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
+        /// <param name="referenceName">Le nom de la liste de référence</param>
+        ICollection<T> GetReferenceList<T>(Func<T, bool> predicate, string referenceName = null);
 
         /// <summary>
-        /// Retourne la liste de référence du type referenceType.
+        /// Récupère une liste de référence.
         /// </summary>
-        /// <typeparam name="TReferenceType">Type de la liste de référence.</typeparam>
-        /// <param name="primaryKeyArray">Liste des clés primaires.</param>
-        /// <returns>Liste de référence.</returns>
-        ICollection<TReferenceType> GetReferenceListByPrimaryKeyList<TReferenceType>(params object[] primaryKeyArray)
-            where TReferenceType : new();
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="primaryKeys">Un array de clés primaires.</param>
+        ICollection<T> GetReferenceList<T>(object[] primaryKeys);
 
         /// <summary>
-        /// Retourne l'élément unique de la liste de référence du type TReference correspondant au prédicat.
+        /// Récupère une liste de référence.
         /// </summary>
-        /// <typeparam name="TReferenceType">Type de la liste de référence.</typeparam>
-        /// <param name="predicate">Prédicat de filtrage.</param>
-        /// <param name="referenceName">Nom de la liste de référence.</param>
-        /// <returns>Ensemble des éléments.</returns>
-        TReferenceType GetReferenceObject<TReferenceType>(Func<TReferenceType, bool> predicate, string referenceName = null)
-            where TReferenceType : new();
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="criteria">Un objet de critère.</param>
+        ICollection<T> GetReferenceList<T>(T criteria);
 
         /// <summary>
-        /// Retourne un type de référence à partir de sa clef primaire.
+        /// Récupère un objet d'une liste de référence.
         /// </summary>
-        /// <typeparam name="TReferenceType">Type de la liste de référence.</typeparam>
-        /// <param name="primaryKey">Clef primaire.</param>
-        /// <returns>Le type de référence.</returns>
-        TReferenceType GetReferenceObjectByPrimaryKey<TReferenceType>(object primaryKey)
-            where TReferenceType : new();
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
+        /// <param name="referenceName">Le nom de la liste de référence</param>
+        T GetReferenceObject<T>(Func<T, bool> predicate, string referenceName = null);
 
         /// <summary>
-        /// Retourne la valeur d'une liste de référence à partir de son identifiant.
+        /// Récupère un objet d'une liste de référence.
         /// </summary>
-        /// <typeparam name="TReferenceType">Type de la liste de référence.</typeparam>
-        /// <param name="primaryKey">Clef primaire de l'objet.</param>
-        /// <param name="propertySelector">Lambda expression de sélection de la propriété.</param>
-        /// <returns>Valeur de la propriété sur le bean.</returns>
-        string GetReferenceValueByPrimaryKey<TReferenceType>(object primaryKey, Expression<Func<TReferenceType, object>> propertySelector)
-            where TReferenceType : new();
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="primaryKey">Une clé primaire.</param>
+        T GetReferenceObject<T>(object primaryKey);
 
         /// <summary>
-        /// Retourne la valeur d'une liste de référence à partir
-        /// de son identifiant.
+        /// Récupère la valeur d'un objet d'une liste de référence.
         /// </summary>
-        /// <typeparam name="TReferenceType">Type de la liste de référence.</typeparam>
-        /// <param name="primaryKey">Identifiant de la liste de référence.</param>
-        /// <param name="defaultPropertyName">Nom de la propriété par défaut à utiliser. Null pour utiliser la valeur définie au niveau de l'objet.</param>
-        /// <returns>Libellé de la liste de référence.</returns>
-        string GetReferenceValueByPrimaryKey<TReferenceType>(object primaryKey, string defaultPropertyName = null)
-            where TReferenceType : new();
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
+        /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
+        /// <param name="referenceName">Le nom de la liste de référence</param>
+        string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null, string referenceName = null);
 
         /// <summary>
-        /// Parse les différents accésseurs fournis par le type.
+        /// Récupère la valeur d'un objet d'une liste de référence.
         /// </summary>
-        /// <param name="contractType">Contrat.</param>
-        void RegisterAccessors(Type contractType);
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="primaryKey">Une clé primaire.</param>
+        /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
+        string GetReferenceValue<T>(object primaryKey, Expression<Func<T, object>> propertySelector = null);
+
+        /// <summary>
+        /// Récupère la valeur d'un objet d'une liste de référence.
+        /// </summary>
+        /// <typeparam name="T">Le type de la liste de référence.</typeparam>
+        /// <param name="reference">L'object dont on veut la valeur.</param>
+        /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
+        string GetReferenceValue<T>(T reference, Expression<Func<T, object>> propertySelector = null);
     }
 }

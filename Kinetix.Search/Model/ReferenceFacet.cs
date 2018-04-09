@@ -31,7 +31,7 @@ namespace Kinetix.Search.Model
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
         public string ResolveLabel(object primaryKey)
         {
-            return _referenceManager.GetReferenceValueByPrimaryKey<T>(primaryKey);
+            return _referenceManager.GetReferenceValue<T>(primaryKey);
         }
     }
 }
