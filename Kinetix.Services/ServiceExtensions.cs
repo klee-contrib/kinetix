@@ -9,10 +9,10 @@ namespace Kinetix.Services
 {
     public static class ServiceExtensions
     {
-        public static IServiceCollection AddServices(this IServiceCollection services, string assemblyPrefix, TimeSpan? staticListCacheDuration = null, TimeSpan? referenceListCacheDuration = null)
+        public static IServiceCollection AddServices(this IServiceCollection services, ServicesConfig config = null)
         {
             IEnumerable<AssemblyName> GetReferencedAssemblyNames(Assembly assembly) =>
-                assembly.GetReferencedAssemblies().Where(name => name.FullName.StartsWith(assemblyPrefix));
+                assembly.GetReferencedAssemblies().Where(name => name.FullName.StartsWith(config?.ServiceAssemblyPrefix ?? string.Empty));
 
             IEnumerable<Assembly> GetReferencedAssemblies(IEnumerable<Assembly> assemblies)
             {
@@ -28,7 +28,7 @@ namespace Kinetix.Services
 
             var contractTypes = new List<Type>();
 
-            foreach (var type in GetReferencedAssemblies(new[] { Assembly.GetEntryAssembly() }).SelectMany(x => x.GetExportedTypes()))
+            foreach (var type in (config?.ServiceAssemblies ?? new List<Assembly>()).Concat(GetReferencedAssemblies(new[] { Assembly.GetEntryAssembly() })).SelectMany(x => x.GetExportedTypes()))
             {
                 var registerImplAttribute = type.GetCustomAttribute<RegisterImplAttribute>();
                 if (registerImplAttribute != null)
@@ -77,7 +77,7 @@ namespace Kinetix.Services
             services.AddMemoryCache();
             services.AddScoped<IReferenceManager, ReferenceManager>(provider =>
             {
-                var referenceManager = new ReferenceManager(provider, staticListCacheDuration, referenceListCacheDuration);
+                var referenceManager = new ReferenceManager(provider, config?.StaticListCacheDuration, config?.ReferenceListCacheDuration);
 
                 foreach (var interfaceType in contractTypes)
                 {
