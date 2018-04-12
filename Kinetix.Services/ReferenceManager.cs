@@ -92,8 +92,7 @@ namespace Kinetix.Services
                     .Where(property => property.GetValue(criteria) != null);
 
             return GetReferenceList<T>()
-                .Where(bean => !beanPropertyDescriptorList
-                    .Any(property => property.PrimitiveType != null && property.GetValue(criteria) != property.GetValue(bean)))
+                .Where(bean => beanPropertyDescriptorList.All(property => property.GetValue(criteria).Equals(property.GetValue(bean))))
                 .ToList();
         }
 
