@@ -98,7 +98,18 @@ namespace Kinetix.Web.Filters
         /// <returns>Message.</returns>
         private IActionResult DefaultExceptionHandler(Exception ex)
         {
-            var errorDico = new Dictionary<string, object> { { EntityException.GlobalErrorKey, new List<string> { ex.Message } } };
+            var errors = new List<string> { ex.Message };
+            var errorDico = new Dictionary<string, object>
+            {
+                [EntityException.GlobalErrorKey] = errors
+            };
+
+            while (ex.InnerException != null)
+            {
+                ex = ex.InnerException;
+                errors.Add(ex.Message);
+            }
+
             return new ObjectResult(errorDico) { StatusCode = 500 };
         }
 
