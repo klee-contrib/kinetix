@@ -41,7 +41,7 @@ namespace Kinetix.Search.Elastic
         /// <summary>
         /// Usine à mapping ElasticSearch.
         /// </summary>
-        private readonly ElasticMappingFactory _factory = new ElasticMappingFactory();
+        private readonly ElasticMappingFactory _factory;
 
         /// <summary>
         /// Handler des facettes standard.
@@ -75,11 +75,12 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         private string _indexName;
 
-        public ElasticStore(ILogger<ElasticStore<TDocument>> logger, DocumentDescriptor documentDescriptor, ElasticManager elasticManager)
+        public ElasticStore(ILogger<ElasticStore<TDocument>> logger, DocumentDescriptor documentDescriptor, ElasticManager elasticManager, ElasticMappingFactory factory)
         {
             _definition = documentDescriptor.GetDefinition(typeof(TDocument));
             _documentTypeName = _definition.DocumentTypeName;
             _elasticManager = elasticManager;
+            _factory = factory;
             _logger = logger;
             _standardHandler = new StandardFacetHandler<TDocument>(_definition);
             _portfolioHandler = new PortfolioFacetHandler<TDocument>(_definition);
@@ -109,7 +110,7 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore{TDocument}.Get" />
         public TDocument Get(string id)
         {
-            var res = this.GetClient().Get(CreateDocumentPath(id));
+            var res = GetClient().Get(CreateDocumentPath(id));
             res.CheckStatus(_logger, "Get");
             return res.Source;
         }
@@ -118,12 +119,9 @@ namespace Kinetix.Search.Elastic
         public void Put(TDocument document)
         {
             var id = _definition.PrimaryKey.GetValue(document).ToString();
-
-            var res = this.GetClient().Index(FormatSortFields(document), x => x
-                .Index(_indexName)
+            var res = GetClient().Index(FormatSortFields(document), x => x
                 .Type(_documentTypeName)
                 .Id(id));
-
             res.CheckStatus(_logger, "Index");
         }
 
@@ -154,16 +152,15 @@ namespace Kinetix.Search.Elastic
                     .Take(ClusterSize);
 
                 /* Indexation en masse du cluster. */
-                var res = this.GetClient().Bulk(x =>
+                var res = GetClient().Bulk(x =>
                 {
                     foreach (var document in cluster)
                     {
                         var id = _definition.PrimaryKey.GetValue(document).ToString();
                         x.Index<TDocument>(y => y
-                         .Document(FormatSortFields(document))
-                         .Index(_indexName)
-                         .Type(_documentTypeName)
-                         .Id(id));
+                            .Document(FormatSortFields(document))
+                            .Type(_documentTypeName)
+                            .Id(id));
                     }
                     return x;
                 });
@@ -174,8 +171,7 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore{TDocument}.Remove" />
         public void Remove(string id)
         {
-            var res = this.GetClient().Delete(CreateDocumentPath(id));
-
+            var res = GetClient().Delete(CreateDocumentPath(id));
             res.CheckStatus(_logger, "Delete");
         }
 
@@ -183,7 +179,7 @@ namespace Kinetix.Search.Elastic
         public void Flush()
         {
             /* SEY : Non testé. */
-            var res = this.GetClient().DeleteByQuery<TDocument>(x => x.Index(_indexName).Type(_documentTypeName));
+            var res = GetClient().DeleteByQuery<TDocument>(x => x.Index(_indexName).Type(_documentTypeName));
 
             res.CheckStatus(_logger, "DeleteAll");
         }
@@ -220,7 +216,7 @@ namespace Kinetix.Search.Elastic
             var skip = apiInput.Skip ?? 0;
             var size = hasGroup ? 0 : apiInput.Top ?? 1000; // TODO Paramétrable ?
 
-            var res = this.GetClient()
+            var res = GetClient()
                 .Search<TDocument>(s =>
                 {
                     s
@@ -403,7 +399,7 @@ namespace Kinetix.Search.Elastic
             var filterQuery = _builder.BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
             var hasFilter = !string.IsNullOrEmpty(filterQuery);
 
-            var res = this.GetClient()
+            var res = GetClient()
                 .Count<TDocument>(s =>
                 {
                     /* Index / type document. */
@@ -785,7 +781,7 @@ namespace Kinetix.Search.Elastic
             {
                 get
                 {
-                    return !string.IsNullOrEmpty(this.FieldName);
+                    return !string.IsNullOrEmpty(FieldName);
                 }
             }
         }

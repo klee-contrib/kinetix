@@ -3,13 +3,13 @@ using Kinetix.Search.ComponentModel;
 using Kinetix.Search.MetaModel;
 using Nest;
 
-namespace Kinetix.Search.Elastic {
-
+namespace Kinetix.Search.Elastic
+{
     /// <summary>
     /// Usine à mapping ElasticSearch.
     /// </summary>
-    public class ElasticMappingFactory {
-
+    public class ElasticMappingFactory
+    {
         /// <summary>
         /// Obtient le mapping de champ Elastic pour une catégorie donnée.
         /// </summary>
@@ -17,22 +17,24 @@ namespace Kinetix.Search.Elastic {
         /// <param name="field">Catégorie de champ.</param>
         /// <returns>Mapping de champ.</returns>
         /// <typeparam name="T">Type du document.</typeparam>
-        public PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
-            where T : class {
+        public virtual PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
+            where T : class
+        {
             var fieldName = field.FieldName;
 
-            /* TODO Externaliser. */
-
-            switch (field.Category) {
+            switch (field.Category)
+            {
                 case SearchFieldCategory.Result:
-                    if (field.PropertyType == typeof(DateTime?)) {
+                    if (field.PropertyType == typeof(DateTime?))
+                    {
                         return selector.Date(x => x
                             .Name(fieldName)
                             .Index(false)
                             .Store(true));
                     }
 
-                    if (field.PropertyType == typeof(int?)) {
+                    if (field.PropertyType == typeof(int?))
+                    {
                         return selector.Number(x => x
                             .Name(fieldName)
                             .Type(NumberType.Integer)
@@ -40,7 +42,8 @@ namespace Kinetix.Search.Elastic {
                             .Store(true));
                     }
 
-                    if (field.PropertyType == typeof(decimal?)) {
+                    if (field.PropertyType == typeof(decimal?))
+                    {
                         return selector.Number(x => x
                             .Name(fieldName)
                             .Type(NumberType.Double)
@@ -69,11 +72,13 @@ namespace Kinetix.Search.Elastic {
                         .Analyzer("text_fr"));
                 case SearchFieldCategory.Facet:
                     /* Champ de facette. */
-                    if (field.PropertyType == typeof(DateTime?)) {
+                    if (field.PropertyType == typeof(DateTime?))
+                    {
                         throw new ElasticException("Le type DateTime n'est pas supporté pour le champ de facette " + field.FieldName);
                     }
 
-                    if (field.PropertyType == typeof(decimal?)) {
+                    if (field.PropertyType == typeof(decimal?))
+                    {
                         return selector.Number(x => x
                             .Name(fieldName)
                             .Index(true)
@@ -91,14 +96,16 @@ namespace Kinetix.Search.Elastic {
                         .Store(false)
                         .Analyzer("text_fr"));
                 case SearchFieldCategory.Sort:
-                    if (field.PropertyType == typeof(DateTime?)) {
+                    if (field.PropertyType == typeof(DateTime?))
+                    {
                         return selector.Date(x => x
                             .Name(fieldName)
                             .Index(true)
                             .Store(false));
                     }
 
-                    if (field.PropertyType == typeof(decimal?)) {
+                    if (field.PropertyType == typeof(decimal?))
+                    {
                         return selector.Number(x => x
                             .Name(fieldName)
                             .Index(true)
@@ -111,11 +118,13 @@ namespace Kinetix.Search.Elastic {
                         .Store(false));
                 case SearchFieldCategory.Filter:
                     /* Champ filtre. */
-                    if (field.PropertyType == typeof(DateTime?)) {
+                    if (field.PropertyType == typeof(DateTime?))
+                    {
                         throw new ElasticException("Le type DateTime n'est pas supporté pour le champ de filtrage " + field.FieldName);
                     }
 
-                    if (field.PropertyType == typeof(decimal?)) {
+                    if (field.PropertyType == typeof(decimal?))
+                    {
                         return selector.Number(x => x
                             .Name(fieldName)
                             .Index(true)

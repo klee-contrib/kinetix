@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Reflection;
+using Elasticsearch.Net;
+using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Config;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nest;
+using Nest.JsonNetSerializer;
+using Newtonsoft.Json;
 
 namespace Kinetix.Search.Elastic
 {
@@ -13,15 +18,26 @@ namespace Kinetix.Search.Elastic
     {
         private readonly ILogger<ElasticManager> _logger;
         private readonly SearchConfig _searchConfig;
+        private readonly Type[] _documentTypes;
+        private readonly JsonConverter[] _jsonConverters;
 
         /// <summary>
         /// Enregistre la configuration d'une connexion base de données.
         /// </summary>
         /// <param name="searchSettings">Configuration.</param>
-        public ElasticManager(ILogger<ElasticManager> logger, IOptions<SearchConfig> searchConfig)
+        public ElasticManager(ILogger<ElasticManager> logger, IOptions<SearchConfig> searchConfig, Type[] documentTypes, JsonConverter[] jsonConverters)
         {
             _logger = logger;
             _searchConfig = searchConfig.Value;
+            _documentTypes = documentTypes;
+            _jsonConverters = jsonConverters;
+        }
+
+        public string GetIndexNameForType(string dataSourceName, Type documentType)
+        {
+            var connSettings = LoadSearchSettings(dataSourceName);
+            var attribute = documentType.GetCustomAttribute<SearchDocumentTypeAttribute>();
+            return $"{connSettings.IndexName}_{attribute.DocumentTypeName}";
         }
 
         /// <summary>
@@ -33,9 +49,28 @@ namespace Kinetix.Search.Elastic
         {
             var connSettings = LoadSearchSettings(dataSourceName);
             var node = new Uri(connSettings.NodeUri);
-            var settings = new ConnectionSettings(node)
+            var settings = new ConnectionSettings(
+                new SingleNodeConnectionPool(node),
+                (b, s) => new JsonNetSerializer(b, s, () =>
+                {
+                    var js = new JsonSerializerSettings();
+                    if (_jsonConverters != null)
+                    {
+                        foreach (var converter in _jsonConverters)
+                        {
+                            js.Converters.Add(converter);
+                        }
+                    }
+                    return js;
+                }))
                 .DefaultIndex(connSettings.IndexName)
                 .DisableDirectStreaming();
+
+            foreach (var documentType in _documentTypes)
+            {
+                settings.DefaultMappingFor(documentType, m => m.IndexName(GetIndexNameForType(dataSourceName, documentType)));
+            }
+
             return new ElasticClient(settings);
         }
 
@@ -44,41 +79,47 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="dataSourceName">Nom de la datasource.</param>
         /// <param name="configurator">Configurateur.</param>
-        public void InitIndex(string dataSourceName, IIndexConfigurator configurator)
+        public void InitIndexes(string dataSourceName, IIndexConfigurator configurator)
         {
             var settings = LoadSearchSettings(dataSourceName);
             var client = ObtainClient(dataSourceName);
-            var res = client.CreateIndex(settings.IndexName, configurator.Configure);
-            res.CheckStatus(_logger, "CreateIndex");
+            foreach (var docType in _documentTypes)
+            {
+                var indexName = GetIndexNameForType(dataSourceName, docType);
+                DeleteIndex(client, indexName);
+                var res = client.CreateIndex(GetIndexNameForType(dataSourceName, docType), configurator.Configure);
+                res.CheckStatus(_logger, "CreateIndex");
+            }
         }
 
         /// <summary>
         /// Supprime un index.
         /// </summary>
-        /// <param name="dataSourceName">Nom de la datasource.</param>
-        public void DeleteIndex(string dataSourceName)
+        /// <param name="client">Client ES pour la datasource voulue.</param>
+        /// <param name="indexName">Nom de l'index.</param>
+        public void DeleteIndex(ElasticClient client, string indexName)
         {
-            var settings = LoadSearchSettings(dataSourceName);
-            var client = ObtainClient(dataSourceName);
-            var res = client.DeleteIndex(settings.IndexName);
-            if (res.ApiCall.HttpStatusCode == 404)
+            if (ExistIndex(client, indexName))
             {
-                throw new ElasticException("The " + settings.IndexName + " index to delete doesn't exist.");
-            }
+                var res = client.DeleteIndex(indexName);
+                if (res.ApiCall.HttpStatusCode == 404)
+                {
+                    throw new ElasticException($"The {indexName} index to delete doesn't exist.");
+                }
 
-            res.CheckStatus(_logger, "DeleteIndex");
+                res.CheckStatus(_logger, "DeleteIndex");
+            }
         }
 
         /// <summary>
         /// Indique si un index existe.
         /// </summary>
-        /// <param name="dataSourceName">Nom de la datasource.</param>
+        /// <param name="client">Client ES pour la datasource voulue.</param>
+        /// <param name="indexName">Nom de l'index.</param>
         /// <returns><code>True</code> si l'index existe.</returns>
-        public bool ExistIndex(string dataSourceName)
+        public bool ExistIndex(ElasticClient client, string indexName)
         {
-            var settings = LoadSearchSettings(dataSourceName);
-            var client = ObtainClient(dataSourceName);
-            var res = client.IndexExists(settings.IndexName);
+            var res = client.IndexExists(indexName);
             res.CheckStatus(_logger, "IndexExists");
             return res.Exists;
         }
