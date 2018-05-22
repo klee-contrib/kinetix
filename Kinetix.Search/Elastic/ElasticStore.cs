@@ -703,7 +703,7 @@ namespace Kinetix.Search.Elastic
         /// <returns>Le DocumentPath.</returns>
         private DocumentPath<TDocument> CreateDocumentPath(string id)
         {
-            return new DocumentPath<TDocument>(id).Index(_indexName).Type(_documentTypeName);
+            return new DocumentPath<TDocument>(id).Type(_documentTypeName);
         }
 
         /// <summary>
