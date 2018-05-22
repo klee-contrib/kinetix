@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Elasticsearch.Net;
 using Kinetix.Search.ComponentModel;
@@ -18,14 +19,14 @@ namespace Kinetix.Search.Elastic
     {
         private readonly ILogger<ElasticManager> _logger;
         private readonly SearchConfig _searchConfig;
-        private readonly Type[] _documentTypes;
-        private readonly JsonConverter[] _jsonConverters;
+        private readonly ICollection<Type> _documentTypes;
+        private readonly ICollection<JsonConverter> _jsonConverters;
 
         /// <summary>
         /// Enregistre la configuration d'une connexion base de données.
         /// </summary>
         /// <param name="searchSettings">Configuration.</param>
-        public ElasticManager(ILogger<ElasticManager> logger, IOptions<SearchConfig> searchConfig, Type[] documentTypes, JsonConverter[] jsonConverters)
+        public ElasticManager(ILogger<ElasticManager> logger, IOptions<SearchConfig> searchConfig, ICollection<Type> documentTypes, ICollection<JsonConverter> jsonConverters)
         {
             _logger = logger;
             _searchConfig = searchConfig.Value;
