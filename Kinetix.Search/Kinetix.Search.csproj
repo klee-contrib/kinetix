@@ -5,10 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NEST.JsonNetSerializer" Version="6.1.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
   </ItemGroup>
 

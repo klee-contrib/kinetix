@@ -5,13 +5,13 @@ using Kinetix.Search.Elastic.Mapping;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 
-namespace Kinetix.Search
+namespace Kinetix.Search.Elastic
 {
-    public class SearchConfigBuilder
+    public class ElasticConfigBuilder
     {
         private readonly IServiceCollection _services;
 
-        internal SearchConfigBuilder(IServiceCollection services)
+        internal ElasticConfigBuilder(IServiceCollection services)
         {
             _services = services;
             AddMapping<DateTimeMapping>();
@@ -26,32 +26,32 @@ namespace Kinetix.Search
 
         internal ICollection<JsonConverter> JsonConverters { get; } = new List<JsonConverter>();
 
-        public SearchConfigBuilder AddDocumentType<T>()
+        public ElasticConfigBuilder AddDocumentType<T>()
         {
             DocumentTypes.Add(typeof(T));
             return this;
         }
 
-        public SearchConfigBuilder AddElasticMapping<T>()
+        public ElasticConfigBuilder AddElasticMapping<T>()
             where T : class, IElasticMapping
         {
             return AddMapping<T>();
         }
 
-        public SearchConfigBuilder AddJsonConverter<T>()
+        public ElasticConfigBuilder AddJsonConverter<T>()
             where T : JsonConverter, new()
         {
             JsonConverters.Add(new T());
             return this;
         }
 
-        public SearchConfigBuilder UseDefaultDataSource(string name)
+        public ElasticConfigBuilder UseDefaultDataSource(string name)
         {
             DefaultDataSourceName = name;
             return this;
         }
 
-        private SearchConfigBuilder AddMapping<T>()
+        private ElasticConfigBuilder AddMapping<T>()
             where T : class, IElasticMapping
         {
             _services.AddSingleton(typeof(T).GetInterfaces().First(), typeof(T));

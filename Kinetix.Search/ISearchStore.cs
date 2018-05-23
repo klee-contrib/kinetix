@@ -2,23 +2,17 @@
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Model;
 
-namespace Kinetix.Search.Contract
+namespace Kinetix.Search
 {
     /// <summary>
-    /// Contrat des brokers de recherche.
-    /// </summary>
-    public interface ISearchBroker
-    {
-    }
-
-    /// <summary>
-    /// Contrat des brokers de recherche.
+    /// Contrat des stores de recherche.
     /// </summary>
     /// <typeparam name="TDocument">Type du document.</typeparam>
-    public interface ISearchBroker<TDocument> : ISearchBroker
+    public interface ISearchStore<TDocument>
+        where TDocument : class
     {
         /// <summary>
-        /// Créé le type de document.
+        /// Créé l'index.
         /// </summary>
         void CreateDocumentType();
 
@@ -44,7 +38,7 @@ namespace Kinetix.Search.Contract
         /// <summary>
         /// Supprime un document dans l'index.
         /// </summary>
-        /// <param name="id">L'id du document.</param>
+        /// <param name="id">ID du document.</param>
         void Remove(string id);
 
         /// <summary>
@@ -53,20 +47,10 @@ namespace Kinetix.Search.Contract
         void Flush();
 
         /// <summary>
-        /// Effectue une requête sur le champ text.
-        /// </summary>
-        /// <param name="text">Texte à chercher.</param>
-        /// <param name="security">Filtrage de périmètre de sécurité.</param>
-        /// <param name="top">Nombre de résultats désirés.</param>
-        /// <returns>Documents trouvés et le nombre total de résultats .</returns>
-        (IEnumerable<TDocument> data, int totalCount) Query(string text, string security = null, int top = 10);
-
-        /// <summary>
         /// Effectue une recherche avancé.
-        /// TODO : update doc
         /// </summary>
-        /// <param name="input">Paramètre de recherche (facettes...)</param>
-        /// <returns>Documents trouvés.</returns>
+        /// <param name="input">Entrée de la recherche.</param>
+        /// <returns>Sortie de la recherche.</returns>
         QueryOutput<TDocument> AdvancedQuery(AdvancedQueryInput input);
 
         /// <summary>
@@ -75,5 +59,12 @@ namespace Kinetix.Search.Contract
         /// <param name="input">Entrée de la recherche.</param>
         /// <returns>Nombre de documents.</returns>
         long AdvancedCount(AdvancedQueryInput input);
+
+        /// <summary>
+        /// Enregistre une data source.
+        /// </summary>
+        /// <param name="dataSourceName">Nom de la data source.</param>
+        /// <returns>This.</returns>
+        ISearchStore<TDocument> RegisterDataSource(string dataSourceName);
     }
 }
