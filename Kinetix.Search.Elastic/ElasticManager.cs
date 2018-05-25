@@ -84,32 +84,24 @@ namespace Kinetix.Search.Elastic
         {
             var settings = LoadSearchSettings(dataSourceName);
             var client = ObtainClient(dataSourceName);
+            DeleteIndexes(client, settings.IndexName);
             foreach (var docType in _documentTypes)
             {
                 var indexName = GetIndexNameForType(dataSourceName, docType);
-                DeleteIndex(client, indexName);
                 var res = client.CreateIndex(GetIndexNameForType(dataSourceName, docType), configurator.Configure);
                 res.CheckStatus(_logger, "CreateIndex");
             }
         }
 
         /// <summary>
-        /// Supprime un index.
+        /// Supprime tous les indexes commençant par le nom donné.
         /// </summary>
         /// <param name="client">Client ES pour la datasource voulue.</param>
         /// <param name="indexName">Nom de l'index.</param>
-        public void DeleteIndex(ElasticClient client, string indexName)
+        public void DeleteIndexes(ElasticClient client, string indexName)
         {
-            if (ExistIndex(client, indexName))
-            {
-                var res = client.DeleteIndex(indexName);
-                if (res.ApiCall.HttpStatusCode == 404)
-                {
-                    throw new ElasticException($"The {indexName} index to delete doesn't exist.");
-                }
-
-                res.CheckStatus(_logger, "DeleteIndex");
-            }
+            var res = client.DeleteIndex($"{indexName}*");
+            res.CheckStatus(_logger, "DeleteIndex");
         }
 
         /// <summary>
