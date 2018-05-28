@@ -88,8 +88,8 @@ namespace Kinetix.Search.Elastic
             foreach (var docType in _documentTypes)
             {
                 var indexName = GetIndexNameForType(dataSourceName, docType);
-                var res = client.CreateIndex(GetIndexNameForType(dataSourceName, docType), configurator.Configure);
-                res.CheckStatus(_logger, "CreateIndex");
+                _logger.LogQuery("CreateIndex", () =>
+                    client.CreateIndex(GetIndexNameForType(dataSourceName, docType), configurator.Configure));
             }
         }
 
@@ -100,8 +100,7 @@ namespace Kinetix.Search.Elastic
         /// <param name="indexName">Nom de l'index.</param>
         public void DeleteIndexes(ElasticClient client, string indexName)
         {
-            var res = client.DeleteIndex($"{indexName}*");
-            res.CheckStatus(_logger, "DeleteIndex");
+            _logger.LogQuery("DeleteIndex", () => client.DeleteIndex($"{indexName}*"));
         }
 
         /// <summary>
@@ -112,9 +111,7 @@ namespace Kinetix.Search.Elastic
         /// <returns><code>True</code> si l'index existe.</returns>
         public bool ExistIndex(ElasticClient client, string indexName)
         {
-            var res = client.IndexExists(indexName);
-            res.CheckStatus(_logger, "IndexExists");
-            return res.Exists;
+            return _logger.LogQuery("IndexExists", () => client.IndexExists(indexName)).Exists;
         }
 
         /// <summary>
@@ -123,10 +120,7 @@ namespace Kinetix.Search.Elastic
         /// <param name="dataSourceName">Nom de la datasource.</param>
         public void PingNode(string dataSourceName)
         {
-            var settings = LoadSearchSettings(dataSourceName);
-            var client = ObtainClient(dataSourceName);
-            var res = client.Ping();
-            res.CheckStatus(_logger, "Ping");
+            _logger.LogQuery("Ping", () => ObtainClient(dataSourceName).Ping());
         }
 
         /// <summary>

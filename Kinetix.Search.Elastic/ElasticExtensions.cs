@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System;
+using System.Diagnostics;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Nest;
 
@@ -9,14 +11,22 @@ namespace Kinetix.Search.Elastic
     /// </summary>
     internal static class ElasticExtensions
     {
+        private static readonly Stopwatch stopWatch = new Stopwatch();
+
         /// <summary>
-        /// Traite les réponses en erreurs de Elastic Search.
+        /// Effectue la requête demandée, traite les exceptions et log le tout.
         /// </summary>
-        /// <param name="response">Réponse.</param>
+        /// <param name="logger">Logger.</param>
         /// <param name="context">Contexte pour le message.</param>
-        public static void CheckStatus(this IResponse response, ILogger logger, string context)
+        /// <param name="esCall">Appel ES.</param>
+        public static T LogQuery<T>(this ILogger logger, string context, Func<T> esCall)
+            where T : IResponse
         {
-            logger.LogInformation($"{response.ApiCall.HttpMethod} {response.ApiCall.Uri} {response.ApiCall.HttpStatusCode}");
+            stopWatch.Restart();
+            var response = esCall();
+            stopWatch.Stop();
+
+            logger.LogInformation($"{context} ({response.ApiCall.HttpMethod} {response.ApiCall.Uri}) {response.ApiCall.HttpStatusCode} ({stopWatch.ElapsedMilliseconds} ms)");
 
             var request = response.ApiCall.RequestBodyInBytes;
             if (request != null)
@@ -42,6 +52,8 @@ namespace Kinetix.Search.Elastic
                 string message = sb.ToString();
                 throw new ElasticException(message);
             }
+
+            return response;
         }
     }
 }

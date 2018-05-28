@@ -84,39 +84,32 @@ namespace Kinetix.Search.Elastic
         public void CreateDocumentType()
         {
             _logger.LogInformation("Create Document type : " + _documentTypeName);
-
-            var client = GetClient();
-
-            var res = client.Map<TDocument>(x => x
-                .Type(_documentTypeName)
-                .Properties(selector =>
-                {
-                    foreach (var field in _definition.Fields)
-                    {
-                        _factory.AddField(selector, field);
-                    }
-                    return selector;
-                }));
-
-            res.CheckStatus(_logger, "Map");
+            _logger.LogQuery("Map", () =>
+                GetClient().Map<TDocument>(x => x
+                     .Type(_documentTypeName)
+                     .Properties(selector =>
+                     {
+                         foreach (var field in _definition.Fields)
+                         {
+                             _factory.AddField(selector, field);
+                         }
+                         return selector;
+                     })));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Get" />
         public TDocument Get(string id)
         {
-            var res = GetClient().Get(CreateDocumentPath(id));
-            res.CheckStatus(_logger, "Get");
-            return res.Source;
+            return _logger.LogQuery("Get", () => GetClient().Get(CreateDocumentPath(id))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Put" />
         public void Put(TDocument document)
         {
-            var id = _definition.PrimaryKey.GetValue(document).ToString();
-            var res = GetClient().Index(FormatSortFields(document), x => x
-                .Type(_documentTypeName)
-                .Id(id));
-            res.CheckStatus(_logger, "Index");
+            _logger.LogQuery("Index", () =>
+                GetClient().Index(FormatSortFields(document), x => x
+                    .Type(_documentTypeName)
+                    .Id(_definition.PrimaryKey.GetValue(document).ToString())));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.PutAll" />
@@ -146,7 +139,7 @@ namespace Kinetix.Search.Elastic
                     .Take(ClusterSize);
 
                 /* Indexation en masse du cluster. */
-                var res = GetClient().Bulk(x =>
+                _logger.LogQuery("Bulk", () => GetClient().Bulk(x =>
                 {
                     foreach (var document in cluster)
                     {
@@ -157,25 +150,21 @@ namespace Kinetix.Search.Elastic
                             .Id(id));
                     }
                     return x;
-                });
-                res.CheckStatus(_logger, "Bulk");
+                }));
             }
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Remove" />
         public void Remove(string id)
         {
-            var res = GetClient().Delete(CreateDocumentPath(id));
-            res.CheckStatus(_logger, "Delete");
+            _logger.LogQuery("Delete", () => GetClient().Delete(CreateDocumentPath(id)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Flush" />
         public void Flush()
         {
             /* SEY : Non testé. */
-            var res = GetClient().DeleteByQuery<TDocument>(x => x.Type(_documentTypeName));
-
-            res.CheckStatus(_logger, "DeleteAll");
+            _logger.LogQuery("DeleteAll", () => GetClient().DeleteByQuery<TDocument>(x => x.Type(_documentTypeName)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery" />
@@ -210,7 +199,7 @@ namespace Kinetix.Search.Elastic
             var skip = apiInput.Skip ?? 0;
             var size = hasGroup ? 0 : apiInput.Top ?? 1000; // TODO Paramétrable ?
 
-            var res = GetClient()
+            var res = _logger.LogQuery("AdvancedQuery", () => GetClient()
                 .Search<TDocument>(s =>
                 {
                     s
@@ -281,9 +270,7 @@ namespace Kinetix.Search.Elastic
                     }
 
                     return s;
-                });
-
-            res.CheckStatus(_logger, "AdvancedQuery");
+                }));
 
             /* Extraction des facettes. */
             var facetListOutput = new List<FacetOutput>();
@@ -392,7 +379,7 @@ namespace Kinetix.Search.Elastic
             var filterQuery = _builder.BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
             var hasFilter = !string.IsNullOrEmpty(filterQuery);
 
-            var res = GetClient()
+            return _logger.LogQuery("AdvancedCount", () => GetClient()
                 .Count<TDocument>(s =>
                 {
                     /* Index / type document. */
@@ -405,17 +392,14 @@ namespace Kinetix.Search.Elastic
                     }
 
                     return s;
-                });
-
-            res.CheckStatus(_logger, "AdvancedCount");
-
-            return res.Count;
+                }))
+                .Count;
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Search" />
         public ISearchResponse<TDocument> Search(Func<SearchDescriptor<TDocument>, ISearchRequest> selector)
         {
-            return GetClient().Search((SearchDescriptor<TDocument> s) => selector(s.Type(_documentTypeName)));
+            return _logger.LogQuery("Search", () => GetClient().Search((SearchDescriptor<TDocument> s) => selector(s.Type(_documentTypeName))));
         }
 
         /// <summary>
