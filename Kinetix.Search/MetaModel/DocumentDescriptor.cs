@@ -47,7 +47,6 @@ namespace Kinetix.Search.MetaModel
 
             foreach (PropertyDescriptor property in properties)
             {
-
                 SearchFieldAttribute fieldAttr = (SearchFieldAttribute)property.Attributes[typeof(SearchFieldAttribute)];
                 if (fieldAttr == null)
                 {

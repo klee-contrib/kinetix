@@ -33,6 +33,12 @@ namespace Kinetix.Search.Elastic
         public PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
             where T : class
         {
+            // On skip le mapping pour les types génériques, par exemple les arrays.
+            if (field.PropertyType.IsGenericType)
+            {
+                return selector;
+            }
+
             if (!(_provider.GetService(typeof(IElasticMapping<>).MakeGenericType(field.PropertyType)) is IElasticMapping mapper))
             {
                 mapper = _provider.GetService<IElasticMapping<string>>();
