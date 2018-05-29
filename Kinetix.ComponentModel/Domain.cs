@@ -73,19 +73,9 @@ namespace Kinetix.ComponentModel
         public Domain(string name, ICollection<ValidationAttribute> validationAttributes, TypeConverter formatter, ICollection<Attribute> decorationAttributes, bool isHtml, Type errorMessageResourceType, string errorMessageResourceName, string metadataPropertySuffix)
         {
             Type dataType = typeof(T);
-            if (dataType.IsGenericType && typeof(Nullable<>).Equals(dataType.GetGenericTypeDefinition()))
+            if (dataType.IsGenericType && dataType.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 dataType = dataType.GetGenericArguments()[0];
-                if (!dataType.IsValueType)
-                {
-                    throw new ArgumentException(dataType + " is not a value type");
-                }
-            }
-            else if (!typeof(string).Equals(dataType) && !typeof(byte[]).Equals(dataType)
-              && !typeof(ICollection<string>).Equals(dataType)
-              && !typeof(ICollection<int>).Equals(dataType))
-            {
-                throw new ArgumentException(dataType + " is not a nullable Type");
             }
 
             this.Name = name ?? throw new ArgumentNullException("name");

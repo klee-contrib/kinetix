@@ -389,9 +389,7 @@ namespace Kinetix.ComponentModel
         /// </summary>
         private void InitPrimitiveType()
         {
-            if (PropertyType.IsPrimitive || typeof(decimal).Equals(PropertyType) || typeof(DateTime).Equals(PropertyType) || typeof(string).Equals(PropertyType) || typeof(byte[]).Equals(PropertyType)
-                || typeof(System.Collections.Generic.ICollection<string>).Equals(PropertyType)
-                || typeof(System.Collections.Generic.ICollection<int>).Equals(PropertyType))
+            if (PropertyType.IsValueType || PropertyType == typeof(string) || PropertyType.GetInterface("ICollection") != null)
             {
                 PrimitiveType = PropertyType;
                 return;
@@ -399,15 +397,8 @@ namespace Kinetix.ComponentModel
 
             if (PropertyType.IsGenericType && PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                Type primitive = PropertyType.GetGenericArguments()[0];
-                if (primitive.IsPrimitive || typeof(decimal).Equals(primitive) || typeof(DateTime).Equals(primitive)
-                    || typeof(Guid).Equals(primitive) || typeof(TimeSpan).Equals(primitive))
-                {
-                    PrimitiveType = primitive;
-                    return;
-                }
-
-                throw new NotSupportedException(string.Format(CultureInfo.CurrentUICulture, SR.ExceptionTypeDescription, PropertyType));
+                PrimitiveType = PropertyType.GetGenericArguments()[0];
+                return;
             }
 
             PrimitiveType = null;
