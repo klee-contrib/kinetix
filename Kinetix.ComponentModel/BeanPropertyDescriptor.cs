@@ -389,15 +389,15 @@ namespace Kinetix.ComponentModel
         /// </summary>
         private void InitPrimitiveType()
         {
-            if (PropertyType.IsValueType || PropertyType == typeof(string) || PropertyType.GetInterface("ICollection") != null)
-            {
-                PrimitiveType = PropertyType;
-                return;
-            }
-
             if (PropertyType.IsGenericType && PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 PrimitiveType = PropertyType.GetGenericArguments()[0];
+                return;
+            }
+
+            if (PropertyType.IsValueType || PropertyType == typeof(string) || PropertyType.GetInterface("ICollection") != null)
+            {
+                PrimitiveType = PropertyType;
                 return;
             }
 

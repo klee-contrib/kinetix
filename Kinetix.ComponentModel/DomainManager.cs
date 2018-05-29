@@ -53,6 +53,8 @@ namespace Kinetix.ComponentModel
             RegisterDomain(new Domain<Guid?>(DomainPrefix + typeof(Guid).Name, null, null));
             RegisterDomain(new Domain<char?>(DomainPrefix + typeof(char).Name, null, null));
             RegisterDomain(new Domain<TimeSpan?>(DomainPrefix + typeof(TimeSpan).Name, null, null));
+            RegisterDomain(new Domain<string[]>(DomainPrefix + typeof(string[]).Name, null, null));
+            RegisterDomain(new Domain<int[]>(DomainPrefix + typeof(int[]).Name, null, null));
 
             RegisterDomainMetadataType();
         }
