@@ -10,14 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="2.1.0" />
     <PackageReference Include="NEST" Version="5.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.0" PrivateAssets="all" />
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.1" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\KinetixCore.Monitoring.Abstractions\KinetixCore.Monitoring.Abstractions.csproj" />
     <ProjectReference Include="..\KinetixCore.Services\KinetixCore.Services.csproj" />
   </ItemGroup>
 

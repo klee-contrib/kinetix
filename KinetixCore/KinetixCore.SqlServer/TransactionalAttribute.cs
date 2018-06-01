@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kinetix.Services.Annotations
+namespace KinetixCore.SqlServer
 {
     /// <summary>
     /// Déclare la classe (le service) comme étant transactionnelle

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reflection;
 using Castle.DynamicProxy;
+using Kinetix.Monitoring.Abstractions;
 
 namespace KinetixCore.Monitoring.Analytics
 {
@@ -22,11 +23,11 @@ namespace KinetixCore.Monitoring.Analytics
             try
             {
                 MethodInfo targetMethod = invocation.GetConcreteMethodInvocationTarget();
-                AnalyticsAttribute att = (AnalyticsAttribute) targetMethod.GetCustomAttribute(typeof(AnalyticsAttribute), false);
-                
+                AnalyticsAttribute att = (AnalyticsAttribute)targetMethod.GetCustomAttribute(typeof(AnalyticsAttribute), false);
+
                 if (att == null)
                 {
-                    att = (AnalyticsAttribute) targetMethod.DeclaringType.GetCustomAttribute(typeof(AnalyticsAttribute), false);
+                    att = (AnalyticsAttribute)targetMethod.DeclaringType.GetCustomAttribute(typeof(AnalyticsAttribute), false);
                 }
 
                 string category = att.Category;

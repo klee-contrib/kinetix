@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>0.0.3</Version>
+    <Company>Klee Group</Company>
+    <Authors>Klee Group</Authors>
+    <Copyright>Klee Group 2018</Copyright>
+    <ProjectGuid>{32D84396-F98B-40AF-82CE-9EE71992FCCF}</ProjectGuid>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac.Extras.DynamicProxy" Version="4.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.5.0" />
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.1" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Label="dotnet pack instructions">
+    <Content Include="$(OutputPath)KinetixCore.Database.pdb">
+      <Pack>true</Pack>
+      <PackagePath>lib/netstandard2.0</PackagePath>
+    </Content>
+  </ItemGroup>
+  
+</Project>

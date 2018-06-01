@@ -12,7 +12,7 @@ namespace Kinetix.Search
     {
         public static IServiceCollection AddSearch(this IServiceCollection services, string defaultDataSourceName)
         {
-
+            // TODO Add default implementation for monitoring when used without the full Monitoring solution.
             services.AddSingleton<DocumentDescriptor>();
             services.AddSingleton<ElasticManager>();
             services.AddTransient(typeof(ISearchStore<>), typeof(ElasticStore<>));

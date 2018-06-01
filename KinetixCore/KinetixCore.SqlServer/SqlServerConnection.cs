@@ -2,7 +2,7 @@
 using System.Data;
 using System.Data.SqlClient;
 
-namespace Kinetix.Database
+namespace KinetixCore.SqlServer
 {
     /// <summary>
     /// Initialise une nouvelle connexion base de données.

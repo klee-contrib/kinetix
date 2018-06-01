@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Kinetix.Monitoring.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace KinetixCore.Monitoring
 {
@@ -10,29 +11,31 @@ namespace KinetixCore.Monitoring
     {
         private static readonly ThreadLocal<Stack<ProcessAnalyticsTracer>> threadLocalProcess = new ThreadLocal<Stack<ProcessAnalyticsTracer>>();
 
-        private ILoggerFactory _loggerFactory;
+        private readonly ILoggerFactory _loggerFactory;
 
         public ProcessAnalytics(ILoggerFactory loggerFactory)
         {
             _loggerFactory = loggerFactory;
         }
-        
-        public void Trace(string category, string name, Action<IProcessAnalyticsTracer> action, Action<AProcess> onCloseConsumer)
+
+        public void Trace(string category, string name, Action<IProcessAnalyticsTracer> action, Action<IAProcess> onCloseConsumer)
         {
-            using (ProcessAnalyticsTracer tracer = CreateTracer(category, name, onCloseConsumer)) {
+            using (ProcessAnalyticsTracer tracer = CreateTracer(category, name, onCloseConsumer))
+            {
                 try
                 {
                     action.Invoke(tracer);
                     tracer.MarkAsSucceeded();
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     tracer.MarkAsFailed(e);
                     throw e;
                 }
             }
         }
 
-        public O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action, Action<AProcess> onCloseConsumer)
+        public O TraceWithReturn<O>(string category, string name, Func<IProcessAnalyticsTracer, O> action, Action<IAProcess> onCloseConsumer)
         {
             using (ProcessAnalyticsTracer tracer = CreateTracer(category, name, onCloseConsumer))
             {
@@ -50,7 +53,7 @@ namespace KinetixCore.Monitoring
             }
         }
 
-        public ProcessAnalyticsTracer GetCurrentTracer()
+        public IProcessAnalyticsTracer GetCurrentTracer()
         {
             return DoGetCurrentTracer();
         }
@@ -88,20 +91,20 @@ namespace KinetixCore.Monitoring
         }
 
 
-        private ProcessAnalyticsTracer CreateTracer(string category, string name, Action<AProcess> onCloseConsumer)
+        private ProcessAnalyticsTracer CreateTracer(string category, string name, Action<IAProcess> onCloseConsumer)
         {
             ProcessAnalyticsTracer analyticsTracer = new ProcessAnalyticsTracer(category, name, onCloseConsumer, () => RemoveCurrentAndGetParentTracer(), _loggerFactory);
             Push(analyticsTracer);
             return analyticsTracer;
         }
 
-        public void BeginTrace(string category, string name, Action<IProcessAnalyticsTracer> action, Action<AProcess> onCloseConsumer)
+        public void BeginTrace(string category, string name, Action<IProcessAnalyticsTracer> action, Action<IAProcess> onCloseConsumer)
         {
             ProcessAnalyticsTracer analyticsTracer = CreateTracer(category, name, onCloseConsumer);
             action.Invoke(analyticsTracer);
         }
 
-        public void EndTraceSuccess(Action<IProcessAnalyticsTracer> action, Action<AProcess> onCloseConsumer)
+        public void EndTraceSuccess(Action<IProcessAnalyticsTracer> action, Action<IAProcess> onCloseConsumer)
         {
             using (ProcessAnalyticsTracer analyticsTracer = DoGetCurrentTracer())
             {
@@ -110,7 +113,7 @@ namespace KinetixCore.Monitoring
             }
         }
 
-        public void EndTraceFailure(Exception e, Action<IProcessAnalyticsTracer> action, Action<AProcess> onCloseConsumer)
+        public void EndTraceFailure(Exception e, Action<IProcessAnalyticsTracer> action, Action<IAProcess> onCloseConsumer)
         {
             using (ProcessAnalyticsTracer analyticsTracer = DoGetCurrentTracer())
             {

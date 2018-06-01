@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
+using Kinetix.Monitoring.Abstractions;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Contract;
 using Kinetix.Search.Model;
-using KinetixCore.Monitoring;
 
 namespace Kinetix.Search
 {
@@ -39,7 +39,8 @@ namespace Kinetix.Search
         public TDocument Get(string id)
         {
             TDocument ret = default(TDocument);
-            _analyticsManager.Trace(CATEGORY, "/Get/" + _store.IndexName, tracer => {
+            _analyticsManager.Trace(CATEGORY, "/Get/" + _store.IndexName, tracer =>
+            {
                 ret = _store.Get(id);
             });
             return ret;
@@ -48,7 +49,8 @@ namespace Kinetix.Search
         /// <inheritdoc cref="ISearchBroker{TDocument}.Put" />
         public void Put(TDocument document)
         {
-            _analyticsManager.Trace(CATEGORY, "/Put/" + _store.IndexName, tracer => {
+            _analyticsManager.Trace(CATEGORY, "/Put/" + _store.IndexName, tracer =>
+            {
                 _store.Put(document);
             });
         }
@@ -56,7 +58,8 @@ namespace Kinetix.Search
         /// <inheritdoc cref="ISearchBroker{TDocument}.PutAll" />
         public void PutAll(IEnumerable<TDocument> documentList)
         {
-            _analyticsManager.Trace(CATEGORY, "/PutAll/" + _store.IndexName, tracer => {
+            _analyticsManager.Trace(CATEGORY, "/PutAll/" + _store.IndexName, tracer =>
+            {
                 _store.PutAll(documentList);
             });
         }
@@ -64,20 +67,22 @@ namespace Kinetix.Search
         /// <inheritdoc cref="ISearchBroker{TDocument}.Remove" />
         public void Remove(string id)
         {
-            _analyticsManager.Trace(CATEGORY, "/Remove/" + _store.IndexName, tracer => {
+            _analyticsManager.Trace(CATEGORY, "/Remove/" + _store.IndexName, tracer =>
+            {
                 _store.Remove(id);
             });
 
-            
+
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.Flush" />
         public void Flush()
         {
-            _analyticsManager.Trace(CATEGORY, "/Flush/" + _store.IndexName, tracer => {
+            _analyticsManager.Trace(CATEGORY, "/Flush/" + _store.IndexName, tracer =>
+            {
                 _store.Flush();
             });
-            
+
         }
 
         /// <inheritdoc cref="ISearchBroker{TDocument}.Query" />
@@ -114,7 +119,8 @@ namespace Kinetix.Search
         /// <inheritdoc cref="ISearchBroker{TDocument}.AdvancedQuery" />
         public QueryOutput<TDocument> AdvancedQuery(AdvancedQueryInput input)
         {
-            QueryOutput<TDocument> results = _analyticsManager.TraceWithReturn(CATEGORY, "/AdvancedQuery/" + _store.IndexName, tracer => {
+            QueryOutput<TDocument> results = _analyticsManager.TraceWithReturn(CATEGORY, "/AdvancedQuery/" + _store.IndexName, tracer =>
+            {
                 return _store.AdvancedQuery(input);
             });
 
@@ -125,7 +131,8 @@ namespace Kinetix.Search
         public long AdvancedCount(AdvancedQueryInput input)
         {
 
-            long count = _analyticsManager.TraceWithReturn(CATEGORY, "/AdvancedCount/" + _store.IndexName, tracer => {
+            long count = _analyticsManager.TraceWithReturn(CATEGORY, "/AdvancedCount/" + _store.IndexName, tracer =>
+            {
                 return _store.AdvancedCount(input);
             });
 

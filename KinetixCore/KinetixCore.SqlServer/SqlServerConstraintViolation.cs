@@ -1,4 +1,4 @@
-﻿namespace Kinetix.Database
+﻿namespace KinetixCore.SqlServer
 {
     /// <summary>
     /// Violation de contraintes.

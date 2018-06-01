@@ -1,13 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DiagnosticAdapter;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using Kinetix.Monitoring.Abstractions;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.DiagnosticAdapter;
 using Newtonsoft.Json;
-using System.Data.Common;
 
 namespace KinetixCore.Monitoring
 {
@@ -48,7 +49,7 @@ namespace KinetixCore.Monitoring
                     }
                     // We take only the first 8 bytes and we convert it to hexadecimal
                     StringBuilder sbHashId = new StringBuilder();
-                    for (int i=0; i<8; i++)
+                    for (int i = 0; i < 8; i++)
                     {
                         sbHashId.Append(hash[i].ToString("X2"));
                     }
@@ -60,10 +61,11 @@ namespace KinetixCore.Monitoring
                         dic[param.ParameterName] = param.Value.ToString();
                     }
 
-                    Action<IProcessAnalyticsTracer> action = (tracer) => {
+                    void action(IProcessAnalyticsTracer tracer)
+                    {
                         tracer.AddTag("sql_request", commandData.Command.CommandText);
                         tracer.AddTag("sql_params", JsonConvert.SerializeObject(dic));
-                    };
+                    }
 
                     _analyticsManager.BeginTrace("sql", commandData.ExecuteMethod.ToString() + async + "/" + sbHashId.ToString(), action);
                 }
@@ -84,7 +86,7 @@ namespace KinetixCore.Monitoring
                         {
                             // RelationalDataReader
                             RelationalDataReader rdr = (RelationalDataReader)commandExecutedData.Result;
-                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure(MODIFIED_ROW, (int) rdr.DbDataReader.RecordsAffected));
+                            _analyticsManager.EndTraceSuccess((tracer) => tracer.SetMeasure(MODIFIED_ROW, (int)rdr.DbDataReader.RecordsAffected));
                         }
                         else
                         {
@@ -106,14 +108,14 @@ namespace KinetixCore.Monitoring
         [DiagnosticName("Microsoft.EntityFrameworkCore.Database.Command.CommandExecuted")]
         public void OnCommandExecuted(object result, bool async)
         {
-            ProcessAnalyticsTracer tracer = _analyticsManager.GetCurrentTracer();
+            var tracer = _analyticsManager.GetCurrentTracer();
 
             if (async == false)
             {
                 if (result.GetType() == typeof(int))
                 {
                     // ExecuteNonQuery
-                    tracer.SetMeasure(MODIFIED_ROW, (int) result);
+                    tracer.SetMeasure(MODIFIED_ROW, (int)result);
                 }
                 else if (result.GetType() == typeof(RelationalDataReader))
                 {
@@ -121,13 +123,14 @@ namespace KinetixCore.Monitoring
                     RelationalDataReader rdr = (RelationalDataReader)result;
 
                     tracer.SetMeasure(MODIFIED_ROW, rdr.DbDataReader.RecordsAffected);
-                } else
+                }
+                else
                 {
                     // ExecuteScalar
                     tracer.SetMeasure(MODIFIED_ROW, 1);
                 }
             }
-            
+
         }
 
         public void OnCompleted()

@@ -1,4 +1,9 @@
-﻿using Kinetix.Monitoring.Appender;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Reflection;
+using Kinetix.Monitoring.Abstractions;
+using Kinetix.Monitoring.Appender;
 using KinetixCore.Monitoring.Config;
 using log4net;
 using log4net.Layout;
@@ -8,10 +13,6 @@ using Microsoft.Extensions.Logging.Log4Net;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Reflection;
 
 namespace KinetixCore.Monitoring
 {
@@ -19,7 +20,7 @@ namespace KinetixCore.Monitoring
     {
         // DefaultPort of SocketAppender 4650 for log4j and 4562 for log4j2
         // 4564 for log4net
-        private static int DEFAULT_SERVER_PORT = 4564; 
+        private static int DEFAULT_SERVER_PORT = 4564;
 
         private Microsoft.Extensions.Logging.ILoggerFactory _loggerFactory;
 
@@ -27,12 +28,12 @@ namespace KinetixCore.Monitoring
         //private ILogger socketHealthLogger;
         //private ILogger socketMetricLogger;
         private string hostName;
-	    private int port;
+        private int port;
 
         private string appName;
-	    private string localHostName;
+        private string localHostName;
 
-	    internal ConcurrentQueue<AProcess> ProcessQueue { get; } = new ConcurrentQueue<AProcess>();
+        internal ConcurrentQueue<AProcess> ProcessQueue { get; } = new ConcurrentQueue<AProcess>();
 
 
         public SocketLoggerAnalyticsConnectorPlugin(Microsoft.Extensions.Logging.ILoggerFactory loggerFactory,
@@ -48,11 +49,11 @@ namespace KinetixCore.Monitoring
         }
 
 
-        public void Add(AProcess process)
+        public void Add(IAProcess process)
         {
             Debug.Assert(process != null);
             //---
-            ProcessQueue.Enqueue(process);
+            ProcessQueue.Enqueue((AProcess)process);
         }
 
 
@@ -65,8 +66,8 @@ namespace KinetixCore.Monitoring
         {
 
             ILog log = LogManager.GetLogger(Assembly.GetExecutingAssembly(), loggerName);
-            
-            Hierarchy hierarchy = (Hierarchy) LogManager.GetRepository(Assembly.GetExecutingAssembly());
+
+            Hierarchy hierarchy = (Hierarchy)LogManager.GetRepository(Assembly.GetExecutingAssembly());
 
             PatternLayout patternLayout = new PatternLayout();
             patternLayout.ConversionPattern = PatternLayout.DefaultConversionPattern;
@@ -84,7 +85,7 @@ namespace KinetixCore.Monitoring
             appender.Layout = patternLayout;
             appender.ActivateOptions();
 
-            Logger logger = (Logger) log.Logger;
+            Logger logger = (Logger)log.Logger;
             logger.AddAppender(appender);
             logger.Level = log4net.Core.Level.Info;
 

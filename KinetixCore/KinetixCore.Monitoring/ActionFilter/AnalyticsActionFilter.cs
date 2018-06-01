@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Kinetix.Monitoring.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
-using System.Threading.Tasks;
 
 namespace KinetixCore.Monitoring
 {

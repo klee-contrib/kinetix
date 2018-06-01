@@ -1,17 +1,15 @@
-﻿using KinetixCore.Monitoring.Analytics;
+﻿using System;
+using System.Diagnostics;
+using Kinetix.Monitoring.Abstractions;
+using KinetixCore.Monitoring.Analytics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection;
 
 namespace KinetixCore.Monitoring
 {
-    public static class MonitoringExtensions 
+    public static class MonitoringExtensions
     {
 
         /// <summary>
@@ -85,5 +83,5 @@ namespace KinetixCore.Monitoring
         }
 
     }
-    
+
 }

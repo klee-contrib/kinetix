@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using Kinetix.Monitoring.Abstractions;
 
 namespace KinetixCore.Monitoring
 {
     public class AnalyticsManager : IAnalyticsManager
     {
         private IProcessAnalytics _processAnalytics;
-        private IEnumerable<IAnalyticsConnectorPlugin> _processConnectorPlugins;
+        private readonly IEnumerable<IAnalyticsConnectorPlugin> _processConnectorPlugins;
 
         private bool _enabled;
 
@@ -29,7 +29,6 @@ namespace KinetixCore.Monitoring
             return _processAnalytics.TraceWithReturn(category, name, action, OnClose);
         }
 
-
         public void BeginTrace(string category, string name, Action<IProcessAnalyticsTracer> action)
         {
             _processAnalytics.BeginTrace(category, name, action, OnClose);
@@ -45,7 +44,7 @@ namespace KinetixCore.Monitoring
             _processAnalytics.EndTraceFailure(e, action, OnClose);
         }
 
-        public ProcessAnalyticsTracer GetCurrentTracer()
+        public IProcessAnalyticsTracer GetCurrentTracer()
         {
             if (!_enabled)
             {
@@ -54,11 +53,11 @@ namespace KinetixCore.Monitoring
             return _processAnalytics.GetCurrentTracer();
         }
 
-        private void OnClose(AProcess process)
+        private void OnClose(IAProcess process)
         {
             Debug.Assert(process != null);
             //---
-            foreach(IAnalyticsConnectorPlugin plugin in _processConnectorPlugins)
+            foreach (var plugin in _processConnectorPlugins)
             {
                 plugin.Add(process);
             }

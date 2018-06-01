@@ -1,20 +1,13 @@
 using Kinetix.Test;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Log4Net;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using KinetixCore.Monitoring;
-using System.Threading;
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore;
-using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace KinetixCore.Monitoring.Test
 {
     [TestClass]
     public class UnitTest1 : DIBaseTest
     {
-
         public override void Register()
         {
             base.Register();

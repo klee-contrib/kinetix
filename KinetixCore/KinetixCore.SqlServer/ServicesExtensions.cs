@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Kinetix.Database
+namespace KinetixCore.SqlServer
 {
     /// <summary>
     /// Méthodes d'extensions.

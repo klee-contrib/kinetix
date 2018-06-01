@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Kinetix.Database
+namespace KinetixCore.SqlServer
 {
     /// <summary>
     /// Manager pour la gestion des appels base de données.
@@ -17,7 +17,6 @@ namespace Kinetix.Database
     {
         private const string SqlServerTransactionalContext = "SqlServerTransactionalContext";
 
-        private readonly TransactionalContext _context;
         private readonly IConfiguration _configuration;
         private readonly Dictionary<string, string> _connectionSettings = new Dictionary<string, string>();
         private readonly List<ResourceManager> _constraintMessagesResources = new List<ResourceManager>();
@@ -33,7 +32,7 @@ namespace Kinetix.Database
         public SqlServerManager(ILogger<SqlServerManager> logger, TransactionalContext context, IConfiguration configuration, IHttpContextAccessor httpContext = null)
         {
             _logger = logger;
-            _context = context;
+            CurrentTransactionalContext = context;
             _configuration = configuration;
             _httpContext = httpContext;
         }
@@ -42,7 +41,7 @@ namespace Kinetix.Database
         /// Retourne le context transactionnel courant.
         /// </summary>
         /// <returns>Context transactionnel.</returns>
-        public TransactionalContext CurrentTransactionalContext => _context;
+        public TransactionalContext CurrentTransactionalContext { get; }
 
         /// <summary>
         /// Manager de resources.
@@ -120,12 +119,12 @@ namespace Kinetix.Database
                 throw new NotSupportedException("Pas de context transactionnel !");
             }
 
-            var connection = _context.GetConnection(connectionName);
+            var connection = CurrentTransactionalContext.GetConnection(connectionName);
 
             if (connection == null)
             {
                 connection = new SqlServerConnection(_configuration.GetConnectionString(connectionName), connectionName);
-                _context.RegisterConnection(connection);
+                CurrentTransactionalContext.RegisterConnection(connection);
                 connection.Open();
             }
 

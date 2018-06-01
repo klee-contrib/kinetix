@@ -1,10 +1,12 @@
-﻿using KinetixCore.Monitoring.Impl.Analytics;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using Kinetix.Monitoring.Abstractions;
+using KinetixCore.Monitoring.Impl.Analytics;
 
 namespace KinetixCore.Monitoring
 {
-    public class AProcess
+    public class AProcess : IAProcess
     {
         public string Category { get; }
         public string Name { get; }
@@ -12,7 +14,7 @@ namespace KinetixCore.Monitoring
         public long End { get; }
         public IDictionary<string, double> Measures { get; }
         public IDictionary<string, string> Tags { get; }
-        public IList<AProcess> SubProcesses { get; }
+        public IList<IAProcess> SubProcesses { get; }
 
         /// <summary>
         /// Process to hold monitoring data
@@ -32,7 +34,7 @@ namespace KinetixCore.Monitoring
             this.End = DateTimeUtil.ConvertDateTimeToEpoch(end);
             this.Measures = measures;
             this.Tags = tags;
-            this.SubProcesses = subProcesses;
+            this.SubProcesses = subProcesses.Cast<IAProcess>().ToList();
         }
 
 
@@ -40,6 +42,6 @@ namespace KinetixCore.Monitoring
 
 
         public long DurationMillis() => End - Start;
-        
+
     }
 }

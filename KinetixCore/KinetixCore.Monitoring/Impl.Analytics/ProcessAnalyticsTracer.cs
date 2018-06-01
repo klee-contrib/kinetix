@@ -1,27 +1,29 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Text;
+using Kinetix.Monitoring.Abstractions;
+using Microsoft.Extensions.Logging;
 
 namespace KinetixCore.Monitoring
 {
     public class ProcessAnalyticsTracer : IProcessAnalyticsTracer, IDisposable
     {
         private ILogger _logger;
-	    private Boolean? _succeeded; //default no info
+        private Boolean? _succeeded; //default no info
         private Exception _causeException; //default no info
-        private Action<AProcess> _consumer;
-        
+        private Action<IAProcess> _consumer;
+
         private Func<ProcessAnalyticsTracer> parentOptSupplier;
         private AProcessBuilder processBuilder;
 
-        public ProcessAnalyticsTracer(string category, string name, Action<AProcess> consumer, Func<ProcessAnalyticsTracer> parentOptSupplier, ILoggerFactory loggerFactory) {
+        public ProcessAnalyticsTracer(string category, string name, Action<IAProcess> consumer, Func<ProcessAnalyticsTracer> parentOptSupplier, ILoggerFactory loggerFactory)
+        {
             Debug.Assert(!String.IsNullOrEmpty(category));
             Debug.Assert(!String.IsNullOrEmpty(name));
             Debug.Assert(consumer != null);
             //---
             _logger = loggerFactory.CreateLogger(category);
-            
+
             this._consumer = consumer;
             this.parentOptSupplier = parentOptSupplier;
 
@@ -84,7 +86,7 @@ namespace KinetixCore.Monitoring
                 StringBuilder sb = new StringBuilder()
                         .Append("Finish ")
                         .Append(process.Name)
-                        .Append(_succeeded.HasValue? (_succeeded.Value ? " successfully" : " with error") : "with internal error")
+                        .Append(_succeeded.HasValue ? (_succeeded.Value ? " successfully" : " with error") : "with internal error")
                         .Append(" in ( ")
                         .Append(process.DurationMillis())
                         .Append(" ms)");

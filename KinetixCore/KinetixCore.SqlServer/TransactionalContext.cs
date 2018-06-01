@@ -2,7 +2,7 @@
 using System.Data.Common;
 using System.Transactions;
 
-namespace Kinetix.Database
+namespace KinetixCore.SqlServer
 {
     /// <summary>
     /// Context transactionnel pour un processus.

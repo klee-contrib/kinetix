@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Kinetix.Monitoring.Abstractions;
 using Kinetix.Search.Contract;
 using Microsoft.Extensions.DependencyInjection;
-using KinetixCore.Monitoring;
 
 namespace Kinetix.Search
 {

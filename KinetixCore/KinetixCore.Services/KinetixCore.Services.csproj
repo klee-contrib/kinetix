@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -10,19 +10,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.2.2" />
-    <PackageReference Include="Autofac.Extras.DynamicProxy" Version="4.4.0" />
-    <PackageReference Include="KinetixCore.Monitoring" Version="0.0.5" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.0.1" />
-    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="2.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.0" />
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.1" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\KinetixCore.Caching\KinetixCore.Caching.csproj" />
     <ProjectReference Include="..\KinetixCore.ComponentModel\KinetixCore.ComponentModel.csproj" />
-    <ProjectReference Include="..\KinetixCore.Database\KinetixCore.Database.csproj" />
   </ItemGroup>
-
 
 </Project>

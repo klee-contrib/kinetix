@@ -1,18 +1,17 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Kinetix.Database
+namespace KinetixCore.SqlServer
 {
     /// <summary>
-    /// Exception générée par les appels base de données.
+    /// Exception générée par un timeout de la base de données.
     /// </summary>
-    [Serializable]
-    public class SqlServerException : Exception
+    public class SqlServerTimeoutException : Exception
     {
         /// <summary>
         /// Crée un nouvelle exception.
         /// </summary>
-        public SqlServerException()
+        public SqlServerTimeoutException()
         {
         }
 
@@ -20,7 +19,7 @@ namespace Kinetix.Database
         /// Crée une nouvelle exception.
         /// </summary>
         /// <param name="message">Description de l'exception.</param>
-        public SqlServerException(string message)
+        public SqlServerTimeoutException(string message)
             : base(message)
         {
         }
@@ -30,7 +29,7 @@ namespace Kinetix.Database
         /// </summary>
         /// <param name="message">Description de l'exception.</param>
         /// <param name="innerException">Exception source.</param>
-        public SqlServerException(string message, Exception innerException)
+        public SqlServerTimeoutException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
@@ -40,7 +39,7 @@ namespace Kinetix.Database
         /// </summary>
         /// <param name="info">Information de sérialisation.</param>
         /// <param name="context">Contexte de sérialisation.</param>
-        protected SqlServerException(SerializationInfo info, StreamingContext context)
+        protected SqlServerTimeoutException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }

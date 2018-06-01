@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Kinetix.Monitoring.Abstractions;
+using Microsoft.AspNetCore.Http;
 
 namespace KinetixCore.Monitoring
 {
-    public class AnalyticsMiddleware 
+    public class AnalyticsMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly IAnalyticsManager _analyticsManager;
@@ -18,7 +19,8 @@ namespace KinetixCore.Monitoring
         {
             string name = "/" + context.Request.Method + "/" + context.Request.Path;
             Task ret = null;
-            _analyticsManager.Trace("urls", name, tracer => {
+            _analyticsManager.Trace("urls", name, tracer =>
+            {
                 ret = this._next(context);
             });
             return ret;

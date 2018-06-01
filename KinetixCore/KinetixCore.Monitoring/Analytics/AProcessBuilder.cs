@@ -7,8 +7,8 @@ namespace KinetixCore.Monitoring
     /// <summary>
     /// Process to hold monitoring data.
     /// </summary>
-    public class AProcessBuilder {
-
+    public class AProcessBuilder
+    {
         private string myCategory;
         private DateTime start;
         private string myName;
@@ -22,7 +22,8 @@ namespace KinetixCore.Monitoring
         /// </summary>
         /// <param name="category"></param>
         /// <param name="name"></param>
-        internal AProcessBuilder(string category, string name) {
+        internal AProcessBuilder(string category, string name)
+        {
             myCategory = category;
             myName = name;
 
@@ -32,7 +33,8 @@ namespace KinetixCore.Monitoring
             start = DateTime.Now;
         }
 
-        public AProcessBuilder IncMeasure(string measureName, double measureValue) {
+        public AProcessBuilder IncMeasure(string measureName, double measureValue)
+        {
             Debug.Assert(measureName != null, "Measure name is required");
             //---------------------------------------------------------------------
             double? lastmValue = measures[measureName];
@@ -65,7 +67,8 @@ namespace KinetixCore.Monitoring
             return this;
         }
 
-        public AProcess Build() {
+        public AProcess Build()
+        {
             DateTime end = DateTime.Now;
             return new AProcess(
                     myCategory,

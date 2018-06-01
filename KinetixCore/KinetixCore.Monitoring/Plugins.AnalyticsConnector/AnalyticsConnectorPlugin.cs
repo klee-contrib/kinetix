@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Kinetix.Monitoring.Abstractions;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace KinetixCore.Monitoring
@@ -10,10 +11,9 @@ namespace KinetixCore.Monitoring
         public LoggerAnalyticsConnectorPlugin(ILoggerFactory iLoggerFactory)
         {
             _iLoggerFactory = iLoggerFactory;
-            
         }
 
-        public void Add(AProcess process)
+        public void Add(IAProcess process)
         {
             ILogger logger = _iLoggerFactory.CreateLogger(process.Category);
             if (logger.IsEnabled(LogLevel.Information))
