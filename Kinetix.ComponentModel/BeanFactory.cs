@@ -137,7 +137,6 @@ namespace Kinetix.ComponentModel
     public class BeanFactory<T> : IBeanFactory
         where T : new()
     {
-
         private static readonly Type[] EmptyConstructorArgs = new Type[0];
 
         private readonly BeanPropertyDescriptorCollection _properties;

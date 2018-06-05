@@ -9,6 +9,8 @@ namespace Kinetix.Search.Elastic
 {
     public class ElasticConfigBuilder
     {
+        internal const string ServerName = "Elastic6";
+
         private readonly IServiceCollection _services;
 
         internal ElasticConfigBuilder(IServiceCollection services)
@@ -19,8 +21,6 @@ namespace Kinetix.Search.Elastic
             AddMapping<IntMapping>();
             AddMapping<StringMapping>();
         }
-
-        internal string DefaultDataSourceName { get; set; }
 
         internal ICollection<Type> DocumentTypes { get; } = new List<Type>();
 
@@ -42,12 +42,6 @@ namespace Kinetix.Search.Elastic
             where T : JsonConverter, new()
         {
             JsonConverters.Add(new T());
-            return this;
-        }
-
-        public ElasticConfigBuilder UseDefaultDataSource(string name)
-        {
-            DefaultDataSourceName = name;
             return this;
         }
 

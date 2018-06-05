@@ -62,18 +62,18 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         private readonly DocumentDefinition _definition;
 
-        private readonly ElasticManager _elasticManager;
+        private readonly ElasticClient _client;
 
         /// <summary>
         /// Nom du type du document.
         /// </summary>
         private readonly string _documentTypeName;
 
-        public ElasticStore(ILogger<ElasticStore<TDocument>> logger, DocumentDescriptor documentDescriptor, ElasticManager elasticManager, ElasticMappingFactory factory)
+        public ElasticStore(ILogger<ElasticStore<TDocument>> logger, DocumentDescriptor documentDescriptor, ElasticClient client, ElasticMappingFactory factory)
         {
             _definition = documentDescriptor.GetDefinition(typeof(TDocument));
             _documentTypeName = _definition.DocumentTypeName;
-            _elasticManager = elasticManager;
+            _client = client;
             _factory = factory;
             _logger = logger;
             _standardHandler = new StandardFacetHandler<TDocument>(_definition);
@@ -85,7 +85,7 @@ namespace Kinetix.Search.Elastic
         {
             _logger.LogInformation("Create Document type : " + _documentTypeName);
             _logger.LogQuery("Map", () =>
-                GetClient().Map<TDocument>(x => x
+                _client.Map<TDocument>(x => x
                      .Type(_documentTypeName)
                      .Properties(selector =>
                      {
@@ -100,14 +100,14 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore{TDocument}.Get" />
         public TDocument Get(string id)
         {
-            return _logger.LogQuery("Get", () => GetClient().Get(CreateDocumentPath(id))).Source;
+            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath(id))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Put" />
         public void Put(TDocument document)
         {
             _logger.LogQuery("Index", () =>
-                GetClient().Index(FormatSortFields(document), x => x
+                _client.Index(FormatSortFields(document), x => x
                     .Type(_documentTypeName)
                     .Id(_definition.PrimaryKey.GetValue(document).ToString())));
         }
@@ -139,7 +139,7 @@ namespace Kinetix.Search.Elastic
                     .Take(ClusterSize);
 
                 /* Indexation en masse du cluster. */
-                _logger.LogQuery("Bulk", () => GetClient().Bulk(x =>
+                _logger.LogQuery("Bulk", () => _client.Bulk(x =>
                 {
                     foreach (var document in cluster)
                     {
@@ -157,14 +157,14 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore{TDocument}.Remove" />
         public void Remove(string id)
         {
-            _logger.LogQuery("Delete", () => GetClient().Delete(CreateDocumentPath(id)));
+            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(id)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Flush" />
         public void Flush()
         {
             /* SEY : Non testé. */
-            _logger.LogQuery("DeleteAll", () => GetClient().DeleteByQuery<TDocument>(x => x.Type(_documentTypeName)));
+            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(x => x.Type(_documentTypeName)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery" />
@@ -199,7 +199,7 @@ namespace Kinetix.Search.Elastic
             var skip = apiInput.Skip ?? 0;
             var size = hasGroup ? 0 : apiInput.Top ?? 1000; // TODO Paramétrable ?
 
-            var res = _logger.LogQuery("AdvancedQuery", () => GetClient()
+            var res = _logger.LogQuery("AdvancedQuery", () => _client
                 .Search<TDocument>(s =>
                 {
                     s
@@ -379,7 +379,7 @@ namespace Kinetix.Search.Elastic
             var filterQuery = _builder.BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
             var hasFilter = !string.IsNullOrEmpty(filterQuery);
 
-            return _logger.LogQuery("AdvancedCount", () => GetClient()
+            return _logger.LogQuery("AdvancedCount", () => _client
                 .Count<TDocument>(s =>
                 {
                     /* Index / type document. */
@@ -399,7 +399,7 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore{TDocument}.Search" />
         public ISearchResponse<TDocument> Search(Func<SearchDescriptor<TDocument>, ISearchRequest> selector)
         {
-            return _logger.LogQuery("Search", () => GetClient().Search((SearchDescriptor<TDocument> s) => selector(s.Type(_documentTypeName))));
+            return _logger.LogQuery("Search", () => _client.Search((SearchDescriptor<TDocument> s) => selector(s.Type(_documentTypeName))));
         }
 
         /// <summary>
@@ -666,15 +666,6 @@ namespace Kinetix.Search.Elastic
             }
 
             return _definition.Fields[fieldName].FieldName;
-        }
-
-        /// <summary>
-        /// Obtient le client ElastcSearch.
-        /// </summary>
-        /// <returns>Client Elastic.</returns>
-        private ElasticClient GetClient()
-        {
-            return _elasticManager.ObtainClient(_dataSourceName);
         }
 
         /// <summary>
