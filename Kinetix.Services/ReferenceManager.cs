@@ -18,8 +18,8 @@ namespace Kinetix.Services
     /// </summary>
     public class ReferenceManager : IReferenceManager
     {
-        private const string ReferenceLists = "ReferenceLists";
-        private const string StaticLists = "StaticLists";
+        private const string ReferenceListsCache = "ReferenceLists";
+        private const string StaticListsCache = "StaticLists";
 
         private readonly BeanDescriptor _beanDescriptor;
         private readonly IMemoryCache _cache;
@@ -48,32 +48,45 @@ namespace Kinetix.Services
         }
 
         /// <inheritdoc />
-        public IEnumerable<Type> ReferenceTypes => _referenceAccessors.Values.Select(accessor => accessor.ReferenceType).Distinct();
+        public IEnumerable<string> ReferenceLists => _referenceAccessors.Values.Select(accessor => accessor.Name).OrderBy(x => x);
 
         /// <inheritdoc cref="IReferenceManager.FlushCache" />
-        public void FlushCache(Type type = null, string referenceName = null)
+        public void FlushCache(string referenceName = null)
         {
-            if (type == null)
+            if (referenceName == null)
             {
-                _cache.Remove(StaticLists);
-                _cache.Remove(ReferenceLists);
+                _cache.Remove(StaticListsCache);
+                _cache.Remove(ReferenceListsCache);
             }
             else
             {
-                GetCacheByType(type).Remove(referenceName ?? type.FullName);
+                GetCacheByType(GetTypeFromName(referenceName)).Remove(referenceName);
             }
         }
 
         /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
-        public ICollection<object> GetReferenceList(Type type, string referenceName = null)
+        public ICollection<object> GetReferenceList(Type type)
         {
-            return GetReferenceEntry(type, referenceName).List;
+            return GetReferenceEntry(type.Name).List;
+        }
+
+        /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
+        public ICollection<object> GetReferenceList(string referenceName)
+        {
+            return GetReferenceEntry(referenceName).List;
         }
 
         /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
         public ICollection<T> GetReferenceList<T>(string referenceName = null)
         {
-            return GetReferenceList(typeof(T), referenceName).Cast<T>().ToList();
+            if (referenceName == null)
+            {
+                return GetReferenceList(typeof(T)).Cast<T>().ToList();
+            }
+            else
+            {
+                return GetReferenceList(referenceName).Cast<T>().ToList();
+            }
         }
 
         /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(Func{T, bool}, string)" />
@@ -108,13 +121,13 @@ namespace Kinetix.Services
         /// <inheritdoc cref="IReferenceManager.GetReferenceObject(object)" />
         public T GetReferenceObject<T>(object primaryKey)
         {
-            return GetReferenceEntry(typeof(T)).GetReferenceObject<T>(primaryKey);
+            return GetReferenceEntry(typeof(T).Name).GetReferenceObject<T>(primaryKey);
         }
 
         /// <inheritdoc cref="IReferenceManager.GetReferenceObject(Func{T, bool}, string)" />
-        public T GetReferenceObject<T>(Func<T, bool> predicate, string referenceName = null)
+        public T GetReferenceObject<T>(Func<T, bool> predicate)
         {
-            return GetReferenceEntry(typeof(T), referenceName).GetReferenceObject(predicate);
+            return GetReferenceEntry(typeof(T).Name).GetReferenceObject(predicate);
         }
 
         public string GetReferenceValue<T>(object primaryKey, Expression<Func<T, object>> propertySelector = null)
@@ -122,9 +135,9 @@ namespace Kinetix.Services
             return GetReferenceValue(GetReferenceObject<T>(primaryKey), propertySelector);
         }
 
-        public string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null, string referenceName = null)
+        public string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null)
         {
-            return GetReferenceValue(GetReferenceObject(predicate, referenceName), propertySelector);
+            return GetReferenceValue(GetReferenceObject(predicate), propertySelector);
         }
 
         public string GetReferenceValue<T>(T reference, Expression<Func<T, object>> propertySelector = null)
@@ -170,16 +183,14 @@ namespace Kinetix.Services
                         ContractType = contractType,
                         Method = method,
                         ReferenceType = returnType.GetGenericArguments()[0],
-                        Name = attribute.Name
+                        Name = attribute.Name ?? returnType.GetGenericArguments()[0].Name
                     };
-
-                    var name = accessor.Name ?? accessor.ReferenceType.FullName;
-                    if (_referenceAccessors.ContainsKey(name))
+                    if (_referenceAccessors.ContainsKey(accessor.Name))
                     {
                         throw new NotSupportedException();
                     }
 
-                    _referenceAccessors.Add(name, accessor);
+                    _referenceAccessors.Add(accessor.Name, accessor);
                 }
             }
         }
@@ -197,7 +208,7 @@ namespace Kinetix.Services
                 throw new NotSupportedException($"Le type {type} n'est pas une liste de référence.");
             }
 
-            return _cache.GetOrCreate(attr.IsStatic ? StaticLists : ReferenceLists, cacheEntry =>
+            return _cache.GetOrCreate(attr.IsStatic ? StaticListsCache : ReferenceListsCache, cacheEntry =>
             {
                 cacheEntry.AbsoluteExpirationRelativeToNow = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
                 return new ReferenceCache();
@@ -207,49 +218,51 @@ namespace Kinetix.Services
         /// <summary>
         /// Récupère l'entrée du cache associé à la référence demandée.
         /// </summary>
-        /// <param name="type">Type de référence.</param>
-        /// <param name="referenceName">Nom de la liste (si défini).</param>
+        /// <param name="referenceName">Nom de la liste.</param>
         /// <returns>L'entrée de cache.</returns>
-        private ReferenceEntry GetReferenceEntry(Type type, string referenceName = null)
+        private ReferenceEntry GetReferenceEntry(string referenceName)
         {
-            var refName = referenceName ?? type.FullName;
+            var type = GetTypeFromName(referenceName);
             var cache = GetCacheByType(type);
 
-            if (!cache.TryGetValue(refName, out var entry))
+            if (!cache.TryGetValue(referenceName, out var entry))
             {
-                entry = BuildReferenceEntry(type);
-                cache.Add(refName, entry);
+                entry = BuildReferenceEntry(referenceName);
+                cache.Add(referenceName, entry);
             }
 
             return entry;
         }
 
+        private Type GetTypeFromName(string referenceName)
+        {
+            return _referenceAccessors.Values.Single(r => r.Name == referenceName).ReferenceType;
+        }
+
         /// <summary>
         /// Construit l'entrée du cache associé à la référence demandée.
         /// </summary>
-        /// <param name="type">Type de référence.</param>
-        /// <param name="referenceName">Nom de la liste (si défini).</param>
+        /// <param name="referenceName">Nom de la liste.</param>
         /// <returns>L'entrée de cache.</returns>
-        private ReferenceEntry BuildReferenceEntry(Type type, string referenceName = null)
+        private ReferenceEntry BuildReferenceEntry(string referenceName)
         {
-            var referenceList = InvokeReferenceAccessor(type, referenceName);
-            return new ReferenceEntry(referenceList, _beanDescriptor.GetDefinition(type));
+            var referenceList = InvokeReferenceAccessor(referenceName);
+            return new ReferenceEntry(referenceList, _beanDescriptor.GetDefinition(GetTypeFromName(referenceName)));
         }
 
         /// <summary>
         /// Récupère la liste de référence associée à la référence demandée, via son accesseur.
         /// </summary>
-        /// <param name="type">Type de référence.</param>
-        /// <param name="referenceName">Nom de la liste (si défini).</param>
+        /// <param name="referenceName">Nom de la liste.</param>
         /// <returns>La liste de référence.</returns>
-        private ICollection<object> InvokeReferenceAccessor(Type type, string referenceName = null)
+        private ICollection<object> InvokeReferenceAccessor(string referenceName)
         {
-            if (!_referenceAccessors.ContainsKey(type.FullName))
+            if (!_referenceAccessors.ContainsKey(referenceName))
             {
-                throw new ArgumentException("Pas d'accesseur disponible pour le type " + type.Name);
+                throw new ArgumentException($"Pas d'accesseur disponible pour la liste {referenceName}");
             }
 
-            var accessor = _referenceAccessors[referenceName ?? type.FullName];
+            var accessor = _referenceAccessors[referenceName];
 
             var service = _provider.GetService(accessor.ContractType);
             var list = accessor.Method.Invoke(service, null);

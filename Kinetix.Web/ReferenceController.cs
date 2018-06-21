@@ -23,32 +23,29 @@ namespace Kinetix.Web
         }
 
         /// <summary>
-        /// Retourne la liste des types de références.
+        /// Retourne la liste des listes de références.
         /// </summary>
         /// <returns>La liste.</returns>
         [HttpGet("api/references")]
-        public IEnumerable<string> GetReferenceTypes()
+        public IEnumerable<string> GetReferenceLists()
         {
-            return _referenceManager.ReferenceTypes.Select(type => type.Name);
+            return _referenceManager.ReferenceLists;
         }
 
         /// <summary>
         /// Charge une liste de référénce.
         /// </summary>
-        /// <param name="type">Le nom de classe de la référence.</param>
         /// <param name="name">Le nom de la liste de reference</param>
         /// <returns>Liste de référence chargée.</returns>
-        [HttpGet("api/references/{type}")]
-        public ICollection<object> GetReferenceList(string type, string name = null)
+        [HttpGet("api/references/{name}")]
+        public ICollection<object> GetReferenceList(string name)
         {
-            var t = _referenceManager.ReferenceTypes.SingleOrDefault(refType => refType.Name == type);
-
-            if (t == null)
+            if (_referenceManager.ReferenceLists.SingleOrDefault(refName => refName == name) == null)
             {
-                throw new ArgumentException($"Le type {type} n'est pas un type de référence");
+                throw new ArgumentException($"La liste de référence {name} n'existe pas.");
             }
 
-            return _referenceManager.GetReferenceList(t, name);
+            return _referenceManager.GetReferenceList(name);
         }
     }
 }

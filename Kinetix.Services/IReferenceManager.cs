@@ -10,30 +10,36 @@ namespace Kinetix.Services
     public interface IReferenceManager
     {
         /// <summary>
-        /// La liste des types de référence du manager.
+        /// La liste des listes de références du manager.
         /// </summary>
-        IEnumerable<Type> ReferenceTypes { get; }
+        IEnumerable<string> ReferenceLists { get; }
 
         /// <summary>
         /// Vide le cache de référence.
         /// </summary>
-        /// <param name="type">Le type de la référence à vider (laisser vide pour tout vider).</param>
         /// <param name="referenceName">Le nom de la liste de référence à vider.</param>
-        void FlushCache(Type type = null, string referenceName = null);
+        void FlushCache(string referenceName = null);
 
         /// <summary>
         /// Récupère une liste de référence.
         /// </summary>
         /// <param name="type">Le type de la liste de référence.</param>
+        /// <returns>La liste de référence.</returns>
+        ICollection<object> GetReferenceList(Type type);
+
+        /// <summary>
+        /// Récupère une liste de référence.
+        /// </summary>
         /// <param name="referenceName">Le nom de la liste de référence</param>
-        /// <returns></returns>
-        ICollection<object> GetReferenceList(Type type, string referenceName = null);
+        /// <returns>La liste de référence.</returns>
+        ICollection<object> GetReferenceList(string referenceName);
 
         /// <summary>
         /// Récupère une liste de référence.
         /// </summary>
         /// <typeparam name="T">Le type de la liste de référence.</typeparam>
         /// <param name="referenceName">Le nom de la liste de référence</param>
+        /// <returns>La liste de référence.</returns>
         ICollection<T> GetReferenceList<T>(string referenceName = null);
 
         /// <summary>
@@ -63,8 +69,7 @@ namespace Kinetix.Services
         /// </summary>
         /// <typeparam name="T">Le type de la liste de référence.</typeparam>
         /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
-        /// <param name="referenceName">Le nom de la liste de référence</param>
-        T GetReferenceObject<T>(Func<T, bool> predicate, string referenceName = null);
+        T GetReferenceObject<T>(Func<T, bool> predicate);
 
         /// <summary>
         /// Récupère un objet d'une liste de référence.
@@ -79,8 +84,7 @@ namespace Kinetix.Services
         /// <typeparam name="T">Le type de la liste de référence.</typeparam>
         /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
         /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
-        /// <param name="referenceName">Le nom de la liste de référence</param>
-        string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null, string referenceName = null);
+        string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null);
 
         /// <summary>
         /// Récupère la valeur d'un objet d'une liste de référence.
