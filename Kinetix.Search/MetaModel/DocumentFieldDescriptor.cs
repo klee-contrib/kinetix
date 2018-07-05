@@ -16,13 +16,15 @@ namespace Kinetix.Search.MetaModel
         /// <param name="propertyName">Nom de la propriété.</param>
         /// <param name="fieldName">Nom du champ dans le document.</param>
         /// <param name="propertyType">Type de la propriété.</param>
-        /// <param name="category">Domaine de la propriété.</param>
-        internal DocumentFieldDescriptor(string propertyName, string fieldName, Type propertyType, SearchFieldCategory category)
+        /// <param name="docCategory">Catégorie de document de la propriété.</param>
+        /// <param name="fieldCategory">Catégorie de recherche de la propriété.</param>
+        internal DocumentFieldDescriptor(string propertyName, string fieldName, Type propertyType, DocumentFieldCategory? docCategory, SearchFieldCategory? fieldCategory)
         {
             this.PropertyName = propertyName;
             this.FieldName = fieldName;
             this.PropertyType = propertyType;
-            this.Category = category;
+            this.DocumentCategory = docCategory;
+            this.SearchCategory = fieldCategory;
         }
 
         /// <summary>
@@ -53,9 +55,18 @@ namespace Kinetix.Search.MetaModel
         }
 
         /// <summary>
-        /// Catégorie de field.
+        /// Catégorie de field de document.
         /// </summary>
-        public SearchFieldCategory Category
+        public DocumentFieldCategory? DocumentCategory
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Catégorie de field de recherche.
+        /// </summary>
+        public SearchFieldCategory? SearchCategory
         {
             get;
             private set;

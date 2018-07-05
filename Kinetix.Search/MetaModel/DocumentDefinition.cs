@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Kinetix.Search.ComponentModel;
 
 namespace Kinetix.Search.MetaModel
@@ -20,17 +21,17 @@ namespace Kinetix.Search.MetaModel
             this.BeanType = beanType;
             this.Fields = properties;
             this.DocumentTypeName = documentTypeName;
-            foreach (DocumentFieldDescriptor property in properties)
+            foreach (var property in properties)
             {
-                switch (property.Category)
+                switch (property.DocumentCategory)
                 {
-                    case SearchFieldCategory.Id:
+                    case DocumentFieldCategory.Id:
                         this.PrimaryKey = property;
                         break;
-                    case SearchFieldCategory.Search:
+                    case DocumentFieldCategory.Search:
                         this.TextField = property;
                         break;
-                    case SearchFieldCategory.Security:
+                    case DocumentFieldCategory.Security:
                         this.SecurityField = property;
                         break;
                     default:
@@ -38,9 +39,24 @@ namespace Kinetix.Search.MetaModel
                 }
             }
 
+            if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Search) > 1)
+            {
+                throw new NotSupportedException($"{beanType} has multiple Search fields");
+            }
+
+            if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Id) > 1)
+            {
+                throw new NotSupportedException($"{beanType} has multiple Id fields");
+            }
+
+            if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Security) > 1)
+            {
+                throw new NotSupportedException($"{beanType} has multiple Security fields");
+            }
+
             if (this.PrimaryKey == null)
             {
-                throw new NotSupportedException(beanType + " has no primary key defined.");
+                throw new NotSupportedException($"{beanType} has no primary key defined.");
             }
         }
 

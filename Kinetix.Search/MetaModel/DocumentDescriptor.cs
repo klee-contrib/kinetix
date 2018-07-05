@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Reflection;
 using Kinetix.Search.ComponentModel;
 
 namespace Kinetix.Search.MetaModel
@@ -43,24 +43,19 @@ namespace Kinetix.Search.MetaModel
         private DocumentFieldDescriptorCollection CreateCollection(Type beanType)
         {
             var coll = new DocumentFieldDescriptorCollection(beanType);
-            var properties = TypeDescriptor.GetProperties(beanType);
 
-            foreach (PropertyDescriptor property in properties)
+            foreach (var property in beanType.GetProperties())
             {
-                SearchFieldAttribute fieldAttr = (SearchFieldAttribute)property.Attributes[typeof(SearchFieldAttribute)];
-                if (fieldAttr == null)
-                {
-                    throw new NotSupportedException("Missing SearchFieldAttribute on property " + beanType + "." + property.Name);
-                }
-
-                var category = fieldAttr.Category;
+                var docAttr = property.GetCustomAttribute<DocumentFieldAttribute>();
+                var searchAttr = property.GetCustomAttribute<SearchFieldAttribute>();
 
                 string fieldName = ToCamelCase(property.Name);
                 var description = new DocumentFieldDescriptor(
                     property.Name,
                     fieldName,
                     property.PropertyType,
-                    category);
+                    docAttr?.Category,
+                    searchAttr?.Category);
 
                 coll[description.PropertyName] = description;
             }
@@ -92,7 +87,7 @@ namespace Kinetix.Search.MetaModel
         {
             if (!_beanDefinitionDictionnary.TryGetValue(beanType, out DocumentDefinition definition))
             {
-                var documentType = (SearchDocumentTypeAttribute)TypeDescriptor.GetAttributes(beanType)[typeof(SearchDocumentTypeAttribute)];
+                var documentType = beanType.GetCustomAttribute<SearchDocumentTypeAttribute>();
                 if (documentType == null)
                 {
                     throw new NotSupportedException("Missing SearchDocumentTypeAttribute on type " + beanType);

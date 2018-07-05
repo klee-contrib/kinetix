@@ -429,12 +429,24 @@ namespace Kinetix.Search.Elastic
             }
 
             var filterList = new List<string>();
+
             foreach (KeyValuePair<string, string> entry in input.FilterList)
             {
-                var field = _definition.Fields[entry.Key].FieldName;
-                filterList.Add(_builder.BuildFilter(field, entry.Value));
-            }
+                var field = _definition.Fields[entry.Key];
 
+                switch (field.SearchCategory)
+                {
+                    case SearchFieldCategory.FullText:
+                        filterList.Add(_builder.BuildFullTextSearch(field.FieldName, entry.Value));
+                        break;
+                    case SearchFieldCategory.Term:
+                    case SearchFieldCategory.Terms:
+                        filterList.Add(_builder.BuildFilter(field.FieldName, entry.Value));
+                        break;
+                    default:
+                        throw new ElasticException($"Cannot filter on fields that are not indexed as FullText, Term o Terms. Field: {field.FieldName}");
+                }
+            }
             return _builder.BuildAndQuery(filterList.ToArray());
         }
 
@@ -687,7 +699,7 @@ namespace Kinetix.Search.Elastic
         /// <returns>Document formaté.</returns>
         private TDocument FormatSortFields(TDocument document)
         {
-            foreach (var field in _definition.Fields.Where(x => x.Category == SearchFieldCategory.Sort && x.PropertyType == typeof(string)))
+            foreach (var field in _definition.Fields.Where(x => x.SearchCategory == SearchFieldCategory.Sort && x.PropertyType == typeof(string)))
             {
                 var raw = field.GetValue(document);
                 if (raw != null)

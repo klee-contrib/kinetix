@@ -34,7 +34,7 @@ namespace Kinetix.Search.Elastic
             where T : class
         {
             // On skip le mapping pour les types génériques, par exemple les arrays.
-            if (field.PropertyType.IsGenericType)
+            if (field.PropertyType.IsGenericType && field.PropertyType.Name != "Nullable`1")
             {
                 return selector;
             }
@@ -44,26 +44,20 @@ namespace Kinetix.Search.Elastic
                 mapper = _provider.GetService<IElasticMapping<string>>();
             }
 
-            switch (field.Category)
+            switch (field.SearchCategory)
             {
-                case SearchFieldCategory.Id:
-                    return selector;
-                case SearchFieldCategory.Facet:
-                    return mapper.MapFacet(selector, field);
-                case SearchFieldCategory.Filter:
-                    return mapper.MapFilter(selector, field);
-                case SearchFieldCategory.ListFacet:
-                    return mapper.MapListFacet(selector, field);
+                case SearchFieldCategory.FullText:
+                    return mapper.MapFullText(selector, field);
                 case SearchFieldCategory.Result:
                     return mapper.MapResult(selector, field);
-                case SearchFieldCategory.Search:
-                    return mapper.MapSearch(selector, field);
-                case SearchFieldCategory.Security:
-                    return mapper.MapSecurity(selector, field);
                 case SearchFieldCategory.Sort:
                     return mapper.MapSort(selector, field);
+                case SearchFieldCategory.Term:
+                    return mapper.MapTerm(selector, field);
+                case SearchFieldCategory.Terms:
+                    return mapper.MapTerms(selector, field);
                 default:
-                    throw new NotSupportedException($"Category not supported {field.Category}");
+                    return selector;
             }
         }
     }
