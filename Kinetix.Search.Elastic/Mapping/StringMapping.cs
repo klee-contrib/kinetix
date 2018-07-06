@@ -49,7 +49,8 @@ namespace Kinetix.Search.Elastic.Mapping
                 .Name(field.FieldName)
                 .Index(true)
                 .Store(true)
-                .Analyzer("text_fr"));
+                .Analyzer("text_fr")
+                .Fielddata(true));
         }
     }
 }

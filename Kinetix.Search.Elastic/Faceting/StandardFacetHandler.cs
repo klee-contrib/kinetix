@@ -35,35 +35,51 @@ namespace Kinetix.Search.Elastic.Faceting
             var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(_builder, facet, facetList, selectedFacets, CreateFacetSubQuery);
             var hasFilterQuery = !string.IsNullOrEmpty(filterQuery);
 
-            agg.Filter(facet.Code, f =>
+            if (!hasFilterQuery)
             {
-                if (hasFilterQuery)
-                {
+                agg
+                   /* Créé une agrégation sur les valeurs discrètes du champ. */
+                   .Terms(facet.Code, st => st.Field(fieldName).Size(50))
+                   /* Créé une agrégation pour les valeurs non renseignées du champ. */
+                   .Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName));
+            }
+            else
+            {
+                agg.Filter(facet.Code, f => f
                     /* Crée le filtre sur les facettes multi-sélectionnables. */
-                    f.Filter(q => q.QueryString(qs => qs.Query(filterQuery)));
-                }
-
-                return f.Aggregations(aa => aa
-                    /* Créé une agrégation sur les valeurs discrètes du champ. */
-                    .Terms(facet.Code, st => st.Field(fieldName).Size(50))
-                    /* Créé une agrégation pour les valeurs non renseignées du champ. */
-                    .Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName)));
-            });
+                    .Filter(q => q.QueryString(qs => qs.Query(filterQuery)))
+                    .Aggregations(aa => aa
+                        /* Créé une agrégation sur les valeurs discrètes du champ. */
+                        .Terms(facet.Code, st => st.Field(fieldName).Size(50))
+                        /* Créé une agrégation pour les valeurs non renseignées du champ. */
+                        .Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName))));
+            }
         }
 
         /// <inheritdoc />
         public ICollection<FacetItem> ExtractFacetItemList(Nest.AggregateDictionary aggs, IFacetDefinition facetDef, long total)
         {
             var facetOutput = new List<FacetItem>();
+
             /* Valeurs renseignées. */
-            var bucket = aggs.Filter(facetDef.Code).Terms(facetDef.Code);
+            var bucket = aggs.Terms(facetDef.Code);
+            if (bucket == null)
+            {
+                bucket = aggs.Filter(facetDef.Code).Terms(facetDef.Code);
+            }
+
             foreach (var b in bucket.Buckets)
             {
                 facetOutput.Add(new FacetItem { Code = b.Key, Label = facetDef.ResolveLabel(b.Key), Count = b.DocCount ?? 0 });
             }
 
             /* Valeurs non renseignées. */
-            var missingBucket = aggs.Filter(facetDef.Code).Missing(facetDef.Code + MissingFacetPrefix);
+            var missingBucket = aggs.Missing(facetDef.Code + MissingFacetPrefix);
+            if (missingBucket == null)
+            {
+                missingBucket = aggs.Filter(facetDef.Code).Missing(facetDef.Code + MissingFacetPrefix);
+            }
+
             var missingCount = missingBucket.DocCount;
             if (missingCount > 0)
             {
