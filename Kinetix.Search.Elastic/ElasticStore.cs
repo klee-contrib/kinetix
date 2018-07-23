@@ -317,7 +317,7 @@ namespace Kinetix.Search.Elastic
             if (hasGroup)
             {
                 /* Groupement. */
-                var bucket = (BucketAggregate)res.Aggregations.Filter(GroupAggs).Aggregations[groupFieldName];
+                var bucket = (BucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName];
                 foreach (KeyedBucket<object> group in bucket.Items)
                 {
                     var list = ((TopHitsAggregate)group[_topHitName]).Documents<TDocument>().ToList();
@@ -331,8 +331,8 @@ namespace Kinetix.Search.Elastic
                 }
 
                 /* Groupe pour les valeurs null. */
-                var nullBucket = (SingleBucketAggregate)res.Aggregations.Filter(GroupAggs).Aggregations[groupFieldName + MissingGroupPrefix];
-                var nullTopHitAgg = (TopHitsAggregate)nullBucket.Aggregations[_topHitName];
+                var nullBucket = (SingleBucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName + MissingGroupPrefix];
+                var nullTopHitAgg = (TopHitsAggregate)nullBucket[_topHitName];
                 var nullDocs = nullTopHitAgg.Documents<TDocument>().ToList();
                 if (nullDocs.Any())
                 {
