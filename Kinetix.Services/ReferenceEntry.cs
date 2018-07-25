@@ -11,6 +11,7 @@ namespace Kinetix.Services
     internal class ReferenceEntry
     {
         private readonly IDictionary<object, object> _referenceMap;
+        private readonly BeanPropertyDescriptor _primaryKey;
         private readonly string _name;
 
         /// <summary>
@@ -21,14 +22,14 @@ namespace Kinetix.Services
         public ReferenceEntry(ICollection<object> referenceList, BeanDefinition definition)
         {
             _name = definition.BeanType.Name;
+            _primaryKey = definition.PrimaryKey;
 
-            var primaryKey = definition.PrimaryKey;
-            if (primaryKey == null)
+            if (_primaryKey == null)
             {
                 throw new NotSupportedException($"Reference type {definition.BeanType.Name} doesn't have a primary key defined. Use the ColumnAttribute to set the primary key property.");
             }
 
-            _referenceMap = referenceList.ToDictionary(r => primaryKey.GetValue(r), r => r);
+            _referenceMap = referenceList.ToDictionary(r => _primaryKey.GetValue(r), r => r);
         }
 
         /// <summary>
@@ -55,6 +56,12 @@ namespace Kinetix.Services
         /// <returns>Objet.</returns>
         public T GetReferenceObject<T>(object primaryKey)
         {
+            /* Si on a la PK en string alors que c'est un ID, par ex depuis ElasticSearch. */
+            if (_primaryKey.PrimitiveType == typeof(int) && primaryKey.GetType() == typeof(string))
+            {
+                primaryKey = int.Parse((string)primaryKey);
+            }
+
             /* Cherche la valeur pour la locale demandée. */
             if (_referenceMap.TryGetValue(primaryKey, out var value))
             {
