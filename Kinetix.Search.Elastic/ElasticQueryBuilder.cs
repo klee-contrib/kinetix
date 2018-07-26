@@ -12,7 +12,7 @@ namespace Kinetix.Search.Elastic
         /// <summary>
         /// Caractères réservés de la syntaxe Query DSL à échapper.
         /// </summary>
-        private static string[] elasticSpecialChars = new string[] { "\"", "<", ">", "=", "/", "\\", "+", "-", "&&", "||", "!", "(", ")", "{", "}", "[", "]", "^", "~", "*", "?", ":", "." };
+        private static readonly string[] elasticSpecialChars = new string[] { "<", ">", "=", "/", "\\", "+", "-", "&&", "||", "!", "(", ")", "{", "}", "[", "]", "^", "~", "*", "?", ":", "." };
 
         /// <summary>
         /// Construit une requête pour une recherche textuelle.
@@ -157,6 +157,8 @@ namespace Kinetix.Search.Elastic
             {
                 sb.Replace(specialChar, @"\" + specialChar);
             }
+
+            sb.Replace("\"", string.Empty);
 
             return sb.ToString();
         }
