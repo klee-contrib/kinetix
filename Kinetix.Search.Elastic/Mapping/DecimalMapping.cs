@@ -7,7 +7,7 @@ namespace Kinetix.Search.Elastic.Mapping
     /// <summary>
     /// Mapping pour les champs Decimal.
     /// </summary>
-    public class DecimalMapping : IElasticMapping<decimal?>
+    public class DecimalMapping : IElasticMapping<decimal>
     {
         /// <inheritdoc />
         public PropertiesDescriptor<TDocument> MapFullText<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class

@@ -53,7 +53,7 @@ namespace Kinetix.Search.MetaModel
                 var description = new DocumentFieldDescriptor(
                     property.Name,
                     fieldName,
-                    property.PropertyType,
+                    property.PropertyType.IsGenericType ? property.PropertyType.GetGenericArguments()[0] : property.PropertyType,
                     docAttr?.Category,
                     searchAttr?.Category);
 

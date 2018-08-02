@@ -53,11 +53,6 @@ namespace Kinetix.Search.MetaModel
             {
                 throw new NotSupportedException($"{beanType} has multiple Security fields");
             }
-
-            if (this.PrimaryKey == null)
-            {
-                throw new NotSupportedException($"{beanType} has no primary key defined.");
-            }
         }
 
         /// <summary>

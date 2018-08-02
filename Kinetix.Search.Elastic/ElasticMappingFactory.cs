@@ -24,21 +24,33 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <summary>
-        /// Obtient le mapping de champ Elastic pour une catégorie donnée.
+        /// Effectue le mapping pour les champs d'un document.
         /// </summary>
         /// <param name="selector">Descripteur des propriétés.</param>
-        /// <param name="field">Catégorie de champ.</param>
+        /// <param name="fields">Les champs.</param>
+        /// <returns>Mapping de champ.</returns>
+        /// <typeparam name="T">Type du document.</typeparam>
+        public PropertiesDescriptor<T> AddFields<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptorCollection fields)
+             where T : class
+        {
+            foreach (var field in fields)
+            {
+                AddField(selector, field);
+            }
+
+            return selector;
+        }
+
+        /// <summary>
+        /// Effectue le mapping pour un champ d'un document.
+        /// </summary>
+        /// <param name="selector">Descripteur des propriétés.</param>
+        /// <param name="field">Le champ.</param>
         /// <returns>Mapping de champ.</returns>
         /// <typeparam name="T">Type du document.</typeparam>
         public PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
             where T : class
         {
-            // On skip le mapping pour les types génériques, par exemple les arrays.
-            if (field.PropertyType.IsGenericType && field.PropertyType.Name != "Nullable`1")
-            {
-                return selector;
-            }
-
             if (!(_provider.GetService(typeof(IElasticMapping<>).MakeGenericType(field.PropertyType)) is IElasticMapping mapper))
             {
                 mapper = _provider.GetService<IElasticMapping<string>>();
