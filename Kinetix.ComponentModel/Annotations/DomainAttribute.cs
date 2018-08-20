@@ -19,7 +19,7 @@ namespace Kinetix.ComponentModel.Annotations
                 throw new ArgumentNullException("name");
             }
 
-            this.Name = name;
+            Name = name;
         }
 
         /// <summary>

@@ -21,7 +21,7 @@ namespace Kinetix.ComponentModel.Formatters
         {
             return value == null ? null : string.Format(
                 NumberFormatInfo.CurrentInfo,
-                this.FormatString ?? "{0:N" + (Decimales - 2).ToString(NumberFormatInfo.CurrentInfo) + "}",
+                FormatString ?? "{0:N" + (Decimales - 2).ToString(NumberFormatInfo.CurrentInfo) + "}",
                 value);
         }
     }

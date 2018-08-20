@@ -32,8 +32,8 @@ namespace Kinetix.ComponentModel.Formatters
             }
             catch (FormatException)
             {
-                char[] array = text.ToCharArray();
-                for (int i = 0; i < array.Length; i++)
+                var array = text.ToCharArray();
+                for (var i = 0; i < array.Length; i++)
                 {
                     if (array[i] >= '2' && array[i] <= '9')
                     {
@@ -41,7 +41,7 @@ namespace Kinetix.ComponentModel.Formatters
                     }
                 }
 
-                if (DateTime.TryParseExact(new string(array), _stringFormats, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.None, out DateTime date))
+                if (DateTime.TryParseExact(new string(array), _stringFormats, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.None, out var date))
                 {
                     throw new FormatException(SR.ErrorFormatDateValue);
                 }
@@ -57,7 +57,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>Représentation textuelle de la date.</returns>
         protected override string InternalConvertToString(DateTime? value)
         {
-            return value.HasValue ? value.GetValueOrDefault().ToString(this.FormatString, DateTimeFormatInfo.CurrentInfo) : null;
+            return value.HasValue ? value.GetValueOrDefault().ToString(FormatString, DateTimeFormatInfo.CurrentInfo) : null;
         }
     }
 }

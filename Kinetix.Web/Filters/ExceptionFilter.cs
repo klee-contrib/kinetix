@@ -33,8 +33,6 @@ namespace Kinetix.Web.Filters
                     return EntityExceptionHandler(ee);
                 case ConstraintException ce:
                     return ConstraintExceptionHandler(ce);
-                ////case DbEntityValidationException eve:
-                ////    return DbEntityValidationExceptionHandler(eve);
                 case DbUpdateException due:
                     return DbUpdateExceptionExceptionHandler(due);
                 default:

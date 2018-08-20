@@ -14,7 +14,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// <param name="providerType">Type du provider.</param>
         public MetadataTypeProviderAttribute(Type providerType)
         {
-            this.ProviderType = providerType;
+            ProviderType = providerType;
         }
 
         /// <summary>

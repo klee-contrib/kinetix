@@ -14,7 +14,7 @@ namespace Kinetix.Search.ComponentModel
         /// <param name="category">Catégorie.</param>
         public SearchFieldAttribute(SearchFieldCategory category)
         {
-            this.Category = category;
+            Category = category;
         }
 
         /// <summary>

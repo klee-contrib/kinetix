@@ -30,13 +30,13 @@ namespace Kinetix.ComponentModel.Formatters
                 return null;
             }
 
-            string testValue = text.Replace(",", ".").Trim(' ', '%');
+            var testValue = text.Replace(",", ".").Trim(' ', '%');
             if (string.IsNullOrEmpty(testValue))
             {
                 return null;
             }
 
-            if (!decimal.TryParse(testValue, NumberStyles.Currency, CultureInfo.InvariantCulture, out decimal value))
+            if (!decimal.TryParse(testValue, NumberStyles.Currency, CultureInfo.InvariantCulture, out var value))
             {
                 throw new FormatException(string.Format(CultureInfo.CurrentCulture, SR.ErrorFormatPercentage, text));
             }
@@ -51,7 +51,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>Chaîne convertie.</returns>
         protected override string InternalConvertToString(decimal? value)
         {
-            return value.HasValue ? value.Value.ToString(this.FormatString, CultureInfo.CurrentCulture) : null;
+            return value.HasValue ? value.Value.ToString(FormatString, CultureInfo.CurrentCulture) : null;
         }
     }
 }

@@ -16,12 +16,9 @@ namespace Kinetix.ComponentModel.Formatters
         /// <exception cref="System.FormatException">En cas d'erreur de convertion.</exception>
         protected override DateTime? InternalConvertFromString(string text)
         {
-            if (string.IsNullOrEmpty(text))
-            {
-                return null;
-            }
-
-            return Convert.ToDateTime(text, CultureInfo.CurrentCulture);
+            return string.IsNullOrEmpty(text)
+                ? null
+                : (DateTime?)Convert.ToDateTime(text, CultureInfo.CurrentCulture);
         }
     }
 }

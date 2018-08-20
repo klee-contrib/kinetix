@@ -52,23 +52,9 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <summary>
         /// Nom complet.
         /// </summary>
-        public string FullFieldName
-        {
-            get
-            {
-                string fullFieldName;
-                if (string.IsNullOrEmpty(this.ModelName))
-                {
-                    fullFieldName = this.FieldName;
-                }
-                else
-                {
-                    fullFieldName = string.Format(CultureInfo.InvariantCulture, "{0}.{1}", this.ModelName, this.FieldName);
-                }
-
-                return fullFieldName;
-            }
-        }
+        public string FullFieldName => string.IsNullOrEmpty(ModelName)
+            ? FieldName
+            : string.Format(CultureInfo.InvariantCulture, "{0}.{1}", ModelName, FieldName);
 
         /// <summary>
         /// Message d'erreur.

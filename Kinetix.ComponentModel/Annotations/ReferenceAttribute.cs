@@ -13,7 +13,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// </summary>
         public ReferenceAttribute()
         {
-            this.IsStatic = false;
+            IsStatic = false;
         }
 
         /// <summary>
@@ -22,7 +22,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// <param name="isStatic"><code>True</code> si la liste est statique, <code>False</code> sinon.</param>
         public ReferenceAttribute(bool isStatic)
         {
-            this.IsStatic = isStatic;
+            IsStatic = isStatic;
         }
 
         /// <summary>

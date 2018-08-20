@@ -59,7 +59,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>Valeur cible.</returns>
         public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
         {
-            return this.InternalConvertFromString((string)value);
+            return InternalConvertFromString((string)value);
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>Valeur cible.</returns>
         public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
         {
-            return this.InternalConvertToString((T)value);
+            return InternalConvertToString((T)value);
         }
 
         /// <summary>
@@ -83,7 +83,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <exception cref="System.FormatException">En cas d'erreur de convertion.</exception>
         T IFormatter<T>.ConvertFromString(string text)
         {
-            return this.InternalConvertFromString(text);
+            return InternalConvertFromString(text);
         }
 
         /// <summary>
@@ -93,7 +93,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>Données sous forme de string.</returns>
         string IFormatter<T>.ConvertToString(T value)
         {
-            return this.InternalConvertToString(value);
+            return InternalConvertToString(value);
         }
 
         /// <summary>

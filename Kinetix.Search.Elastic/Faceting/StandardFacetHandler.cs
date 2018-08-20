@@ -105,12 +105,9 @@ namespace Kinetix.Search.Elastic.Faceting
             var fieldName = fieldDesc.FieldName;
 
             /* Traite la valeur de sélection NULL */
-            if (facet == FacetConst.NullValue)
-            {
-                return _builder.BuildMissingField(fieldName);
-            }
-
-            return _builder.BuildFilter(fieldName, facet);
+            return facet == FacetConst.NullValue
+                ? _builder.BuildMissingField(fieldName)
+                : _builder.BuildFilter(fieldName, facet);
         }
     }
 }

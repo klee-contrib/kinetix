@@ -18,8 +18,8 @@ namespace Kinetix.ComponentModel.Annotations
         {
             Precision = precision;
 
-            this.ErrorMessageResourceType = typeof(SR);
-            this.ErrorMessageResourceName = "DateContraintError";
+            ErrorMessageResourceType = typeof(SR);
+            ErrorMessageResourceName = "DateContraintError";
         }
 
         /// <summary>
@@ -38,19 +38,14 @@ namespace Kinetix.ComponentModel.Annotations
         /// <returns><code>True</code> si l'objet est une date et qu'elle est bien dans l'intervalle de date SQL Server.</returns>
         public override bool IsValid(object value)
         {
-            string strValue = value as string;
-            if (strValue != null)
+            if (value is string strValue)
             {
-                if (string.IsNullOrEmpty(strValue))
-                {
-                    return true;
-                }
-
-                DateTime testedValue;
-                return DateTime.TryParse(strValue, out testedValue) && CheckRange(testedValue);
+                return string.IsNullOrEmpty(strValue)
+                    ? true
+                    : DateTime.TryParse(strValue, out var testedValue) && CheckRange(testedValue);
             }
 
-            DateTime? dateValue = (DateTime?)value;
+            var dateValue = (DateTime?)value;
             return !dateValue.HasValue || CheckRange(dateValue.Value);
         }
 

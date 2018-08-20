@@ -11,11 +11,6 @@ namespace Kinetix.ComponentModel.Exceptions
     public class ConstraintException : Exception
     {
         /// <summary>
-        /// Inner message parameters.
-        /// </summary>
-        private Dictionary<string, ErrorMessageParameter> _messageParameters = new Dictionary<string, ErrorMessageParameter>();
-
-        /// <summary>
         /// Crée un nouvelle exception.
         /// </summary>
         public ConstraintException()
@@ -28,7 +23,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="errorCollection">Pile d'erreur.</param>
         public ConstraintException(ErrorMessageCollection errorCollection)
         {
-            this.Errors = errorCollection;
+            Errors = errorCollection;
         }
 
         /// <summary>
@@ -74,7 +69,7 @@ namespace Kinetix.ComponentModel.Exceptions
         public ConstraintException(BeanPropertyDescriptor property, string message)
             : base(message)
         {
-            this.Property = property;
+            Property = property;
         }
 
         /// <summary>
@@ -84,8 +79,8 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="message">Message d'erreur.</param>
         public ConstraintException(string fieldName, string message)
         {
-            this.Errors = new ErrorMessageCollection();
-            this.Errors.AddEntry(fieldName, message);
+            Errors = new ErrorMessageCollection();
+            Errors.AddEntry(fieldName, message);
         }
 
         /// <summary>
@@ -96,7 +91,7 @@ namespace Kinetix.ComponentModel.Exceptions
         public ConstraintException(string message, Dictionary<string, ErrorMessageParameter> messageParameters)
             : base(message)
         {
-            this._messageParameters = messageParameters;
+            MessageParameters = messageParameters;
         }
 
         /// <summary>
@@ -118,7 +113,7 @@ namespace Kinetix.ComponentModel.Exceptions
         public ConstraintException(BeanPropertyDescriptor property, string message, Exception innerException)
             : base(message, innerException)
         {
-            this.Property = property;
+            Property = property;
         }
 
         /// <summary>
@@ -130,7 +125,7 @@ namespace Kinetix.ComponentModel.Exceptions
         public ConstraintException(string fieldName, string message, string code)
             : this(fieldName, message)
         {
-            this.Code = code;
+            Code = code;
         }
 
         /// <summary>
@@ -142,7 +137,7 @@ namespace Kinetix.ComponentModel.Exceptions
         public ConstraintException(string message, string code, Exception innerException)
             : base(message, innerException)
         {
-            this.Code = code;
+            Code = code;
         }
 
         /// <summary>
@@ -155,7 +150,7 @@ namespace Kinetix.ComponentModel.Exceptions
         {
             if (info != null)
             {
-                this.Property = (BeanPropertyDescriptor)info.GetValue("Property", typeof(BeanPropertyDescriptor));
+                Property = (BeanPropertyDescriptor)info.GetValue("Property", typeof(BeanPropertyDescriptor));
             }
         }
 
@@ -180,7 +175,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <summary>
         /// List of parameters to inject in the message describing the exception.
         /// </summary>
-        public Dictionary<string, ErrorMessageParameter> MessageParameters => _messageParameters;
+        public Dictionary<string, ErrorMessageParameter> MessageParameters { get; } = new Dictionary<string, ErrorMessageParameter>();
 
         /// <summary>
         /// Retourne la propriété associée à la violation de contrainte.
@@ -201,7 +196,7 @@ namespace Kinetix.ComponentModel.Exceptions
             if (info != null)
             {
                 base.GetObjectData(info, context);
-                info.AddValue("Property", this.Property);
+                info.AddValue("Property", Property);
             }
         }
     }

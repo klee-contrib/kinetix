@@ -43,32 +43,17 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <summary>
         /// Indique si la pile contient des erreurs.
         /// </summary>
-        public bool HasError
-        {
-            get { return _entryList.Count > 0; }
-        }
+        public bool HasError => _entryList.Count > 0;
 
         /// <summary>
         /// Indique le nombre d'éléments dans la collection.
         /// </summary>
-        int ICollection<ErrorMessage>.Count
-        {
-            get
-            {
-                return _entryList.Count;
-            }
-        }
+        int ICollection<ErrorMessage>.Count => _entryList.Count;
 
         /// <summary>
         /// Indique que la collection est en lecture seule.
         /// </summary>
-        bool ICollection<ErrorMessage>.IsReadOnly
-        {
-            get
-            {
-                return true;
-            }
-        }
+        bool ICollection<ErrorMessage>.IsReadOnly => true;
 
         /// <summary>
         /// Ajoute une exception à la liste des erreurs.
@@ -83,15 +68,15 @@ namespace Kinetix.ComponentModel.Exceptions
 
             if (ce.Errors != null)
             {
-                this.AddErrorStack(string.Empty, ce.Errors);
+                AddErrorStack(string.Empty, ce.Errors);
             }
             else if (ce.Property != null)
             {
-                this.AddEntry(ce.Property.PropertyName, ce.Message);
+                AddEntry(ce.Property.PropertyName, ce.Message);
             }
             else
             {
-                this.AddEntry(string.Empty, ce.Message);
+                AddEntry(string.Empty, ce.Message);
             }
         }
 
@@ -101,7 +86,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="message">Le message de l'exception.</param>
         public void AddConstraintException(string message)
         {
-            this.AddConstraintException(new ConstraintException(message));
+            AddConstraintException(new ConstraintException(message));
         }
 
         /// <summary>
@@ -146,9 +131,9 @@ namespace Kinetix.ComponentModel.Exceptions
                 throw new ArgumentNullException("errorCollection");
             }
 
-            foreach (ErrorMessage entry in errorCollection)
+            foreach (var entry in errorCollection)
             {
-                this.AddEntry(fieldPrefix + entry.FieldName, entry.Message);
+                AddEntry(fieldPrefix + entry.FieldName, entry.Message);
             }
         }
 
@@ -157,7 +142,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// </summary>
         public void Throw()
         {
-            if (this.HasError)
+            if (HasError)
             {
                 throw new ConstraintException(this);
             }

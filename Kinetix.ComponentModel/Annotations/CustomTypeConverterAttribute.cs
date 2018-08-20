@@ -19,7 +19,7 @@ namespace Kinetix.ComponentModel.Annotations
                 throw new ArgumentNullException("typeConverter");
             }
 
-            this.ConverterTypeName = typeConverter.AssemblyQualifiedName;
+            ConverterTypeName = typeConverter.AssemblyQualifiedName;
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Kinetix.ComponentModel.Annotations
                 throw new ArgumentNullException("converterTypeName");
             }
 
-            this.ConverterTypeName = converterTypeName;
+            ConverterTypeName = converterTypeName;
         }
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace Kinetix.ComponentModel.Annotations
                 throw new ArgumentNullException("formatString");
             }
 
-            this.FormatString = formatString;
+            FormatString = formatString;
         }
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace Kinetix.ComponentModel.Annotations
                 throw new ArgumentNullException("formatString");
             }
 
-            this.FormatString = formatString;
+            FormatString = formatString;
         }
 
         /// <summary>

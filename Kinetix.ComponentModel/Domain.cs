@@ -72,34 +72,34 @@ namespace Kinetix.ComponentModel
         /// <param name="metadataPropertySuffix">Suffix de la propriété portant les métadonnées utilent au domaine.</param>
         public Domain(string name, ICollection<ValidationAttribute> validationAttributes, TypeConverter formatter, ICollection<Attribute> decorationAttributes, bool isHtml, Type errorMessageResourceType, string errorMessageResourceName, string metadataPropertySuffix)
         {
-            Type dataType = typeof(T);
+            var dataType = typeof(T);
             if (dataType.IsGenericType && dataType.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 dataType = dataType.GetGenericArguments()[0];
             }
 
-            this.Name = name ?? throw new ArgumentNullException("name");
-            this.DataType = dataType;
+            Name = name ?? throw new ArgumentNullException("name");
+            DataType = dataType;
             _formatter = formatter as IFormatter<T>;
             _extendedFormatter = formatter as IFormatter<ExtendedValue>;
-            this.ValidationAttributes = validationAttributes;
-            this.IsHtml = isHtml;
-            this.DecorationAttributes = decorationAttributes;
-            this.ErrorMessageResourceType = errorMessageResourceType;
-            this.ErrorMessageResourceName = errorMessageResourceName;
-            this.MetadataPropertySuffix = metadataPropertySuffix;
+            ValidationAttributes = validationAttributes;
+            IsHtml = isHtml;
+            DecorationAttributes = decorationAttributes;
+            ErrorMessageResourceType = errorMessageResourceType;
+            ErrorMessageResourceName = errorMessageResourceName;
+            MetadataPropertySuffix = metadataPropertySuffix;
 
-            if (this.ErrorMessageResourceType != null && !string.IsNullOrEmpty(this.ErrorMessageResourceName))
+            if (ErrorMessageResourceType != null && !string.IsNullOrEmpty(ErrorMessageResourceName))
             {
-                _propertyMessage = this.ErrorMessageResourceType.GetProperty(this.ErrorMessageResourceName, BindingFlags.Public | BindingFlags.Static);
+                _propertyMessage = ErrorMessageResourceType.GetProperty(ErrorMessageResourceName, BindingFlags.Public | BindingFlags.Static);
                 if (_propertyMessage == null)
                 {
-                    throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, "{0} doesn't have a property named {1}.", this.ErrorMessageResourceType.FullName, this.ErrorMessageResourceName));
+                    throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, "{0} doesn't have a property named {1}.", ErrorMessageResourceType.FullName, ErrorMessageResourceName));
                 }
 
                 if (_propertyMessage.PropertyType != typeof(string))
                 {
-                    throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, "{0}.{1} is not a string typed property.", this.ErrorMessageResourceType.FullName, this.ErrorMessageResourceName));
+                    throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, "{0}.{1} is not a string typed property.", ErrorMessageResourceType.FullName, ErrorMessageResourceName));
                 }
             }
         }
@@ -174,31 +174,26 @@ namespace Kinetix.ComponentModel
         {
             get
             {
-                StringLengthAttribute strLenAttr = GetValidationAttribute<StringLengthAttribute>();
+                var strLenAttr = GetValidationAttribute<StringLengthAttribute>();
                 if (strLenAttr != null)
                 {
                     return strLenAttr.MaximumLength;
                 }
 
-                RangeAttribute ranAttr = GetValidationAttribute<RangeAttribute>();
+                var ranAttr = GetValidationAttribute<RangeAttribute>();
                 if (ranAttr != null && ranAttr.Maximum != null)
                 {
                     return ranAttr.Maximum.ToString().Length;
                 }
 
-                DateAttribute dateAttr = GetValidationAttribute<DateAttribute>();
+                var dateAttr = GetValidationAttribute<DateAttribute>();
                 if (dateAttr != null)
                 {
                     return dateAttr.Precision;
                 }
 
-                NumeroSiretAttribute siretAttr = GetValidationAttribute<NumeroSiretAttribute>();
-                if (siretAttr != null)
-                {
-                    return NumeroSiretAttribute.SiretLength;
-                }
-
-                return null;
+                var siretAttr = GetValidationAttribute<NumeroSiretAttribute>();
+                return siretAttr != null ? NumeroSiretAttribute.SiretLength : (int?)null;
             }
         }
 
@@ -214,55 +209,21 @@ namespace Kinetix.ComponentModel
         /// <summary>
         /// Retourne le convertisseur de type.
         /// </summary>
-        public TypeConverter Converter
-        {
-            get
-            {
-                if (_extendedFormatter != null)
-                {
-                    return (TypeConverter)_extendedFormatter;
-                }
-
-                if (_formatter != null)
-                {
-                    return (TypeConverter)_formatter;
-                }
-
-                return null;
-            }
-        }
+        public TypeConverter Converter => _extendedFormatter != null
+            ? (TypeConverter)_extendedFormatter
+            : _formatter != null
+                ? (TypeConverter)_formatter
+                : null;
 
         /// <summary>
         /// Retourne l'unité associée au format.
         /// </summary>
-        string IDomainChecker.Unit
-        {
-            get
-            {
-                if (_formatter != null)
-                {
-                    return _formatter.Unit;
-                }
-
-                if (_extendedFormatter != null)
-                {
-                    return _extendedFormatter.Unit;
-                }
-
-                return null;
-            }
-        }
+        string IDomainChecker.Unit => _formatter != null ? _formatter.Unit : _extendedFormatter?.Unit;
 
         /// <summary>
         /// Retourne les attributs de validation associés.
         /// </summary>
-        ICollection<ValidationAttribute> IDomainChecker.ValidationAttributes
-        {
-            get
-            {
-                return this.ValidationAttributes;
-            }
-        }
+        ICollection<ValidationAttribute> IDomainChecker.ValidationAttributes => ValidationAttributes;
 
         /// <summary>
         /// Obtient la valeur d'un attribut décoratif à partir de son type s'il a été défini, null sinon.
@@ -281,7 +242,7 @@ namespace Kinetix.ComponentModel
                 return null;
             }
 
-            foreach (Attribute attr in DecorationAttributes)
+            foreach (var attr in DecorationAttributes)
             {
                 if (attr.GetType() == attributeType)
                 {
@@ -356,16 +317,16 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException("propertyDescriptor");
             }
 
-            if (!this.DataType.Equals(propertyDescriptor.PrimitiveType))
+            if (!DataType.Equals(propertyDescriptor.PrimitiveType))
             {
                 if (propertyDescriptor.PrimitiveType != null)
                 {
                     throw new NotSupportedException("Invalid property type " + propertyDescriptor.PropertyType +
-                            " for domain " + this.Name + " " + this.DataType + " expected." + propertyDescriptor.PrimitiveType);
+                            " for domain " + Name + " " + DataType + " expected." + propertyDescriptor.PrimitiveType);
                 }
 
                 throw new NotSupportedException("Invalid property type " + propertyDescriptor.PropertyType +
-                                                " for domain " + this.Name + " " + this.DataType + " expected. PrimitiveType is null.");
+                                                " for domain " + Name + " " + DataType + " expected. PrimitiveType is null.");
             }
         }
 
@@ -422,7 +383,7 @@ namespace Kinetix.ComponentModel
             }
             catch (Exception e)
             {
-                string message = e.Message;
+                var message = e.Message;
                 if (_propertyMessage != null)
                 {
                     message = string.Format(CultureInfo.CurrentCulture, (string)_propertyMessage.GetValue(null, null), text);
@@ -455,13 +416,10 @@ namespace Kinetix.ComponentModel
                 return _formatter.ConvertToString((T)value);
             }
 
-            ExtendedValue extValue = value as ExtendedValue;
-            if (_extendedFormatter != null && extValue != null)
-            {
-                return _extendedFormatter.ConvertToString(extValue);
-            }
-
-            return TypeDescriptor.GetConverter(typeof(T)).ConvertToString(value);
+            var extValue = value as ExtendedValue;
+            return _extendedFormatter != null && extValue != null
+                ? _extendedFormatter.ConvertToString(extValue)
+                : TypeDescriptor.GetConverter(typeof(T)).ConvertToString(value);
         }
 
         /// <summary>
@@ -482,9 +440,9 @@ namespace Kinetix.ComponentModel
         /// <param name="propertyDescriptor">Propriété.</param>
         private void CheckValueValidation(object value, BeanPropertyDescriptor propertyDescriptor)
         {
-            if (this.ValidationAttributes != null)
+            if (ValidationAttributes != null)
             {
-                foreach (ValidationAttribute validationAttribute in this.ValidationAttributes)
+                foreach (var validationAttribute in ValidationAttributes)
                 {
                     if (!validationAttribute.IsValid(value))
                     {

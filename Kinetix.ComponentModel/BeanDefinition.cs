@@ -18,21 +18,21 @@ namespace Kinetix.ComponentModel
         /// <param name="isStatic"><code>True</code> si le bean correspond à une liste de référence statique, <code>False</code> sinon.</param>
         internal BeanDefinition(Type beanType, BeanPropertyDescriptorCollection properties, string contractName, bool isReference, bool isStatic)
         {
-            this.BeanType = beanType;
-            this.Properties = properties;
-            this.ContractName = contractName;
-            this.IsReference = isReference;
-            this.IsStatic = isStatic;
-            foreach (BeanPropertyDescriptor property in properties)
+            BeanType = beanType;
+            Properties = properties;
+            ContractName = contractName;
+            IsReference = isReference;
+            IsStatic = isStatic;
+            foreach (var property in properties)
             {
                 if (property.IsPrimaryKey)
                 {
-                    this.PrimaryKey = property;
+                    PrimaryKey = property;
                 }
 
                 if (property.IsDefault)
                 {
-                    this.DefaultProperty = property;
+                    DefaultProperty = property;
                 }
             }
         }
@@ -107,14 +107,14 @@ namespace Kinetix.ComponentModel
         /// <param name="allowPrimaryKeyNull">True si la clef primaire peut être null (insertion).</param>
         internal void Check(object bean, bool allowPrimaryKeyNull)
         {
-            foreach (BeanPropertyDescriptor property in this.Properties)
+            foreach (var property in Properties)
             {
                 if (property.DomainName == null || property.IsReadOnly)
                 {
                     continue;
                 }
 
-                bool checkNull = property.IsPrimaryKey ? !allowPrimaryKeyNull : true;
+                var checkNull = property.IsPrimaryKey ? !allowPrimaryKeyNull : true;
                 property.ValidConstraints(property.GetValue(bean), checkNull, null);
             }
         }

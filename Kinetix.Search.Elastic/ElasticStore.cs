@@ -120,10 +120,10 @@ namespace Kinetix.Search.Elastic
 
             /* Découpage en cluster. */
             var total = documentList.Count();
-            int left = total % ClusterSize;
-            var clusterNb = ((total - left) / ClusterSize) + (left > 0 ? 1 : 0);
+            var left = total % ClusterSize;
+            var clusterNb = (total - left) / ClusterSize + (left > 0 ? 1 : 0);
 
-            for (int i = 1; i <= clusterNb; i++)
+            for (var i = 1; i <= clusterNb; i++)
             {
 
                 /* Extraction du cluster. */
@@ -203,33 +203,33 @@ namespace Kinetix.Search.Elastic
                         .From(skip)
                         .Size(size);
 
-                        /* Tri */
+                    /* Tri */
                     if (sortDef.HasSort)
                     {
                         s.Sort(x => x
                             .Field(sortDef.FieldName, sortDef.Order));
                     }
 
-                        /* Critère de filtrage. */
+                    /* Critère de filtrage. */
                     if (hasFilter)
                     {
                         s.Query(q => q.QueryString(qs => qs.Query(filterQuery)));
                     }
 
-                        /* Critère de post-filtrage. */
+                    /* Critère de post-filtrage. */
                     if (hasPostFilter)
                     {
                         s.PostFilter(q => q.QueryString(qs => qs.Query(postFilterQuery)));
                     }
 
-                        /* Aggrégations. */
+                    /* Aggrégations. */
                     if (hasFacet || hasGroup)
                     {
                         s.Aggregations(a =>
                         {
                             if (hasFacet)
                             {
-                                    /* Facettage. */
+                                /* Facettage. */
                                 foreach (var facetDef in facetDefList)
                                 {
                                     GetHandler(facetDef).DefineAggregation(a, facetDef, facetDefList, input.ApiInput.Facets, portfolio);
@@ -237,11 +237,11 @@ namespace Kinetix.Search.Elastic
                             }
                             if (hasGroup)
                             {
-                                    /* Groupement. */
+                                /* Groupement. */
                                 a.Filter(GroupAggs, f =>
                                 {
 
-                                        /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
+                                    /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
                                     if (hasPostFilter)
                                     {
                                         f.Filter(q => q.QueryString(qs => qs.Query(postFilterQuery)));
@@ -375,10 +375,10 @@ namespace Kinetix.Search.Elastic
             return _logger.LogQuery("AdvancedCount", () => _client
                 .Count<TDocument>(s =>
                 {
-                        /* Index / type document. */
+                    /* Index / type document. */
                     s.Type(_documentTypeName);
 
-                        /* Critère de filtrage. */
+                    /* Critère de filtrage. */
                     if (hasFilter)
                     {
                         s.Query(q => q.QueryString(qs => qs.Query(filterQuery)));
@@ -423,7 +423,7 @@ namespace Kinetix.Search.Elastic
 
             var filterList = new List<string>();
 
-            foreach (KeyValuePair<string, string> entry in input.FilterList)
+            foreach (var entry in input.FilterList)
             {
                 var field = _definition.Fields[entry.Key];
 
@@ -513,14 +513,14 @@ namespace Kinetix.Search.Elastic
             var facetSubQueryList = facetList
                 .Select(f =>
                 {
-                        /* Récupère la définition de la facette non multi-sélectionnable. */
+                    /* Récupère la définition de la facette non multi-sélectionnable. */
                     var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == false && x.Code == f.Key);
                     if (def == null)
                     {
                         return null;
                     }
 
-                        /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur. */
+                    /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur. */
                     var s = f.Value[0];
                     return GetHandler(def).CreateFacetSubQuery(s, def, input.Portfolio);
                 })
@@ -555,7 +555,7 @@ namespace Kinetix.Search.Elastic
             var facetSubQueryList = facetList
                 .Select(f =>
                 {
-                        /* Récupère la définition de la facette multi-sélectionnable. */
+                    /* Récupère la définition de la facette multi-sélectionnable. */
                     var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == true && x.Code == f.Key);
                     if (def == null)
                     {
@@ -563,7 +563,7 @@ namespace Kinetix.Search.Elastic
                     }
 
                     var handler = GetHandler(def);
-                        /* On fait un "OR" sur toutes les valeurs sélectionnées. */
+                    /* On fait un "OR" sur toutes les valeurs sélectionnées. */
                     return _builder.BuildOrQuery(f.Value.Select(s => handler.CreateFacetSubQuery(s, def, input.Portfolio)).ToArray());
                 })
                 .Where(f => f != null)
@@ -711,12 +711,7 @@ namespace Kinetix.Search.Elastic
         /// <returns>Handler.</returns>
         private IFacetHandler<TDocument> GetHandler(IFacetDefinition def)
         {
-            if (def.GetType() == typeof(PortfolioFacet))
-            {
-                return _portfolioHandler;
-            }
-
-            return _standardHandler;
+            return def.GetType() == typeof(PortfolioFacet) ? _portfolioHandler : _standardHandler;
         }
 
         public ISearchStore<TDocument> RegisterDataSource(string dataSourceName)
@@ -752,13 +747,7 @@ namespace Kinetix.Search.Elastic
             /// <summary>
             /// Indique si le tri est défini.
             /// </summary>
-            public bool HasSort
-            {
-                get
-                {
-                    return !string.IsNullOrEmpty(FieldName);
-                }
-            }
+            public bool HasSort => !string.IsNullOrEmpty(FieldName);
         }
     }
 }

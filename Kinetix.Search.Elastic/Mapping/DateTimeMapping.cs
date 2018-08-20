@@ -10,7 +10,8 @@ namespace Kinetix.Search.Elastic.Mapping
     public class DateTimeMapping : IElasticMapping<DateTime>
     {
         /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapFullText<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public PropertiesDescriptor<TDocument> MapFullText<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             throw new NotSupportedException();
         }
@@ -34,13 +35,15 @@ namespace Kinetix.Search.Elastic.Mapping
         }
 
         /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapTerm<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public PropertiesDescriptor<TDocument> MapTerm<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             throw new NotSupportedException();
         }
 
         /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapTerms<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public PropertiesDescriptor<TDocument> MapTerms<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             throw new NotSupportedException();
         }

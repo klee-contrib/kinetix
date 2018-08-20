@@ -49,7 +49,7 @@ namespace Kinetix.Search.Elastic
                     sb.Append(ex.Error);
                 }
 
-                string message = sb.ToString();
+                var message = sb.ToString();
                 throw new ElasticException(message);
             }
 

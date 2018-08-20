@@ -36,7 +36,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// <returns><code>True</code> si l'objet est valide, <code>False</code> sinon.</returns>
         public override bool IsValid(object value)
         {
-            string strValue = value as string;
+            var strValue = value as string;
             return base.IsValid(value) && (strValue == null || _mailRegex.IsMatch(strValue));
         }
 
@@ -47,7 +47,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// <returns>Message d'erreur.</returns>
         public override string FormatErrorMessage(string name)
         {
-            return String.Format(CultureInfo.CurrentCulture, SR.ErrorConstraintEmail, this.MaximumLength);
+            return string.Format(CultureInfo.CurrentCulture, SR.ErrorConstraintEmail, MaximumLength);
         }
     }
 }

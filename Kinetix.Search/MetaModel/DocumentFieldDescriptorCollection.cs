@@ -44,10 +44,7 @@ namespace Kinetix.Search.MetaModel
                 }
             }
 
-            set
-            {
-                _properties[propertyName] = value;
-            }
+            set => _properties[propertyName] = value;
         }
 
         /// <summary>

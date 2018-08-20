@@ -37,11 +37,10 @@ namespace Kinetix.ComponentModel.Formatters
             }
 
             // conversion en booléen
-            if (!bool.TryParse(text, out bool value))
+            if (!bool.TryParse(text, out var value))
             {
-
                 // vérification du format de saisie
-                string numeroFormat = @"^(true|True|oui|Oui|1)$";
+                var numeroFormat = @"^(true|True|oui|Oui|1)$";
                 if (Regex.IsMatch(text, numeroFormat))
                 {
                     return true;
@@ -66,12 +65,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>La valeur du booléen en string.</returns>
         protected override string InternalConvertToString(bool? value)
         {
-            if (!value.HasValue)
-            {
-                return Undefined;
-            }
-
-            return value.Value ? True : False;
+            return !value.HasValue ? Undefined : value.Value ? True : False;
         }
     }
 }

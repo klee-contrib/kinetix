@@ -18,12 +18,9 @@ namespace Kinetix.Services
             {
                 var referencedAssemblies = assemblies.SelectMany(GetReferencedAssemblyNames).Select(Assembly.Load);
 
-                if (!referencedAssemblies.Any())
-                {
-                    return new List<Assembly>();
-                }
-
-                return assemblies.Concat(GetReferencedAssemblies(referencedAssemblies)).Distinct();
+                return !referencedAssemblies.Any()
+                    ? new List<Assembly>()
+                    : assemblies.Concat(GetReferencedAssemblies(referencedAssemblies)).Distinct();
             }
 
             var contractTypes = new List<Type>();

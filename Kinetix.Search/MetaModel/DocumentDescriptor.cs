@@ -49,7 +49,7 @@ namespace Kinetix.Search.MetaModel
                 var docAttr = property.GetCustomAttribute<DocumentFieldAttribute>();
                 var searchAttr = property.GetCustomAttribute<SearchFieldAttribute>();
 
-                string fieldName = ToCamelCase(property.Name);
+                var fieldName = ToCamelCase(property.Name);
                 var description = new DocumentFieldDescriptor(
                     property.Name,
                     fieldName,
@@ -70,12 +70,7 @@ namespace Kinetix.Search.MetaModel
         /// <returns>Chaîne en camelCase.</returns>
         private string ToCamelCase(string raw)
         {
-            if (string.IsNullOrEmpty(raw))
-            {
-                return raw;
-            }
-
-            return char.ToLower(raw[0]) + raw.Substring(1);
+            return string.IsNullOrEmpty(raw) ? raw : char.ToLower(raw[0]) + raw.Substring(1);
         }
 
         /// <summary>
@@ -85,7 +80,7 @@ namespace Kinetix.Search.MetaModel
         /// <returns>Description des propriétés.</returns>
         private DocumentDefinition GetDefinitionInternal(Type beanType)
         {
-            if (!_beanDefinitionDictionnary.TryGetValue(beanType, out DocumentDefinition definition))
+            if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
             {
                 var documentType = beanType.GetCustomAttribute<SearchDocumentTypeAttribute>();
                 if (documentType == null)

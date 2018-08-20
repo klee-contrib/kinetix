@@ -79,14 +79,9 @@ namespace Kinetix.Services
         /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
         public ICollection<T> GetReferenceList<T>(string referenceName = null)
         {
-            if (referenceName == null)
-            {
-                return GetReferenceList(typeof(T)).Cast<T>().ToList();
-            }
-            else
-            {
-                return GetReferenceList(referenceName).Cast<T>().ToList();
-            }
+            return referenceName == null
+                ? GetReferenceList(typeof(T)).Cast<T>().ToList()
+                : GetReferenceList(referenceName).Cast<T>().ToList();
         }
 
         /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(Func{T, bool}, string)" />
@@ -166,9 +161,9 @@ namespace Kinetix.Services
                 var attribute = method.GetCustomAttribute<ReferenceAccessorAttribute>();
                 if (attribute != null)
                 {
-                    if (!returnType.IsGenericType || (
+                    if (!returnType.IsGenericType ||
                         !typeof(ICollection<>).Equals(returnType.GetGenericTypeDefinition()) &&
-                        returnType.GetGenericTypeDefinition().GetInterface(typeof(ICollection<>).Name) == null))
+                        returnType.GetGenericTypeDefinition().GetInterface(typeof(ICollection<>).Name) == null)
                     {
                         throw new NotSupportedException($"L'accesseur {method.Name} doit retourner une ICollection générique.");
                     }

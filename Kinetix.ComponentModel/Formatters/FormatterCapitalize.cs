@@ -9,7 +9,6 @@ namespace Kinetix.ComponentModel.Formatters
     /// </summary>
     public class FormatterCapitalize : AbstractFormatter<string>
     {
-
         /// <summary>
         /// Convertit une chaîne entrée en majuscule.
         /// </summary>
@@ -42,7 +41,7 @@ namespace Kinetix.ComponentModel.Formatters
                 return null;
             }
 
-            Regex regex = new Regex(@"\b\w");
+            var regex = new Regex(@"\b\w");
             return regex.Replace(text.ToLower(CultureInfo.CurrentUICulture), UpperMatchEvaluator);
         }
 

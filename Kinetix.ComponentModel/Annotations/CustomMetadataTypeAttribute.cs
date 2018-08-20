@@ -15,7 +15,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// <exception cref="System.ArgumentNullException">Si type vaut <code>Null</code>.</exception>
         public CustomMetadataTypeAttribute(Type metadataClassType)
         {
-            this.MetadataClassType = metadataClassType ?? throw new ArgumentNullException("metadataClassType");
+            MetadataClassType = metadataClassType ?? throw new ArgumentNullException("metadataClassType");
         }
 
         /// <summary>

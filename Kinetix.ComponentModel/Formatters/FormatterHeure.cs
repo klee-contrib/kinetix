@@ -20,7 +20,7 @@ namespace Kinetix.ComponentModel.Formatters
                 return null;
             }
 
-            if (TimeSpan.TryParseExact(text, this.FormatString, CultureInfo.CurrentCulture, TimeSpanStyles.None, out TimeSpan result))
+            if (TimeSpan.TryParseExact(text, FormatString, CultureInfo.CurrentCulture, TimeSpanStyles.None, out var result))
             {
                 return result;
             }
@@ -35,7 +35,7 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>Représentation textuelle.</returns>
         protected override string InternalConvertToString(TimeSpan? value)
         {
-            return value.HasValue ? value.GetValueOrDefault().ToString(this.FormatString, DateTimeFormatInfo.CurrentInfo) : null;
+            return value.HasValue ? value.GetValueOrDefault().ToString(FormatString, DateTimeFormatInfo.CurrentInfo) : null;
         }
     }
 }

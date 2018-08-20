@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Reflection;
 using Kinetix.ComponentModel.Annotations;
 
 namespace Kinetix.ComponentModel
@@ -36,7 +35,7 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException(nameof(bean));
             }
 
-            TChild newBean = new TChild();
+            var newBean = new TChild();
             FillBean(bean, newBean);
             return newBean;
         }
@@ -58,16 +57,16 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException(nameof(childBean));
             }
 
-            BeanDefinition definitionBean = _beanDescriptor.GetDefinition(parentBean);
-            BeanDefinition definitionNewBean = _beanDescriptor.GetDefinition(childBean);
+            var definitionBean = _beanDescriptor.GetDefinition(parentBean);
+            var definitionNewBean = _beanDescriptor.GetDefinition(childBean);
 
-            bool isMetadataProvided = typeof(TChild).GetCustomAttributes(typeof(MetadataTypeProviderAttribute), true).Length != 0;
+            var isMetadataProvided = typeof(TChild).GetCustomAttributes(typeof(MetadataTypeProviderAttribute), true).Length != 0;
 
-            foreach (BeanPropertyDescriptor property in definitionBean.Properties)
+            foreach (var property in definitionBean.Properties)
             {
                 if (isMetadataProvided && property.IsReadOnly)
                 {
-                    PropertyInfo propertyDescriptor = typeof(TChild).GetProperty(property.PropertyName);
+                    var propertyDescriptor = typeof(TChild).GetProperty(property.PropertyName);
                     if (propertyDescriptor.CanWrite)
                     {
                         propertyDescriptor.SetValue(childBean, property.GetValue(parentBean), null);
@@ -79,9 +78,9 @@ namespace Kinetix.ComponentModel
                 }
                 else if (property.PropertyType.IsGenericType && typeof(ICollection<>).Equals(property.PropertyType.GetGenericTypeDefinition()))
                 {
-                    IList values = (IList)property.GetValue(parentBean);
-                    IList newBeanValues = (IList)property.GetValue(childBean);
-                    foreach (object value in values)
+                    var values = (IList)property.GetValue(parentBean);
+                    var newBeanValues = (IList)property.GetValue(childBean);
+                    foreach (var value in values)
                     {
                         newBeanValues.Add(value);
                     }
@@ -123,7 +122,7 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException(nameof(listeChild));
             }
 
-            foreach (TParent tmp in listeParent)
+            foreach (var tmp in listeParent)
             {
                 listeChild.Add(CreateBean(tmp));
             }
@@ -165,8 +164,8 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException("bean");
             }
 
-            BeanDefinition definitionBean = _beanDescriptor.GetDefinition(bean);
-            foreach (BeanPropertyDescriptor property in definitionBean.Properties)
+            var definitionBean = _beanDescriptor.GetDefinition(bean);
+            foreach (var property in definitionBean.Properties)
             {
                 if (!property.IsReadOnly)
                 {
@@ -174,12 +173,12 @@ namespace Kinetix.ComponentModel
                 }
                 else if (property.PropertyType.IsGenericType && typeof(ICollection<>).Equals(property.PropertyType.GetGenericTypeDefinition()))
                 {
-                    IList list = (IList)property.GetValue(bean);
+                    var list = (IList)property.GetValue(bean);
                     list.Clear();
                 }
                 else if (property.PrimitiveType == null)
                 {
-                    IBeanFactory factory = CreateBeanFactory(property.PropertyType);
+                    var factory = CreateBeanFactory(property.PropertyType);
                     factory.ResetBean(property.GetValue(bean));
                 }
             }
@@ -202,14 +201,14 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException("target");
             }
 
-            foreach (BeanPropertyDescriptor property in _properties)
+            foreach (var property in _properties)
             {
-                PropertyDescriptor prop = _nativeProperties[property.PropertyName];
+                var prop = _nativeProperties[property.PropertyName];
                 if (property.PrimitiveType != null || property.PropertyType.IsEnum)
                 {
                     if (!property.IsReadOnly)
                     {
-                        object initialValue = prop.GetValue(source);
+                        var initialValue = prop.GetValue(source);
 
                         // Si la propriété est un type primitif ou un enum, copie directe.
                         prop.SetValue(target, initialValue);
@@ -218,29 +217,28 @@ namespace Kinetix.ComponentModel
                 else if (!property.PropertyType.IsGenericType &&
                   property.PropertyType.GetConstructor(EmptyConstructorArgs) != null)
                 {
-                    IBeanFactory factory = CreateBeanFactory(property.PropertyType);
+                    var factory = CreateBeanFactory(property.PropertyType);
                     if (prop.IsReadOnly)
                     {
-                        object initialValue = prop.GetValue(source);
+                        var initialValue = prop.GetValue(source);
                         factory.CloneBean(initialValue, prop.GetValue(target));
                     }
                     else
                     {
 
                         // Si la propriété n'est pas générique et qu'un constructeur publique par défaut existe, recopie par BeanFactory.
-                        object initialValue = prop.GetValue(source);
+                        var initialValue = prop.GetValue(source);
                         prop.SetValue(target, factory.CloneBean(initialValue));
                     }
                 }
                 else
                 {
-                    if (IsGenericCollection(property.PropertyType, out Type typeFactory, out Type innerType))
+                    if (IsGenericCollection(property.PropertyType, out var typeFactory, out var innerType))
                     {
-                        ICollection collection = property.GetValue(source) as ICollection;
-                        IList valueList = (IList)prop.GetValue(target);
-                        if (collection != null && valueList != null)
+                        var valueList = (IList)prop.GetValue(target);
+                        if (property.GetValue(source) is ICollection collection && valueList != null)
                         {
-                            foreach (object item in collection)
+                            foreach (var item in collection)
                             {
                                 valueList.Add(item);
                             }
@@ -257,7 +255,7 @@ namespace Kinetix.ComponentModel
         /// <returns>Le bean cloné.</returns>
         public T CloneBean(T bean)
         {
-            T newBean = Activator.CreateInstance<T>();
+            var newBean = Activator.CreateInstance<T>();
             if (bean != null)
             {
                 CloneBean(bean, newBean);
@@ -283,7 +281,7 @@ namespace Kinetix.ComponentModel
         /// <param name="target">Cible de la copie.</param>
         void IBeanFactory.CloneBean(object source, object target)
         {
-            this.CloneBean((T)source, (T)target);
+            CloneBean((T)source, (T)target);
         }
 
         /// <summary>
@@ -306,7 +304,7 @@ namespace Kinetix.ComponentModel
         {
             if (propertyType.IsGenericType)
             {
-                Type generic = propertyType.GetGenericTypeDefinition();
+                var generic = propertyType.GetGenericTypeDefinition();
                 if (typeof(ICollection<>).Equals(generic))
                 {
                     innerType = propertyType.GetGenericArguments()[0];
@@ -327,7 +325,7 @@ namespace Kinetix.ComponentModel
         /// <returns>BeanFactory.</returns>
         private static IBeanFactory CreateBeanFactory(Type type)
         {
-            Type factoryType = typeof(BeanFactory<>).MakeGenericType(type);
+            var factoryType = typeof(BeanFactory<>).MakeGenericType(type);
             return (IBeanFactory)Activator.CreateInstance(factoryType);
         }
     }

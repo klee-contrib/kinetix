@@ -26,8 +26,8 @@ namespace Kinetix.ComponentModel.Annotations
         /// </summary>
         public NumeroSiretAttribute()
         {
-            this.ErrorMessageResourceType = typeof(SR);
-            this.ErrorMessageResourceName = "SiretConstraintError";
+            ErrorMessageResourceType = typeof(SR);
+            ErrorMessageResourceName = "SiretConstraintError";
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// <returns><code>True</code> si le numéro SIRET est valide, <code>false</code> sinon.</returns>
         public override bool IsValid(object value)
         {
-            string siret = value as string;
+            var siret = value as string;
 
             if (string.IsNullOrEmpty(siret))
             {
@@ -49,14 +49,14 @@ namespace Kinetix.ComponentModel.Annotations
                 return false;
             }
 
-            int sumOfDigits = 0;
-            for (int i = 0; i < siret.Length; i++)
+            var sumOfDigits = 0;
+            for (var i = 0; i < siret.Length; i++)
             {
-                int tmp = (siret[i] - '0') * (((i + 1) % 2) + 1);
-                sumOfDigits += (tmp / 10) + (tmp % 10);
+                var tmp = (siret[i] - '0') * ((i + 1) % 2 + 1);
+                sumOfDigits += tmp / 10 + tmp % 10;
             }
 
-            return (sumOfDigits % 10) == 0;
+            return sumOfDigits % 10 == 0;
         }
     }
 }

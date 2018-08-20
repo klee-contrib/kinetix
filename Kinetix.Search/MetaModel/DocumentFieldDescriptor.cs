@@ -20,11 +20,11 @@ namespace Kinetix.Search.MetaModel
         /// <param name="fieldCategory">Catégorie de recherche de la propriété.</param>
         internal DocumentFieldDescriptor(string propertyName, string fieldName, Type propertyType, DocumentFieldCategory? docCategory, SearchFieldCategory? fieldCategory)
         {
-            this.PropertyName = propertyName;
-            this.FieldName = fieldName;
-            this.PropertyType = propertyType;
-            this.DocumentCategory = docCategory;
-            this.SearchCategory = fieldCategory;
+            PropertyName = propertyName;
+            FieldName = fieldName;
+            PropertyType = propertyType;
+            DocumentCategory = docCategory;
+            SearchCategory = fieldCategory;
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace Kinetix.Search.MetaModel
         /// <returns>Valeur.</returns>
         public object GetValue(object bean)
         {
-            object value = TypeDescriptor.GetProperties(bean)[this.PropertyName].GetValue(bean);
+            var value = TypeDescriptor.GetProperties(bean)[PropertyName].GetValue(bean);
             return value;
         }
 
@@ -90,7 +90,7 @@ namespace Kinetix.Search.MetaModel
         /// <param name="value">Valeur.</param>
         public void SetValue(object bean, object value)
         {
-            PropertyDescriptor descriptor = TypeDescriptor.GetProperties(bean)[this.PropertyName];
+            var descriptor = TypeDescriptor.GetProperties(bean)[PropertyName];
             descriptor.SetValue(bean, value);
         }
 
@@ -100,7 +100,7 @@ namespace Kinetix.Search.MetaModel
         /// <returns>Chaîne de caractère représentant l'objet.</returns>
         public override string ToString()
         {
-            return this.PropertyName;
+            return PropertyName;
         }
     }
 }

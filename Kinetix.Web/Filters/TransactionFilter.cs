@@ -53,8 +53,6 @@ namespace Kinetix.Web.Filters
             _context.Database.BeginTransaction();
         }
 
-        public void OnPageHandlerSelected(PageHandlerSelectedContext context)
-        {
-        }
+        public void OnPageHandlerSelected(PageHandlerSelectedContext context) { }
     }
 }

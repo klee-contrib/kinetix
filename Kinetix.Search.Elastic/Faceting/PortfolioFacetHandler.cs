@@ -36,7 +36,7 @@ namespace Kinetix.Search.Elastic.Faceting
             }
 
             /* Récupère le nom du champ. */
-            string fieldName = _document.Fields[facet.FieldName].FieldName;
+            var fieldName = _document.Fields[facet.FieldName].FieldName;
 
             /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
             var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(_builder, facet, facetList, selectedFacets, CreateFacetSubQuery);

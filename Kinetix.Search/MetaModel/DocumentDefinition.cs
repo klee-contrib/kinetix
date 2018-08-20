@@ -18,21 +18,21 @@ namespace Kinetix.Search.MetaModel
         /// <param name="documentTypeName">Nom du contrat (table).</param>
         internal DocumentDefinition(Type beanType, DocumentFieldDescriptorCollection properties, string documentTypeName)
         {
-            this.BeanType = beanType;
-            this.Fields = properties;
-            this.DocumentTypeName = documentTypeName;
+            BeanType = beanType;
+            Fields = properties;
+            DocumentTypeName = documentTypeName;
             foreach (var property in properties)
             {
                 switch (property.DocumentCategory)
                 {
                     case DocumentFieldCategory.Id:
-                        this.PrimaryKey = property;
+                        PrimaryKey = property;
                         break;
                     case DocumentFieldCategory.Search:
-                        this.TextField = property;
+                        TextField = property;
                         break;
                     case DocumentFieldCategory.Security:
-                        this.SecurityField = property;
+                        SecurityField = property;
                         break;
                     default:
                         break;

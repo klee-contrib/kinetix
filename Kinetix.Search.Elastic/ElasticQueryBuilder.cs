@@ -114,16 +114,13 @@ namespace Kinetix.Search.Elastic
         /// <returns>Requête.</returns>
         public string BuildAndQuery(params string[] subQueries)
         {
-            if (subQueries == null)
-            {
-                return null;
-            }
-
-            return string.Join(
-                " AND ",
-                subQueries
-                    .Where(x => !string.IsNullOrEmpty(x))
-                    .Select(x => "(" + x + ")"));
+            return subQueries == null
+                ? null
+                : string.Join(
+                    " AND ",
+                    subQueries
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .Select(x => "(" + x + ")"));
         }
 
         /// <summary>
@@ -133,16 +130,13 @@ namespace Kinetix.Search.Elastic
         /// <returns>Requête.</returns>
         public string BuildOrQuery(params string[] subQueries)
         {
-            if (subQueries == null)
-            {
-                return null;
-            }
-
-            return string.Join(
-                " OR ",
-                subQueries
-                    .Where(x => !string.IsNullOrEmpty(x))
-                    .Select(x => "(" + x + ")"));
+            return subQueries == null
+                ? null
+                : string.Join(
+                    " OR ",
+                    subQueries
+                        .Where(x => !string.IsNullOrEmpty(x))
+                        .Select(x => "(" + x + ")"));
         }
 
         /// <summary>
@@ -170,9 +164,9 @@ namespace Kinetix.Search.Elastic
         /// <returns>Chaîne traitée.</returns>
         private static string RemoveDiacritics(string raw)
         {
-            string normalizedString = raw.Normalize(NormalizationForm.FormD);
+            var normalizedString = raw.Normalize(NormalizationForm.FormD);
             var sb = new StringBuilder();
-            foreach (char c in normalizedString)
+            foreach (var c in normalizedString)
             {
                 if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
                 {

@@ -31,8 +31,8 @@ namespace Kinetix.ComponentModel.Annotations
         public RangeDecimalAttribute(double minimum, double maximum, bool isMinimumIncluded, bool isMaximumIncluded)
             : base(minimum, maximum)
         {
-            this.IsMinimumIncluded = isMinimumIncluded;
-            this.IsMaximumIncluded = isMaximumIncluded;
+            IsMinimumIncluded = isMinimumIncluded;
+            IsMaximumIncluded = isMaximumIncluded;
         }
 
         /// <summary>
@@ -60,8 +60,8 @@ namespace Kinetix.ComponentModel.Annotations
         /// <returns>Formated error message.</returns>
         public override string FormatErrorMessage(string name)
         {
-            string s = string.Empty;
-            int i = (this.IsMaximumIncluded ? 10 : 0) + (this.IsMinimumIncluded ? 1 : 0);
+            var s = string.Empty;
+            var i = (IsMaximumIncluded ? 10 : 0) + (IsMinimumIncluded ? 1 : 0);
             switch (i)
             {
                 case 0:
@@ -77,7 +77,7 @@ namespace Kinetix.ComponentModel.Annotations
                     return base.FormatErrorMessage(name);
             }
 
-            return string.Format(CultureInfo.CurrentCulture, s, this.Minimum, this.Maximum);
+            return string.Format(CultureInfo.CurrentCulture, s, Minimum, Maximum);
         }
 
         /// <summary>
@@ -87,16 +87,16 @@ namespace Kinetix.ComponentModel.Annotations
         /// <returns>Boolean.</returns>
         public override bool IsValid(object value)
         {
-            string s = value as string;
+            var s = value as string;
             if (string.IsNullOrEmpty(s))
             {
                 return base.IsValid(value);
             }
 
-            decimal d = (decimal)new FormatterDecimal().ConvertFromString(s);
+            var d = (decimal)new FormatterDecimal().ConvertFromString(s);
             return base.IsValid(s.Replace(',', '.')) &&
-                (this.IsMinimumIncluded || (double)d > (double)this.Minimum) &&
-                (this.IsMaximumIncluded || (double)d < (double)this.Maximum);
+                (IsMinimumIncluded || (double)d > (double)Minimum) &&
+                (IsMaximumIncluded || (double)d < (double)Maximum);
         }
     }
 }

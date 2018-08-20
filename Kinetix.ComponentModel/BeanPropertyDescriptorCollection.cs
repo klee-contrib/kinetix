@@ -18,7 +18,7 @@ namespace Kinetix.ComponentModel
         /// Crée une nouvelle instance.
         /// </summary>
         /// <param name="beanType">Type du bean.</param>
-        /// <exception cref="System.ArgumentNullException">Si bean type est null.</exception>
+        /// <exception cref="ArgumentNullException">Si bean type est null.</exception>
         internal BeanPropertyDescriptorCollection(Type beanType)
         {
             _beanType = beanType ?? throw new ArgumentNullException("beanType");

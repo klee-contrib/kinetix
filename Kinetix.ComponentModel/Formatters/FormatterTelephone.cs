@@ -32,7 +32,7 @@ namespace Kinetix.ComponentModel.Formatters
             }
 
             // éliminer les espaces, les points et les slash
-            string telephone = text.Replace(@" ", string.Empty).Replace(@".", string.Empty).Replace(@"/", string.Empty).Replace(@"(", string.Empty).Replace(@")", string.Empty);
+            var telephone = text.Replace(@" ", string.Empty).Replace(@".", string.Empty).Replace(@"/", string.Empty).Replace(@"(", string.Empty).Replace(@")", string.Empty);
             if (telephone.StartsWith("+33", StringComparison.OrdinalIgnoreCase))
             {
                 if (telephone.Length == 13)
@@ -60,13 +60,13 @@ namespace Kinetix.ComponentModel.Formatters
                 return null;
             }
 
-            string telephone = value.Replace(@" ", string.Empty).Replace(@".", string.Empty).Replace(@"/", string.Empty).Replace(@"(", string.Empty).Replace(@")", string.Empty);
+            var telephone = value.Replace(@" ", string.Empty).Replace(@".", string.Empty).Replace(@"/", string.Empty).Replace(@"(", string.Empty).Replace(@")", string.Empty);
 
             if (telephone.StartsWith("+33", StringComparison.OrdinalIgnoreCase) && telephone.Length == 12)
             {
-                char[] valueArray = telephone.ToCharArray();
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < valueArray.Length; i++)
+                var valueArray = telephone.ToCharArray();
+                var sb = new StringBuilder();
+                for (var i = 0; i < valueArray.Length; i++)
                 {
                     if (i == 3 || i == 4 || i == 6 || i == 8 || i == 10)
                     {
@@ -81,9 +81,9 @@ namespace Kinetix.ComponentModel.Formatters
 
             if (telephone.StartsWith("+33", StringComparison.OrdinalIgnoreCase) && telephone.Length == 13)
             {
-                char[] valueArray = telephone.ToCharArray();
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < valueArray.Length; i++)
+                var valueArray = telephone.ToCharArray();
+                var sb = new StringBuilder();
+                for (var i = 0; i < valueArray.Length; i++)
                 {
                     if (i == 3 || i == 5 || i == 7 || i == 9 || i == 11)
                     {
@@ -102,11 +102,11 @@ namespace Kinetix.ComponentModel.Formatters
             }
             else
             {
-                char[] valueArray = telephone.ToCharArray();
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < valueArray.Length; i++)
+                var valueArray = telephone.ToCharArray();
+                var sb = new StringBuilder();
+                for (var i = 0; i < valueArray.Length; i++)
                 {
-                    if ((i > 0) && (i % 2 == 0))
+                    if (i > 0 && i % 2 == 0)
                     {
                         sb.Append(' ');
                     }

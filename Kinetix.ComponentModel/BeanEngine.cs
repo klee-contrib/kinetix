@@ -24,7 +24,7 @@ namespace Kinetix.ComponentModel
             var mapper = GetMapper<TSource, TDestination>();
 
             /* Exécute le mapping. */
-            TDestination destination = mapper.Map<TSource, TDestination>(source);
+            var destination = mapper.Map<TSource, TDestination>(source);
 
             return destination;
         }

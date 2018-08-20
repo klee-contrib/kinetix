@@ -66,7 +66,7 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException("collection");
             }
 
-            foreach (T obj in collection)
+            foreach (var obj in collection)
             {
                 Check(obj, allowPrimaryKeyNull);
             }
@@ -84,7 +84,7 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException("collection");
             }
 
-            Type collectionType = collection.GetType();
+            var collectionType = collection.GetType();
             if (collectionType.IsArray)
             {
                 return GetDefinition(collectionType.GetElementType());
@@ -100,7 +100,7 @@ namespace Kinetix.ComponentModel
                     "collection");
             }
 
-            Type genericDefinition = collectionType.GetGenericTypeDefinition();
+            var genericDefinition = collectionType.GetGenericTypeDefinition();
             if (genericDefinition.GetInterface(typeof(ICollection<>).Name) == null)
             {
                 throw new NotSupportedException(
@@ -110,15 +110,15 @@ namespace Kinetix.ComponentModel
                         genericDefinition.Name));
             }
 
-            Type objectType = collectionType.GetGenericArguments()[0];
-            ICollection coll = (ICollection)collection;
+            var objectType = collectionType.GetGenericArguments()[0];
+            var coll = (ICollection)collection;
             if (typeof(ICustomTypeDescriptor).IsAssignableFrom(objectType) && coll.Count != 0)
             {
-                object customObject = coll.Cast<object>().FirstOrDefault();
+                var customObject = coll.Cast<object>().FirstOrDefault();
                 return GetDefinition(customObject);
             }
 
-            foreach (object obj in coll)
+            foreach (var obj in coll)
             {
                 objectType = obj.GetType();
                 break;
@@ -181,30 +181,30 @@ namespace Kinetix.ComponentModel
         /// <returns>Collection.</returns>
         private BeanPropertyDescriptorCollection CreateCollection(PropertyDescriptorCollection properties, PropertyDescriptor defaultProperty, Type beanType)
         {
-            BeanPropertyDescriptorCollection coll = new BeanPropertyDescriptorCollection(beanType);
-            for (int i = 0; i < properties.Count; i++)
+            var coll = new BeanPropertyDescriptorCollection(beanType);
+            for (var i = 0; i < properties.Count; i++)
             {
-                PropertyDescriptor property = properties[i];
+                var property = properties[i];
 
-                KeyAttribute keyAttr = (KeyAttribute)property.Attributes[typeof(KeyAttribute)];
-                DisplayAttribute displayAttr = (DisplayAttribute)property.Attributes[typeof(DisplayAttribute)];
-                ReferencedTypeAttribute attr = (ReferencedTypeAttribute)property.Attributes[typeof(ReferencedTypeAttribute)];
-                ColumnAttribute colAttr = (ColumnAttribute)property.Attributes[typeof(ColumnAttribute)];
-                DomainAttribute domainAttr = (DomainAttribute)property.Attributes[typeof(DomainAttribute)];
-                RequiredAttribute requiredAttr = (RequiredAttribute)property.Attributes[typeof(RequiredAttribute)];
-                Type[] genericArgumentArray = beanType.GetGenericArguments();
+                var keyAttr = (KeyAttribute)property.Attributes[typeof(KeyAttribute)];
+                var displayAttr = (DisplayAttribute)property.Attributes[typeof(DisplayAttribute)];
+                var attr = (ReferencedTypeAttribute)property.Attributes[typeof(ReferencedTypeAttribute)];
+                var colAttr = (ColumnAttribute)property.Attributes[typeof(ColumnAttribute)];
+                var domainAttr = (DomainAttribute)property.Attributes[typeof(DomainAttribute)];
+                var requiredAttr = (RequiredAttribute)property.Attributes[typeof(RequiredAttribute)];
+                var genericArgumentArray = beanType.GetGenericArguments();
 
                 string display = null;
                 if (displayAttr != null)
                 {
                     if (displayAttr.ResourceType != null && displayAttr.Name != null)
                     {
-                        if (!_resourceTypeMap.TryGetValue(displayAttr.ResourceType, out Dictionary<string, PropertyInfo> resourceProperties))
+                        if (!_resourceTypeMap.TryGetValue(displayAttr.ResourceType, out var resourceProperties))
                         {
                             resourceProperties = new Dictionary<string, PropertyInfo>();
                             _resourceTypeMap[displayAttr.ResourceType] = resourceProperties;
 
-                            foreach (PropertyInfo p in displayAttr.ResourceType.GetProperties(BindingFlags.Public | BindingFlags.Static))
+                            foreach (var p in displayAttr.ResourceType.GetProperties(BindingFlags.Public | BindingFlags.Static))
                             {
                                 resourceProperties.Add(p.Name, p);
                             }
@@ -218,14 +218,14 @@ namespace Kinetix.ComponentModel
                     }
                 }
 
-                string memberName = colAttr?.Name;
-                bool isPrimaryKey = keyAttr != null;
-                bool isRequired = requiredAttr != null;
-                string domainName = domainAttr?.Name;
-                bool isDefault = property.Equals(defaultProperty) || (DefaultPropertyDefaultName.Equals(property.Name) && defaultProperty == null);
-                Type referenceType = attr?.ReferenceType;
-                bool isBrowsable = property.IsBrowsable;
-                bool isReadonly = property.IsReadOnly;
+                var memberName = colAttr?.Name;
+                var isPrimaryKey = keyAttr != null;
+                var isRequired = requiredAttr != null;
+                var domainName = domainAttr?.Name;
+                var isDefault = property.Equals(defaultProperty) || DefaultPropertyDefaultName.Equals(property.Name) && defaultProperty == null;
+                var referenceType = attr?.ReferenceType;
+                var isBrowsable = property.IsBrowsable;
+                var isReadonly = property.IsReadOnly;
 
                 var description = new BeanPropertyDescriptor(
                     _domainManager,
@@ -285,17 +285,17 @@ namespace Kinetix.ComponentModel
         /// <returns>Description des propriétés.</returns>
         private BeanDefinition GetDefinitionInternal(Type beanType, object bean)
         {
-            Type descriptionType = beanType;
+            var descriptionType = beanType;
 
-            if (!_beanDefinitionDictionnary.TryGetValue(descriptionType, out BeanDefinition definition))
+            if (!_beanDefinitionDictionnary.TryGetValue(descriptionType, out var definition))
             {
-                TableAttribute table = (TableAttribute)TypeDescriptor.GetAttributes(beanType)[typeof(TableAttribute)];
-                string contractName = table?.Name;
+                var table = (TableAttribute)TypeDescriptor.GetAttributes(beanType)[typeof(TableAttribute)];
+                var contractName = table?.Name;
 
-                object[] attrs = beanType.GetCustomAttributes(typeof(ReferenceAttribute), false);
-                bool isReference = attrs.Length == 1;
-                bool isStatic = isReference ? ((ReferenceAttribute)attrs[0]).IsStatic : false;
-                BeanPropertyDescriptorCollection properties = CreateBeanPropertyCollection(beanType, bean);
+                var attrs = beanType.GetCustomAttributes(typeof(ReferenceAttribute), false);
+                var isReference = attrs.Length == 1;
+                var isStatic = isReference ? ((ReferenceAttribute)attrs[0]).IsStatic : false;
+                var properties = CreateBeanPropertyCollection(beanType, bean);
 
                 definition = new BeanDefinition(beanType, properties, contractName, isReference, isStatic);
                 if (bean == null && !typeof(ICustomTypeDescriptor).IsAssignableFrom(beanType))
@@ -315,6 +315,5 @@ namespace Kinetix.ComponentModel
         {
             _beanDefinitionDictionnary.Remove(descriptionType);
         }
-
     }
 }

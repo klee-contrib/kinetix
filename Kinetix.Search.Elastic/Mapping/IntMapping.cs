@@ -10,13 +10,15 @@ namespace Kinetix.Search.Elastic.Mapping
     public class IntMapping : IElasticMapping<int>
     {
         /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapFullText<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public PropertiesDescriptor<TDocument> MapFullText<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             throw new NotSupportedException();
         }
 
         /// <inheritdoc />
-        public virtual PropertiesDescriptor<TDocument> MapResult<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public virtual PropertiesDescriptor<TDocument> MapResult<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             return selector.Number(x => x
                 .Name(field.FieldName)
@@ -26,13 +28,15 @@ namespace Kinetix.Search.Elastic.Mapping
         }
 
         /// <inheritdoc />
-        public virtual PropertiesDescriptor<TDocument> MapSort<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public virtual PropertiesDescriptor<TDocument> MapSort<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             return MapTerm(selector, field);
         }
 
         /// <inheritdoc />
-        public virtual PropertiesDescriptor<TDocument> MapTerm<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public virtual PropertiesDescriptor<TDocument> MapTerm<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             return selector.Number(x => x
                 .Name(field.FieldName)
@@ -42,7 +46,8 @@ namespace Kinetix.Search.Elastic.Mapping
         }
 
         /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapTerms<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field) where TDocument : class
+        public PropertiesDescriptor<TDocument> MapTerms<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+            where TDocument : class
         {
             throw new NotSupportedException();
         }

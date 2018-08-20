@@ -59,119 +59,13 @@ namespace Kinetix.ComponentModel
             RegisterDomainMetadataType();
         }
 
-        /// <summary>
-        /// Retourne la description d'un domaine.
-        /// </summary>
-        /// <param name="domainName">Nom du domaine.</param>
-        /// <returns>Domaine.</returns>
-        /// <exception cref="NotSupportedException">Si le domaine n'est pas connu.</exception>
+        /// <inheritdoc cref="IDomainManager.GetDomain(string)" />
         public IDomain GetDomain(string domainName)
         {
             return GetDomainInternal(domainName);
         }
 
-        /// <summary>
-        /// Enregistre les domaines.
-        /// </summary>
-        /// <returns>Liste des domaines créés.</returns>
-        public ICollection<IDomain> RegisterDomainMetadataType(Type type = null)
-        {
-            var domainMetadataType = type ?? typeof(TDomainMetadata);
-            var list = new List<IDomain>();
-
-            foreach (var property in domainMetadataType.GetProperties())
-            {
-                object[] attrDomainArray = property.GetCustomAttributes(typeof(DomainAttribute), false);
-                if (attrDomainArray.Length > 0)
-                {
-                    DomainAttribute domainAttr = (DomainAttribute)attrDomainArray[0];
-
-                    List<ValidationAttribute> validationAttributes = new List<ValidationAttribute>();
-                    object[] attrValidationArray = property.GetCustomAttributes(typeof(ValidationAttribute), false);
-                    foreach (ValidationAttribute validationAttribute in attrValidationArray)
-                    {
-                        validationAttributes.Add(validationAttribute);
-                        RequiredAttribute requiredAttr = validationAttribute as RequiredAttribute;
-                        StringLengthAttribute strLenAttr = validationAttribute as StringLengthAttribute;
-                        RangeAttribute rangeAttr = validationAttribute as RangeAttribute;
-                        if (requiredAttr != null)
-                        {
-                            requiredAttr.ErrorMessageResourceName = "ConstraintNotNull";
-                            requiredAttr.ErrorMessageResourceType = typeof(SR);
-                        }
-                        else if (strLenAttr != null)
-                        {
-                            strLenAttr.ErrorMessageResourceName = "ErrorConstraintStringLength";
-                            strLenAttr.ErrorMessageResourceType = typeof(SR);
-                        }
-                        else if (rangeAttr != null)
-                        {
-                            rangeAttr.ErrorMessageResourceName = "ConstraintIntervalBornes";
-                            rangeAttr.ErrorMessageResourceType = typeof(SR);
-                        }
-                    }
-
-                    TypeConverter formatter = null;
-                    object[] attrConverterArray = property.GetCustomAttributes(typeof(CustomTypeConverterAttribute), false);
-                    if (attrConverterArray.Length > 0)
-                    {
-                        CustomTypeConverterAttribute converterAttribute = (CustomTypeConverterAttribute)attrConverterArray[0];
-                        Type converterType = Type.GetType(converterAttribute.ConverterTypeName, false);
-                        if (converterType == null)
-                        {
-                            string simpleTypeName = converterAttribute.ConverterTypeName.Split(',').First();
-                            converterType = domainMetadataType.Assembly.GetType(simpleTypeName);
-                        }
-
-                        formatter = (TypeConverter)Activator.CreateInstance(converterType);
-                        IFormatter iFormatter = (IFormatter)formatter;
-                        if (!string.IsNullOrEmpty(converterAttribute.FormatString))
-                        {
-                            iFormatter.FormatString = converterAttribute.FormatString;
-                        }
-
-                        if (!string.IsNullOrEmpty(converterAttribute.Unit))
-                        {
-                            iFormatter.Unit = converterAttribute.Unit;
-                        }
-                    }
-
-                    List<Attribute> decorationAttributes = new List<Attribute>();
-                    foreach (object attribute in property.GetCustomAttributes(false))
-                    {
-                        if (attribute is DomainAttribute || attribute is TypeConverterAttribute || attribute is ValidationAttribute)
-                        {
-                            continue;
-                        }
-
-                        Attribute extraAttribute = attribute as Attribute;
-                        decorationAttributes.Add(extraAttribute);
-                    }
-
-                    IDomainChecker domain = (IDomainChecker)Activator.CreateInstance(
-                        typeof(Domain<>).MakeGenericType(property.PropertyType),
-                        domainAttr.Name,
-                        validationAttributes,
-                        formatter,
-                        decorationAttributes,
-                        false,
-                        domainAttr.ErrorMessageResourceType,
-                        domainAttr.ErrorMessageResourceName,
-                        domainAttr.MetadataPropertySuffix);
-
-                    this.RegisterDomain(domain);
-                    list.Add(domain);
-                }
-            }
-
-            return list;
-        }
-
-        /// <summary>
-        /// Retourne le domaine associé à une propriété.
-        /// </summary>
-        /// <param name="property">Description de la propriété.</param>
-        /// <returns>Null si aucun domaine n'est associé.</returns>
+        /// <inheritdoc cref="IDomainManager.GetDomain(BeanPropertyDescriptor)" />
         public IDomainChecker GetDomain(BeanPropertyDescriptor property)
         {
             IDomainChecker domain = null;
@@ -182,7 +76,7 @@ namespace Kinetix.ComponentModel
 
             if (property.DomainName == null)
             {
-                Type primitiveType = property.PrimitiveType;
+                var primitiveType = property.PrimitiveType;
                 if (primitiveType != null)
                 {
                     if (!_domainDictionary.TryGetValue(DomainPrefix + primitiveType.Name, out domain))
@@ -202,6 +96,100 @@ namespace Kinetix.ComponentModel
             }
 
             return domain;
+        }
+
+        /// <summary>
+        /// Enregistre les domaines.
+        /// </summary>
+        /// <returns>Liste des domaines créés.</returns>
+        public ICollection<IDomain> RegisterDomainMetadataType(Type type = null)
+        {
+            var domainMetadataType = type ?? typeof(TDomainMetadata);
+            var list = new List<IDomain>();
+
+            foreach (var property in domainMetadataType.GetProperties())
+            {
+                var attrDomainArray = property.GetCustomAttributes(typeof(DomainAttribute), false);
+                if (attrDomainArray.Length > 0)
+                {
+                    var domainAttr = (DomainAttribute)attrDomainArray[0];
+
+                    var validationAttributes = new List<ValidationAttribute>();
+                    var attrValidationArray = property.GetCustomAttributes(typeof(ValidationAttribute), false);
+                    foreach (ValidationAttribute validationAttribute in attrValidationArray)
+                    {
+                        validationAttributes.Add(validationAttribute);
+                        if (validationAttribute is RequiredAttribute requiredAttr)
+                        {
+                            requiredAttr.ErrorMessageResourceName = "ConstraintNotNull";
+                            requiredAttr.ErrorMessageResourceType = typeof(SR);
+                        }
+                        else if (validationAttribute is StringLengthAttribute strLenAttr)
+                        {
+                            strLenAttr.ErrorMessageResourceName = "ErrorConstraintStringLength";
+                            strLenAttr.ErrorMessageResourceType = typeof(SR);
+                        }
+                        else if (validationAttribute is RangeAttribute rangeAttr)
+                        {
+                            rangeAttr.ErrorMessageResourceName = "ConstraintIntervalBornes";
+                            rangeAttr.ErrorMessageResourceType = typeof(SR);
+                        }
+                    }
+
+                    TypeConverter formatter = null;
+                    var attrConverterArray = property.GetCustomAttributes(typeof(CustomTypeConverterAttribute), false);
+                    if (attrConverterArray.Length > 0)
+                    {
+                        var converterAttribute = (CustomTypeConverterAttribute)attrConverterArray[0];
+                        var converterType = Type.GetType(converterAttribute.ConverterTypeName, false);
+                        if (converterType == null)
+                        {
+                            var simpleTypeName = converterAttribute.ConverterTypeName.Split(',').First();
+                            converterType = domainMetadataType.Assembly.GetType(simpleTypeName);
+                        }
+
+                        formatter = (TypeConverter)Activator.CreateInstance(converterType);
+                        var iFormatter = (IFormatter)formatter;
+                        if (!string.IsNullOrEmpty(converterAttribute.FormatString))
+                        {
+                            iFormatter.FormatString = converterAttribute.FormatString;
+                        }
+
+                        if (!string.IsNullOrEmpty(converterAttribute.Unit))
+                        {
+                            iFormatter.Unit = converterAttribute.Unit;
+                        }
+                    }
+
+                    var decorationAttributes = new List<Attribute>();
+                    foreach (var attribute in property.GetCustomAttributes(false))
+                    {
+                        if (attribute is DomainAttribute || attribute is TypeConverterAttribute || attribute is ValidationAttribute)
+                        {
+                            continue;
+                        }
+
+                        var extraAttribute = attribute as Attribute;
+                        decorationAttributes.Add(extraAttribute);
+                    }
+
+                    var domain = (IDomainChecker)Activator.CreateInstance(
+                        typeof(Domain<>).MakeGenericType(property.PropertyType),
+                        domainAttr.Name,
+                        validationAttributes,
+                        formatter,
+                        decorationAttributes,
+                        false,
+                        domainAttr.ErrorMessageResourceType,
+                        domainAttr.ErrorMessageResourceName,
+                        domainAttr.MetadataPropertySuffix);
+
+                    RegisterDomain(domain);
+                    list.Add(domain);
+                }
+            }
+
+            return list;
         }
 
         /// <summary>

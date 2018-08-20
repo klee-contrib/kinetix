@@ -22,7 +22,7 @@ namespace Kinetix.ComponentModel.Formatters
 
             text = text.Replace(".", ",");
             text = text.Replace(" ", string.Empty);
-            if (decimal.TryParse(text.Trim(), NumberStyles.Number, NumberFormatInfo.CurrentInfo, out decimal result))
+            if (decimal.TryParse(text.Trim(), NumberStyles.Number, NumberFormatInfo.CurrentInfo, out var result))
             {
                 return result;
             }
@@ -39,17 +39,11 @@ namespace Kinetix.ComponentModel.Formatters
         /// <returns>Chaîne convertie.</returns>
         protected override string InternalConvertToString(decimal? value)
         {
-            if (value == null)
-            {
-                return null;
-            }
-
-            if (string.IsNullOrEmpty(this.FormatString))
-            {
-                return value.Value.ToString(CultureInfo.CurrentCulture);
-            }
-
-            return value.Value.ToString(this.FormatString, CultureInfo.CurrentCulture);
+            return value == null
+                ? null
+                : string.IsNullOrEmpty(FormatString)
+                    ? value.Value.ToString(CultureInfo.CurrentCulture)
+                    : value.Value.ToString(FormatString, CultureInfo.CurrentCulture);
         }
     }
 }

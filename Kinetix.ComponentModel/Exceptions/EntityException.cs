@@ -19,11 +19,6 @@ namespace Kinetix.ComponentModel.Exceptions
         public const string GlobalErrorKey = "globalErrors";
 
         /// <summary>
-        /// List of errors organized by store and field.
-        /// </summary>
-        private readonly IDictionary<string, object> _errorList = new Dictionary<string, object>();
-
-        /// <summary>
         /// Default constructor.
         /// </summary>
         public EntityException()
@@ -36,7 +31,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="error">Error message.</param>
         public EntityException(string error)
         {
-            this.AddError(error);
+            AddError(error);
         }
 
         /// <summary>
@@ -46,13 +41,13 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="error">Error message.</param>
         public EntityException(string fieldPath, string error)
         {
-            this.AddError(fieldPath, error);
+            AddError(fieldPath, error);
         }
 
         /// <summary>
         /// Return the list of errors.
         /// </summary>
-        public IDictionary<string, object> ErrorList => _errorList;
+        public IDictionary<string, object> ErrorList { get; } = new Dictionary<string, object>();
 
         /// <summary>
         /// Add an error for a field in a row in a list.
@@ -63,12 +58,12 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="error">Error message.</param>
         public void AddCollectionError(string fieldPath, string rowId, string rowFieldPath, string error)
         {
-            if (!_errorList.ContainsKey(fieldPath))
+            if (!ErrorList.ContainsKey(fieldPath))
             {
-                _errorList.Add(fieldPath, new Dictionary<string, IDictionary<string, string>>());
+                ErrorList.Add(fieldPath, new Dictionary<string, IDictionary<string, string>>());
             }
 
-            IDictionary<string, IDictionary<string, string>> errorDetail = (IDictionary<string, IDictionary<string, string>>)_errorList[fieldPath];
+            var errorDetail = (IDictionary<string, IDictionary<string, string>>)ErrorList[fieldPath];
             if (!errorDetail.ContainsKey(rowId))
             {
                 errorDetail.Add(rowId, new Dictionary<string, string>());
@@ -83,12 +78,12 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="message">Error message.</param>
         public void AddError(string message)
         {
-            if (!_errorList.ContainsKey(GlobalErrorKey))
+            if (!ErrorList.ContainsKey(GlobalErrorKey))
             {
-                _errorList.Add(GlobalErrorKey, new List<string>());
+                ErrorList.Add(GlobalErrorKey, new List<string>());
             }
 
-            ((ICollection<string>)_errorList[GlobalErrorKey]).Add(message);
+            ((ICollection<string>)ErrorList[GlobalErrorKey]).Add(message);
         }
 
         /// <summary>
@@ -98,7 +93,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="error">Error message.</param>
         public void AddError(string fieldPath, string error)
         {
-            _errorList.Add(fieldPath, error);
+            ErrorList.Add(fieldPath, error);
         }
 
         /// <summary>
@@ -106,7 +101,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// </summary>
         public void ThrowIfError()
         {
-            if (_errorList.Count > 0)
+            if (ErrorList.Count > 0)
             {
                 throw this;
             }

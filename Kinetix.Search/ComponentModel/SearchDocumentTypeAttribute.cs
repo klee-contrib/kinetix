@@ -14,7 +14,7 @@ namespace Kinetix.Search.ComponentModel
         /// <param name="documentTypeName">Nom du type de document.</param>
         public SearchDocumentTypeAttribute(string documentTypeName)
         {
-            this.DocumentTypeName = documentTypeName;
+            DocumentTypeName = documentTypeName;
         }
 
         /// <summary>

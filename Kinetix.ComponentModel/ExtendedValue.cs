@@ -14,8 +14,8 @@ namespace Kinetix.ComponentModel
         /// <param name="metadata">Métadonnées.</param>
         public ExtendedValue(object value, object metadata)
         {
-            this.Value = value;
-            this.Metadata = metadata;
+            Value = value;
+            Metadata = metadata;
         }
 
         /// <summary>
@@ -42,20 +42,12 @@ namespace Kinetix.ComponentModel
         /// <param name="source">Opérande de gauche.</param>
         /// <param name="test">Opérande de droite.</param>
         /// <returns>True si équivalent, False sinon.</returns>
-        public static bool operator ==(ExtendedValue source, ExtendedValue test)
-        {
-            if (object.Equals(source, null) && object.Equals(test, null))
-            {
-                return object.Equals(source, test);
-            }
-
-            if (object.Equals(source, null) && !object.Equals(test, null))
-            {
-                return test.Equals(source);
-            }
-
-            return source.Equals(test);
-        }
+        public static bool operator ==(ExtendedValue source, ExtendedValue test) =>
+            Equals(source, null) && Equals(test, null)
+                ? Equals(source, test)
+                : Equals(source, null) && !Equals(test, null)
+                    ? test.Equals(source)
+                    : source.Equals(test);
 
         /// <summary>
         /// Test l'inégalité.
@@ -63,10 +55,7 @@ namespace Kinetix.ComponentModel
         /// <param name="source">Opérande de gauche.</param>
         /// <param name="test">Opérande de droite.</param>
         /// <returns>True si équivalent, False sinon.</returns>
-        public static bool operator !=(ExtendedValue source, ExtendedValue test)
-        {
-            return !(source == test);
-        }
+        public static bool operator !=(ExtendedValue source, ExtendedValue test) => !(source == test);
 
         /// <summary>
         /// Test l'inferiorité.
@@ -107,10 +96,10 @@ namespace Kinetix.ComponentModel
         /// <returns>Indique si les objets sont égaux.</returns>
         public override bool Equals(object obj)
         {
-            ExtendedValue other = obj as ExtendedValue;
+            var other = obj as ExtendedValue;
             return other == null ?
                 base.Equals(obj) :
-                object.Equals(this.Value, other.Value) && object.Equals(this.Metadata, other.Metadata);
+                object.Equals(Value, other.Value) && object.Equals(Metadata, other.Metadata);
         }
 
         /// <summary>
@@ -135,18 +124,12 @@ namespace Kinetix.ComponentModel
                 throw new ArgumentNullException("obj");
             }
 
-            ExtendedValue value = (ExtendedValue)obj;
-            if (object.Equals(this.Value, value.Value) && object.Equals(this.Metadata, value.Metadata))
-            {
-                return 0;
-            }
-
-            if (this.Value == null)
-            {
-                return -1;
-            }
-
-            return decimal.Compare((decimal)this.Value, (decimal)value.Value);
+            var value = (ExtendedValue)obj;
+            return Equals(Value, value.Value) && Equals(Metadata, value.Metadata)
+                ? 0
+                : Value == null
+                    ? -1
+                    : decimal.Compare((decimal)Value, (decimal)value.Value);
         }
     }
 }

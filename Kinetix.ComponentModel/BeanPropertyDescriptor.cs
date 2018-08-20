@@ -44,20 +44,20 @@ namespace Kinetix.ComponentModel
             bool isBrowsable)
         {
             _domainManager = domainManager;
-            this.PropertyName = propertyName;
-            this.MemberName = memberName;
-            this.PropertyType = propertyType;
-            this.Description = description;
-            this.DomainName = domainName;
-            this.IsPrimaryKey = isPrimaryKey;
-            this.IsDefault = isDefault;
-            this.IsRequired = isRequired;
-            this.ReferenceType = referenceType;
-            this.IsReadOnly = isReadOnly;
-            this.IsBrowsable = isBrowsable;
+            PropertyName = propertyName;
+            MemberName = memberName;
+            PropertyType = propertyType;
+            Description = description;
+            DomainName = domainName;
+            IsPrimaryKey = isPrimaryKey;
+            IsDefault = isDefault;
+            IsRequired = isRequired;
+            ReferenceType = referenceType;
+            IsReadOnly = isReadOnly;
+            IsBrowsable = isBrowsable;
 
-            this.InitPrimitiveType();
-            this.CheckPropertyTypeForReference();
+            InitPrimitiveType();
+            CheckPropertyTypeForReference();
         }
 
         /// <summary>
@@ -215,7 +215,7 @@ namespace Kinetix.ComponentModel
                 return;
             }
 
-            Type valueType = value.GetType();
+            var valueType = value.GetType();
             if (valueType.IsPrimitive || typeof(decimal).Equals(valueType) || typeof(Guid).Equals(valueType) ||
                     typeof(string).Equals(valueType) || typeof(DateTime).Equals(valueType)
                     || typeof(byte[]).Equals(valueType) || typeof(TimeSpan).Equals(valueType))
@@ -236,7 +236,7 @@ namespace Kinetix.ComponentModel
 
             if (value is ExtendedValue extValue)
             {
-                this.CheckValueType(extValue.Value);
+                CheckValueType(extValue.Value);
                 return;
             }
 
@@ -253,7 +253,7 @@ namespace Kinetix.ComponentModel
         /// <returns>Valeur.</returns>
         public object ConvertFromString(string value)
         {
-            return this.Domain.ConvertFromString(value, this);
+            return Domain.ConvertFromString(value, this);
         }
 
         /// <summary>
@@ -263,7 +263,7 @@ namespace Kinetix.ComponentModel
         /// <returns>Chaine de texte.</returns>
         public string ConvertToString(object value)
         {
-            return this.Domain.ConvertToString(value, this);
+            return Domain.ConvertToString(value, this);
         }
 
         /// <summary>
@@ -274,16 +274,16 @@ namespace Kinetix.ComponentModel
         /// <returns>Valeur.</returns>
         public object GetValue(object bean, bool noExtendedValue = false)
         {
-            object value = TypeDescriptor.GetProperties(bean)[this.PropertyName].GetValue(bean);
-            if (noExtendedValue || this.Domain == null || this.Domain.MetadataPropertySuffix == null)
+            var value = TypeDescriptor.GetProperties(bean)[PropertyName].GetValue(bean);
+            if (noExtendedValue || Domain == null || Domain.MetadataPropertySuffix == null)
             {
                 return value;
             }
 
-            PropertyDescriptor propertyDescriptor = TypeDescriptor.GetProperties(bean)[this.PropertyName + this.Domain.MetadataPropertySuffix];
+            var propertyDescriptor = TypeDescriptor.GetProperties(bean)[PropertyName + Domain.MetadataPropertySuffix];
             if (propertyDescriptor == null)
             {
-                throw new NotSupportedException("ExtendedValue requires a " + this.PropertyName + this.Domain.MetadataPropertySuffix + " property to enable automatic precision.");
+                throw new NotSupportedException("ExtendedValue requires a " + PropertyName + Domain.MetadataPropertySuffix + " property to enable automatic precision.");
             }
 
             return new ExtendedValue(value, propertyDescriptor.GetValue(bean));
@@ -297,21 +297,21 @@ namespace Kinetix.ComponentModel
         /// <exception cref="System.NotSupportedException">Si la propriété est en lecture seule.</exception>
         public void SetValue(object bean, object value)
         {
-            PropertyDescriptor descriptor = TypeDescriptor.GetProperties(bean)[this.PropertyName];
+            var descriptor = TypeDescriptor.GetProperties(bean)[PropertyName];
             if (descriptor.IsReadOnly)
             {
-                throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, SR.ReadOnlyProperty, this.PropertyName));
+                throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, SR.ReadOnlyProperty, PropertyName));
             }
 
-            if (this.Domain == null || this.Domain.MetadataPropertySuffix == null)
+            if (Domain == null || Domain.MetadataPropertySuffix == null)
             {
                 descriptor.SetValue(bean, value);
                 return;
             }
 
-            ExtendedValue extValue = (ExtendedValue)value;
+            var extValue = (ExtendedValue)value;
             descriptor.SetValue(bean, extValue.Value);
-            PropertyDescriptor metadataDescriptor = TypeDescriptor.GetProperties(bean)[this.PropertyName + this.Domain.MetadataPropertySuffix];
+            var metadataDescriptor = TypeDescriptor.GetProperties(bean)[PropertyName + Domain.MetadataPropertySuffix];
             metadataDescriptor.SetValue(bean, extValue.Metadata);
         }
 
@@ -327,7 +327,7 @@ namespace Kinetix.ComponentModel
 
             // Vérifie les contraintes sur le champ,
             // la nullité du champ n'est pas vérifiée
-            this.ValidConstraints(value, true, isRequired);
+            ValidConstraints(value, true, isRequired);
         }
 
         /// <summary>
@@ -336,7 +336,7 @@ namespace Kinetix.ComponentModel
         /// <returns>Chaîne de caractère représentant l'objet.</returns>
         public override string ToString()
         {
-            return this.PropertyName;
+            return PropertyName;
         }
 
         /// <summary>
@@ -347,7 +347,7 @@ namespace Kinetix.ComponentModel
         /// <param name="isForceRequirement">Si on force le fait que la propriété est requise ou non.</param>
         internal void ValidConstraints(object value, bool checkNullValue, bool? isForceRequirement)
         {
-            bool isRequired = this.IsRequired;
+            var isRequired = IsRequired;
             if (isForceRequirement.HasValue)
             {
                 isRequired = isForceRequirement.Value;
@@ -355,7 +355,7 @@ namespace Kinetix.ComponentModel
 
             if (isRequired && checkNullValue)
             {
-                RequiredAttribute c = new RequiredAttribute { AllowEmptyStrings = false, ErrorMessageResourceType = typeof(SR), ErrorMessageResourceName = "ConstraintNotNull" };
+                var c = new RequiredAttribute { AllowEmptyStrings = false, ErrorMessageResourceType = typeof(SR), ErrorMessageResourceName = "ConstraintNotNull" };
                 if (value is ExtendedValue extVal)
                 {
                     if (!c.IsValid(extVal.Value) || !c.IsValid(extVal.Metadata))
@@ -369,7 +369,7 @@ namespace Kinetix.ComponentModel
                 }
             }
 
-            this.Domain.CheckValue(value, this);
+            Domain.CheckValue(value, this);
         }
 
         /// <summary>
