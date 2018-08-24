@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace Kinetix.Search.Elastic
 {
@@ -9,6 +8,11 @@ namespace Kinetix.Search.Elastic
     [Serializable]
     public class ElasticException : Exception
     {
+        /// <summary>
+        /// Détails de l'appel ElasticSearch.
+        /// </summary>
+        public string DebugInformation { get; set; }
+
         /// <summary>
         /// Crée un nouvelle exception.
         /// </summary>
@@ -29,20 +33,12 @@ namespace Kinetix.Search.Elastic
         /// Crée une nouvelle exception.
         /// </summary>
         /// <param name="message">Description de l'exception.</param>
-        /// <param name="innerException">Exception source.</param>
-        public ElasticException(string message, Exception innerException)
-            : base(message, innerException)
+        /// <param name="debugInformation">Détails de l'appel ElasticSearch.</param>
+        /// <param name="originalException">Exception originale.</param>
+        public ElasticException(string message, string debugInformation, Exception originalException)
+            : base(message, originalException)
         {
-        }
-
-        /// <summary>
-        /// Crée une nouvelle exception.
-        /// </summary>
-        /// <param name="info">Information de sérialisation.</param>
-        /// <param name="context">Contexte de sérialisation.</param>
-        protected ElasticException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
-        {
+            DebugInformation = debugInformation;
         }
     }
 }

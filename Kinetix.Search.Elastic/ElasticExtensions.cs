@@ -37,20 +37,7 @@ namespace Kinetix.Search.Elastic
 
             if (!response.ApiCall.Success)
             {
-                var ex = response.ServerError;
-                var sb = new StringBuilder();
-                sb.Append("Error " + response.ApiCall.HttpStatusCode + " in ");
-                sb.Append(context);
-                if (ex != null)
-                {
-                    sb.Append(" : [");
-                    sb.Append(ex.Error.Type);
-                    sb.Append("] ");
-                    sb.Append(ex.Error);
-                }
-
-                var message = sb.ToString();
-                throw new ElasticException(message);
+                throw new ElasticException($"Error in {context}", response.DebugInformation, response.OriginalException);
             }
 
             return response;
