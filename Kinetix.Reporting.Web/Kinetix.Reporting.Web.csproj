@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kinetix.Reporting\Kinetix.Reporting.csproj" />
+    <ProjectReference Include="..\Kinetix.Web\Kinetix.Web.csproj" />
+  </ItemGroup>
+
+</Project>
