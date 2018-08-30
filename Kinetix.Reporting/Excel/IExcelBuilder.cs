@@ -1,4 +1,5 @@
-﻿using ClosedXML.Excel;
+﻿using System;
+using ClosedXML.Excel;
 
 namespace Kinetix.Reporting.Excel
 {
@@ -13,11 +14,6 @@ namespace Kinetix.Reporting.Excel
         string FileName { get; set; }
 
         /// <summary>
-        /// Workbook ClosedXML, pour manipuler directement le fichier Excel en cours de construction.
-        /// </summary>
-        IXLWorkbook Workbook { get; }
-
-        /// <summary>
         /// Ajoute une Worksheet au Workbook Excel avec son constructeur.
         /// </summary>
         /// <typeparam name="T">Type de l'objet représenté dans la Worksheet.</typeparam>
@@ -28,7 +24,8 @@ namespace Kinetix.Reporting.Excel
         /// <summary>
         /// Crée le fichier binaire à partir du Workbook précédemment créé.
         /// </summary>
+        /// <param name="preBuildAction">Actions manuelles à effectuer sur le workbook avant finalisation.</param>
         /// <returns>Le fichier binaire.</returns>
-        byte[] Build();
+        byte[] Build(Action<IXLWorkbook> preBuildAction = null);
     }
 }

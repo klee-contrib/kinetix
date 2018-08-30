@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using ClosedXML.Excel;
 
 namespace Kinetix.Reporting.Excel
@@ -11,21 +12,11 @@ namespace Kinetix.Reporting.Excel
     public interface IWorksheetBuilder<T>
     {
         /// <summary>
-        /// ExcelBuilder parent.
-        /// </summary>
-        IExcelBuilder ExcelBuilder { get; set; }
-
-        /// <summary>
-        /// Worksheet ClosedXML, pour manipuler directement l'onglet Excel en cours de construction.
-        /// </summary>
-        IXLWorksheet Worksheet { get; set; }
-
-        /// <summary>
         /// Configure une nouvelle colonne dans la Worksheet.
         /// </summary>
         /// <param name="selector">Le champ à afficher dans la colonne.</param>
         /// <returns>Builder.</returns>
-        IWorksheetBuilder<T> Column(Func<T, object> selector);
+        IWorksheetBuilder<T> Column(Expression<Func<T, object>> selector);
 
         /// <summary>
         /// Configure une nouvelle colonne dans la Worksheet.
@@ -40,7 +31,7 @@ namespace Kinetix.Reporting.Excel
         /// <param name="label">Le libellé de la colonne.</param>
         /// <param name="selector">Le champ à afficher dans la colonne.</param>
         /// <returns>Builder.</returns>
-        IWorksheetBuilder<T> Column(string label, Func<T, object> selector);
+        IWorksheetBuilder<T> Column(string label, Expression<Func<T, object>> selector);
 
         /// <summary>
         /// Configure la source de données pour la Worksheet.
@@ -58,7 +49,8 @@ namespace Kinetix.Reporting.Excel
         /// <summary>
         /// Crée la Worksheet à partir de ce qui a été configuré.
         /// </summary>
+        /// <param name="postBuildAction">Actions manuelles à effectuer sur la worksheet après construction.</param>
         /// <returns>ExcelBuilder.</returns>
-        IExcelBuilder Build();
+        IExcelBuilder Build(Action<IXLWorksheet> postBuildAction = null);
     }
 }

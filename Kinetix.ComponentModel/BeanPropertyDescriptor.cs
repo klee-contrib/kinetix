@@ -190,7 +190,7 @@ namespace Kinetix.ComponentModel
         /// <summary>
         /// Retourne le domaine associé à la propriété.
         /// </summary>
-        private IDomainChecker Domain
+        public IDomainChecker Domain
         {
             get
             {

@@ -1,28 +1,26 @@
-﻿using System;
+﻿using Kinetix.ComponentModel;
 using Kinetix.Reporting.Excel;
-using Microsoft.Extensions.DependencyInjection;
+using Kinetix.Reporting.Internal.Excel;
 
 namespace Kinetix.Reporting.Internal
 {
     internal class ReportBuilder : IReportBuilder
     {
-        private readonly IServiceProvider _provider;
+        private readonly BeanDescriptor _beanDescriptor;
 
         /// <summary>
         /// Constructeur.
         /// </summary>
-        /// <param name="provider">Provider injecté.</param>
-        public ReportBuilder(IServiceProvider provider)
+        /// <param name="beanDescriptor">BeanDescriptor injecté.</param>
+        public ReportBuilder(BeanDescriptor beanDescriptor)
         {
-            _provider = provider;
+            _beanDescriptor = beanDescriptor;
         }
 
         /// <inheritdoc cref="IReportBuilder.CreateExcelReport" />
         public IExcelBuilder CreateExcelReport(string fileName)
         {
-            var excelBuilder = _provider.GetRequiredService<IExcelBuilder>();
-            excelBuilder.FileName = fileName;
-            return excelBuilder;
+            return new ExcelBuilder(_beanDescriptor, fileName);
         }
     }
 }

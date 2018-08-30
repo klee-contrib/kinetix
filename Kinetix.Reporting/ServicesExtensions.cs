@@ -1,6 +1,4 @@
-﻿using Kinetix.Reporting.Excel;
-using Kinetix.Reporting.Internal;
-using Kinetix.Reporting.Internal.Excel;
+﻿using Kinetix.Reporting.Internal;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Reporting
@@ -14,10 +12,7 @@ namespace Kinetix.Reporting
         /// <returns>ServiceCollection.</returns>
         public static IServiceCollection AddReporting(this IServiceCollection services)
         {
-            return services
-                .AddSingleton<IReportBuilder, ReportBuilder>()
-                .AddTransient<IExcelBuilder, ExcelBuilder>()
-                .AddTransient(typeof(IWorksheetBuilder<>), typeof(WorksheetBuilder<>));
+            return services.AddSingleton<IReportBuilder, ReportBuilder>();
         }
     }
 }

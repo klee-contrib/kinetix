@@ -226,6 +226,11 @@ namespace Kinetix.ComponentModel
         ICollection<ValidationAttribute> IDomainChecker.ValidationAttributes => ValidationAttributes;
 
         /// <summary>
+        /// Format.
+        /// </summary>
+        public string FormatString => _formatter.FormatString;
+
+        /// <summary>
         /// Obtient la valeur d'un attribut décoratif à partir de son type s'il a été défini, null sinon.
         /// </summary>
         /// <param name="attributeType">Type de l'attribut décoratif.</param>

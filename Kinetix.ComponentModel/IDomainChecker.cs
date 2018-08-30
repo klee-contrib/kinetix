@@ -9,6 +9,12 @@ namespace Kinetix.ComponentModel
     public interface IDomainChecker : IDomain
     {
         /// <summary>
+        /// Format.
+        /// </summary>
+
+        string FormatString { get; }
+
+        /// <summary>
         /// Retourne l'unité associée au format.
         /// </summary>
         string Unit
