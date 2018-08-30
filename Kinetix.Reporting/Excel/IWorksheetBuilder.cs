@@ -31,6 +31,13 @@ namespace Kinetix.Reporting.Excel
         /// Configure une nouvelle colonne dans la Worksheet.
         /// </summary>
         /// <param name="label">Le libellé de la colonne.</param>
+        /// <returns>Builder.</returns>
+        IWorksheetBuilder<T> Column(string label = null);
+
+        /// <summary>
+        /// Configure une nouvelle colonne dans la Worksheet.
+        /// </summary>
+        /// <param name="label">Le libellé de la colonne.</param>
         /// <param name="selector">Le champ à afficher dans la colonne.</param>
         /// <returns>Builder.</returns>
         IWorksheetBuilder<T> Column(string label, Func<T, object> selector);

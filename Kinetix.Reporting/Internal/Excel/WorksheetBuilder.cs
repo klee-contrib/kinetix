@@ -57,6 +57,12 @@ namespace Kinetix.Reporting.Internal.Excel
             return Column(string.Empty, selector);
         }
 
+        /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string)" />
+        public IWorksheetBuilder<T> Column(string label = null)
+        {
+            return Column(label, _ => null);
+        }
+
         /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string, Func{T, object})" />
         public IWorksheetBuilder<T> Column(string label, Func<T, object> selector)
         {
