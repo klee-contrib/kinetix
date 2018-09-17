@@ -17,6 +17,9 @@
         /// <inheritdoc />
         public bool IsMultiSelectable => false;
 
+        /// <inheritdoc />
+        public bool HasMissing { get; set; } = true;
+
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
         public string ResolveLabel(object primaryKey)
         {

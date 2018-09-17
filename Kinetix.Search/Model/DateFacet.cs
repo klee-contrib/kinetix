@@ -20,6 +20,9 @@ namespace Kinetix.Search.Model
         /// <inheritdoc />
         public bool IsMultiSelectable { get; set; } = false;
 
+        /// <inheritdoc />
+        public bool HasMissing { get; set; } = true;
+
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
         public string ResolveLabel(object primaryKey)
         {

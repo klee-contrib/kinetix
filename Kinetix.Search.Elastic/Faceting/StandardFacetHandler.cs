@@ -37,22 +37,33 @@ namespace Kinetix.Search.Elastic.Faceting
 
             if (!hasFilterQuery)
             {
-                agg
-                   /* Créé une agrégation sur les valeurs discrètes du champ. */
-                   .Terms(facet.Code, st => st.Field(fieldName).Size(50))
-                   /* Créé une agrégation pour les valeurs non renseignées du champ. */
-                   .Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName));
+                /* Crée une agrégation sur les valeurs discrètes du champ. */
+                agg.Terms(facet.Code, st => st.Field(fieldName).Size(50));
+
+                /* Crée une agrégation pour les valeurs non renseignées du champ. */
+                if (facet.HasMissing)
+                {
+                    agg.Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName));
+                }
             }
             else
             {
                 agg.Filter(facet.Code, f => f
                     /* Crée le filtre sur les facettes multi-sélectionnables. */
                     .Filter(q => q.QueryString(qs => qs.Query(filterQuery)))
-                    .Aggregations(aa => aa
-                        /* Créé une agrégation sur les valeurs discrètes du champ. */
-                        .Terms(facet.Code, st => st.Field(fieldName).Size(50))
-                        /* Créé une agrégation pour les valeurs non renseignées du champ. */
-                        .Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName))));
+                    .Aggregations(aa =>
+                    {
+                        /* Crée une agrégation sur les valeurs discrètes du champ. */
+                        aa.Terms(facet.Code, st => st.Field(fieldName).Size(50));
+
+                        /* Crée une agrégation pour les valeurs non renseignées du champ. */
+                        if (facet.HasMissing)
+                        {
+                            aa.Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName));
+                        }
+
+                        return aa;
+                    }));
             }
         }
 
@@ -74,16 +85,19 @@ namespace Kinetix.Search.Elastic.Faceting
             }
 
             /* Valeurs non renseignées. */
-            var missingBucket = aggs.Missing(facetDef.Code + MissingFacetPrefix);
-            if (missingBucket == null)
+            if (facetDef.HasMissing)
             {
-                missingBucket = aggs.Filter(facetDef.Code).Missing(facetDef.Code + MissingFacetPrefix);
-            }
+                var missingBucket = aggs.Missing(facetDef.Code + MissingFacetPrefix);
+                if (missingBucket == null)
+                {
+                    missingBucket = aggs.Filter(facetDef.Code).Missing(facetDef.Code + MissingFacetPrefix);
+                }
 
-            var missingCount = missingBucket.DocCount;
-            if (missingCount > 0)
-            {
-                facetOutput.Add(new FacetItem { Code = FacetConst.NullValue, Label = "focus.search.results.missing", Count = missingCount });
+                var missingCount = missingBucket.DocCount;
+                if (missingCount > 0)
+                {
+                    facetOutput.Add(new FacetItem { Code = FacetConst.NullValue, Label = "focus.search.results.missing", Count = missingCount });
+                }
             }
 
             return facetOutput;

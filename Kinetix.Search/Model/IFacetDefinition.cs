@@ -26,6 +26,11 @@
         bool IsMultiSelectable { get; }
 
         /// <summary>
+        /// Précise si on doit ajouter une valeur spéciale "missing" quand la valeur de facette n'est pas renseignée.
+        /// </summary>
+        bool HasMissing { get; set; }
+
+        /// <summary>
         /// Résout le libellé de la facette.
         /// </summary>
         /// <param name="primaryKey">Code ou libellé.</param>
