@@ -31,6 +31,11 @@
         bool HasMissing { get; set; }
 
         /// <summary>
+        /// Ordre des résultats dans la liste des valeurs.
+        /// </summary>
+        FacetOrdering Ordering { get; set; }
+
+        /// <summary>
         /// Résout le libellé de la facette.
         /// </summary>
         /// <param name="primaryKey">Code ou libellé.</param>

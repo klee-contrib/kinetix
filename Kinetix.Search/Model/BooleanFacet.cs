@@ -20,6 +20,9 @@
         /// <inheritdoc />
         public bool HasMissing { get; set; } = true;
 
+        /// <inheritdoc />
+        public FacetOrdering Ordering { get; set; } = FacetOrdering.KeyDescending;
+
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
         public string ResolveLabel(object primaryKey)
         {

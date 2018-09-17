@@ -2,6 +2,7 @@
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
+using Nest;
 
 namespace Kinetix.Search.Elastic.Faceting
 {
@@ -35,10 +36,31 @@ namespace Kinetix.Search.Elastic.Faceting
             var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(_builder, facet, facetList, selectedFacets, CreateFacetSubQuery);
             var hasFilterQuery = !string.IsNullOrEmpty(filterQuery);
 
+            ITermsAggregation GetAgg(TermsAggregationDescriptor<TDocument> st)
+            {
+                return st
+                    .Field(fieldName)
+                    .Size(50)
+                    .Order(t =>
+                    {
+                        switch (facet.Ordering)
+                        {
+                            case FacetOrdering.KeyAscending:
+                                return t.KeyAscending();
+                            case FacetOrdering.KeyDescending:
+                                return t.KeyDescending();
+                            case FacetOrdering.CountAscending:
+                                return t.CountAscending();
+                            default:
+                                return t.CountDescending();
+                        }
+                    });
+            }
+
             if (!hasFilterQuery)
             {
                 /* Crée une agrégation sur les valeurs discrètes du champ. */
-                agg.Terms(facet.Code, st => st.Field(fieldName).Size(50));
+                agg.Terms(facet.Code, GetAgg);
 
                 /* Crée une agrégation pour les valeurs non renseignées du champ. */
                 if (facet.HasMissing)
@@ -54,7 +76,7 @@ namespace Kinetix.Search.Elastic.Faceting
                     .Aggregations(aa =>
                     {
                         /* Crée une agrégation sur les valeurs discrètes du champ. */
-                        aa.Terms(facet.Code, st => st.Field(fieldName).Size(50));
+                        aa.Terms(facet.Code, GetAgg);
 
                         /* Crée une agrégation pour les valeurs non renseignées du champ. */
                         if (facet.HasMissing)

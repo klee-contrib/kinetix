@@ -23,6 +23,9 @@ namespace Kinetix.Search.Model
         /// <inheritdoc />
         public bool HasMissing { get; set; } = true;
 
+        /// <inheritdoc />
+        public FacetOrdering Ordering { get; set; } = FacetOrdering.CountDescending;
+
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
         public string ResolveLabel(object primaryKey)
         {
