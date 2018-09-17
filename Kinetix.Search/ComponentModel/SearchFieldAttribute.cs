@@ -11,6 +11,15 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Créé une nouvelle instance de SearchFieldAttribute.
         /// </summary>
+        /// <param name="indexing">Indexage.</param>
+        public SearchFieldAttribute(SearchFieldIndexing indexing)
+        {
+            Indexing = indexing;
+        }
+
+        /// <summary>
+        /// Créé une nouvelle instance de SearchFieldAttribute.
+        /// </summary>
         /// <param name="category">Catégorie.</param>
         public SearchFieldAttribute(SearchFieldCategory category)
         {
@@ -18,12 +27,39 @@ namespace Kinetix.Search.ComponentModel
         }
 
         /// <summary>
+        /// Créé une nouvelle instance de SearchFieldAttribute.
+        /// </summary>
+        /// <param name="indexing">Indexage.</param>
+        /// <param name="category">Catégorie.</param>
+        public SearchFieldAttribute(SearchFieldCategory category, SearchFieldIndexing indexing)
+        {
+            Category = category;
+            Indexing = indexing;
+        }
+
+        /// <summary>
+        /// Créé une nouvelle instance de SearchFieldAttribute.
+        /// </summary>
+        /// <param name="category">Catégorie.</param>
+        /// <param name="indexing">Indexage.</param>
+        public SearchFieldAttribute(SearchFieldIndexing indexing, SearchFieldCategory category) : this(category, indexing)
+        {
+        }
+
+        /// <summary>
         /// Catégorie du champ.
         /// </summary>
-        public SearchFieldCategory Category
-        {
-            get;
-            private set;
-        }
+        public SearchFieldCategory Category { get; private set; }
+
+        /// <summary>
+        /// Type d'indexage du champ.
+        /// </summary>
+        public SearchFieldIndexing Indexing { get; private set; }
+
+        /// <summary>
+        /// Ordre de la propriété dans la clé primaire composite (si applicable).
+        /// </summary>
+        public int PkOrder { get; set; }
+
     }
 }

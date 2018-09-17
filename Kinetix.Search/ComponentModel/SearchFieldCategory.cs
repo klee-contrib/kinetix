@@ -6,28 +6,23 @@
     public enum SearchFieldCategory
     {
         /// <summary>
-        /// Champ de recherche : indexé tokenisé en minuscule, non stocké.
+        /// Champ normal.
         /// </summary>
-        FullText,
+        None,
 
         /// <summary>
-        /// Champ de résultat, destiné à l'affichage : non indexé, stocké.
+        /// Champ ID 
         /// </summary>
-        Result,
+        Id,
 
         /// <summary>
-        /// Champ de tri : indexé en minuscule, non stocké.
+        /// Champ de recherche 
         /// </summary>
-        Sort,
+        Search,
 
         /// <summary>
-        /// Champ de facette : indexé tel quel, non stocké.
+        /// Champ de filtrage de sécurité 
         /// </summary>
-        Term,
-
-        /// <summary>
-        /// Champ de facette contenant une liste de valeurs : indexé tel quel, non stocké.
-        /// </summary>
-        Terms
+        Security,
     }
 }

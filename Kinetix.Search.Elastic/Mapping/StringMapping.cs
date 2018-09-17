@@ -1,4 +1,6 @@
-﻿using Kinetix.Search.MetaModel;
+﻿using System;
+using Kinetix.Search.ComponentModel;
+using Kinetix.Search.MetaModel;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping
@@ -8,54 +10,31 @@ namespace Kinetix.Search.Elastic.Mapping
     /// </summary>
     public class StringMapping : IElasticMapping<string>
     {
-        /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapFullText<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+        /// <inheritdoc cref="IElasticMapping.Map" />
+        public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
             where TDocument : class
         {
-            return selector.Text(x => x
-               .Name(field.FieldName)
-               .Index(true)
-               .Store(false)
-               .Analyzer("text_fr"));
-        }
-
-        /// <inheritdoc />
-        public virtual PropertiesDescriptor<TDocument> MapResult<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class
-        {
-            return selector.Text(x => x
-                .Name(field.FieldName)
-                .Index(false)
-                .Store(true));
-        }
-
-        /// <inheritdoc />
-        public virtual PropertiesDescriptor<TDocument> MapSort<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class
-        {
-            return MapTerm(selector, field);
-        }
-
-        /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapTerm<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class
-        {
-            return selector.Keyword(x => x
-                .Name(field.FieldName)
-                .Index(true)
-                .Store(false));
-        }
-
-        /// <inheritdoc />
-        public PropertiesDescriptor<TDocument> MapTerms<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class
-        {
-            return selector.Text(x => x
-                .Name(field.FieldName)
-                .Index(true)
-                .Store(true)
-                .Analyzer("text_fr")
-                .Fielddata(true));
+            switch (field.Indexing)
+            {
+                case SearchFieldIndexing.FullText:
+                    return selector.Text(x => x
+                      .Name(field.FieldName)
+                      .Analyzer("text_fr"));
+                case SearchFieldIndexing.Term:
+                case SearchFieldIndexing.Sort:
+                    return selector.Keyword(x => x.Name(field.FieldName));
+                case SearchFieldIndexing.Terms:
+                    return selector.Text(x => x
+                        .Name(field.FieldName)
+                        .Analyzer("text_fr")
+                        .Fielddata(true));
+                case SearchFieldIndexing.None:
+                    return selector.Text(x => x
+                        .Name(field.FieldName)
+                        .Index(false));
+                default:
+                    throw new NotSupportedException();
+            }
         }
     }
 }

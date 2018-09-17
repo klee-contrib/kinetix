@@ -464,13 +464,13 @@ namespace Kinetix.Search.Elastic
 
                     var field = _definition.Fields[propName];
 
-                    switch (field.SearchCategory)
+                    switch (field.Indexing)
                     {
-                        case SearchFieldCategory.FullText:
+                        case SearchFieldIndexing.FullText:
                             filterList.Add(_builder.BuildFullTextSearch(field.FieldName, propValue));
                             break;
-                        case SearchFieldCategory.Term:
-                        case SearchFieldCategory.Terms:
+                        case SearchFieldIndexing.Term:
+                        case SearchFieldIndexing.Terms:
                             filterList.Add(_builder.BuildFilter(field.FieldName, propValue));
                             break;
                         default:
@@ -748,7 +748,7 @@ namespace Kinetix.Search.Elastic
         /// <returns>Document formaté.</returns>
         private TDocument FormatSortFields(TDocument document)
         {
-            foreach (var field in _definition.Fields.Where(x => x.SearchCategory == SearchFieldCategory.Sort && x.PropertyType == typeof(string)))
+            foreach (var field in _definition.Fields.Where(x => x.Indexing == SearchFieldIndexing.Sort && x.PropertyType == typeof(string)))
             {
                 var raw = field.GetValue(document);
                 if (raw != null)

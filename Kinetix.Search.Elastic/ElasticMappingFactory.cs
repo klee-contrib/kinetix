@@ -1,5 +1,4 @@
 ﻿using System;
-using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Elastic.Mapping;
 using Kinetix.Search.MetaModel;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,21 +55,7 @@ namespace Kinetix.Search.Elastic
                 mapper = _provider.GetService<IElasticMapping<string>>();
             }
 
-            switch (field.SearchCategory)
-            {
-                case SearchFieldCategory.FullText:
-                    return mapper.MapFullText(selector, field);
-                case SearchFieldCategory.Result:
-                    return mapper.MapResult(selector, field);
-                case SearchFieldCategory.Sort:
-                    return mapper.MapSort(selector, field);
-                case SearchFieldCategory.Term:
-                    return mapper.MapTerm(selector, field);
-                case SearchFieldCategory.Terms:
-                    return mapper.MapTerms(selector, field);
-                default:
-                    return selector;
-            }
+            return mapper.Map(selector, field);
         }
     }
 }

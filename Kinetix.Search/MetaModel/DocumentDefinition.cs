@@ -23,15 +23,15 @@ namespace Kinetix.Search.MetaModel
             DocumentTypeName = documentTypeName;
             foreach (var property in properties)
             {
-                switch (property.DocumentCategory)
+                switch (property.Category)
                 {
-                    case DocumentFieldCategory.Id:
+                    case SearchFieldCategory.Id:
                         PrimaryKey.AddProperty(property);
                         break;
-                    case DocumentFieldCategory.Search:
+                    case SearchFieldCategory.Search:
                         TextField = property;
                         break;
-                    case DocumentFieldCategory.Security:
+                    case SearchFieldCategory.Security:
                         SecurityField = property;
                         break;
                     default:
@@ -39,12 +39,12 @@ namespace Kinetix.Search.MetaModel
                 }
             }
 
-            if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Search) > 1)
+            if (properties.Count(prop => prop.Category == SearchFieldCategory.Search) > 1)
             {
                 throw new NotSupportedException($"{beanType} has multiple Search fields");
             }
 
-            if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Security) > 1)
+            if (properties.Count(prop => prop.Category == SearchFieldCategory.Security) > 1)
             {
                 throw new NotSupportedException($"{beanType} has multiple Security fields");
             }

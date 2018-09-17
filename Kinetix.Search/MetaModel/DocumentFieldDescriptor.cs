@@ -40,7 +40,7 @@ namespace Kinetix.Search.MetaModel
         /// <summary>
         /// Catégorie de field de document.
         /// </summary>
-        public DocumentFieldCategory? DocumentCategory
+        public SearchFieldCategory Category
         {
             get;
             internal set;
@@ -49,7 +49,7 @@ namespace Kinetix.Search.MetaModel
         /// <summary>
         /// Catégorie de field de recherche.
         /// </summary>
-        public SearchFieldCategory? SearchCategory
+        public SearchFieldIndexing Indexing
         {
             get;
             internal set;
@@ -58,7 +58,7 @@ namespace Kinetix.Search.MetaModel
         /// <summary>
         /// Ordre de la propriété dans la clé primaire composite (si applicable).
         /// </summary>
-        public int? PkOrder
+        public int PkOrder
         {
             get;
             internal set;

@@ -46,7 +46,6 @@ namespace Kinetix.Search.MetaModel
 
             foreach (var property in beanType.GetProperties())
             {
-                var docAttr = property.GetCustomAttribute<DocumentFieldAttribute>();
                 var searchAttr = property.GetCustomAttribute<SearchFieldAttribute>();
 
                 var fieldName = ToCamelCase(property.Name);
@@ -59,9 +58,9 @@ namespace Kinetix.Search.MetaModel
                         : property.PropertyType.IsArray
                             ? property.PropertyType.GetElementType()
                             : property.PropertyType,
-                    DocumentCategory = docAttr?.Category,
-                    SearchCategory = searchAttr?.Category,
-                    PkOrder = docAttr?.PkOrder
+                    Category = searchAttr?.Category ?? SearchFieldCategory.None,
+                    Indexing = searchAttr?.Indexing ?? SearchFieldIndexing.None,
+                    PkOrder = searchAttr?.PkOrder ?? 0
                 };
 
                 coll[description.PropertyName] = description;

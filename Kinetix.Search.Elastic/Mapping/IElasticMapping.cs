@@ -17,53 +17,13 @@ namespace Kinetix.Search.Elastic.Mapping
     public interface IElasticMapping
     {
         /// <summary>
-        /// Définit le mapping pour la catégorie FullText.
+        /// Définit le mapping pour le type..
         /// </summary>
         /// <param name="selector">Descripteur des propriétés.</param>
         /// <param name="field">Catégorie de champ.</param>
         /// <returns>Mapping de champ.</returns>
         /// <typeparam name="TDocument">Type du document.</typeparam>
-        PropertiesDescriptor<TDocument> MapFullText<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class;
-
-        /// <summary>
-        /// Définit le mapping pour la catégorie Result.
-        /// </summary>
-        /// <param name="selector">Descripteur des propriétés.</param>
-        /// <param name="field">Catégorie de champ.</param>
-        /// <returns>Mapping de champ.</returns>
-        /// <typeparam name="TDocument">Type du document.</typeparam>
-        PropertiesDescriptor<TDocument> MapResult<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class;
-
-        /// <summary>
-        /// Définit le mapping pour la catégorie Sort.
-        /// </summary>
-        /// <param name="selector">Descripteur des propriétés.</param>
-        /// <param name="field">Catégorie de champ.</param>
-        /// <returns>Mapping de champ.</returns>
-        /// <typeparam name="TDocument">Type du document.</typeparam>
-        PropertiesDescriptor<TDocument> MapSort<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class;
-
-        /// <summary>
-        /// Définit le mapping pour la catégorie Term.
-        /// </summary>
-        /// <param name="selector">Descripteur des propriétés.</param>
-        /// <param name="field">Catégorie de champ.</param>
-        /// <returns>Mapping de champ.</returns>
-        /// <typeparam name="TDocument">Type du document.</typeparam>
-        PropertiesDescriptor<TDocument> MapTerm<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class;
-
-        /// <summary>
-        /// Définit le mapping pour la catégorie Terms.
-        /// </summary>
-        /// <param name="selector">Descripteur des propriétés.</param>
-        /// <param name="field">Catégorie de champ.</param>
-        /// <returns>Mapping de champ.</returns>
-        /// <typeparam name="TDocument">Type du document.</typeparam>
-        PropertiesDescriptor<TDocument> MapTerms<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+        PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
             where TDocument : class;
     }
 }
