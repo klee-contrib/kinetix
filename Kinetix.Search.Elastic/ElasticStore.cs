@@ -20,7 +20,7 @@ namespace Kinetix.Search.Elastic
         /// <summary>
         /// Taille de cluster pour l'insertion en masse.
         /// </summary>
-        private const int ClusterSize = 2000;
+        private const int ClusterSize = 1000;
 
         private const string MissingGroupPrefix = "_Missing";
         private const string GroupAggs = "groupAggs";
@@ -90,10 +90,16 @@ namespace Kinetix.Search.Elastic
                      .Properties(selector => _factory.AddFields(selector, _definition.Fields))));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Get" />
+        /// <inheritdoc cref="ISearchStore{TDocument}.Get(string)" />
         public TDocument Get(string id)
         {
             return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath(id))).Source;
+        }
+
+        /// <inheritdoc cref="ISearchStore{TDocument}.Get(TDocument)" />
+        public TDocument Get(TDocument bean)
+        {
+            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath(bean))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Put" />
@@ -147,10 +153,16 @@ namespace Kinetix.Search.Elastic
             }
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Remove" />
+        /// <inheritdoc cref="ISearchStore{TDocument}.Remove(string)" />
         public void Remove(string id)
         {
             _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(id)));
+        }
+
+        /// <inheritdoc cref="ISearchStore{TDocument}.Remove(TDocument)" />
+        public void Remove(TDocument bean)
+        {
+            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(bean)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Flush" />
@@ -160,8 +172,16 @@ namespace Kinetix.Search.Elastic
             _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(x => x.Type(_documentTypeName)));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery" />
-        public QueryOutput<TDocument> AdvancedQuery(AdvancedQueryInput input)
+        /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery{TCriteria}(AdvancedQueryInput{TDocument, TCriteria})" />
+        public QueryOutput<TDocument> AdvancedQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
+        {
+            return AdvancedQuery(input, x => x);
+        }
+
+        /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery{TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
+        public QueryOutput<TOutput> AdvancedQuery<TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+            where TCriteria : Criteria
         {
             if (input == null)
             {
@@ -305,16 +325,16 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Extraction des résultats. */
-            var resultList = new List<TDocument>();
-            var groupResultList = new List<GroupResult<TDocument>>();
+            var resultList = new List<TOutput>();
+            var groupResultList = new List<GroupResult<TOutput>>();
             if (hasGroup)
             {
                 /* Groupement. */
                 var bucket = (BucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName];
                 foreach (KeyedBucket<object> group in bucket.Items)
                 {
-                    var list = ((TopHitsAggregate)group[_topHitName]).Documents<TDocument>().ToList();
-                    groupResultList.Add(new GroupResult<TDocument>
+                    var list = ((TopHitsAggregate)group[_topHitName]).Documents<TDocument>().Select(documentMapper).ToList();
+                    groupResultList.Add(new GroupResult<TOutput>
                     {
                         Code = group.Key.ToString(),
                         Label = facetDefList.First(f => f.Code == apiInput.Group).ResolveLabel(group.Key),
@@ -326,10 +346,10 @@ namespace Kinetix.Search.Elastic
                 /* Groupe pour les valeurs null. */
                 var nullBucket = (SingleBucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName + MissingGroupPrefix];
                 var nullTopHitAgg = (TopHitsAggregate)nullBucket[_topHitName];
-                var nullDocs = nullTopHitAgg.Documents<TDocument>().ToList();
+                var nullDocs = nullTopHitAgg.Documents<TDocument>().Select(documentMapper).ToList();
                 if (nullDocs.Any())
                 {
-                    groupResultList.Add(new GroupResult<TDocument>
+                    groupResultList.Add(new GroupResult<TOutput>
                     {
                         Code = FacetConst.NullValue,
                         Label = input.FacetQueryDefinition.FacetNullValueLabel ?? "focus.search.results.missing",
@@ -343,17 +363,16 @@ namespace Kinetix.Search.Elastic
             else
             {
                 /* Liste unique. */
-                resultList = res.Documents.ToList();
+                resultList = res.Documents.Select(documentMapper).ToList();
                 groupResultList = null;
             }
 
             /* Construction de la sortie. */
-            var output = new QueryOutput<TDocument>
+            var output = new QueryOutput<TOutput>
             {
                 List = resultList,
                 Facets = facetListOutput,
                 Groups = groupResultList,
-                Query = apiInput,
                 TotalCount = (int)res.Total
             };
 
@@ -361,7 +380,8 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedCount" />
-        public long AdvancedCount(AdvancedQueryInput input)
+        public long AdvancedCount<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             if (input == null)
             {
@@ -400,7 +420,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Requête de filtrage.</returns>
-        private string GetFilterQuery(AdvancedQueryInput input)
+        private string GetFilterQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var textSubQuery = GetTextSubQuery(input);
             var securitySubQuery = GetSecuritySubQuery(input);
@@ -414,32 +435,50 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private string GetFilterSubQuery(AdvancedQueryInput input)
+        private string GetFilterSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
-            if (input.FilterList == null || !input.FilterList.Any())
-            {
-                return string.Empty;
-            }
+            var beanProperties = typeof(TDocument).GetProperties();
+            var criteriaProperties = typeof(TCriteria).GetProperties();
 
             var filterList = new List<string>();
 
-            foreach (var entry in input.FilterList)
+            foreach (var entry in beanProperties)
             {
-                var field = _definition.Fields[entry.Key];
+                var propName = entry.Name;
+                var propValue = input.AdditionalCriteria != null
+                    ? entry.GetValue(input.AdditionalCriteria)?.ToString()
+                    : null;
 
-                switch (field.SearchCategory)
+                if (string.IsNullOrWhiteSpace(propValue))
                 {
-                    case SearchFieldCategory.FullText:
-                        filterList.Add(_builder.BuildFullTextSearch(field.FieldName, entry.Value));
-                        break;
-                    case SearchFieldCategory.Term:
-                    case SearchFieldCategory.Terms:
-                        filterList.Add(_builder.BuildFilter(field.FieldName, entry.Value));
-                        break;
-                    default:
-                        throw new ElasticException($"Cannot filter on fields that are not indexed as FullText, Term o Terms. Field: {field.FieldName}");
+                    propValue = criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(input.ApiInput.Criteria)?.ToString();
+                }
+
+                if (!string.IsNullOrWhiteSpace(propValue))
+                {
+                    if (propValue == "True")
+                    {
+                        propValue = "true";
+                    }
+
+                    var field = _definition.Fields[propName];
+
+                    switch (field.SearchCategory)
+                    {
+                        case SearchFieldCategory.FullText:
+                            filterList.Add(_builder.BuildFullTextSearch(field.FieldName, propValue));
+                            break;
+                        case SearchFieldCategory.Term:
+                        case SearchFieldCategory.Terms:
+                            filterList.Add(_builder.BuildFilter(field.FieldName, propValue));
+                            break;
+                        default:
+                            throw new ElasticException($"Cannot filter on fields that are not indexed as FullText, Term or Terms. Field: {field.FieldName}");
+                    }
                 }
             }
+
             return _builder.BuildAndQuery(filterList.ToArray());
         }
 
@@ -448,7 +487,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private string GetTextSubQuery(AdvancedQueryInput input)
+        private string GetTextSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var criteria = input.ApiInput.Criteria;
             var value = criteria?.Query;
@@ -475,7 +515,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private string GetSecuritySubQuery(AdvancedQueryInput input)
+        private string GetSecuritySubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var value = input.Security;
 
@@ -501,7 +542,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private string GetFacetSelectionSubQuery(AdvancedQueryInput input)
+        private string GetFacetSelectionSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var facetList = input.ApiInput.Facets;
             if (facetList == null || !facetList.Any())
@@ -543,7 +585,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private string GetPostFilterSubQuery(AdvancedQueryInput input)
+        private string GetPostFilterSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var facetList = input.ApiInput.Facets;
             if (facetList == null || !facetList.Any())
@@ -585,7 +628,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Définitions de facettes.</returns>
-        private ICollection<IFacetDefinition> GetFacetDefinitionList(AdvancedQueryInput input)
+        private ICollection<IFacetDefinition> GetFacetDefinitionList<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var groupFacetName = input.ApiInput.Group;
             var list = input.FacetQueryDefinition != null ? input.FacetQueryDefinition.Facets : new List<IFacetDefinition>();
@@ -617,7 +661,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Définition du tri.</returns>
-        private SortDefinition GetSortDefinition(AdvancedQueryInput input)
+        private SortDefinition GetSortDefinition<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var fieldName = input.ApiInput.SortFieldName;
 
@@ -645,7 +690,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Nom du champ.</returns>
-        private string GetGroupFieldName(AdvancedQueryInput input)
+        private string GetGroupFieldName<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria
         {
             var groupFacetName = input.ApiInput.Group;
 
@@ -681,6 +727,16 @@ namespace Kinetix.Search.Elastic
         private DocumentPath<TDocument> CreateDocumentPath(string id)
         {
             return new DocumentPath<TDocument>(id).Type(_documentTypeName);
+        }
+
+        /// <summary>
+        /// Créé un DocumentPath.
+        /// </summary>
+        /// <param name="id">ID du document.</param>
+        /// <returns>Le DocumentPath.</returns>
+        private DocumentPath<TDocument> CreateDocumentPath(TDocument document)
+        {
+            return new DocumentPath<TDocument>(_definition.PrimaryKey.GetValue(document).ToString()).Type(_documentTypeName);
         }
 
         /// <summary>

@@ -43,14 +43,5 @@ namespace Kinetix.Search.ComponentModel
             get;
             set;
         }
-
-        /// <summary>
-        /// Rappel de l'entrée de la recherche.
-        /// </summary>
-        public QueryInput Query
-        {
-            get;
-            set;
-        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Model;
 
@@ -10,37 +11,48 @@ namespace Kinetix.Search
     public static class SearchStoreExtensions
     {
         /// <summary>
-        /// Effectue une requête sur le champ text.
+        /// Effectue une requête sur le champ texte.
         /// </summary>
         /// <param name="store">Store de recherche.</param>
-        /// <param name="text">Texte à chercher.</param>
-        /// <param name="filterList">Filtres.</param>
-        /// <param name="security">Filtrage de périmètre de sécurité.</param>
-        /// <param name="top">Nombre de résultats désirés.</param>
-        /// <returns>Documents trouvés et le nombre total de résultats .</returns>
-        public static (IEnumerable<TDocument> data, int totalCount) Query<TDocument>(this ISearchStore<TDocument> store, string text, IDictionary<string, string> filterList = null, string security = null, int top = 10)
+        /// <param name="queryInput">Query input.</param>
+        /// <returns>Résultat.</returns>
+        public static (IEnumerable<TDocument> data, int totalCount) Query<TDocument>(this ISearchStore<TDocument> store, BasicQueryInput<TDocument> queryInput)
             where TDocument : class
         {
-            if (string.IsNullOrEmpty(text))
+            return store.Query(queryInput, x => x);
+        }
+
+        /// <summary>
+        /// Effectue une requête sur le champ texte.
+        /// </summary>
+        /// <param name="store">Store de recherche.</param>
+        /// <param name="queryInput">Query input.</param>
+        /// <param name="documentMapper">Mapper de document.</param>
+        /// <returns>Résultat.</returns>
+        public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore<TDocument> store, BasicQueryInput<TDocument> queryInput, Func<TDocument, TOutput> documentMapper)
+            where TDocument : class
+        {
+            if (string.IsNullOrEmpty(queryInput.Query))
             {
-                return (new List<TDocument>(), 0);
+                return (new List<TOutput>(), 0);
             }
 
-            var input = new AdvancedQueryInput
+            var input = new AdvancedQueryInput<TDocument, Criteria>
             {
                 ApiInput = new QueryInput
                 {
                     Criteria = new Criteria
                     {
-                        Query = text
+                        Query = queryInput.Query
                     },
                     Skip = 0,
-                    Top = top
+                    Top = queryInput.Top ?? 10
                 },
-                Security = security,
-                FilterList = filterList
+                Security = queryInput.Security,
+                AdditionalCriteria = queryInput.Criteria
             };
-            var output = store.AdvancedQuery(input);
+
+            var output = store.AdvancedQuery(input, documentMapper);
             return (output.List, output.TotalCount.Value);
         }
     }

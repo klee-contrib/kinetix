@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Model;
 
@@ -24,6 +25,13 @@ namespace Kinetix.Search
         TDocument Get(string id);
 
         /// <summary>
+        /// Obtient un document à partir de sa clé primaire composite.
+        /// </summary>
+        /// <param name="bean">Le bean, avec sa clé primaire composite renseignée.</param>
+        /// <returns>Document.</returns>
+        TDocument Get(TDocument bean);
+
+        /// <summary>
         /// Pose un document dans l'index.
         /// </summary>
         /// <param name="document">Document à poser.</param>
@@ -42,6 +50,12 @@ namespace Kinetix.Search
         void Remove(string id);
 
         /// <summary>
+        /// Supprime un document dans l'index.
+        /// </summary>
+        /// <param name="bean">Le document.</param>
+        void Remove(TDocument bean);
+
+        /// <summary>
         /// Supprime tous les documents.
         /// </summary>
         void Flush();
@@ -51,14 +65,25 @@ namespace Kinetix.Search
         /// </summary>
         /// <param name="input">Entrée de la recherche.</param>
         /// <returns>Sortie de la recherche.</returns>
-        QueryOutput<TDocument> AdvancedQuery(AdvancedQueryInput input);
+        QueryOutput<TDocument> AdvancedQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria;
+
+        /// <summary>
+        /// Effectue une recherche avancé.
+        /// </summary>
+        /// <param name="input">Entrée de la recherche.</param>
+        /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
+        /// <returns>Sortie de la recherche.</returns>
+        QueryOutput<TOutput> AdvancedQuery<TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+            where TCriteria : Criteria;
 
         /// <summary>
         /// Effectue un count avancé.
         /// </summary>
         /// <param name="input">Entrée de la recherche.</param>
         /// <returns>Nombre de documents.</returns>
-        long AdvancedCount(AdvancedQueryInput input);
+        long AdvancedCount<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TCriteria : Criteria;
 
         /// <summary>
         /// Enregistre une data source.

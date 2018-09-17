@@ -30,29 +30,23 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <summary>
-        /// Initialise un index avec la configuration Analyser/Tokenizer.
+        /// Initialise un index pour le document donné avec la configuration Analyser/Tokenizer.
         /// </summary>
-        /// <param name="dataSourceName">Nom de la datasource.</param>
         /// <param name="configurator">Configurateur.</param>
-        public void InitIndexes(IIndexConfigurator configurator)
+        public void InitIndex<T>(IIndexConfigurator configurator)
         {
-            DeleteIndexes();
-            foreach (var docType in _documentTypes)
-            {
-                var indexName = _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, docType);
-                _logger.LogQuery("CreateIndex", () => _client.CreateIndex(indexName, configurator.Configure));
-            }
+            DeleteIndex<T>();
+            _logger.LogQuery("CreateIndex", () =>
+                _client.CreateIndex(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)), configurator.Configure));
         }
 
         /// <summary>
-        /// Supprime tous les indexes commençant par le nom donné.
+        /// Supprime l'index pour le document donné.
         /// </summary>
-        /// <param name="client">Client ES pour la datasource voulue.</param>
-        /// <param name="indexName">Nom de l'index.</param>
-        public void DeleteIndexes()
+        public void DeleteIndex<T>()
         {
-            var indexName = _config.GetServer(ElasticConfigBuilder.ServerName).IndexName;
-            _logger.LogQuery("DeleteIndex", () => _client.DeleteIndex($"{indexName}*"));
+            _logger.LogQuery("DeleteIndex", () =>
+                _client.DeleteIndex(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T))));
         }
 
         /// <summary>

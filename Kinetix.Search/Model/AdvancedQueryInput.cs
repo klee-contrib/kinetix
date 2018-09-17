@@ -1,17 +1,17 @@
-﻿using System.Collections.Generic;
-using Kinetix.Search.ComponentModel;
+﻿using Kinetix.Search.ComponentModel;
 
 namespace Kinetix.Search.Model
 {
     /// <summary>
     /// Entrée complète d'une recherche avancée.
     /// </summary>
-    public class AdvancedQueryInput
+    public class AdvancedQueryInput<TDocument, TCriteria>
+         where TCriteria : Criteria
     {
         /// <summary>
         /// Entrée de l'API.
         /// </summary>
-        public QueryInput ApiInput
+        public QueryInput<TCriteria> ApiInput
         {
             get;
             set;
@@ -45,9 +45,9 @@ namespace Kinetix.Search.Model
         }
 
         /// <summary>
-        /// La liste des filtres clé/valeur.
+        /// Critères supplémentaires.
         /// </summary>
-        public IDictionary<string, string> FilterList
+        public TDocument AdditionalCriteria
         {
             get;
             set;

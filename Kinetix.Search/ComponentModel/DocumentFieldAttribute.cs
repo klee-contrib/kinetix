@@ -14,6 +14,7 @@ namespace Kinetix.Search.ComponentModel
         /// Créé une nouvelle instance de DocumentFieldCategory.
         /// </summary>
         /// <param name="category">Catégorie.</param>
+        /// <param name="pkOrder">Ordre de la propriété dans la clé primaire composite, si applicable.</param>
         public DocumentFieldAttribute(DocumentFieldCategory category)
         {
             Category = category;
@@ -22,10 +23,11 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Catégorie du champ.
         /// </summary>
-        public DocumentFieldCategory Category
-        {
-            get;
-            private set;
-        }
+        public DocumentFieldCategory Category { get; private set; }
+
+        /// <summary>
+        /// Ordre de la propriété dans la clé primaire composite (si applicable).
+        /// </summary>
+        public int PkOrder { get; set; }
     }
 }

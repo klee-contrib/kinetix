@@ -50,16 +50,19 @@ namespace Kinetix.Search.MetaModel
                 var searchAttr = property.GetCustomAttribute<SearchFieldAttribute>();
 
                 var fieldName = ToCamelCase(property.Name);
-                var description = new DocumentFieldDescriptor(
-                    property.Name,
-                    fieldName,
-                    property.PropertyType.IsGenericType
+                var description = new DocumentFieldDescriptor
+                {
+                    PropertyName = property.Name,
+                    FieldName = fieldName,
+                    PropertyType = property.PropertyType.IsGenericType
                         ? property.PropertyType.GetGenericArguments()[0]
                         : property.PropertyType.IsArray
                             ? property.PropertyType.GetElementType()
                             : property.PropertyType,
-                    docAttr?.Category,
-                    searchAttr?.Category);
+                    DocumentCategory = docAttr?.Category,
+                    SearchCategory = searchAttr?.Category,
+                    PkOrder = docAttr?.PkOrder
+                };
 
                 coll[description.PropertyName] = description;
             }

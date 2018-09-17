@@ -11,29 +11,12 @@ namespace Kinetix.Search.MetaModel
     public sealed class DocumentFieldDescriptor
     {
         /// <summary>
-        /// Crée une nouvelle instance.
-        /// </summary>
-        /// <param name="propertyName">Nom de la propriété.</param>
-        /// <param name="fieldName">Nom du champ dans le document.</param>
-        /// <param name="propertyType">Type de la propriété.</param>
-        /// <param name="docCategory">Catégorie de document de la propriété.</param>
-        /// <param name="fieldCategory">Catégorie de recherche de la propriété.</param>
-        internal DocumentFieldDescriptor(string propertyName, string fieldName, Type propertyType, DocumentFieldCategory? docCategory, SearchFieldCategory? fieldCategory)
-        {
-            PropertyName = propertyName;
-            FieldName = fieldName;
-            PropertyType = propertyType;
-            DocumentCategory = docCategory;
-            SearchCategory = fieldCategory;
-        }
-
-        /// <summary>
         /// Obtient le nom de la propriété.
         /// </summary>
         public string PropertyName
         {
             get;
-            private set;
+            internal set;
         }
 
         /// <summary>
@@ -42,7 +25,7 @@ namespace Kinetix.Search.MetaModel
         public string FieldName
         {
             get;
-            private set;
+            internal set;
         }
 
         /// <summary>
@@ -51,7 +34,7 @@ namespace Kinetix.Search.MetaModel
         public Type PropertyType
         {
             get;
-            private set;
+            internal set;
         }
 
         /// <summary>
@@ -60,7 +43,7 @@ namespace Kinetix.Search.MetaModel
         public DocumentFieldCategory? DocumentCategory
         {
             get;
-            private set;
+            internal set;
         }
 
         /// <summary>
@@ -69,7 +52,16 @@ namespace Kinetix.Search.MetaModel
         public SearchFieldCategory? SearchCategory
         {
             get;
-            private set;
+            internal set;
+        }
+
+        /// <summary>
+        /// Ordre de la propriété dans la clé primaire composite (si applicable).
+        /// </summary>
+        public int? PkOrder
+        {
+            get;
+            internal set;
         }
 
         /// <summary>

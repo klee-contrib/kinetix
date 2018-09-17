@@ -26,7 +26,7 @@ namespace Kinetix.Search.MetaModel
                 switch (property.DocumentCategory)
                 {
                     case DocumentFieldCategory.Id:
-                        PrimaryKey = property;
+                        PrimaryKey.AddProperty(property);
                         break;
                     case DocumentFieldCategory.Search:
                         TextField = property;
@@ -42,11 +42,6 @@ namespace Kinetix.Search.MetaModel
             if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Search) > 1)
             {
                 throw new NotSupportedException($"{beanType} has multiple Search fields");
-            }
-
-            if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Id) > 1)
-            {
-                throw new NotSupportedException($"{beanType} has multiple Id fields");
             }
 
             if (properties.Count(prop => prop.DocumentCategory == DocumentFieldCategory.Security) > 1)
@@ -76,11 +71,11 @@ namespace Kinetix.Search.MetaModel
         /// <summary>
         /// Retourne la clef primaire si elle existe.
         /// </summary>
-        public DocumentFieldDescriptor PrimaryKey
+        public DocumentPrimaryKeyDescriptor PrimaryKey
         {
             get;
             private set;
-        }
+        } = new DocumentPrimaryKeyDescriptor();
 
         /// <summary>
         /// Retourne la propriété de recherche textuelle.
