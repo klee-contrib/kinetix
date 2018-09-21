@@ -19,14 +19,14 @@ namespace Kinetix.Search.Elastic.Mapping
                 case SearchFieldIndexing.FullText:
                     return selector.Text(x => x
                       .Name(field.FieldName)
-                      .Analyzer("text_fr"));
+                      .Analyzer("text"));
                 case SearchFieldIndexing.Term:
                 case SearchFieldIndexing.Sort:
                     return selector.Keyword(x => x.Name(field.FieldName));
                 case SearchFieldIndexing.Terms:
                     return selector.Text(x => x
                         .Name(field.FieldName)
-                        .Analyzer("text_fr")
+                        .Analyzer("terms")
                         .Fielddata(true));
                 case SearchFieldIndexing.None:
                     return selector.Text(x => x
