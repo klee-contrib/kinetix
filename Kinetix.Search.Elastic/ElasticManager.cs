@@ -35,9 +35,12 @@ namespace Kinetix.Search.Elastic
         /// <param name="configurator">Configurateur.</param>
         public void InitIndex<T>(IIndexConfigurator configurator)
         {
-            DeleteIndex<T>();
+            if (ExistIndex(_client, _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T))))
+            {
+                DeleteIndex<T>();
+            }
             _logger.LogQuery("CreateIndex", () =>
-                _client.CreateIndex(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)), configurator.Configure));
+                    _client.CreateIndex(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)), configurator.Configure));
         }
 
         /// <summary>
