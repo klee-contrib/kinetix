@@ -9,7 +9,7 @@ namespace Kinetix.Search.Elastic
     /// <summary>
     /// Builder de requête ElasticSearch.
     /// </summary>
-    public class ElasticQueryBuilder
+    public static class ElasticQueryBuilder
     {
         /// <summary>
         /// Caractères réservés de la syntaxe Query DSL à échapper.
@@ -22,7 +22,7 @@ namespace Kinetix.Search.Elastic
         /// <param name="text">Texte de recherche.</param>
         /// <param name="fields">Champs de recherche.</param>
         /// <returns>Requête.</returns>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFullTextSearch<TDocument>(string text, params string[] fields)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFullTextSearch<TDocument>(string text, params string[] fields)
             where TDocument : class
         {
             if (string.IsNullOrEmpty(text))
@@ -53,7 +53,7 @@ namespace Kinetix.Search.Elastic
         /// <param name="field">Champ.</param>
         /// <param name="codes">Liste de valeurs à inclure.</param>
         /// <returns>Requête.</returns>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildInclusiveInclude<TDocument>(string field, string codes)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildInclusiveInclude<TDocument>(string field, string codes)
             where TDocument : class
         {
             var escapedValue = EscapeLuceneSpecialChars(codes);
@@ -72,7 +72,7 @@ namespace Kinetix.Search.Elastic
         /// <param name="field">Champ.</param>
         /// <param name="codes">Liste de valeurs à exclure.</param>
         /// <returns>Requête.</returns>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildExcludeQuery<TDocument>(string field, string codes)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildExcludeQuery<TDocument>(string field, string codes)
             where TDocument : class
         {
             var escapedValue = EscapeLuceneSpecialChars(codes);
@@ -94,7 +94,7 @@ namespace Kinetix.Search.Elastic
         /// <param name="field">Champ.</param>
         /// <param name="value">Valeur.</param>
         /// <returns>Requête.</returns>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value)
             where TDocument : class
         {
             /* Echappe les caractères réservés. */
@@ -107,7 +107,7 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="field">Champ.</param>
         /// <returns>Requête.</returns>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(string field)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(string field)
             where TDocument : class
         {
             return q => q.Bool(b => b.MustNot(m => m.Exists(t => t.Field(field))));
@@ -118,7 +118,7 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="subQueries">Sous-requêtes.</param>
         /// <returns>Requête.</returns>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildAndQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildAndQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
             where TDocument : class
         {
             return q => q.Bool(b => b.Filter(subQueries));
@@ -129,7 +129,7 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="subQueries">Sous-requêtes.</param>
         /// <returns>Requête.</returns>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildOrQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildOrQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
             where TDocument : class
         {
             return q => q.Bool(b => b

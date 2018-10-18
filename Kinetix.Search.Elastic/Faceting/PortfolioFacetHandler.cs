@@ -7,6 +7,8 @@ using Nest;
 
 namespace Kinetix.Search.Elastic.Faceting
 {
+    using static ElasticQueryBuilder;
+
     /// <summary>
     /// Handler de facette Portfolio.
     /// </summary>
@@ -17,7 +19,6 @@ namespace Kinetix.Search.Elastic.Faceting
         private const string InValue = "1";
         private const string OutValue = "0";
         private readonly DocumentDefinition _document;
-        private readonly ElasticQueryBuilder _builder = new ElasticQueryBuilder();
 
         /// <summary>
         /// Créé une nouvelle instance de PortfolioFacetHandler.
@@ -41,11 +42,11 @@ namespace Kinetix.Search.Elastic.Faceting
             var fieldName = _document.Fields[facet.FieldName].FieldName;
 
             /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
-            var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(_builder, facet, facetList, selectedFacets, CreateFacetSubQuery);
+            var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(facet, facetList, selectedFacets, CreateFacetSubQuery);
 
             /* Créé une agrégation avec deux buckets. */
-            var inQuery = _builder.BuildAndQuery(_builder.BuildInclusiveInclude<TDocument>(fieldName, portfolio), filterQuery);
-            var outQuery = _builder.BuildAndQuery(_builder.BuildExcludeQuery<TDocument>(fieldName, portfolio), filterQuery);
+            var inQuery = BuildAndQuery(BuildInclusiveInclude<TDocument>(fieldName, portfolio), filterQuery);
+            var outQuery = BuildAndQuery(BuildExcludeQuery<TDocument>(fieldName, portfolio), filterQuery);
 
             agg.Filters(facet.Code, st => st.NamedFilters(x => x
                 /* Une pour les documents dans le portefeuille */
@@ -110,9 +111,9 @@ namespace Kinetix.Search.Elastic.Faceting
             switch (facet)
             {
                 case InValue:
-                    return _builder.BuildInclusiveInclude<TDocument>(fieldName, portfolio);
+                    return BuildInclusiveInclude<TDocument>(fieldName, portfolio);
                 case OutValue:
-                    return _builder.BuildExcludeQuery<TDocument>(fieldName, portfolio);
+                    return BuildExcludeQuery<TDocument>(fieldName, portfolio);
                 default:
                     return q => q;
             }

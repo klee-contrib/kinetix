@@ -43,7 +43,7 @@ namespace Kinetix.Search.Elastic.Faceting
         /// <param name="selectedFacets">Facettes sélectionnées.</param>
         /// <param name="facetQueryBuilder">Builder de requête pour une facette.</param>
         /// <returns>La filtre.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiSelectableFacetFilter<TDocument>(ElasticQueryBuilder builder, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, Func<string, IFacetDefinition, string, Func<QueryContainerDescriptor<TDocument>, QueryContainer>> facetQueryBuilder)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiSelectableFacetFilter<TDocument>(IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, Func<string, IFacetDefinition, string, Func<QueryContainerDescriptor<TDocument>, QueryContainer>> facetQueryBuilder)
             where TDocument : class
         {
             return q => q.Bool(b => b
@@ -61,7 +61,7 @@ namespace Kinetix.Search.Elastic.Faceting
                         /* On ne filtre pas sur les facettes non multisélectionnables. */
                         return targetFacet.IsMultiSelectable == false
                             ? null
-                            : builder.BuildOrQuery(sf.Value.Select(v => facetQueryBuilder(v, targetFacet, null)).ToArray());
+                            : ElasticQueryBuilder.BuildOrQuery(sf.Value.Select(v => facetQueryBuilder(v, targetFacet, null)).ToArray());
                     })
                     .Where(sf => sf != null)));
         }

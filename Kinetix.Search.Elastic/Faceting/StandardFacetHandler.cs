@@ -7,6 +7,8 @@ using Nest;
 
 namespace Kinetix.Search.Elastic.Faceting
 {
+    using static ElasticQueryBuilder;
+
     /// <summary>
     /// Handler de facette standard.
     /// </summary>
@@ -16,7 +18,6 @@ namespace Kinetix.Search.Elastic.Faceting
     {
         private const string MissingFacetPrefix = "_Missing";
         private readonly DocumentDefinition _document;
-        private readonly ElasticQueryBuilder _builder = new ElasticQueryBuilder();
 
         /// <summary>
         /// Créé une nouvelle instance de StandardFacetHandler.
@@ -34,7 +35,7 @@ namespace Kinetix.Search.Elastic.Faceting
             var fieldName = _document.Fields[facet.FieldName].FieldName;
 
             /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
-            var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(_builder, facet, facetList, selectedFacets, CreateFacetSubQuery);
+            var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(facet, facetList, selectedFacets, CreateFacetSubQuery);
             var hasFilter = FacetingUtil.HasFilter(facet, facetList, selectedFacets);
 
             AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
@@ -133,8 +134,8 @@ namespace Kinetix.Search.Elastic.Faceting
 
             /* Traite la valeur de sélection NULL */
             return facet == FacetConst.NullValue
-                ? _builder.BuildMissingField<TDocument>(fieldName)
-                : _builder.BuildFilter<TDocument>(fieldName, facet);
+                ? BuildMissingField<TDocument>(fieldName)
+                : BuildFilter<TDocument>(fieldName, facet);
         }
     }
 }

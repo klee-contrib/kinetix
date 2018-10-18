@@ -10,6 +10,8 @@ using Nest;
 
 namespace Kinetix.Search.Elastic
 {
+    using static ElasticQueryBuilder;
+
     /// <summary>
     /// Store ElasticSearch.
     /// </summary>
@@ -31,11 +33,6 @@ namespace Kinetix.Search.Elastic
         private const string _topHitName = "top";
 
         private static ILogger<ElasticStore<TDocument>> _logger;
-
-        /// <summary>
-        /// Builder de requête.
-        /// </summary>
-        private readonly ElasticQueryBuilder _builder = new ElasticQueryBuilder();
 
         /// <summary>
         /// Usine à mapping ElasticSearch.
@@ -372,7 +369,7 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
-            var filterQuery = _builder.BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
+            var filterQuery = BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
             return _logger.LogQuery("AdvancedCount", () => _client
                 .Count<TDocument>(s => s
 
@@ -402,7 +399,7 @@ namespace Kinetix.Search.Elastic
             var securitySubQuery = GetSecuritySubQuery(input);
             var filterSubQuery = GetFilterSubQuery(input);
             var monoValuedFacetsSubQuery = GetFacetSelectionSubQuery(input);
-            return _builder.BuildAndQuery(
+            return BuildAndQuery(
                 new[] { textSubQuery, securitySubQuery, filterSubQuery, monoValuedFacetsSubQuery }
                 .Concat(filters).ToArray());
         }
@@ -444,11 +441,11 @@ namespace Kinetix.Search.Elastic
                     switch (field.Indexing)
                     {
                         case SearchFieldIndexing.FullText:
-                            filterList.Add(_builder.BuildFullTextSearch<TDocument>(propValue, field.FieldName));
+                            filterList.Add(BuildFullTextSearch<TDocument>(propValue, field.FieldName));
                             break;
                         case SearchFieldIndexing.Term:
                         case SearchFieldIndexing.Terms:
-                            filterList.Add(_builder.BuildFilter<TDocument>(field.FieldName, propValue));
+                            filterList.Add(BuildFilter<TDocument>(field.FieldName, propValue));
                             break;
                         default:
                             throw new ElasticException($"Cannot filter on fields that are not indexed as FullText, Term or Terms. Field: {field.FieldName}");
@@ -456,7 +453,7 @@ namespace Kinetix.Search.Elastic
                 }
             }
 
-            return _builder.BuildAndQuery(filterList.ToArray());
+            return BuildAndQuery(filterList.ToArray());
         }
 
         /// <summary>
@@ -483,7 +480,7 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Constuit la sous requête. */
-            return _builder.BuildFullTextSearch<TDocument>(value, _definition.TextFields.Select(f => f.FieldName).ToArray());
+            return BuildFullTextSearch<TDocument>(value, _definition.TextFields.Select(f => f.FieldName).ToArray());
         }
 
         /// <summary>
@@ -510,7 +507,7 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Constuit la sous requête. */
-            return _builder.BuildInclusiveInclude<TDocument>(fieldDesc.FieldName, value);
+            return BuildInclusiveInclude<TDocument>(fieldDesc.FieldName, value);
         }
 
         /// <summary>
@@ -548,7 +545,7 @@ namespace Kinetix.Search.Elastic
             if (facetSubQueryList.Any())
             {
                 /* Concatène en "ET" toutes les sous-requêtes. */
-                return _builder.BuildAndQuery(facetSubQueryList);
+                return BuildAndQuery(facetSubQueryList);
             }
             else
             {
@@ -583,7 +580,7 @@ namespace Kinetix.Search.Elastic
 
                     var handler = GetHandler(def);
                     /* On fait un "OR" sur toutes les valeurs sélectionnées. */
-                    return _builder.BuildOrQuery(f.Value.Select(s => handler.CreateFacetSubQuery(s, def, input.Portfolio)).ToArray());
+                    return BuildOrQuery(f.Value.Select(s => handler.CreateFacetSubQuery(s, def, input.Portfolio)).ToArray());
                 })
                 .Where(f => f != null)
                 .ToArray();
@@ -591,7 +588,7 @@ namespace Kinetix.Search.Elastic
             if (facetSubQueryList.Any())
             {
                 /* Concatène en "ET" toutes les sous-requêtes. */
-                return _builder.BuildAndQuery(facetSubQueryList);
+                return BuildAndQuery(facetSubQueryList);
             }
             else
             {
