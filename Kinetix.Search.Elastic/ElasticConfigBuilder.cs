@@ -20,6 +20,7 @@ namespace Kinetix.Search.Elastic
             AddMapping<DecimalMapping>();
             AddMapping<IntMapping>();
             AddMapping<StringMapping>();
+            AddMapping<DictionaryMapping>();
         }
 
         internal ICollection<Type> DocumentTypes { get; } = new List<Type>();
