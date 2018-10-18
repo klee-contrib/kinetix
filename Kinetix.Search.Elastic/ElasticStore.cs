@@ -443,7 +443,7 @@ namespace Kinetix.Search.Elastic
                     switch (field.Indexing)
                     {
                         case SearchFieldIndexing.FullText:
-                            filterList.Add(_builder.BuildFullTextSearch<TDocument>(field.FieldName, propValue));
+                            filterList.Add(_builder.BuildFullTextSearch<TDocument>(propValue, field.FieldName));
                             break;
                         case SearchFieldIndexing.Term:
                         case SearchFieldIndexing.Terms:
