@@ -172,15 +172,14 @@ namespace Kinetix.Search.Elastic
             _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(x => x.Type(_documentTypeName)));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery{TCriteria}(AdvancedQueryInput{TDocument, TCriteria})" />
-        public QueryOutput<TDocument> AdvancedQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TCriteria : Criteria
-        {
-            return AdvancedQuery(input, x => x);
-        }
-
         /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery{TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
         public QueryOutput<TOutput> AdvancedQuery<TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+            where TCriteria : Criteria
+        {
+            return AdvancedQuery(input, documentMapper, new Func<QueryContainerDescriptor<TDocument>, QueryContainer>[0]);
+        }
+
+        public QueryOutput<TOutput> AdvancedQuery<TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
             where TCriteria : Criteria
         {
             if (input == null)
@@ -194,7 +193,7 @@ namespace Kinetix.Search.Elastic
             var sortDef = GetSortDefinition(input);
 
             /* Requêtes de filtrage. */
-            var filterQuery = GetFilterQuery(input);
+            var filterQuery = GetFilterQuery(input, filters);
             var postFilterQuery = GetPostFilterSubQuery(input);
 
             /* Facettage. */
@@ -396,14 +395,16 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Requête de filtrage.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
             where TCriteria : Criteria
         {
             var textSubQuery = GetTextSubQuery(input);
             var securitySubQuery = GetSecuritySubQuery(input);
             var filterSubQuery = GetFilterSubQuery(input);
             var monoValuedFacetsSubQuery = GetFacetSelectionSubQuery(input);
-            return _builder.BuildAndQuery(textSubQuery, securitySubQuery, filterSubQuery, monoValuedFacetsSubQuery);
+            return _builder.BuildAndQuery(
+                new[] { textSubQuery, securitySubQuery, filterSubQuery, monoValuedFacetsSubQuery }
+                .Concat(filters).ToArray());
         }
 
         /// <summary>

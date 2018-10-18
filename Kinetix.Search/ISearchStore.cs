@@ -64,14 +64,6 @@ namespace Kinetix.Search
         /// Effectue une recherche avancé.
         /// </summary>
         /// <param name="input">Entrée de la recherche.</param>
-        /// <returns>Sortie de la recherche.</returns>
-        QueryOutput<TDocument> AdvancedQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TCriteria : Criteria;
-
-        /// <summary>
-        /// Effectue une recherche avancé.
-        /// </summary>
-        /// <param name="input">Entrée de la recherche.</param>
         /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
         /// <returns>Sortie de la recherche.</returns>
         QueryOutput<TOutput> AdvancedQuery<TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
