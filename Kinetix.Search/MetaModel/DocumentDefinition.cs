@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Kinetix.Search.ComponentModel;
 
@@ -29,7 +30,7 @@ namespace Kinetix.Search.MetaModel
                         PrimaryKey.AddProperty(property);
                         break;
                     case SearchFieldCategory.Search:
-                        TextField = property;
+                        TextFields.Add(property);
                         break;
                     case SearchFieldCategory.Security:
                         SecurityField = property;
@@ -37,11 +38,6 @@ namespace Kinetix.Search.MetaModel
                     default:
                         break;
                 }
-            }
-
-            if (properties.Count(prop => prop.Category == SearchFieldCategory.Search) > 1)
-            {
-                throw new NotSupportedException($"{beanType} has multiple Search fields");
             }
 
             if (properties.Count(prop => prop.Category == SearchFieldCategory.Security) > 1)
@@ -78,13 +74,13 @@ namespace Kinetix.Search.MetaModel
         } = new DocumentPrimaryKeyDescriptor();
 
         /// <summary>
-        /// Retourne la propriété de recherche textuelle.
+        /// Retourne les propriétés de recherche textuelle.
         /// </summary>
-        public DocumentFieldDescriptor TextField
+        public ICollection<DocumentFieldDescriptor> TextFields
         {
             get;
             private set;
-        }
+        } = new List<DocumentFieldDescriptor>();
 
         /// <summary>
         /// Retourne la propriété de filtrage de sécurité.

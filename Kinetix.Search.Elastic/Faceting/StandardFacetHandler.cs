@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
@@ -27,18 +28,19 @@ namespace Kinetix.Search.Elastic.Faceting
         }
 
         /// <inheritdoc/>
-        public void DefineAggregation(Nest.AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio)
+        public void DefineAggregation(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio)
         {
             /* Récupère le nom du champ. */
             var fieldName = _document.Fields[facet.FieldName].FieldName;
 
             /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
             var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(_builder, facet, facetList, selectedFacets, CreateFacetSubQuery);
-            var hasFilterQuery = !string.IsNullOrEmpty(filterQuery);
+            var hasFilter = FacetingUtil.HasFilter(facet, facetList, selectedFacets);
 
-            ITermsAggregation GetAgg(TermsAggregationDescriptor<TDocument> st)
+            AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
             {
-                return st
+                /* Crée une agrégation sur les valeurs discrètes du champ. */
+                aa.Terms(facet.Code, st => st
                     .Field(fieldName)
                     .Size(50)
                     .Order(t =>
@@ -54,43 +56,32 @@ namespace Kinetix.Search.Elastic.Faceting
                             default:
                                 return t.CountDescending();
                         }
-                    });
-            }
-
-            if (!hasFilterQuery)
-            {
-                /* Crée une agrégation sur les valeurs discrètes du champ. */
-                agg.Terms(facet.Code, GetAgg);
+                    }));
 
                 /* Crée une agrégation pour les valeurs non renseignées du champ. */
                 if (facet.HasMissing)
                 {
-                    agg.Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName));
+                    aa.Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName));
                 }
+
+                return aa;
+            };
+
+            if (!hasFilter)
+            {
+                AggDescriptor(agg);
             }
             else
             {
                 agg.Filter(facet.Code, f => f
                     /* Crée le filtre sur les facettes multi-sélectionnables. */
-                    .Filter(q => q.QueryString(qs => qs.Query(filterQuery)))
-                    .Aggregations(aa =>
-                    {
-                        /* Crée une agrégation sur les valeurs discrètes du champ. */
-                        aa.Terms(facet.Code, GetAgg);
-
-                        /* Crée une agrégation pour les valeurs non renseignées du champ. */
-                        if (facet.HasMissing)
-                        {
-                            aa.Missing(facet.Code + MissingFacetPrefix, ad => ad.Field(fieldName));
-                        }
-
-                        return aa;
-                    }));
+                    .Filter(filterQuery)
+                    .Aggregations(AggDescriptor));
             }
         }
 
         /// <inheritdoc />
-        public ICollection<FacetItem> ExtractFacetItemList(Nest.AggregateDictionary aggs, IFacetDefinition facetDef, long total)
+        public ICollection<FacetItem> ExtractFacetItemList(AggregateDictionary aggs, IFacetDefinition facetDef, long total)
         {
             var facetOutput = new List<FacetItem>();
 
@@ -135,15 +126,15 @@ namespace Kinetix.Search.Elastic.Faceting
         }
 
         /// <inheritdoc/>
-        public string CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio)
         {
             var fieldDesc = _document.Fields[facetDef.FieldName];
             var fieldName = fieldDesc.FieldName;
 
             /* Traite la valeur de sélection NULL */
             return facet == FacetConst.NullValue
-                ? _builder.BuildMissingField(fieldName)
-                : _builder.BuildFilter(fieldName, facet);
+                ? _builder.BuildMissingField<TDocument>(fieldName)
+                : _builder.BuildFilter<TDocument>(fieldName, facet);
         }
     }
 }

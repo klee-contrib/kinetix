@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
+using Nest;
 
 namespace Kinetix.Search.Elastic.Faceting
 {
@@ -27,7 +29,7 @@ namespace Kinetix.Search.Elastic.Faceting
         }
 
         /// <inheritdoc/>
-        public void DefineAggregation(Nest.AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio)
+        public void DefineAggregation(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio)
         {
             if (string.IsNullOrEmpty(portfolio))
             {
@@ -42,18 +44,18 @@ namespace Kinetix.Search.Elastic.Faceting
             var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(_builder, facet, facetList, selectedFacets, CreateFacetSubQuery);
 
             /* Créé une agrégation avec deux buckets. */
-            var inQuery = _builder.BuildAndQuery(_builder.BuildInclusiveInclude(fieldName, portfolio), filterQuery);
-            var outQuery = _builder.BuildAndQuery(_builder.BuildExcludeQuery(fieldName, portfolio), filterQuery);
+            var inQuery = _builder.BuildAndQuery(_builder.BuildInclusiveInclude<TDocument>(fieldName, portfolio), filterQuery);
+            var outQuery = _builder.BuildAndQuery(_builder.BuildExcludeQuery<TDocument>(fieldName, portfolio), filterQuery);
 
             agg.Filters(facet.Code, st => st.NamedFilters(x => x
                 /* Une pour les documents dans le portefeuille */
-                .Filter(InValue, d => d.QueryString(query => query.Query(inQuery)))
+                .Filter(InValue, inQuery)
                 /* Une pour les documents absents du portefeuille */
-                .Filter(OutValue, d => d.QueryString(query => query.Query(outQuery)))));
+                .Filter(OutValue, outQuery)));
         }
 
         /// <inheritdoc />
-        public ICollection<FacetItem> ExtractFacetItemList(Nest.AggregateDictionary aggs, IFacetDefinition facetDef, long total)
+        public ICollection<FacetItem> ExtractFacetItemList(AggregateDictionary aggs, IFacetDefinition facetDef, long total)
         {
             var facetOutput = new List<FacetItem>();
             /* Valeurs renseignées. */
@@ -94,7 +96,7 @@ namespace Kinetix.Search.Elastic.Faceting
         }
 
         /// <inheritdoc/>
-        public string CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio)
         {
             var fieldDesc = _document.Fields[facetDef.FieldName];
             var fieldName = fieldDesc.FieldName;
@@ -102,17 +104,17 @@ namespace Kinetix.Search.Elastic.Faceting
             if (string.IsNullOrEmpty(portfolio))
             {
                 /* Utilisateur avec un portefeuille vide : on ne filtre pas sur la facette. */
-                return string.Empty;
+                return q => q;
             }
 
             switch (facet)
             {
                 case InValue:
-                    return _builder.BuildInclusiveInclude(fieldName, portfolio);
+                    return _builder.BuildInclusiveInclude<TDocument>(fieldName, portfolio);
                 case OutValue:
-                    return _builder.BuildExcludeQuery(fieldName, portfolio);
+                    return _builder.BuildExcludeQuery<TDocument>(fieldName, portfolio);
                 default:
-                    return string.Empty;
+                    return q => q;
             }
         }
     }

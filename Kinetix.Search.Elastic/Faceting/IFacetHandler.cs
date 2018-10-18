@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Model;
 using Nest;
@@ -25,7 +26,7 @@ namespace Kinetix.Search.Elastic.Faceting
         /// <param name="facetDef">Définition de la facette.</param>
         /// <param name="portfolio">Portefeuille de l'utilisateur.</param>
         /// <returns>Sous-requête.</returns>
-        string CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio);
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio);
 
         /// <summary>
         /// Définit l'agrégation correspondant à la facette lors de la recherche à facettes.

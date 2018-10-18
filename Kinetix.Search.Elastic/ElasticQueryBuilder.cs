@@ -1,6 +1,8 @@
-﻿using System.Globalization;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
+using Nest;
 
 namespace Kinetix.Search.Elastic
 {
@@ -17,14 +19,15 @@ namespace Kinetix.Search.Elastic
         /// <summary>
         /// Construit une requête pour une recherche textuelle.
         /// </summary>
-        /// <param name="field">Champ de recherche.</param>
         /// <param name="text">Texte de recherche.</param>
+        /// <param name="fields">Champs de recherche.</param>
         /// <returns>Requête.</returns>
-        public string BuildFullTextSearch(string field, string text)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFullTextSearch<TDocument>(string text, params string[] fields)
+            where TDocument : class
         {
             if (string.IsNullOrEmpty(text))
             {
-                return string.Empty;
+                return q => q;
             }
 
             /* Enlève les accents. */
@@ -35,13 +38,13 @@ namespace Kinetix.Search.Elastic
             var escapedValue = EscapeLuceneSpecialChars(lower);
             /* Remplace les tirets et apostrophe par des espaces. */
             escapedValue = escapedValue.Replace('-', ' ').Replace('\'', ' ');
-            /* Découpe en mot. */
-            var subWords = escapedValue.Split(' ');
-            /* Rajoute le joker à la fin. */
-            /* Concatène en AND : tous les termes doivent matcher. */
-            var andQuery = string.Join(" AND ", subWords.Select(x => x + "*"));
-            var query = string.Format("{0}:({1})", field, andQuery);
-            return query;
+
+            return q => q.MultiMatch(m => m
+                .Query(text)
+                .Type(TextQueryType.PhrasePrefix)
+                .Fields(fields)
+                .MaxExpansions(1000)
+                .Slop(2));
         }
 
         /// <summary>
@@ -50,17 +53,17 @@ namespace Kinetix.Search.Elastic
         /// <param name="field">Champ.</param>
         /// <param name="codes">Liste de valeurs à inclure.</param>
         /// <returns>Requête.</returns>
-        public string BuildInclusiveInclude(string field, string codes)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildInclusiveInclude<TDocument>(string field, string codes)
+            where TDocument : class
         {
-            /* Echappe les caractères réservés. */
             var escapedValue = EscapeLuceneSpecialChars(codes);
-            /* Découpe en mot. */
-            var subWords = escapedValue.Split(' ');
-            /* Concatène en OR : un seul match est suffisant. */
-            var andQuery = string.Join(" OR ", subWords);
-            /* Ajoute le nom du champ. */
-            var query = string.Format("{0}:({1})", field, andQuery);
-            return query;
+            var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
+            foreach (var word in escapedValue.Split(' '))
+            {
+                clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
+            }
+
+            return q => q.Bool(b => b.Should(clauses).MinimumShouldMatch(1));
         }
 
         /// <summary>
@@ -69,17 +72,20 @@ namespace Kinetix.Search.Elastic
         /// <param name="field">Champ.</param>
         /// <param name="codes">Liste de valeurs à exclure.</param>
         /// <returns>Requête.</returns>
-        public string BuildExcludeQuery(string field, string codes)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildExcludeQuery<TDocument>(string field, string codes)
+            where TDocument : class
         {
-            /* Echappe les caractères réservés. */
             var escapedValue = EscapeLuceneSpecialChars(codes);
-            /* Découpe en mot. */
-            var subWords = escapedValue.Split(' ');
-            /* Concatène en OR : un seul match est suffisant. */
-            var andQuery = string.Join(" AND ", subWords.Select(x => $"-{x}"));
-            /* Ajoute le nom du champ. */
-            var query = string.Format("{0}:({1})", field, andQuery);
-            return query;
+            return q => q.Bool(b =>
+            {
+                var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
+                foreach (var word in escapedValue.Split(' '))
+                {
+                    clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
+                }
+
+                return b.MustNot(clauses);
+            });
         }
 
         /// <summary>
@@ -88,13 +94,12 @@ namespace Kinetix.Search.Elastic
         /// <param name="field">Champ.</param>
         /// <param name="value">Valeur.</param>
         /// <returns>Requête.</returns>
-        public string BuildFilter(string field, string value)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value)
+            where TDocument : class
         {
             /* Echappe les caractères réservés. */
             var escapedValue = EscapeLuceneSpecialChars(value);
-            /* Ajoute le nom du champ. */
-            var query = string.Format("{0}:({1})", field, escapedValue);
-            return query;
+            return q => q.Term(t => t.Field(field).Value(escapedValue));
         }
 
         /// <summary>
@@ -102,9 +107,10 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="field">Champ.</param>
         /// <returns>Requête.</returns>
-        public string BuildMissingField(string field)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(string field)
+            where TDocument : class
         {
-            return string.Format("NOT (_exists_:{0})", field);
+            return q => q.Bool(b => b.MustNot(m => m.Exists(t => t.Field(field))));
         }
 
         /// <summary>
@@ -112,15 +118,10 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="subQueries">Sous-requêtes.</param>
         /// <returns>Requête.</returns>
-        public string BuildAndQuery(params string[] subQueries)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildAndQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
+            where TDocument : class
         {
-            return subQueries == null
-                ? null
-                : string.Join(
-                    " AND ",
-                    subQueries
-                        .Where(x => !string.IsNullOrEmpty(x))
-                        .Select(x => "(" + x + ")"));
+            return q => q.Bool(b => b.Filter(subQueries));
         }
 
         /// <summary>
@@ -128,15 +129,12 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="subQueries">Sous-requêtes.</param>
         /// <returns>Requête.</returns>
-        public string BuildOrQuery(params string[] subQueries)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildOrQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
+            where TDocument : class
         {
-            return subQueries == null
-                ? null
-                : string.Join(
-                    " OR ",
-                    subQueries
-                        .Where(x => !string.IsNullOrEmpty(x))
-                        .Select(x => "(" + x + ")"));
+            return q => q.Bool(b => b
+                .Should(subQueries)
+                .MinimumShouldMatch(1));
         }
 
         /// <summary>
