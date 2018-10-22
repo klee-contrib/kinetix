@@ -28,7 +28,7 @@ namespace Kinetix.Search.MetaModel
         public object GetValue(object bean)
         {
             return _fieldDescriptors.Count > 1
-                ? string.Join("__", _fieldDescriptors.Select(f => f.GetValue(bean)))
+                ? string.Join("__", _fieldDescriptors.Select(f => f.GetValue(bean)).Where(v => v != null))
                 : _fieldDescriptors.Single().GetValue(bean);
         }
     }
