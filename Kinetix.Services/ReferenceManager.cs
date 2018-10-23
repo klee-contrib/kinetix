@@ -28,6 +28,7 @@ namespace Kinetix.Services
 
         private readonly TimeSpan _referenceListCacheDuration;
         private readonly TimeSpan _staticListCacheDuration;
+        private static readonly object lockObj = new object();
 
         private readonly IDictionary<string, Accessor> _referenceAccessors = new Dictionary<string, Accessor>();
 
@@ -220,13 +221,15 @@ namespace Kinetix.Services
             var type = GetTypeFromName(referenceName);
             var cache = GetCacheByType(type);
 
-            if (!cache.TryGetValue(referenceName, out var entry))
+            lock (lockObj)
             {
-                entry = BuildReferenceEntry(referenceName);
-                cache.Add(referenceName, entry);
+                if (!cache.TryGetValue(referenceName, out var entry))
+                {
+                    entry = BuildReferenceEntry(referenceName);
+                    cache.Add(referenceName, entry);
+                }
+                return entry;
             }
-
-            return entry;
         }
 
         private Type GetTypeFromName(string referenceName)
