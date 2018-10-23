@@ -11,6 +11,7 @@ namespace Kinetix.Search.MetaModel
     public class DocumentDescriptor
     {
         private readonly Dictionary<Type, DocumentDefinition> _beanDefinitionDictionnary;
+        private readonly object lockObj = new object();
 
         /// <summary>
         /// Crée un nouvelle instance.
@@ -84,22 +85,25 @@ namespace Kinetix.Search.MetaModel
         /// <returns>Description des propriétés.</returns>
         private DocumentDefinition GetDefinitionInternal(Type beanType)
         {
-            if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
+            lock (lockObj)
             {
-                var documentType = beanType.GetCustomAttribute<SearchDocumentTypeAttribute>();
-                if (documentType == null)
+                if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
                 {
-                    throw new NotSupportedException("Missing SearchDocumentTypeAttribute on type " + beanType);
+                    var documentType = beanType.GetCustomAttribute<SearchDocumentTypeAttribute>();
+                    if (documentType == null)
+                    {
+                        throw new NotSupportedException("Missing SearchDocumentTypeAttribute on type " + beanType);
+                    }
+
+                    var documentTypeName = documentType.DocumentTypeName;
+
+                    var properties = CreateCollection(beanType);
+                    definition = new DocumentDefinition(beanType, properties, documentTypeName);
+                    _beanDefinitionDictionnary[beanType] = definition;
                 }
 
-                var documentTypeName = documentType.DocumentTypeName;
-
-                var properties = CreateCollection(beanType);
-                definition = new DocumentDefinition(beanType, properties, documentTypeName);
-                _beanDefinitionDictionnary[beanType] = definition;
+                return definition;
             }
-
-            return definition;
         }
     }
 }
