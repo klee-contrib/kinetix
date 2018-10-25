@@ -23,11 +23,6 @@
         /// <summary>
         /// Champ de facette : indexé tel quel.
         /// </summary>
-        Term,
-
-        /// <summary>
-        /// Champ de facette contenant une liste de valeurs : indexé tel quel.
-        /// </summary>
-        Terms
+        Term
     }
 }

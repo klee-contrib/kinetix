@@ -444,7 +444,6 @@ namespace Kinetix.Search.Elastic
                             filterList.Add(BuildFullTextSearch<TDocument>(propValue, field.FieldName));
                             break;
                         case SearchFieldIndexing.Term:
-                        case SearchFieldIndexing.Terms:
                             filterList.Add(BuildFilter<TDocument>(field.FieldName, propValue));
                             break;
                         default:
