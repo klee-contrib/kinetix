@@ -54,9 +54,10 @@ namespace Kinetix.Search.MetaModel
                 {
                     PropertyName = property.Name,
                     FieldName = fieldName,
-                    PropertyType = property.PropertyType.IsArray
-                        ? property.PropertyType.GetElementType()
-                        : property.PropertyType,
+                    PropertyType = Nullable.GetUnderlyingType(property.PropertyType)
+                        ?? (property.PropertyType.IsArray
+                            ? property.PropertyType.GetElementType()
+                            : property.PropertyType),
                     Category = searchAttr?.Category ?? SearchFieldCategory.None,
                     Indexing = searchAttr?.Indexing ?? SearchFieldIndexing.None,
                     PkOrder = searchAttr?.PkOrder ?? 0
