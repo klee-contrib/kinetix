@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Elasticsearch.Net;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Elastic.Faceting;
 using Kinetix.Search.MetaModel;
@@ -105,11 +106,12 @@ namespace Kinetix.Search.Elastic
             _logger.LogQuery("Index", () =>
                 _client.Index(FormatSortFields(document), x => x
                     .Type(_documentTypeName)
-                    .Id(_definition.PrimaryKey.GetValue(document).ToString())));
+                    .Id(_definition.PrimaryKey.GetValue(document).ToString())
+                    .Refresh(Refresh.WaitFor)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.PutAll" />
-        public void PutAll(IEnumerable<TDocument> documentList)
+        public void PutAll(IEnumerable<TDocument> documentList, bool waitForRefresh = false)
         {
             if (documentList == null)
             {
@@ -145,6 +147,12 @@ namespace Kinetix.Search.Elastic
                             .Type(_documentTypeName)
                             .Id(id));
                     }
+
+                    if (waitForRefresh)
+                    {
+                        x.Refresh(Refresh.WaitFor);
+                    }
+
                     return x;
                 }));
             }

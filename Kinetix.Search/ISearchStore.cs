@@ -41,7 +41,8 @@ namespace Kinetix.Search
         /// Pose un ensemble de documents dans l'index.
         /// </summary>
         /// <param name="documentList">Liste de documents.</param>
-        void PutAll(IEnumerable<TDocument> documentList);
+        /// <param name="waitForRefresh">Attends le refresh de l'index avant de répondre.</param>
+        void PutAll(IEnumerable<TDocument> documentList, bool waitForRefresh = false);
 
         /// <summary>
         /// Supprime un document dans l'index.
