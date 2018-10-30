@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
@@ -111,6 +112,25 @@ namespace Kinetix.Search.Elastic.Faceting
                 if (missingCount > 0)
                 {
                     facetOutput.Add(new FacetItem { Code = FacetConst.NullValue, Label = "focus.search.results.missing", Count = missingCount });
+                }
+            }
+
+            // Gestion du mode "affichage de toutes les valeurs de listes de référence".
+            if (facetDef is ReferenceFacet rfDef && rfDef.ShowEmptyReferenceValues)
+            {
+                facetOutput.AddRange(rfDef.GetReferenceList().Where(rlItem => !facetOutput.Any(fi => fi.Code == rlItem.Code)));
+
+                // On est obligé de retrier par derrière.
+                switch (facetDef.Ordering)
+                {
+                    case FacetOrdering.CountAscending:
+                        return facetOutput.OrderBy(fi => fi.Count).ToList();
+                    case FacetOrdering.CountDescending:
+                        return facetOutput.OrderByDescending(fi => fi.Count).ToList();
+                    case FacetOrdering.KeyAscending:
+                        return facetOutput.OrderBy(fi => fi.Code).ToList();
+                    case FacetOrdering.KeyDescending:
+                        return facetOutput.OrderByDescending(fi => fi.Code).ToList();
                 }
             }
 
