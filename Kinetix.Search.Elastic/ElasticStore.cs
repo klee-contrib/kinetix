@@ -161,13 +161,13 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore{TDocument}.Remove(string)" />
         public void Remove(string id)
         {
-            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(id)));
+            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(id), d => d.Refresh(Refresh.WaitFor)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Remove(TDocument)" />
         public void Remove(TDocument bean)
         {
-            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(bean)));
+            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(bean), d => d.Refresh(Refresh.WaitFor)));
         }
 
         /// <inheritdoc cref="ISearchStore{TDocument}.Flush" />
