@@ -16,7 +16,7 @@ namespace Kinetix.Search
         /// <param name="store">Store de recherche.</param>
         /// <param name="queryInput">Query input.</param>
         /// <returns>Résultat.</returns>
-        public static (IEnumerable<TDocument> data, int totalCount) Query<TDocument>(this ISearchStore<TDocument> store, BasicQueryInput<TDocument> queryInput)
+        public static (IEnumerable<TDocument> data, int totalCount) Query<TDocument>(this ISearchStore store, BasicQueryInput<TDocument> queryInput)
             where TDocument : class
         {
             return store.Query(queryInput, x => x);
@@ -29,7 +29,7 @@ namespace Kinetix.Search
         /// <param name="queryInput">Query input.</param>
         /// <param name="documentMapper">Mapper de document.</param>
         /// <returns>Résultat.</returns>
-        public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore<TDocument> store, BasicQueryInput<TDocument> queryInput, Func<TDocument, TOutput> documentMapper)
+        public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, Func<TDocument, TOutput> documentMapper)
             where TDocument : class
         {
             if (string.IsNullOrEmpty(queryInput.Query))

@@ -16,9 +16,7 @@ namespace Kinetix.Search.Elastic
     /// <summary>
     /// Store ElasticSearch.
     /// </summary>
-    /// <typeparam name="TDocument">Type du document.</typeparam>
-    public class ElasticStore<TDocument> : ISearchStore<TDocument>
-        where TDocument : class
+    public class ElasticStore : ISearchStore
     {
         /// <summary>
         /// Taille de cluster pour l'insertion en masse.
@@ -33,85 +31,66 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         private const string _topHitName = "top";
 
-        private static ILogger<ElasticStore<TDocument>> _logger;
-
-        /// <summary>
-        /// Usine à mapping ElasticSearch.
-        /// </summary>
-        private readonly ElasticMappingFactory _factory;
-
-        /// <summary>
-        /// Handler des facettes standard.
-        /// </summary>
-        private readonly IFacetHandler<TDocument> _standardHandler;
-
-        /// <summary>
-        /// Handler des facettes portefeuille.
-        /// </summary>
-        private readonly IFacetHandler<TDocument> _portfolioHandler;
-
-        /// <summary>
-        /// Nom de la source de données.
-        /// </summary>
-        private string _dataSourceName;
-
-        /// <summary>
-        /// Définition du document.
-        /// </summary>
-        private readonly DocumentDefinition _definition;
-
         private readonly ElasticClient _client;
+        private readonly DocumentDescriptor _documentDescriptor;
+        private readonly ILogger<ElasticStore> _logger;
+        private readonly ElasticMappingFactory _factory;
+        private readonly IFacetHandler _portfolioHandler;
+        private readonly IFacetHandler _standardHandler;
 
-        /// <summary>
-        /// Nom du type du document.
-        /// </summary>
-        private readonly string _documentTypeName;
-
-        public ElasticStore(ILogger<ElasticStore<TDocument>> logger, DocumentDescriptor documentDescriptor, ElasticClient client, ElasticMappingFactory factory)
+        public ElasticStore(ILogger<ElasticStore> logger, DocumentDescriptor documentDescriptor, ElasticClient client, ElasticMappingFactory factory, StandardFacetHandler standardHandler, PortfolioFacetHandler portfolioHandler)
         {
-            _definition = documentDescriptor.GetDefinition(typeof(TDocument));
-            _documentTypeName = _definition.DocumentTypeName;
             _client = client;
+            _documentDescriptor = documentDescriptor;
             _factory = factory;
             _logger = logger;
-            _standardHandler = new StandardFacetHandler<TDocument>(_definition);
-            _portfolioHandler = new PortfolioFacetHandler<TDocument>(_definition);
+            _portfolioHandler = portfolioHandler;
+            _standardHandler = standardHandler;
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.CreateDocumentType" />
-        public void CreateDocumentType()
+        /// <inheritdoc cref="ISearchStore.CreateDocumentType" />
+        public void CreateDocumentType<TDocument>()
+            where TDocument : class
         {
-            _logger.LogInformation("Create Document type : " + _documentTypeName);
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
+            _logger.LogInformation("Create Document type : " + def.DocumentTypeName);
             _logger.LogQuery("Map", () =>
                 _client.Map<TDocument>(x => x
-                     .Type(_documentTypeName)
-                     .Properties(selector => _factory.AddFields(selector, _definition.Fields))));
+                     .Type(def.DocumentTypeName)
+                     .Properties(selector => _factory.AddFields(selector, def.Fields))));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Get(string)" />
-        public TDocument Get(string id)
+        /// <inheritdoc cref="ISearchStore.Get{TDocument}(string)" />
+        public TDocument Get<TDocument>(string id)
+            where TDocument : class
         {
-            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath(id))).Source;
+            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath<TDocument>(id))).Source;
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Get(TDocument)" />
-        public TDocument Get(TDocument bean)
+        /// <inheritdoc cref="ISearchStore.Get{TDocument}(TDocument)" />
+        public TDocument Get<TDocument>(TDocument bean)
+            where TDocument : class
         {
-            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath(bean))).Source;
+            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath<TDocument>(bean))).Source;
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Put" />
-        public void Put(TDocument document)
+        /// <inheritdoc cref="ISearchStore.Put" />
+        public void Put<TDocument>(TDocument document)
+            where TDocument : class
         {
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
             _logger.LogQuery("Index", () =>
                 _client.Index(FormatSortFields(document), x => x
-                    .Type(_documentTypeName)
-                    .Id(_definition.PrimaryKey.GetValue(document).ToString())
+                    .Type(def.DocumentTypeName)
+                    .Id(def.PrimaryKey.GetValue(document).ToString())
                     .Refresh(Refresh.WaitFor)));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.PutAll" />
-        public void PutAll(IEnumerable<TDocument> documentList, bool waitForRefresh = false)
+        /// <inheritdoc cref="ISearchStore.PutAll" />
+        public void PutAll<TDocument>(IEnumerable<TDocument> documentList, bool waitForRefresh = false)
+            where TDocument : class
         {
             if (documentList == null)
             {
@@ -122,6 +101,8 @@ namespace Kinetix.Search.Elastic
             {
                 return;
             }
+
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
             /* Découpage en cluster. */
             var total = documentList.Count();
@@ -141,10 +122,10 @@ namespace Kinetix.Search.Elastic
                 {
                     foreach (var document in cluster)
                     {
-                        var id = _definition.PrimaryKey.GetValue(document).ToString();
+                        var id = def.PrimaryKey.GetValue(document).ToString();
                         x.Index<TDocument>(y => y
                             .Document(FormatSortFields(document))
-                            .Type(_documentTypeName)
+                            .Type(def.DocumentTypeName)
                             .Id(id));
                     }
 
@@ -158,39 +139,54 @@ namespace Kinetix.Search.Elastic
             }
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Remove(string)" />
+        /// <inheritdoc cref="ISearchStore.Remove(string)" />
         public void Remove(string id)
         {
             _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(id), d => d.Refresh(Refresh.WaitFor)));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Remove(TDocument)" />
-        public void Remove(TDocument bean)
+        /// <inheritdoc cref="ISearchStore.Remove{TDocument}(TDocument)" />
+        public void Remove<TDocument>(TDocument bean)
+            where TDocument : class
         {
             _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(bean), d => d.Refresh(Refresh.WaitFor)));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.Flush" />
-        public void Flush()
+        /// <inheritdoc cref="ISearchStore.Flush" />
+        public void Flush<TDocument>()
+            where TDocument : class
         {
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
             /* SEY : Non testé. */
-            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(x => x.Type(_documentTypeName)));
+            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(x => x.Type(def.DocumentTypeName)));
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedQuery{TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
-        public QueryOutput<TOutput> AdvancedQuery<TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+        /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
+        public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+            where TDocument : class
             where TCriteria : Criteria
         {
             return AdvancedQuery(input, documentMapper, new Func<QueryContainerDescriptor<TDocument>, QueryContainer>[0]);
         }
 
-        public QueryOutput<TOutput> AdvancedQuery<TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+        /// <summary>
+        /// Effectue une recherche avancée.
+        /// </summary>
+        /// <param name="input">Entrée de la recherche.</param>
+        /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
+        /// <param name="filters">Filtres NEST additionnels.</param>
+        /// <returns>Sortie de la recherche.</returns>
+        public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+            where TDocument : class
             where TCriteria : Criteria
         {
             if (input == null)
             {
                 throw new ArgumentNullException(nameof(input));
             }
+
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
             var apiInput = input.ApiInput;
 
@@ -219,7 +215,7 @@ namespace Kinetix.Search.Elastic
                 {
                     s
                         /* Index / type document. */
-                        .Type(_documentTypeName)
+                        .Type(def.DocumentTypeName)
 
                         /* Pagination */
                         .From(skip)
@@ -367,8 +363,9 @@ namespace Kinetix.Search.Elastic
             return output;
         }
 
-        /// <inheritdoc cref="ISearchStore{TDocument}.AdvancedCount" />
-        public long AdvancedCount<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        /// <inheritdoc cref="ISearchStore.AdvancedCount" />
+        public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
             if (input == null)
@@ -376,23 +373,19 @@ namespace Kinetix.Search.Elastic
                 throw new ArgumentNullException(nameof(input));
             }
 
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
             /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
             var filterQuery = BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
             return _logger.LogQuery("AdvancedCount", () => _client
                 .Count<TDocument>(s => s
 
                     /* Index / type document. */
-                    .Type(_documentTypeName)
+                    .Type(def.DocumentTypeName)
 
                     /* Critère de filtrage. */
                     .Query(filterQuery)))
                 .Count;
-        }
-
-        /// <inheritdoc cref="ISearchStore{TDocument}.Search" />
-        public ISearchResponse<TDocument> Search(Func<SearchDescriptor<TDocument>, ISearchRequest> selector)
-        {
-            return _logger.LogQuery("Search", () => _client.Search((SearchDescriptor<TDocument> s) => selector(s.Type(_documentTypeName))));
         }
 
         /// <summary>
@@ -400,7 +393,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Requête de filtrage.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+            where TDocument : class
             where TCriteria : Criteria
         {
             var textSubQuery = GetTextSubQuery(input);
@@ -417,9 +411,11 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             var beanProperties = typeof(TDocument).GetProperties();
             var criteriaProperties = typeof(TCriteria).GetProperties();
 
@@ -444,7 +440,7 @@ namespace Kinetix.Search.Elastic
                         propValue = "true";
                     }
 
-                    var field = _definition.Fields[propName];
+                    var field = def.Fields[propName];
 
                     switch (field.Indexing)
                     {
@@ -468,9 +464,11 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetTextSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetTextSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             var criteria = input.ApiInput.Criteria;
             var value = criteria?.Query;
 
@@ -481,13 +479,13 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Vérifie la présence d'au moins un champ textuel. */
-            if (!_definition.TextFields.Any())
+            if (!def.TextFields.Any())
             {
-                throw new ElasticException("The Document \"" + _definition.DocumentTypeName + "\" needs at lease one Search category field to allow Query.");
+                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" needs at lease one Search category field to allow Query.");
             }
 
             /* Constuit la sous requête. */
-            return BuildFullTextSearch<TDocument>(value, _definition.TextFields.Select(f => f.FieldName).ToArray());
+            return BuildFullTextSearch<TDocument>(value, def.TextFields.Select(f => f.FieldName).ToArray());
         }
 
         /// <summary>
@@ -495,9 +493,11 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetSecuritySubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetSecuritySubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             var value = input.Security;
 
             /* Absence de filtrage de sécurité : sous-requêt vide. */
@@ -507,10 +507,10 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Vérifie la présence d'un champ de sécurité. */
-            var fieldDesc = _definition.SecurityField;
+            var fieldDesc = def.SecurityField;
             if (fieldDesc == null)
             {
-                throw new ElasticException("The Document \"" + _definition.DocumentTypeName + "\" needs a Security category field to allow Query with security filtering.");
+                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" needs a Security category field to allow Query with security filtering.");
             }
 
             /* Constuit la sous requête. */
@@ -522,7 +522,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFacetSelectionSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFacetSelectionSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
             var facetList = input.ApiInput.Facets;
@@ -544,7 +545,7 @@ namespace Kinetix.Search.Elastic
 
                     /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur. */
                     var s = f.Value[0];
-                    return GetHandler(def).CreateFacetSubQuery(s, def, input.Portfolio);
+                    return GetHandler(def).CreateFacetSubQuery<TDocument>(s, def, input.Portfolio);
                 })
                 .Where(f => f != null)
                 .ToArray();
@@ -565,7 +566,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetPostFilterSubQuery<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetPostFilterSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
             var facetList = input.ApiInput.Facets;
@@ -587,7 +589,7 @@ namespace Kinetix.Search.Elastic
 
                     var handler = GetHandler(def);
                     /* On fait un "OR" sur toutes les valeurs sélectionnées. */
-                    return BuildOrQuery(f.Value.Select(s => handler.CreateFacetSubQuery(s, def, input.Portfolio)).ToArray());
+                    return BuildOrQuery(f.Value.Select(s => handler.CreateFacetSubQuery<TDocument>(s, def, input.Portfolio)).ToArray());
                 })
                 .Where(f => f != null)
                 .ToArray();
@@ -608,7 +610,8 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Définitions de facettes.</returns>
-        private ICollection<IFacetDefinition> GetFacetDefinitionList<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private ICollection<IFacetDefinition> GetFacetDefinitionList<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
             var groupFacetName = input.ApiInput.Group;
@@ -630,7 +633,7 @@ namespace Kinetix.Search.Elastic
             foreach (var facetDef in list)
             {
                 /* Vérifie que le champ à facetter existe sur le document. */
-                GetHandler(facetDef).CheckFacet(facetDef);
+                GetHandler(facetDef).CheckFacet<TDocument>(facetDef);
             }
 
             return list;
@@ -641,9 +644,11 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Définition du tri.</returns>
-        private SortDefinition GetSortDefinition<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private SortDefinition GetSortDefinition<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             var fieldName = input.ApiInput.SortFieldName;
 
             /* Cas de l'absence de tri. */
@@ -653,14 +658,14 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Vérifie la présence du champ. */
-            if (!_definition.Fields.HasProperty(fieldName))
+            if (!def.Fields.HasProperty(fieldName))
             {
-                throw new ElasticException("The Document \"" + _definition.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to sort on.");
+                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to sort on.");
             }
 
             return new SortDefinition
             {
-                FieldName = _definition.Fields[fieldName].FieldName,
+                FieldName = def.Fields[fieldName].FieldName,
                 Order = input.ApiInput.SortDesc ? SortOrder.Descending : SortOrder.Ascending
             };
         }
@@ -670,9 +675,11 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="input">Entrée.</param>
         /// <returns>Nom du champ.</returns>
-        private string GetGroupFieldName<TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        private string GetGroupFieldName<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
             where TCriteria : Criteria
         {
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             var groupFacetName = input.ApiInput.Group;
 
             /* Pas de groupement. */
@@ -691,12 +698,12 @@ namespace Kinetix.Search.Elastic
             var fieldName = facetDef.FieldName;
 
             /* Vérifie la présence du champ. */
-            if (!_definition.Fields.HasProperty(fieldName))
+            if (!def.Fields.HasProperty(fieldName))
             {
-                throw new ElasticException("The Document \"" + _definition.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to group on.");
+                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to group on.");
             }
 
-            return _definition.Fields[fieldName].FieldName;
+            return def.Fields[fieldName].FieldName;
         }
 
         /// <summary>
@@ -704,9 +711,10 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="id">ID du document.</param>
         /// <returns>Le DocumentPath.</returns>
-        private DocumentPath<TDocument> CreateDocumentPath(string id)
+        private DocumentPath<TDocument> CreateDocumentPath<TDocument>(string id)
+            where TDocument : class
         {
-            return new DocumentPath<TDocument>(id).Type(_documentTypeName);
+            return new DocumentPath<TDocument>(id).Type(_documentDescriptor.GetDefinition(typeof(TDocument)).DocumentTypeName);
         }
 
         /// <summary>
@@ -714,9 +722,11 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="id">ID du document.</param>
         /// <returns>Le DocumentPath.</returns>
-        private DocumentPath<TDocument> CreateDocumentPath(TDocument document)
+        private DocumentPath<TDocument> CreateDocumentPath<TDocument>(TDocument document)
+            where TDocument : class
         {
-            return new DocumentPath<TDocument>(_definition.PrimaryKey.GetValue(document).ToString()).Type(_documentTypeName);
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+            return new DocumentPath<TDocument>(def.PrimaryKey.GetValue(document).ToString()).Type(def.DocumentTypeName);
         }
 
         /// <summary>
@@ -726,9 +736,11 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="document">Document.</param>
         /// <returns>Document formaté.</returns>
-        private TDocument FormatSortFields(TDocument document)
+        private TDocument FormatSortFields<TDocument>(TDocument document)
+            where TDocument : class
         {
-            foreach (var field in _definition.Fields.Where(x => x.Indexing == SearchFieldIndexing.Sort && x.PropertyType == typeof(string)))
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+            foreach (var field in def.Fields.Where(x => x.Indexing == SearchFieldIndexing.Sort && x.PropertyType == typeof(string)))
             {
                 var raw = field.GetValue(document);
                 if (raw != null)
@@ -745,15 +757,9 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         /// <param name="def">Définition de facet.</param>
         /// <returns>Handler.</returns>
-        private IFacetHandler<TDocument> GetHandler(IFacetDefinition def)
+        private IFacetHandler GetHandler(IFacetDefinition def)
         {
             return def.GetType() == typeof(PortfolioFacet) ? _portfolioHandler : _standardHandler;
-        }
-
-        public ISearchStore<TDocument> RegisterDataSource(string dataSourceName)
-        {
-            _dataSourceName = dataSourceName ?? throw new ArgumentNullException(nameof(dataSourceName));
-            return this;
         }
 
         /// <summary>
@@ -761,7 +767,6 @@ namespace Kinetix.Search.Elastic
         /// </summary>
         private class SortDefinition
         {
-
             /// <summary>
             /// Ordre de tri.
             /// </summary>

@@ -9,15 +9,14 @@ namespace Kinetix.Search.Elastic.Faceting
     /// <summary>
     /// Contrat des handlers de facette.
     /// </summary>
-    /// <typeparam name="TDocument">Type du document.</typeparam>
-    public interface IFacetHandler<TDocument>
-        where TDocument : class
+    public interface IFacetHandler
     {
         /// <summary>
         /// Vérifie qu'une définition de facette est valide.
         /// </summary>
         /// <param name="facetDef">Définition de facette.</param>
-        void CheckFacet(IFacetDefinition facetDef);
+        void CheckFacet<TDocument>(IFacetDefinition facetDef)
+            where TDocument : class;
 
         /// <summary>
         /// Créé la sous-requête QSL de filtrage pour la facette sélectionnée.
@@ -26,7 +25,8 @@ namespace Kinetix.Search.Elastic.Faceting
         /// <param name="facetDef">Définition de la facette.</param>
         /// <param name="portfolio">Portefeuille de l'utilisateur.</param>
         /// <returns>Sous-requête.</returns>
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio);
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery<TDocument>(string facet, IFacetDefinition facetDef, string portfolio)
+            where TDocument : class;
 
         /// <summary>
         /// Définit l'agrégation correspondant à la facette lors de la recherche à facettes.
@@ -36,7 +36,8 @@ namespace Kinetix.Search.Elastic.Faceting
         /// <param name="facetList">Définitions de toutes les facettes.</param>
         /// <param name="selectedFacets">Facettes sélectionnées, pour filtrer.</param>
         /// <param name="portfolio">Portefeuille de l'utilisateur.</param>
-        void DefineAggregation(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio);
+        void DefineAggregation<TDocument>(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio)
+            where TDocument : class;
 
         /// <summary>
         /// Extrait les facets du résultat d'une requête.

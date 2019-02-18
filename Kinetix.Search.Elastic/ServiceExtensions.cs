@@ -57,13 +57,7 @@ namespace Kinetix.Search.Elastic
                     provider.GetService<IOptions<SearchConfig>>(),
                     provider.GetService<ElasticClient>(),
                     config.DocumentTypes))
-                .AddTransient(typeof(ISearchStore<>), typeof(ElasticStore<>));
-        }
-
-        public static ElasticStore<TDocument> GetElasticStore<TDocument>(this SearchManager manager)
-            where TDocument : class, new()
-        {
-            return (ElasticStore<TDocument>)manager.GetStore<TDocument>();
+                .AddSingleton<ISearchStore, ElasticStore>();
         }
     }
 }

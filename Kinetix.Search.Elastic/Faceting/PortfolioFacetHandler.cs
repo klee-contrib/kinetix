@@ -12,25 +12,24 @@ namespace Kinetix.Search.Elastic.Faceting
     /// <summary>
     /// Handler de facette Portfolio.
     /// </summary>
-    /// <typeparam name="TDocument">Type du document.</typeparam>
-    public class PortfolioFacetHandler<TDocument> : IFacetHandler<TDocument>
-        where TDocument : class
+    public class PortfolioFacetHandler : IFacetHandler
     {
         private const string InValue = "1";
         private const string OutValue = "0";
-        private readonly DocumentDefinition _document;
+        private readonly DocumentDescriptor _documentDescriptor;
 
         /// <summary>
         /// Créé une nouvelle instance de PortfolioFacetHandler.
         /// </summary>
         /// <param name="document">Définition du document.</param>
-        public PortfolioFacetHandler(DocumentDefinition document)
+        public PortfolioFacetHandler(DocumentDescriptor documentDescriptor)
         {
-            _document = document;
+            _documentDescriptor = documentDescriptor;
         }
 
         /// <inheritdoc/>
-        public void DefineAggregation(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio)
+        public void DefineAggregation<TDocument>(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition facet, ICollection<IFacetDefinition> facetList, FacetListInput selectedFacets, string portfolio)
+            where TDocument : class
         {
             if (string.IsNullOrEmpty(portfolio))
             {
@@ -39,10 +38,10 @@ namespace Kinetix.Search.Elastic.Faceting
             }
 
             /* Récupère le nom du champ. */
-            var fieldName = _document.Fields[facet.FieldName].FieldName;
+            var fieldName = _documentDescriptor.GetDefinition(typeof(TDocument)).Fields[facet.FieldName].FieldName;
 
             /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
-            var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(facet, facetList, selectedFacets, CreateFacetSubQuery);
+            var filterQuery = FacetingUtil.BuildMultiSelectableFacetFilter(facet, facetList, selectedFacets, CreateFacetSubQuery<TDocument>);
 
             /* Créé une agrégation avec deux buckets. */
             var inQuery = BuildAndQuery(BuildInclusiveInclude<TDocument>(fieldName, portfolio), filterQuery);
@@ -88,18 +87,21 @@ namespace Kinetix.Search.Elastic.Faceting
         }
 
         /// <inheritdoc/>
-        public void CheckFacet(IFacetDefinition facetDef)
+        public void CheckFacet<TDocument>(IFacetDefinition facetDef)
+            where TDocument : class
         {
-            if (!_document.Fields.HasProperty(facetDef.FieldName))
+            var doc = _documentDescriptor.GetDefinition(typeof(TDocument));
+            if (!doc.Fields.HasProperty(facetDef.FieldName))
             {
-                throw new ElasticException("The Document \"" + _document.DocumentTypeName + "\" is missing a \"" + facetDef.FieldName + "\" property to facet on.");
+                throw new ElasticException("The Document \"" + doc.DocumentTypeName + "\" is missing a \"" + facetDef.FieldName + "\" property to facet on.");
             }
         }
 
         /// <inheritdoc/>
-        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery(string facet, IFacetDefinition facetDef, string portfolio)
+        public Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery<TDocument>(string facet, IFacetDefinition facetDef, string portfolio)
+            where TDocument : class
         {
-            var fieldDesc = _document.Fields[facetDef.FieldName];
+            var fieldDesc = _documentDescriptor.GetDefinition(typeof(TDocument)).Fields[facetDef.FieldName];
             var fieldName = fieldDesc.FieldName;
 
             if (string.IsNullOrEmpty(portfolio))
