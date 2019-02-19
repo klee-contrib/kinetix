@@ -32,15 +32,16 @@ namespace Kinetix.Search.Elastic
         /// <summary>
         /// Initialise un index pour le document donné avec la configuration Analyser/Tokenizer.
         /// </summary>
-        /// <param name="configurator">Configurateur.</param>
-        public void InitIndex<T>(IIndexConfigurator configurator)
+        public void InitIndex<T, TIndexConfigurator>()
+            where TIndexConfigurator : IIndexConfigurator, new()
         {
             if (ExistIndex(_client, _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T))))
             {
                 DeleteIndex<T>();
             }
+
             _logger.LogQuery("CreateIndex", () =>
-                _client.CreateIndex(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)), configurator.Configure));
+                _client.CreateIndex(new TIndexConfigurator().CreateIndexRequest(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))));
         }
 
         /// <summary>

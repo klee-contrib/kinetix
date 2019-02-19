@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
 using Nest;
 
 namespace Kinetix.Search.Elastic
@@ -12,39 +10,19 @@ namespace Kinetix.Search.Elastic
     public static class ElasticQueryBuilder
     {
         /// <summary>
-        /// Caractères réservés de la syntaxe Query DSL à échapper.
-        /// </summary>
-        private static readonly string[] elasticSpecialChars = new string[] { "<", ">", "=", "/", "\\", "+", "-", "&&", "||", "!", "(", ")", "{", "}", "[", "]", "^", "~", "*", "?", ":", "." };
-
-        /// <summary>
         /// Construit une requête pour une recherche textuelle.
         /// </summary>
         /// <param name="text">Texte de recherche.</param>
         /// <param name="fields">Champs de recherche.</param>
         /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFullTextSearch<TDocument>(string text, params string[] fields)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiMatchQuery<TDocument>(string text, params string[] fields)
             where TDocument : class
         {
-            if (string.IsNullOrEmpty(text))
-            {
-                return q => q;
-            }
-
-            /* Enlève les accents. */
-            var withoutAccent = RemoveDiacritics(text);
-            /* Passe en minsucule. */
-            var lower = withoutAccent.ToLower(CultureInfo.CurrentCulture);
-            /* Echappe les caractères réservés. */
-            var escapedValue = EscapeLuceneSpecialChars(lower);
-            /* Remplace les tirets et apostrophe par des espaces. */
-            escapedValue = escapedValue.Replace('-', ' ').Replace('\'', ' ');
-
             return q => q.MultiMatch(m => m
                 .Query(text)
-                .Type(TextQueryType.PhrasePrefix)
-                .Fields(fields)
-                .MaxExpansions(1000)
-                .Slop(2));
+                .Operator(Operator.And)
+                .Type(TextQueryType.CrossFields)
+                .Fields(fields));
         }
 
         /// <summary>
@@ -56,9 +34,8 @@ namespace Kinetix.Search.Elastic
         public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildInclusiveInclude<TDocument>(string field, string codes)
             where TDocument : class
         {
-            var escapedValue = EscapeLuceneSpecialChars(codes);
             var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-            foreach (var word in escapedValue.Split(' '))
+            foreach (var word in codes.Split(' '))
             {
                 clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
             }
@@ -75,11 +52,10 @@ namespace Kinetix.Search.Elastic
         public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildExcludeQuery<TDocument>(string field, string codes)
             where TDocument : class
         {
-            var escapedValue = EscapeLuceneSpecialChars(codes);
             return q => q.Bool(b =>
             {
                 var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-                foreach (var word in escapedValue.Split(' '))
+                foreach (var word in codes.Split(' '))
                 {
                     clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
                 }
@@ -97,9 +73,7 @@ namespace Kinetix.Search.Elastic
         public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value)
             where TDocument : class
         {
-            /* Echappe les caractères réservés. */
-            var escapedValue = EscapeLuceneSpecialChars(value);
-            return q => q.Term(t => t.Field(field).Value(escapedValue));
+            return q => q.Term(t => t.Field(field).Value(value));
         }
 
         /// <summary>
@@ -135,44 +109,6 @@ namespace Kinetix.Search.Elastic
             return q => q.Bool(b => b
                 .Should(subQueries)
                 .MinimumShouldMatch(1));
-        }
-
-        /// <summary>
-        /// Échappe les caractères spéciaux ElasticSearch.
-        /// </summary>
-        /// <param name="value">Texte à traiter.</param>
-        /// <returns>Chaîne échappée.</returns>
-        private static string EscapeLuceneSpecialChars(string value)
-        {
-            var sb = new StringBuilder(value);
-            foreach (var specialChar in elasticSpecialChars)
-            {
-                sb.Replace(specialChar, @"\" + specialChar);
-            }
-
-            sb.Replace("\"", string.Empty);
-
-            return sb.ToString();
-        }
-
-        /// <summary>
-        /// Remplace les caractères avec accents par les caractères correspondants sans accents.
-        /// </summary>
-        /// <param name="raw">Chaîne brute.</param>
-        /// <returns>Chaîne traitée.</returns>
-        private static string RemoveDiacritics(string raw)
-        {
-            var normalizedString = raw.Normalize(NormalizationForm.FormD);
-            var sb = new StringBuilder();
-            foreach (var c in normalizedString)
-            {
-                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                {
-                    sb.Append(c);
-                }
-            }
-
-            return sb.ToString();
         }
     }
 }

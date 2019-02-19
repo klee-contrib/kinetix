@@ -207,7 +207,7 @@ namespace Kinetix.Search.Elastic.Querying
 
             /* Constuit la sous requête de query. */
             var textSubQuery = criteria.Query != null
-                ? BuildFullTextSearch<TDocument>(criteria.Query, def.TextFields.Select(f => f.FieldName).ToArray())
+                ? BuildMultiMatchQuery<TDocument>(criteria.Query, def.TextFields.Select(f => f.FieldName).ToArray())
                 : q => q;
 
             /* Constuit la sous requête de sécurité. */
@@ -245,7 +245,7 @@ namespace Kinetix.Search.Elastic.Querying
                     switch (field.Indexing)
                     {
                         case SearchFieldIndexing.FullText:
-                            filterList.Add(BuildFullTextSearch<TDocument>(propValue, field.FieldName));
+                            filterList.Add(BuildMultiMatchQuery<TDocument>(propValue, field.FieldName));
                             break;
                         case SearchFieldIndexing.Term:
                             filterList.Add(BuildFilter<TDocument>(field.FieldName, propValue));

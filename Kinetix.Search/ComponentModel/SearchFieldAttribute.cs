@@ -24,6 +24,15 @@ namespace Kinetix.Search.ComponentModel
         public SearchFieldAttribute(SearchFieldCategory category)
         {
             Category = category;
+
+            if (category == SearchFieldCategory.Search)
+            {
+                Indexing = SearchFieldIndexing.FullText;
+            }
+            else if (category == SearchFieldCategory.Security)
+            {
+                Indexing = SearchFieldIndexing.Term;
+            }
         }
 
         /// <summary>
