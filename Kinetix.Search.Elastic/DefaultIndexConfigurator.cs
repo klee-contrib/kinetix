@@ -18,18 +18,22 @@ namespace Kinetix.Search.Elastic
                 {
                     TokenFilters = new TokenFilters
                     {
-                        ["autocomplete"] = new EdgeNGramTokenFilter { MinGram = 1, MaxGram = 20 }
+                        ["edgengram"] = new EdgeNGramTokenFilter { MinGram = 1, MaxGram = 20 }
+                    },
+                    Tokenizers = new Tokenizers
+                    {
+                        ["chargroup"] = new CharGroupTokenizer { TokenizeOnCharacters = new[] { " ", "-", "'" } }
                     },
                     Analyzers = new Analyzers
                     {
                         ["text"] = new CustomAnalyzer
                         {
-                            Tokenizer = "whitespace",
-                            Filter = new[] { "autocomplete", "asciifolding", "lowercase" }
+                            Tokenizer = "chargroup",
+                            Filter = new[] { "edgengram", "asciifolding", "lowercase" }
                         },
                         ["search_text"] = new CustomAnalyzer
                         {
-                            Tokenizer = "whitespace",
+                            Tokenizer = "chargroup",
                             Filter = new[] { "asciifolding", "lowercase" }
                         }
                     }
