@@ -16,6 +16,11 @@ namespace Kinetix.Search.Elastic.Mapping
         {
             switch (field.Indexing)
             {
+                case SearchFieldIndexing.FullText:
+                    return selector.Text(x => x
+                        .Name(field.FieldName)
+                        .Analyzer("text")
+                        .SearchAnalyzer("standard"));
                 case SearchFieldIndexing.Term:
                 case SearchFieldIndexing.Sort:
                     return selector.Number(x => x
