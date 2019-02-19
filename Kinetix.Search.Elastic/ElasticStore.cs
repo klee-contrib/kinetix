@@ -7,11 +7,11 @@ using Kinetix.Search.Elastic.Faceting;
 using Kinetix.Search.Elastic.Querying;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
+using Microsoft.Extensions.Logging;
 using Nest;
 
 namespace Kinetix.Search.Elastic
 {
-    using Microsoft.Extensions.Logging;
     using static AdvancedQueryUtil;
 
     /// <summary>
@@ -238,10 +238,15 @@ namespace Kinetix.Search.Elastic
             if (hasGroup)
             {
                 /* Groupement. */
-                var bucket = (BucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName];
-                foreach (KeyedBucket<object> group in bucket.Items)
+                var bucket = res.Aggregations.Terms(groupFieldName);
+                if (bucket == null)
                 {
-                    var list = ((TopHitsAggregate)group[TopHitName]).Documents<TDocument>().Select(documentMapper).ToList();
+                    bucket = res.Aggregations.Filter(groupFieldName).Terms(groupFieldName);
+                }
+
+                foreach (var group in bucket.Buckets)
+                {
+                    var list = group.TopHits(TopHitName).Documents<TDocument>().Select(documentMapper).ToList();
                     groupResultList.Add(new GroupResult<TOutput>
                     {
                         Code = group.Key.ToString(),
@@ -251,10 +256,14 @@ namespace Kinetix.Search.Elastic
                     });
                 }
 
-                /* Groupe pour les valeurs null. */
-                var nullBucket = (SingleBucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName + MissingGroupPrefix];
-                var nullTopHitAgg = (TopHitsAggregate)nullBucket[TopHitName];
-                var nullDocs = nullTopHitAgg.Documents<TDocument>().Select(documentMapper).ToList();
+                /* Groupe pour les valeurs missing. */
+                var missingBucket = res.Aggregations.Missing(groupFieldName + MissingGroupPrefix);
+                if (missingBucket == null)
+                {
+                    missingBucket = res.Aggregations.Filter(groupFieldName + MissingGroupPrefix).Missing(groupFieldName + MissingGroupPrefix);
+                }
+
+                var nullDocs = missingBucket.TopHits(TopHitName).Documents<TDocument>().Select(documentMapper).ToList();
                 if (nullDocs.Any())
                 {
                     groupResultList.Add(new GroupResult<TOutput>
@@ -262,7 +271,7 @@ namespace Kinetix.Search.Elastic
                         Code = FacetConst.NullValue,
                         Label = input.FacetQueryDefinition.FacetNullValueLabel ?? "focus.search.results.missing",
                         List = nullDocs,
-                        TotalCount = (int)nullBucket.DocCount
+                        TotalCount = (int)missingBucket.DocCount
                     });
                 }
 

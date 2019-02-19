@@ -13,7 +13,6 @@ namespace Kinetix.Search.Elastic.Querying
 
     public static class AdvancedQueryUtil
     {
-        public const string GroupAggs = "groupAggs";
         public const string MissingGroupPrefix = "_Missing";
         public const string TopHitName = "top";
 
@@ -42,7 +41,7 @@ namespace Kinetix.Search.Elastic.Querying
 
             /* Requêtes de filtrage. */
             var filterQuery = GetFilterQuery(def, input, getFacetHandler, filters);
-            var postFilterQuery = GetPostFilterSubQuery(input, getFacetHandler);
+            var (hasPostFilter, postFilterQuery) = GetPostFilterSubQuery(input, getFacetHandler);
 
             /* Booléens */
             var hasGroup = !string.IsNullOrEmpty(input.ApiInput.Group);
@@ -89,11 +88,9 @@ namespace Kinetix.Search.Elastic.Querying
                         }
                         if (hasGroup)
                         {
-                            /* Groupement. */
-                            a.Filter(GroupAggs, f => f
-                                /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
-                                .Filter(postFilterQuery)
-                                .Aggregations(aa => aa
+                            AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
+                            {
+                                return aa
                                     /* Groupement. */
                                     .Terms(groupFieldName, st => st
                                         .Field(groupFieldName)
@@ -101,8 +98,22 @@ namespace Kinetix.Search.Elastic.Querying
                                     /* Groupement pour les valeurs nulles */
                                     .Missing(groupFieldName + MissingGroupPrefix, st => st
                                         .Field(groupFieldName)
-                                        .Aggregations(g => g.TopHits(TopHitName, x => x.Size(input.GroupSize))))));
+                                        .Aggregations(g => g.TopHits(TopHitName, x => x.Size(input.GroupSize))));
+                            }
+
+                            if (hasPostFilter)
+                            {
+                                /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
+                                a.Filter(groupFieldName, f => f
+                                    .Filter(postFilterQuery)
+                                    .Aggregations(AggDescriptor));
+                            }
+                            else
+                            {
+                                AggDescriptor(a);
+                            }
                         }
+
                         return a;
                     });
                 }
@@ -162,7 +173,8 @@ namespace Kinetix.Search.Elastic.Querying
             where TDocument : class
             where TCriteria : Criteria, new()
         {
-            return BuildAndQuery(GetFilterQuery(def, input, getFacetHandler), GetPostFilterSubQuery(input, getFacetHandler));
+            var (_, postFilterQuery) = GetPostFilterSubQuery(input, getFacetHandler);
+            return BuildAndQuery(GetFilterQuery(def, input, getFacetHandler), postFilterQuery);
         }
 
         /// <summary>
@@ -294,7 +306,7 @@ namespace Kinetix.Search.Elastic.Querying
         /// <param name="input">Input de la recherche.</param>
         /// <param name="getFacetHandler">Getter sur le handler de facette.</param>
         /// <returns>Sous-requête.</returns>
-        private static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetPostFilterSubQuery<TDocument, TCriteria>(
+        private static (bool hasPostFilter, Func<QueryContainerDescriptor<TDocument>, QueryContainer> query) GetPostFilterSubQuery<TDocument, TCriteria>(
             AdvancedQueryInput<TDocument, TCriteria> input,
             Func<IFacetDefinition, IFacetHandler> getFacetHandler)
             where TDocument : class
@@ -318,9 +330,11 @@ namespace Kinetix.Search.Elastic.Querying
                 .ToArray();
 
             /* Concatène en "ET" toutes les sous-requêtes. */
-            return facetSubQueryList.Any()
-                ? BuildAndQuery(facetSubQueryList)
-                : q => q;
+            return (
+                facetSubQueryList.Any(),
+                facetSubQueryList.Any()
+                    ? BuildAndQuery(facetSubQueryList)
+                    : q => q);
         }
 
         /// <summary>
