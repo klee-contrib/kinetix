@@ -74,7 +74,13 @@ namespace Kinetix.Search
         /// <returns>Sortie de la recherche.</returns>
         QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
             where TDocument : class
-            where TCriteria : Criteria;
+            where TCriteria : Criteria, new();
+
+        /// <summary>
+        /// Effectue une recherche avancée mutiple.
+        /// </summary>
+        /// <returns>Descripteur.</returns>
+        IMultiAdvancedQueryDescriptor MultiAdvancedQuery();
 
         /// <summary>
         /// Effectue un count avancé.
@@ -83,6 +89,6 @@ namespace Kinetix.Search
         /// <returns>Nombre de documents.</returns>
         long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
             where TDocument : class
-            where TCriteria : Criteria;
+            where TCriteria : Criteria, new();
     }
 }

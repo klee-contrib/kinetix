@@ -5,7 +5,7 @@
     /// </summary>
     /// <typeparam name="TCriteria">Critère.</typeparam>
     public class QueryInput<TCriteria>
-        where TCriteria : Criteria
+        where TCriteria : Criteria, new()
     {
         /// <summary>
         /// Liste des facettes.

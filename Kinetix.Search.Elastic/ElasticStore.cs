@@ -4,14 +4,15 @@ using System.Linq;
 using Elasticsearch.Net;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Elastic.Faceting;
+using Kinetix.Search.Elastic.Querying;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
-using Microsoft.Extensions.Logging;
 using Nest;
 
 namespace Kinetix.Search.Elastic
 {
-    using static ElasticQueryBuilder;
+    using Microsoft.Extensions.Logging;
+    using static AdvancedQueryUtil;
 
     /// <summary>
     /// Store ElasticSearch.
@@ -22,14 +23,6 @@ namespace Kinetix.Search.Elastic
         /// Taille de cluster pour l'insertion en masse.
         /// </summary>
         private const int ClusterSize = 1000;
-
-        private const string MissingGroupPrefix = "_Missing";
-        private const string GroupAggs = "groupAggs";
-
-        /// <summary>
-        /// Nom de l'aggrégation des top hits pour le groupement.
-        /// </summary>
-        private const string _topHitName = "top";
 
         private readonly ElasticClient _client;
         private readonly DocumentDescriptor _documentDescriptor;
@@ -82,7 +75,7 @@ namespace Kinetix.Search.Elastic
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
             _logger.LogQuery("Index", () =>
-                _client.Index(FormatSortFields(document), x => x
+                _client.Index(FormatSortFields(def, document), x => x
                     .Type(def.DocumentTypeName)
                     .Id(def.PrimaryKey.GetValue(document).ToString())
                     .Refresh(Refresh.WaitFor)));
@@ -124,7 +117,7 @@ namespace Kinetix.Search.Elastic
                     {
                         var id = def.PrimaryKey.GetValue(document).ToString();
                         x.Index<TDocument>(y => y
-                            .Document(FormatSortFields(document))
+                            .Document(FormatSortFields(def, document))
                             .Type(def.DocumentTypeName)
                             .Id(id));
                     }
@@ -165,7 +158,7 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
         public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
             where TDocument : class
-            where TCriteria : Criteria
+            where TCriteria : Criteria, new()
         {
             return AdvancedQuery(input, documentMapper, new Func<QueryContainerDescriptor<TDocument>, QueryContainer>[0]);
         }
@@ -179,95 +172,26 @@ namespace Kinetix.Search.Elastic
         /// <returns>Sortie de la recherche.</returns>
         public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
             where TDocument : class
-            where TCriteria : Criteria
+            where TCriteria : Criteria, new()
         {
             if (input == null)
             {
                 throw new ArgumentNullException(nameof(input));
             }
 
+            /* Définition du document. */
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
-            var apiInput = input.ApiInput;
-
-            /* Tri */
-            var sortDef = GetSortDefinition(input);
-
-            /* Requêtes de filtrage. */
-            var filterQuery = GetFilterQuery(input, filters);
-            var postFilterQuery = GetPostFilterSubQuery(input);
-
             /* Facettage. */
-            var facetDefList = GetFacetDefinitionList(input);
+            var facetDefList = GetFacetDefinitionList(input, GetHandler);
             var hasFacet = facetDefList.Any();
-            var portfolio = input.Portfolio;
 
             /* Group */
-            var groupFieldName = GetGroupFieldName(input);
-            var hasGroup = !string.IsNullOrEmpty(apiInput.Group);
+            var groupFieldName = GetGroupFieldName(def, input);
+            var hasGroup = !string.IsNullOrEmpty(input.ApiInput.Group);
 
-            /* Pagination. */
-            var skip = apiInput.Skip ?? 0;
-            var size = hasGroup ? 0 : apiInput.Top ?? 1000; // TODO Paramétrable ?
-
-            var res = _logger.LogQuery("AdvancedQuery", () => _client
-                .Search<TDocument>(s =>
-                {
-                    s
-                        /* Index / type document. */
-                        .Type(def.DocumentTypeName)
-
-                        /* Pagination */
-                        .From(skip)
-                        .Size(size)
-
-                        /* Critère de filtrage. */
-                        .Query(filterQuery)
-
-                        /* Critère de post-filtrage. */
-                        .PostFilter(postFilterQuery);
-
-                    /* Tri */
-                    if (sortDef.HasSort)
-                    {
-                        s.Sort(x => x.Field(sortDef.FieldName, sortDef.Order));
-                    }
-
-                    /* Aggrégations. */
-                    if (hasFacet || hasGroup)
-                    {
-                        s.Aggregations(a =>
-                        {
-                            if (hasFacet)
-                            {
-                                /* Facettage. */
-                                foreach (var facetDef in facetDefList)
-                                {
-                                    GetHandler(facetDef).DefineAggregation(a, facetDef, facetDefList, input.ApiInput.Facets, portfolio);
-                                }
-                            }
-                            if (hasGroup)
-                            {
-                                /* Groupement. */
-                                a.Filter(GroupAggs, f => f
-                                    /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
-                                    .Filter(postFilterQuery)
-                                    .Aggregations(aa => aa
-                                        /* Groupement. */
-                                        .Terms(groupFieldName, st => st
-                                            .Field(groupFieldName)
-                                            .Aggregations(g => g.TopHits(_topHitName, x => x.Size(input.GroupSize))))
-                                        /* Groupement pour les valeurs nulles */
-                                        .Missing(groupFieldName + MissingGroupPrefix, st => st
-                                            .Field(groupFieldName)
-                                            .Aggregations(g => g.TopHits(_topHitName, x => x.Size(input.GroupSize))))));
-                            }
-                            return a;
-                        });
-                    }
-
-                    return s;
-                }));
+            var res = _logger.LogQuery("AdvancedQuery", () => _client.Search(
+                GetAdvancedQueryDescriptor(def, input, GetHandler, facetDefList, groupFieldName, filters)));
 
             /* Extraction des facettes. */
             var facetListOutput = new List<FacetOutput>();
@@ -317,11 +241,11 @@ namespace Kinetix.Search.Elastic
                 var bucket = (BucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName];
                 foreach (KeyedBucket<object> group in bucket.Items)
                 {
-                    var list = ((TopHitsAggregate)group[_topHitName]).Documents<TDocument>().Select(documentMapper).ToList();
+                    var list = ((TopHitsAggregate)group[TopHitName]).Documents<TDocument>().Select(documentMapper).ToList();
                     groupResultList.Add(new GroupResult<TOutput>
                     {
                         Code = group.Key.ToString(),
-                        Label = facetDefList.First(f => f.Code == apiInput.Group).ResolveLabel(group.Key),
+                        Label = facetDefList.First(f => f.Code == input.ApiInput.Group).ResolveLabel(group.Key),
                         List = list,
                         TotalCount = (int)group.DocCount
                     });
@@ -329,7 +253,7 @@ namespace Kinetix.Search.Elastic
 
                 /* Groupe pour les valeurs null. */
                 var nullBucket = (SingleBucketAggregate)res.Aggregations.Filter(GroupAggs)[groupFieldName + MissingGroupPrefix];
-                var nullTopHitAgg = (TopHitsAggregate)nullBucket[_topHitName];
+                var nullTopHitAgg = (TopHitsAggregate)nullBucket[TopHitName];
                 var nullDocs = nullTopHitAgg.Documents<TDocument>().Select(documentMapper).ToList();
                 if (nullDocs.Any())
                 {
@@ -363,10 +287,16 @@ namespace Kinetix.Search.Elastic
             return output;
         }
 
+        /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />
+        public IMultiAdvancedQueryDescriptor MultiAdvancedQuery()
+        {
+            return new MultiAdvancedQueryDescriptor(_client, _documentDescriptor, GetHandler);
+        }
+
         /// <inheritdoc cref="ISearchStore.AdvancedCount" />
         public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
             where TDocument : class
-            where TCriteria : Criteria
+            where TCriteria : Criteria, new()
         {
             if (input == null)
             {
@@ -376,7 +306,7 @@ namespace Kinetix.Search.Elastic
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
             /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
-            var filterQuery = BuildAndQuery(GetFilterQuery(input), GetPostFilterSubQuery(input));
+            var filterQuery = GetFilterAndPostFilterQuery(def, input, GetHandler);
             return _logger.LogQuery("AdvancedCount", () => _client
                 .Count<TDocument>(s => s
 
@@ -389,321 +319,15 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <summary>
-        /// Créé la requête de filtrage.
+        /// Recherche directement via le client ElasticSearch.
         /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Requête de filtrage.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+        /// <param name="descriptor">Search descriptor.</param>
+        /// <returns>Search response.</returns>
+        public ISearchResponse<TDocument> Search<TDocument>(Func<SearchDescriptor<TDocument>, ISearchRequest> descriptor)
             where TDocument : class
-            where TCriteria : Criteria
-        {
-            var textSubQuery = GetTextSubQuery(input);
-            var securitySubQuery = GetSecuritySubQuery(input);
-            var filterSubQuery = GetFilterSubQuery(input);
-            var monoValuedFacetsSubQuery = GetFacetSelectionSubQuery(input);
-            return BuildAndQuery(
-                new[] { textSubQuery, securitySubQuery, filterSubQuery, monoValuedFacetsSubQuery }
-                .Concat(filters).ToArray());
-        }
-
-        /// <summary>
-        /// Crée la sous requête pour les champs de filtre.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            var beanProperties = typeof(TDocument).GetProperties();
-            var criteriaProperties = typeof(TCriteria).GetProperties();
-
-            var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-
-            foreach (var entry in beanProperties)
-            {
-                var propName = entry.Name;
-                var propValue = input.AdditionalCriteria != null
-                    ? entry.GetValue(input.AdditionalCriteria)?.ToString()
-                    : null;
-
-                if (string.IsNullOrWhiteSpace(propValue))
-                {
-                    propValue = criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(input.ApiInput.Criteria)?.ToString();
-                }
-
-                if (!string.IsNullOrWhiteSpace(propValue))
-                {
-                    if (propValue == "True")
-                    {
-                        propValue = "true";
-                    }
-
-                    var field = def.Fields[propName];
-
-                    switch (field.Indexing)
-                    {
-                        case SearchFieldIndexing.FullText:
-                            filterList.Add(BuildFullTextSearch<TDocument>(propValue, field.FieldName));
-                            break;
-                        case SearchFieldIndexing.Term:
-                            filterList.Add(BuildFilter<TDocument>(field.FieldName, propValue));
-                            break;
-                        default:
-                            throw new ElasticException($"Cannot filter on fields that are not indexed as FullText, Term or Terms. Field: {field.FieldName}");
-                    }
-                }
-            }
-
-            return BuildAndQuery(filterList.ToArray());
-        }
-
-        /// <summary>
-        /// Créé la sous-requête pour le champ textuel.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetTextSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            var criteria = input.ApiInput.Criteria;
-            var value = criteria?.Query;
-
-            /* Absence de texte ou joker : sous-requête vide. */
-            if (string.IsNullOrEmpty(value) || value == "*")
-            {
-                return q => q;
-            }
-
-            /* Vérifie la présence d'au moins un champ textuel. */
-            if (!def.TextFields.Any())
-            {
-                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" needs at lease one Search category field to allow Query.");
-            }
-
-            /* Constuit la sous requête. */
-            return BuildFullTextSearch<TDocument>(value, def.TextFields.Select(f => f.FieldName).ToArray());
-        }
-
-        /// <summary>
-        /// Créé la sous-requête le filtrage de sécurité.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetSecuritySubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            var value = input.Security;
-
-            /* Absence de filtrage de sécurité : sous-requêt vide. */
-            if (string.IsNullOrEmpty(value))
-            {
-                return q => q;
-            }
-
-            /* Vérifie la présence d'un champ de sécurité. */
-            var fieldDesc = def.SecurityField;
-            if (fieldDesc == null)
-            {
-                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" needs a Security category field to allow Query with security filtering.");
-            }
-
-            /* Constuit la sous requête. */
-            return BuildInclusiveInclude<TDocument>(fieldDesc.FieldName, value);
-        }
-
-        /// <summary>
-        /// Créé la sous-requête le filtrage par sélection de facette non multi-sélectionnables.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFacetSelectionSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
-        {
-            var facetList = input.ApiInput.Facets;
-            if (facetList == null || !facetList.Any())
-            {
-                return q => q;
-            }
-
-            /* Créé une sous-requête par facette. */
-            var facetSubQueryList = facetList
-                .Select(f =>
-                {
-                    /* Récupère la définition de la facette non multi-sélectionnable. */
-                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == false && x.Code == f.Key);
-                    if (def == null)
-                    {
-                        return null;
-                    }
-
-                    /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur. */
-                    var s = f.Value[0];
-                    return GetHandler(def).CreateFacetSubQuery<TDocument>(s, def, input.Portfolio);
-                })
-                .Where(f => f != null)
-                .ToArray();
-
-            if (facetSubQueryList.Any())
-            {
-                /* Concatène en "ET" toutes les sous-requêtes. */
-                return BuildAndQuery(facetSubQueryList);
-            }
-            else
-            {
-                return q => q;
-            }
-        }
-
-        /// <summary>
-        /// Créé la sous-requête de post-filtrage pour les facettes multi-sélectionnables.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Sous-requête.</returns>
-        private Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetPostFilterSubQuery<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
-        {
-            var facetList = input.ApiInput.Facets;
-            if (facetList == null || !facetList.Any())
-            {
-                return q => q;
-            }
-
-            /* Créé une sous-requête par facette */
-            var facetSubQueryList = facetList
-                .Select(f =>
-                {
-                    /* Récupère la définition de la facette multi-sélectionnable. */
-                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == true && x.Code == f.Key);
-                    if (def == null)
-                    {
-                        return null;
-                    }
-
-                    var handler = GetHandler(def);
-                    /* On fait un "OR" sur toutes les valeurs sélectionnées. */
-                    return BuildOrQuery(f.Value.Select(s => handler.CreateFacetSubQuery<TDocument>(s, def, input.Portfolio)).ToArray());
-                })
-                .Where(f => f != null)
-                .ToArray();
-
-            if (facetSubQueryList.Any())
-            {
-                /* Concatène en "ET" toutes les sous-requêtes. */
-                return BuildAndQuery(facetSubQueryList);
-            }
-            else
-            {
-                return q => q;
-            }
-        }
-
-        /// <summary>
-        /// Obtient la liste des facettes.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Définitions de facettes.</returns>
-        private ICollection<IFacetDefinition> GetFacetDefinitionList<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
-        {
-            var groupFacetName = input.ApiInput.Group;
-            var list = input.FacetQueryDefinition != null ? input.FacetQueryDefinition.Facets : new List<IFacetDefinition>();
-
-            /* Recherche de la facette de groupement. */
-            string groupFieldName = null;
-            if (!string.IsNullOrEmpty(groupFacetName))
-            {
-                var groupFacetDef = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.Code == groupFacetName);
-                if (groupFacetDef == null)
-                {
-                    throw new ElasticException("No facet \"" + groupFacetName + "\" to group on.");
-                }
-
-                groupFieldName = groupFacetDef.FieldName;
-            }
-
-            foreach (var facetDef in list)
-            {
-                /* Vérifie que le champ à facetter existe sur le document. */
-                GetHandler(facetDef).CheckFacet<TDocument>(facetDef);
-            }
-
-            return list;
-        }
-
-        /// <summary>
-        /// Obtient la définition du tri.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Définition du tri.</returns>
-        private SortDefinition GetSortDefinition<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            var fieldName = input.ApiInput.SortFieldName;
-
-            /* Cas de l'absence de tri. */
-            if (string.IsNullOrEmpty(fieldName))
-            {
-                return new SortDefinition();
-            }
-
-            /* Vérifie la présence du champ. */
-            if (!def.Fields.HasProperty(fieldName))
-            {
-                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to sort on.");
-            }
-
-            return new SortDefinition
-            {
-                FieldName = def.Fields[fieldName].FieldName,
-                Order = input.ApiInput.SortDesc ? SortOrder.Descending : SortOrder.Ascending
-            };
-        }
-
-        /// <summary>
-        /// Obtient le nom du champ pour le groupement.
-        /// </summary>
-        /// <param name="input">Entrée.</param>
-        /// <returns>Nom du champ.</returns>
-        private string GetGroupFieldName<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            var groupFacetName = input.ApiInput.Group;
-
-            /* Pas de groupement. */
-            if (string.IsNullOrEmpty(groupFacetName))
-            {
-                return null;
-            }
-
-            /* Recherche de la facette de groupement. */
-            var facetDef = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.Code == groupFacetName);
-            if (facetDef == null)
-            {
-                throw new ElasticException("No facet " + groupFacetName + " to group on.");
-            }
-
-            var fieldName = facetDef.FieldName;
-
-            /* Vérifie la présence du champ. */
-            if (!def.Fields.HasProperty(fieldName))
-            {
-                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to group on.");
-            }
-
-            return def.Fields[fieldName].FieldName;
+            return _logger.LogQuery("Search", () => _client.Search((SearchDescriptor<TDocument> s) => descriptor(s.Type(def.DocumentTypeName))));
         }
 
         /// <summary>
@@ -730,29 +354,6 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <summary>
-        /// Format les champs de tri du document.
-        /// Les champs de tri sont mis manuellement en minuscule avant indexation.
-        /// Ceci est nécessaire car en ElasticSearch 5.x, il n'est plus possible de trier sur un champ indexé (à faible coût).
-        /// </summary>
-        /// <param name="document">Document.</param>
-        /// <returns>Document formaté.</returns>
-        private TDocument FormatSortFields<TDocument>(TDocument document)
-            where TDocument : class
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            foreach (var field in def.Fields.Where(x => x.Indexing == SearchFieldIndexing.Sort && x.PropertyType == typeof(string)))
-            {
-                var raw = field.GetValue(document);
-                if (raw != null)
-                {
-                    field.SetValue(document, ((string)raw).ToLowerInvariant());
-                }
-            }
-
-            return document;
-        }
-
-        /// <summary>
         /// Renvoie le handler de facet pour une définition de facet.
         /// </summary>
         /// <param name="def">Définition de facet.</param>
@@ -760,35 +361,6 @@ namespace Kinetix.Search.Elastic
         private IFacetHandler GetHandler(IFacetDefinition def)
         {
             return def.GetType() == typeof(PortfolioFacet) ? _portfolioHandler : _standardHandler;
-        }
-
-        /// <summary>
-        /// Définition de tri.
-        /// </summary>
-        private class SortDefinition
-        {
-            /// <summary>
-            /// Ordre de tri.
-            /// </summary>
-            public SortOrder Order
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
-            /// Champ du tri (camelCase).
-            /// </summary>
-            public string FieldName
-            {
-                get;
-                set;
-            }
-
-            /// <summary>
-            /// Indique si le tri est défini.
-            /// </summary>
-            public bool HasSort => !string.IsNullOrEmpty(FieldName);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Kinetix.Search.Model
     /// Entrée complète d'une recherche avancée.
     /// </summary>
     public class AdvancedQueryInput<TDocument, TCriteria>
-         where TCriteria : Criteria
+         where TCriteria : Criteria, new()
     {
         /// <summary>
         /// Entrée de l'API.
