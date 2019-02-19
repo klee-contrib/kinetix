@@ -26,6 +26,11 @@ namespace Kinetix.Search.Elastic
                         {
                             Tokenizer = "whitespace",
                             Filter = new[] { "autocomplete", "asciifolding", "lowercase" }
+                        },
+                        ["search_text"] = new CustomAnalyzer
+                        {
+                            Tokenizer = "whitespace",
+                            Filter = new[] { "asciifolding", "lowercase" }
                         }
                     }
                 }
