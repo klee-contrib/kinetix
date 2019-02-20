@@ -33,37 +33,36 @@ namespace Kinetix.Search
             where TDocument : class;
 
         /// <summary>
+        /// Permet d'effectuer des indexations et de suppressions en masse.
+        /// </summary>
+        /// <returns>ISearchBulkDescriptor.</returns>
+        ISearchBulkDescriptor Bulk();
+
+        /// <summary>
+        /// Supprime un document de l'index.
+        /// </summary>
+        /// <param name="id">ID du document.</param>
+        void Delete(string id);
+
+        /// <summary>
+        /// Supprime un document de l'index.
+        /// </summary>
+        /// <param name="bean">La clé composite.</param>
+        void Delete<TDocument>(TDocument bean)
+            where TDocument : class;
+
+        /// <summary>
         /// Pose un document dans l'index.
         /// </summary>
         /// <param name="document">Document à poser.</param>
-        void Put<TDocument>(TDocument document)
+        void Index<TDocument>(TDocument document)
             where TDocument : class;
 
         /// <summary>
-        /// Pose un ensemble de documents dans l'index.
+        /// Réinitialise l'index avec les documents fournis.
         /// </summary>
         /// <param name="documentList">Liste de documents.</param>
-        /// <param name="waitForRefresh">Attends le refresh de l'index avant de répondre.</param>
-        void PutAll<TDocument>(IEnumerable<TDocument> documentList, bool waitForRefresh = false)
-            where TDocument : class;
-
-        /// <summary>
-        /// Supprime un document dans l'index.
-        /// </summary>
-        /// <param name="id">ID du document.</param>
-        void Remove(string id);
-
-        /// <summary>
-        /// Supprime un document dans l'index.
-        /// </summary>
-        /// <param name="bean">Le document.</param>
-        void Remove<TDocument>(TDocument bean)
-            where TDocument : class;
-
-        /// <summary>
-        /// Supprime tous les documents.
-        /// </summary>
-        void Flush<TDocument>()
+        void IndexAll<TDocument>(IEnumerable<TDocument> documentList)
             where TDocument : class;
 
         /// <summary>

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Elasticsearch.Net;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Elastic.Faceting;
 using Kinetix.Search.Elastic.Querying;
@@ -58,44 +57,56 @@ namespace Kinetix.Search.Elastic
         public TDocument Get<TDocument>(string id)
             where TDocument : class
         {
-            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath<TDocument>(id))).Source;
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(id).Type(def.DocumentTypeName))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore.Get{TDocument}(TDocument)" />
         public TDocument Get<TDocument>(TDocument bean)
             where TDocument : class
         {
-            return _logger.LogQuery("Get", () => _client.Get(CreateDocumentPath<TDocument>(bean))).Source;
-        }
-
-        /// <inheritdoc cref="ISearchStore.Put" />
-        public void Put<TDocument>(TDocument document)
-            where TDocument : class
-        {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-
-            _logger.LogQuery("Index", () =>
-                _client.Index(FormatSortFields(def, document), x => x
-                    .Type(def.DocumentTypeName)
-                    .Id(def.PrimaryKey.GetValue(document).ToString())
-                    .Refresh(Refresh.WaitFor)));
+            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValue(bean).ToString()).Type(def.DocumentTypeName))).Source;
         }
 
-        /// <inheritdoc cref="ISearchStore.PutAll" />
-        public void PutAll<TDocument>(IEnumerable<TDocument> documentList, bool waitForRefresh = false)
+        /// <inheritdoc cref="ISearchStore.Bulk" />
+        public ISearchBulkDescriptor Bulk()
+        {
+            return new ElasticBulkDescriptor(_documentDescriptor, _client, _logger);
+        }
+
+        /// <inheritdoc cref="ISearchStore.Delete(string)" />
+        public void Delete(string id)
+        {
+            Bulk().Delete(id).Run(true);
+        }
+
+        /// <inheritdoc cref="ISearchStore.Delete{TDocument}(TDocument)" />
+        public void Delete<TDocument>(TDocument bean)
             where TDocument : class
         {
-            if (documentList == null)
-            {
-                throw new ArgumentNullException(nameof(documentList));
-            }
+            Bulk().Delete(bean).Run(true);
+        }
+
+        /// <inheritdoc cref="ISearchStore.Index" />
+        public void Index<TDocument>(TDocument document)
+            where TDocument : class
+        {
+            Bulk().Index(document).Run(true);
+        }
+
+        /// <inheritdoc cref="ISearchStore.IndexAll" />
+        public void IndexAll<TDocument>(IEnumerable<TDocument> documentList)
+            where TDocument : class
+        {
+            /* On vide l'index. */
+            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(d => d
+                .Type(_documentDescriptor.GetDefinition(typeof(TDocument)).DocumentTypeName)));
 
             if (!documentList.Any())
             {
                 return;
             }
-
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
             /* Découpage en cluster. */
             var total = documentList.Count();
@@ -104,55 +115,14 @@ namespace Kinetix.Search.Elastic
 
             for (var i = 1; i <= clusterNb; i++)
             {
-
                 /* Extraction du cluster. */
                 var cluster = documentList
                     .Skip((i - 1) * ClusterSize)
                     .Take(ClusterSize);
 
                 /* Indexation en masse du cluster. */
-                _logger.LogQuery("Bulk", () => _client.Bulk(x =>
-                {
-                    foreach (var document in cluster)
-                    {
-                        var id = def.PrimaryKey.GetValue(document).ToString();
-                        x.Index<TDocument>(y => y
-                            .Document(FormatSortFields(def, document))
-                            .Type(def.DocumentTypeName)
-                            .Id(id));
-                    }
-
-                    if (waitForRefresh)
-                    {
-                        x.Refresh(Refresh.WaitFor);
-                    }
-
-                    return x;
-                }));
+                Bulk().IndexMany(cluster).Run();
             }
-        }
-
-        /// <inheritdoc cref="ISearchStore.Remove(string)" />
-        public void Remove(string id)
-        {
-            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(id), d => d.Refresh(Refresh.WaitFor)));
-        }
-
-        /// <inheritdoc cref="ISearchStore.Remove{TDocument}(TDocument)" />
-        public void Remove<TDocument>(TDocument bean)
-            where TDocument : class
-        {
-            _logger.LogQuery("Delete", () => _client.Delete(CreateDocumentPath(bean), d => d.Refresh(Refresh.WaitFor)));
-        }
-
-        /// <inheritdoc cref="ISearchStore.Flush" />
-        public void Flush<TDocument>()
-            where TDocument : class
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-
-            /* SEY : Non testé. */
-            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(x => x.Type(def.DocumentTypeName)));
         }
 
         /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
@@ -337,29 +307,6 @@ namespace Kinetix.Search.Elastic
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             return _logger.LogQuery("Search", () => _client.Search((SearchDescriptor<TDocument> s) => descriptor(s.Type(def.DocumentTypeName))));
-        }
-
-        /// <summary>
-        /// Créé un DocumentPath.
-        /// </summary>
-        /// <param name="id">ID du document.</param>
-        /// <returns>Le DocumentPath.</returns>
-        private DocumentPath<TDocument> CreateDocumentPath<TDocument>(string id)
-            where TDocument : class
-        {
-            return new DocumentPath<TDocument>(id).Type(_documentDescriptor.GetDefinition(typeof(TDocument)).DocumentTypeName);
-        }
-
-        /// <summary>
-        /// Créé un DocumentPath.
-        /// </summary>
-        /// <param name="id">ID du document.</param>
-        /// <returns>Le DocumentPath.</returns>
-        private DocumentPath<TDocument> CreateDocumentPath<TDocument>(TDocument document)
-            where TDocument : class
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            return new DocumentPath<TDocument>(def.PrimaryKey.GetValue(document).ToString()).Type(def.DocumentTypeName);
         }
 
         /// <summary>
