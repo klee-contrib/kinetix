@@ -42,7 +42,8 @@ namespace Kinetix.Search
         /// Supprime un document de l'index.
         /// </summary>
         /// <param name="id">ID du document.</param>
-        void Delete(string id);
+        void Delete<TDocument>(string id)
+            where TDocument : class;
 
         /// <summary>
         /// Supprime un document de l'index.

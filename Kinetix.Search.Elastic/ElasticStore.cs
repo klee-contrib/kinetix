@@ -76,23 +76,24 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <inheritdoc cref="ISearchStore.Delete(string)" />
-        public void Delete(string id)
+        public void Delete<TDocument>(string id)
+            where TDocument : class
         {
-            Bulk().Delete(id).Run(true);
+            Bulk().Delete<TDocument>(id).Run();
         }
 
         /// <inheritdoc cref="ISearchStore.Delete{TDocument}(TDocument)" />
         public void Delete<TDocument>(TDocument bean)
             where TDocument : class
         {
-            Bulk().Delete(bean).Run(true);
+            Bulk().Delete(bean).Run();
         }
 
         /// <inheritdoc cref="ISearchStore.Index" />
         public void Index<TDocument>(TDocument document)
             where TDocument : class
         {
-            Bulk().Index(document).Run(true);
+            Bulk().Index(document).Run();
         }
 
         /// <inheritdoc cref="ISearchStore.IndexAll" />
@@ -121,7 +122,7 @@ namespace Kinetix.Search.Elastic
                     .Take(ClusterSize);
 
                 /* Indexation en masse du cluster. */
-                Bulk().IndexMany(cluster).Run();
+                Bulk().IndexMany(cluster).Run(false);
             }
         }
 
@@ -295,18 +296,6 @@ namespace Kinetix.Search.Elastic
                     /* Critère de filtrage. */
                     .Query(filterQuery)))
                 .Count;
-        }
-
-        /// <summary>
-        /// Recherche directement via le client ElasticSearch.
-        /// </summary>
-        /// <param name="descriptor">Search descriptor.</param>
-        /// <returns>Search response.</returns>
-        public ISearchResponse<TDocument> Search<TDocument>(Func<SearchDescriptor<TDocument>, ISearchRequest> descriptor)
-            where TDocument : class
-        {
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            return _logger.LogQuery("Search", () => _client.Search((SearchDescriptor<TDocument> s) => descriptor(s.Type(def.DocumentTypeName))));
         }
 
         /// <summary>

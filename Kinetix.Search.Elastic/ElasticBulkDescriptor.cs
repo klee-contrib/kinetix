@@ -12,12 +12,14 @@ namespace Kinetix.Search.Elastic
 
     public class ElasticBulkDescriptor : ISearchBulkDescriptor
     {
+        private int _operationCount = 0;
+
         private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor();
         private readonly ElasticClient _client;
         private readonly DocumentDescriptor _documentDescriptor;
         private readonly ILogger<ElasticStore> _logger;
 
-        public ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger)
+        internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger)
         {
             _documentDescriptor = documentDescriptor;
             _client = client;
@@ -29,7 +31,10 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
             _bulkDescriptor.Delete<TDocument>(d => d.Type(def.DocumentTypeName).Id(id));
+
+            _operationCount++;
             return this;
         }
 
@@ -38,7 +43,10 @@ namespace Kinetix.Search.Elastic
            where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
             _bulkDescriptor.Delete<TDocument>(d => d.Type(def.DocumentTypeName).Id(def.PrimaryKey.GetValue(bean).ToString()));
+
+            _operationCount++;
             return this;
         }
 
@@ -47,7 +55,10 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
             _bulkDescriptor.DeleteMany(ids, (d, id) => d.Type(def.DocumentTypeName).Id(id));
+
+            _operationCount++;
             return this;
         }
 
@@ -56,7 +67,12 @@ namespace Kinetix.Search.Elastic
            where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            _bulkDescriptor.DeleteMany(beans.Select(bean => def.PrimaryKey.GetValue(bean).ToString()), (d, id) => d.Type(def.DocumentTypeName).Id(id));
+
+            _bulkDescriptor.DeleteMany(
+                beans.Select(bean => def.PrimaryKey.GetValue(bean).ToString()),
+                (d, id) => d.Type(def.DocumentTypeName).Id(id));
+
+            _operationCount++;
             return this;
         }
 
@@ -72,6 +88,7 @@ namespace Kinetix.Search.Elastic
                 .Type(def.DocumentTypeName)
                 .Id(id));
 
+            _operationCount++;
             return this;
         }
 
@@ -87,13 +104,18 @@ namespace Kinetix.Search.Elastic
                     .Type(def.DocumentTypeName)
                     .Id(def.PrimaryKey.GetValue(document).ToString()));
 
+            _operationCount++;
             return this;
         }
 
         /// <inheritdoc cref="ISearchBulkDescriptor.Run" />
-        public void Run(bool refresh = false)
+        public void Run(bool refresh = true)
         {
-            _logger.LogQuery("Index", () => _client.Bulk(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False)));
+            if (_operationCount > 0)
+            {
+                _logger.LogQuery($"Index {_operationCount}", () =>
+                    _client.Bulk(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False)));
+            }
         }
     }
 }

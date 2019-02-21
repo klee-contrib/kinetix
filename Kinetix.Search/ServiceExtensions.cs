@@ -10,7 +10,9 @@ namespace Kinetix.Search
     {
         public static IServiceCollection AddSearch(this IServiceCollection services, string defaultDataSourceName)
         {
-            return services.AddSingleton<DocumentDescriptor>();
+            return services
+                .AddSingleton<DocumentDescriptor>()
+                .AddSingleton<IndexManager>();
         }
     }
 }
