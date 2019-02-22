@@ -143,7 +143,7 @@ namespace Kinetix.Search.Elastic.Faceting
             var doc = _documentDescriptor.GetDefinition(typeof(TDocument));
             if (!doc.Fields.HasProperty(facetDef.FieldName))
             {
-                throw new ElasticException("The Document \"" + doc.DocumentTypeName + "\" is missing a \"" + facetDef.FieldName + "\" property to facet on.");
+                throw new ElasticException("The Document \"" + typeof(TDocument) + "\" is missing a \"" + facetDef.FieldName + "\" property to facet on.");
             }
         }
 

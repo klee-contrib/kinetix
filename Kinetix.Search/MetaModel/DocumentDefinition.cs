@@ -16,12 +16,10 @@ namespace Kinetix.Search.MetaModel
         /// </summary>
         /// <param name="beanType">Type du bean.</param>
         /// <param name="properties">Collection de propriétés.</param>
-        /// <param name="documentTypeName">Nom du contrat (table).</param>
-        internal DocumentDefinition(Type beanType, DocumentFieldDescriptorCollection properties, string documentTypeName)
+        internal DocumentDefinition(Type beanType, DocumentFieldDescriptorCollection properties)
         {
             BeanType = beanType;
             Fields = properties;
-            DocumentTypeName = documentTypeName;
             foreach (var property in properties)
             {
                 switch (property.Category)
@@ -50,15 +48,6 @@ namespace Kinetix.Search.MetaModel
         /// Retourne le type du bean.
         /// </summary>
         public Type BeanType
-        {
-            get;
-            private set;
-        }
-
-        /// <summary>
-        /// Retourne le nom du contrat.
-        /// </summary>
-        public string DocumentTypeName
         {
             get;
             private set;

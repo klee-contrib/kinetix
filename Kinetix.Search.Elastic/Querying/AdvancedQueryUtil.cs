@@ -54,9 +54,6 @@ namespace Kinetix.Search.Elastic.Querying
             return (SearchDescriptor<TDocument> s) =>
             {
                 s
-                    /* Index / type document. */
-                    .Type(def.DocumentTypeName)
-
                     /* Pagination */
                     .From(skip)
                     .Size(size)
@@ -209,12 +206,12 @@ namespace Kinetix.Search.Elastic.Querying
             /* Vérifications sur le document. */
             if (criteria.Query != null && !def.TextFields.Any())
             {
-                throw new ElasticException($@"The Document ""{def.DocumentTypeName}"" needs at least one Search category field to allow Query.");
+                throw new ElasticException($@"The Document ""{typeof(TDocument)}"" needs at least one Search category field to allow Query.");
             }
 
             if (input.Security != null && def.SecurityField == null)
             {
-                throw new ElasticException($@"The Document ""{def.DocumentTypeName}"" needs a Security category field to allow Query with security filtering.");
+                throw new ElasticException($@"The Document ""{typeof(TDocument)}"" needs a Security category field to allow Query with security filtering.");
             }
 
             /* Constuit la sous requête de query. */
@@ -369,7 +366,7 @@ namespace Kinetix.Search.Elastic.Querying
             /* Vérifie la présence du champ. */
             if (!def.Fields.HasProperty(fieldName))
             {
-                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to group on.");
+                throw new ElasticException("The Document \"" + typeof(TDocument) + "\" is missing a \"" + fieldName + "\" property to group on.");
             }
 
             return def.Fields[fieldName].FieldName;
@@ -421,7 +418,7 @@ namespace Kinetix.Search.Elastic.Querying
             /* Vérifie la présence du champ. */
             if (!def.Fields.HasProperty(fieldName))
             {
-                throw new ElasticException("The Document \"" + def.DocumentTypeName + "\" is missing a \"" + fieldName + "\" property to sort on.");
+                throw new ElasticException("The Document \"" + typeof(TDocument) + "\" is missing a \"" + fieldName + "\" property to sort on.");
             }
 
             return new SortDefinition

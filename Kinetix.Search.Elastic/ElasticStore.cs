@@ -45,12 +45,8 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-
-            _logger.LogInformation("Create Document type : " + def.DocumentTypeName);
             _logger.LogQuery("Map", () =>
-                _client.Map<TDocument>(x => x
-                     .Type(def.DocumentTypeName)
-                     .Properties(selector => _factory.AddFields(selector, def.Fields))));
+                _client.Map<TDocument>(x => x.Properties(selector => _factory.AddFields(selector, def.Fields))));
         }
 
         /// <inheritdoc cref="ISearchStore.Get{TDocument}(string)" />
@@ -58,7 +54,7 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(id).Type(def.DocumentTypeName))).Source;
+            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(id))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore.Get{TDocument}(TDocument)" />
@@ -66,7 +62,7 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValue(bean).ToString()).Type(def.DocumentTypeName))).Source;
+            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValue(bean).ToString()))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore.Bulk" />
@@ -101,23 +97,24 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             /* On vide l'index. */
-            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(d => d
-                .Type(_documentDescriptor.GetDefinition(typeof(TDocument)).DocumentTypeName)));
+            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(d => d));
 
-            if (!documentList.Any())
+            var documents = documentList.ToList();
+
+            if (!documents.Any())
             {
                 return;
             }
 
             /* Découpage en cluster. */
-            var total = documentList.Count();
+            var total = documents.Count;
             var left = total % ClusterSize;
             var clusterNb = (total - left) / ClusterSize + (left > 0 ? 1 : 0);
 
             for (var i = 1; i <= clusterNb; i++)
             {
                 /* Extraction du cluster. */
-                var cluster = documentList
+                var cluster = documents
                     .Skip((i - 1) * ClusterSize)
                     .Take(ClusterSize);
 
@@ -288,13 +285,7 @@ namespace Kinetix.Search.Elastic
             /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
             var filterQuery = GetFilterAndPostFilterQuery(def, input, GetHandler);
             return _logger.LogQuery("AdvancedCount", () => _client
-                .Count<TDocument>(s => s
-
-                    /* Index / type document. */
-                    .Type(def.DocumentTypeName)
-
-                    /* Critère de filtrage. */
-                    .Query(filterQuery)))
+                .Count<TDocument>(s => s.Query(filterQuery)))
                 .Count;
         }
 

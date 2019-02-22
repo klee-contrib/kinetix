@@ -90,16 +90,8 @@ namespace Kinetix.Search.MetaModel
             {
                 if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
                 {
-                    var documentType = beanType.GetCustomAttribute<SearchDocumentTypeAttribute>();
-                    if (documentType == null)
-                    {
-                        throw new NotSupportedException("Missing SearchDocumentTypeAttribute on type " + beanType);
-                    }
-
-                    var documentTypeName = documentType.DocumentTypeName;
-
                     var properties = CreateCollection(beanType);
-                    definition = new DocumentDefinition(beanType, properties, documentTypeName);
+                    definition = new DocumentDefinition(beanType, properties);
                     _beanDefinitionDictionnary[beanType] = definition;
                 }
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
-using Kinetix.Search.ComponentModel;
+using System.Text.RegularExpressions;
 
 namespace Kinetix.Search.Config
 {
@@ -15,8 +14,7 @@ namespace Kinetix.Search.Config
         public string GetIndexNameForType(string dataSourceName, Type documentType)
         {
             var connSettings = GetServer(dataSourceName);
-            var attribute = documentType.GetCustomAttribute<SearchDocumentTypeAttribute>();
-            return $"{connSettings.IndexName}_{attribute.DocumentTypeName}";
+            return $@"{connSettings.IndexName}_{GetTypeNameForIndex(documentType)}";
         }
 
         public SearchConfigItem GetServer(string dataSourceName)
@@ -27,6 +25,17 @@ namespace Kinetix.Search.Config
             }
 
             return server;
+        }
+
+        /// <summary>
+        /// Récupère le nom du document pour déterminer le nom de l'index.
+        /// </summary>
+        /// <param name="documentType">Type du document.</param>
+        /// <returns>Nom.</returns>
+        public static string GetTypeNameForIndex(Type documentType)
+        {
+            return Regex.Replace(Regex.Replace(documentType.Name, "Document$", string.Empty), @"\p{Lu}", m => "_" + m.Value)
+                .Substring(1).ToLowerInvariant();
         }
     }
 }
