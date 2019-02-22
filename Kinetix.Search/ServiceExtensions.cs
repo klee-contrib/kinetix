@@ -12,7 +12,7 @@ namespace Kinetix.Search
         {
             return services
                 .AddSingleton<DocumentDescriptor>()
-                .AddSingleton<IndexManager>();
+                .AddScoped<IndexManager>();
         }
     }
 }

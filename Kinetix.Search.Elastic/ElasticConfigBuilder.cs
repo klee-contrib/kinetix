@@ -51,7 +51,7 @@ namespace Kinetix.Search.Elastic
             where TLoader : class, IDocumentLoader<TDocument>
         {
             DocumentTypes.Add(typeof(TDocument));
-            _services.AddSingleton<IDocumentLoader<TDocument>, TLoader>();
+            _services.AddScoped<IDocumentLoader<TDocument>, TLoader>();
             return this;
         }
 

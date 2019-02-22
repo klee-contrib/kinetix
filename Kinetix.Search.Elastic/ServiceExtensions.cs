@@ -1,6 +1,7 @@
 ﻿using System;
 using Elasticsearch.Net;
 using Kinetix.Search.Config;
+using Kinetix.Search.Elastic.Faceting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -52,6 +53,8 @@ namespace Kinetix.Search.Elastic
                     return new ElasticClient(settings);
                 })
                 .AddSingleton<ElasticMappingFactory>()
+                .AddSingleton<StandardFacetHandler>()
+                .AddSingleton<PortfolioFacetHandler>()
                 .AddSingleton(provider => new ElasticManager(
                     provider.GetService<ILogger<ElasticManager>>(),
                     provider.GetService<IOptions<SearchConfig>>(),
