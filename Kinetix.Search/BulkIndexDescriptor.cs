@@ -59,7 +59,7 @@ namespace Kinetix.Search
         public BulkIndexDescriptor DeleteMany<TDocument>(IEnumerable<int> ids)
             where TDocument : class
         {
-            _searchBulkDescriptor.DeleteMany(ids.Select(id => id.ToString()));
+            _searchBulkDescriptor.DeleteMany<TDocument>(ids.Select(id => id.ToString()));
             return this;
         }
 
