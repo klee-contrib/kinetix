@@ -103,10 +103,13 @@ namespace Kinetix.Search
         public BulkIndexDescriptor IndexMany<TDocument>(IEnumerable<int> ids)
             where TDocument : class
         {
-            var docs = _provider.GetService<IDocumentLoader<TDocument>>().GetMany(ids);
-            if (docs.Any())
+            if (ids.Any())
             {
-                _searchBulkDescriptor.IndexMany(docs);
+                var docs = _provider.GetService<IDocumentLoader<TDocument>>().GetMany(ids);
+                if (docs.Any())
+                {
+                    _searchBulkDescriptor.IndexMany(docs);
+                }
             }
 
             return this;
