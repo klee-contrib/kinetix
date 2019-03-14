@@ -65,6 +65,6 @@ namespace Kinetix.Search
         /// Effectue la requête.
         /// </summary>
         /// <param name="refresh">Attends ou non la réindexation.</param>
-        void Run(bool refresh = false);
+        void Run(bool refresh = true);
     }
 }
