@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Kinetix.ComponentModel.Exceptions;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,17 @@ namespace Kinetix.Web.Filters
     /// </summary>
     public class ExceptionFilter : IExceptionFilter
     {
+        private readonly TelemetryClient _telemetryClient;
+
+        /// <summary>
+        /// Constructeur.
+        /// </summary>
+        /// <param name="telemetryClient">Composant injecté.</param>
+        public ExceptionFilter(TelemetryClient telemetryClient)
+        {
+            _telemetryClient = telemetryClient;
+        }
+
         /// <summary>
         /// A chaque exception.
         /// </summary>
@@ -23,21 +35,19 @@ namespace Kinetix.Web.Filters
             {
                 context.Result = msg;
             }
+
+            _telemetryClient.TrackException(context.Exception);
         }
 
         private IActionResult GetExceptionMessage(Exception exception)
         {
-            switch (exception)
+            return exception switch
             {
-                case EntityException ee:
-                    return EntityExceptionHandler(ee);
-                case BusinessException ce:
-                    return BusinessExceptionHandler(ce);
-                case DbUpdateException due:
-                    return DbUpdateExceptionExceptionHandler(due);
-                default:
-                    return DefaultExceptionHandler(exception);
-            }
+                EntityException ee => EntityExceptionHandler(ee),
+                BusinessException ce => BusinessExceptionHandler(ce),
+                DbUpdateException due => DbUpdateExceptionExceptionHandler(due),
+                _ => DefaultExceptionHandler(exception),
+            };
         }
 
         private IActionResult BusinessExceptionHandler(BusinessException ex)
