@@ -196,28 +196,30 @@ namespace Kinetix.Search.Elastic.Querying
             {
                 var propName = field.PropertyName;
                 var propValue = input.AdditionalCriteria != null
-                    ? field.GetValue(input.AdditionalCriteria)?.ToString()
+                    ? field.GetValue(input.AdditionalCriteria)
                     : null;
 
-                if (string.IsNullOrWhiteSpace(propValue))
+                if (propValue == null)
                 {
-                    propValue = criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(input.ApiInput.Criteria)?.ToString();
+                    propValue = criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(input.ApiInput.Criteria);
                 }
 
-                if (!string.IsNullOrWhiteSpace(propValue))
+                if (propValue != null)
                 {
-                    if (propValue == "True")
+                    var propValueString = propValue switch
                     {
-                        propValue = "true";
-                    }
+                        bool b => b ? "true" : "false",
+                        DateTime d => d.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                        _ => propValue.ToString()
+                    };
 
                     switch (field.Indexing)
                     {
                         case SearchFieldIndexing.FullText:
-                            filterList.Add(BuildMultiMatchQuery<TDocument>(propValue, field.FieldName));
+                            filterList.Add(BuildMultiMatchQuery<TDocument>(propValueString, field.FieldName));
                             break;
                         case SearchFieldIndexing.Term:
-                            filterList.Add(BuildFilter<TDocument>(field.FieldName, propValue));
+                            filterList.Add(BuildFilter<TDocument>(field.FieldName, propValueString));
                             break;
                         default:
                             throw new ElasticException($"Cannot filter on fields that are not indexed as FullText or Term. Field: {field.FieldName}");
