@@ -8,15 +8,10 @@ namespace Kinetix.Search.Elastic
     public interface IIndexConfigurator
     {
         /// <summary>
-        /// Paramètres de l'index.
+        /// Configure l'index.
         /// </summary>
-        IIndexSettings IndexSettings { get; }
-
-        /// <summary>
-        /// Crée la requête de création d'index.
-        /// </summary>
-        /// <param name="indexName">Nom de l'index.</param>
-        /// <returns>Requête de création d'index.</returns>
-        ICreateIndexRequest CreateIndexRequest(IndexName indexName);
+        /// <param name="descriptor">Descripteur.</param>
+        /// <returns>ICreateIndexRequest.</returns>
+        ICreateIndexRequest ConfigureIndex(CreateIndexDescriptor descriptor);
     }
 }

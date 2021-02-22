@@ -72,8 +72,9 @@ namespace Kinetix.Search.Elastic
                     DeleteIndex<T>();
                 }
 
-                _logger.LogQuery(_analytics, "CreateIndex", () =>
-                    _client.CreateIndex(new TIndexConfigurator().CreateIndexRequest(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))));
+                _logger.LogQuery(_analytics, "CreateIndex", () => _client.CreateIndex(
+                    _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
+                    new TIndexConfigurator().ConfigureIndex));
             }
             else
             {

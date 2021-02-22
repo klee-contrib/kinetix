@@ -219,10 +219,11 @@ namespace Kinetix.Search.Elastic.Querying
                             filterList.Add(BuildMultiMatchQuery<TDocument>(propValueString, field.FieldName));
                             break;
                         case SearchFieldIndexing.Term:
+                        case SearchFieldIndexing.Sort:
                             filterList.Add(BuildFilter<TDocument>(field.FieldName, propValueString));
                             break;
                         default:
-                            throw new ElasticException($"Cannot filter on fields that are not indexed as FullText or Term. Field: {field.FieldName}");
+                            throw new ElasticException($"Cannot filter on fields that are not indexed. Field: {field.FieldName}");
                     }
                 }
             }

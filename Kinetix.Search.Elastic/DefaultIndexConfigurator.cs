@@ -7,66 +7,44 @@ namespace Kinetix.Search.Elastic
     /// </summary>
     public class DefaultIndexConfigurator : IIndexConfigurator
     {
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        public DefaultIndexConfigurator()
+        /// <inheritdoc cref="IIndexConfigurator.ConfigureIndex" />
+        public ICreateIndexRequest ConfigureIndex(CreateIndexDescriptor descriptor)
         {
-            IndexSettings = new IndexSettings
-            {
-                Analysis = new Analysis
-                {
-                    TokenFilters = new TokenFilters
-                    {
-                        ["edgengram"] = new EdgeNGramTokenFilter { MinGram = 1, MaxGram = 20 }
-                    },
-                    Tokenizers = new Tokenizers
-                    {
-                        ["chargroup"] = new CharGroupTokenizer { TokenizeOnCharacters = new[] { " ", "-", "'" } }
-                    },
-                    Analyzers = new Analyzers
-                    {
-                        ["text"] = new CustomAnalyzer
-                        {
-                            Tokenizer = "chargroup",
-                            Filter = new[] { "edgengram", "asciifolding", "lowercase" }
-                        },
-                        ["search_text"] = new CustomAnalyzer
-                        {
-                            Tokenizer = "chargroup",
-                            Filter = new[] { "asciifolding", "lowercase" }
-                        }
-                    },
-                    Normalizers = new Normalizers
-                    {
-                        ["keyword"] = new CustomNormalizer
-                        {
-                            Filter = new[] { "asciifolding", "lowercase" }
-                        }
-                    }
-                }
-            };
-
-            IndexSettings.Add("index.translog.retention.age", "30m");
-            IndexSettings.Add("index.translog.retention.size", "64mb");
-
-            Configure();
-        }
-
-        /// <inheritdoc />
-        public IIndexSettings IndexSettings { get; }
-
-        /// <inheritdoc />
-        public ICreateIndexRequest CreateIndexRequest(IndexName indexName)
-        {
-            return new CreateIndexRequest(indexName) { Settings = IndexSettings };
-        }
-
-        /// <summary>
-        /// Pour étendre/modifier la configuration de base.
-        /// </summary>
-        public virtual void Configure()
-        {
+            return descriptor.Settings(s => s
+                .Analysis(a => a
+                    .CharFilters(c => c
+                        .PatternReplace("unsignificant", p => p
+                            .Pattern("[\\.()]")
+                            .Replacement(string.Empty))
+                        .PatternReplace("start", p => p
+                            .Pattern("^[^\\w]+")
+                            .Replacement(string.Empty))
+                        .PatternReplace("end", p => p
+                            .Pattern("[^\\w]+$")
+                            .Replacement(string.Empty))
+                        .PatternReplace("spaces", p => p
+                            .Pattern("[- ']+")
+                            .Replacement(" ")))
+                    .TokenFilters(t => t
+                        .EdgeNGram("edgengram", e => e
+                            .MinGram(1)
+                            .MaxGram(20)))
+                    .Tokenizers(t => t
+                        .CharGroup("chargroup", c => c
+                            .TokenizeOnCharacters(" ", "-", "'")))
+                    .Analyzers(a => a
+                        .Custom("text", c => c
+                            .Tokenizer("chargroup")
+                            .Filters("edgengram", "asciifolding", "lowercase"))
+                        .Custom("search_text", c => c
+                            .Tokenizer("chargroup")
+                            .Filters("asciifolding", "lowercase")))
+                    .Normalizers(n => n
+                        .Custom("keyword", c => c
+                            .CharFilters("unsignificant", "start", "end", "spaces")
+                            .Filters("asciifolding", "lowercase"))))
+                .Setting("index.translog.retention.age", "30m")
+                .Setting("index.translog.retention.size", "64mb"));
         }
     }
 }
