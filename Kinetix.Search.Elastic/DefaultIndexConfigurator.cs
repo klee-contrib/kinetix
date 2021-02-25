@@ -17,10 +17,10 @@ namespace Kinetix.Search.Elastic
                             .Pattern("[\\.()]")
                             .Replacement(string.Empty))
                         .PatternReplace("start", p => p
-                            .Pattern("^[^\\w]+")
+                            .Pattern("^[- ']+")
                             .Replacement(string.Empty))
                         .PatternReplace("end", p => p
-                            .Pattern("[^\\w]+$")
+                            .Pattern("[- ']+$")
                             .Replacement(string.Empty))
                         .PatternReplace("spaces", p => p
                             .Pattern("[- ']+")
