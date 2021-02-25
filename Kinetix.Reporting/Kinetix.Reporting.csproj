@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClosedXML" Version="0.95.3" />
+    <PackageReference Include="ClosedXML" Version="0.95.4" />
   </ItemGroup>
 
   <ItemGroup>

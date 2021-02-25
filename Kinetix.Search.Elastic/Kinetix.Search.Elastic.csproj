@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.6" />
-    <PackageReference Include="NEST.JsonNetSerializer" Version="6.5.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="3.1.11" />
+    <PackageReference Include="NEST.JsonNetSerializer" Version="6.8.7" />
   </ItemGroup>
 
   <ItemGroup>
