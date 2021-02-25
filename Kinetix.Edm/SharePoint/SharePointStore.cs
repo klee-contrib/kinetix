@@ -227,7 +227,7 @@ namespace Kinetix.Edm.SharePoint
                     catch (Exception e)
                     {
                         _edmAnalytics.CountError();
-                        _logger.LogError($"Téléchargement sharepoint en échec : {item.DisplayName}");
+                        _logger.LogError(e, $"Téléchargement sharepoint en échec : {item.DisplayName}");
                     }
                 });
 
