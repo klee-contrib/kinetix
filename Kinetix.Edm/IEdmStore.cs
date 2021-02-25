@@ -1,4 +1,6 @@
-﻿namespace Kinetix.Edm
+﻿using System.Collections.Generic;
+
+namespace Kinetix.Edm
 {
     /// <summary>
     /// Contrat des stores de GED.
@@ -12,6 +14,13 @@
         /// <param name="edmId">ID du document dans la GED.</param>
         /// <returns>Document.</returns>
         EdmDocument Get(object edmId);
+
+        /// <summary>
+        /// Charge une liste de documents par leur ID
+        /// </summary>
+        /// <param name="gedIds">Id des documents dans la GED</param>
+        /// <returns></returns>
+        Dictionary<int, EdmDocument> GetItems(int[] gedIds);
 
         /// <summary>
         /// Obtient un document de la GED à partir de son chemin relatif.

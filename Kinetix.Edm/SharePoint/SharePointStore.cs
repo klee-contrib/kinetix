@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
 
@@ -145,6 +147,91 @@ namespace Kinetix.Edm.SharePoint
                 {
                     Content = content
                 };
+            }
+            catch
+            {
+                _edmAnalytics.CountError();
+                throw;
+            }
+            finally
+            {
+                _edmAnalytics.StopQuery();
+            }
+        }
+
+        /// <inheritdoc cref="IEdmStore.GetItems" />sdha
+        public Dictionary<int, EdmDocument> GetItems(int[] gedIds)
+        {
+            _logger.LogInformation("SharePoint GET (" + gedIds.Length + " items)");
+            _edmAnalytics.StartQuery("Sharepoint.GetItems");
+
+            try
+            {
+                using var client = GetClient();
+
+                var list = client
+                    .Web
+                    .Lists
+                    .GetByTitle(LibraryName);
+
+                var filter = string.Concat(gedIds.Select(id =>
+                    $@"<Value Type='Number'>{id}</Value>")
+                    .ToArray());
+
+                var camlQuery = new CamlQuery
+                {
+                    ViewXml = $@"
+                        <View Scope='RecursiveAll'>
+                            <Query>
+                                <Where>
+                                    <In><FieldRef Name='ID' />
+                                        <Values>
+                                            {filter}   
+                                        </Values>
+                                    </In>
+                                </Where>
+                            </Query>
+                        </View>
+                    "
+                };
+
+                var items = list.GetItems(camlQuery);
+                client.Load(items);
+
+
+                /* 2. Exécute la requête. */
+                client.ExecuteQuery();
+
+                if (items.Count == 0)
+                {
+                    throw new ArgumentException("Aucun fichier présent dans sharepoint");
+                }
+
+                var result = new Dictionary<int, EdmDocument>();
+                Parallel.ForEach(items, item =>
+                {
+                    try
+                    {
+                        /* 3. Télécharge le fichier. */
+
+                        var relativeUrl = (string)item["FileRef"];
+                        var fileInfo = Microsoft.SharePoint.Client.File.OpenBinaryDirect(client, relativeUrl);
+                        var content = ReadByteArray(fileInfo.Stream);
+
+                        /* Retourne le document. */
+                        result.Add(item.Id, new EdmDocument
+                        {
+                            Content = content
+                        });
+                    }
+                    catch (Exception e)
+                    {
+                        _edmAnalytics.CountError();
+                        _logger.LogError($"Téléchargement sharepoint en échec : {item.DisplayName}");
+                    }
+                });
+
+                return result;
             }
             catch
             {
