@@ -18,11 +18,11 @@ namespace Kinetix.Search
         /// Constructeur.
         /// </summary>
         /// <param name="referenceManager">ReferenceManager.</param>
-        /// <param name="apiInput">Requête.</param>
-        public AdvancedQueryInputBuilder(IReferenceManager referenceManager, QueryInput<TCriteria> apiInput)
+        /// <param name="searchCriteria">Requêtes.</param>
+        public AdvancedQueryInputBuilder(IReferenceManager referenceManager, params QueryInput<TCriteria>[] searchCriteria)
         {
             _referenceManager = referenceManager;
-            Input.ApiInput = apiInput;
+            Input.SearchCriteria = searchCriteria;
         }
 
         /// <summary>

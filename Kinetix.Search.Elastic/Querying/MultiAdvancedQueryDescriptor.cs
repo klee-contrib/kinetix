@@ -32,7 +32,10 @@ namespace Kinetix.Search.Elastic.Querying
             where TDocument : class
             where TCriteria : Criteria, new()
         {
-            input.ApiInput.Group = null;
+            foreach (var sc in input.SearchCriteria)
+            {
+                sc.Group = null;
+            }
 
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             _searchDescriptors.Add(code, GetAdvancedQueryDescriptor(

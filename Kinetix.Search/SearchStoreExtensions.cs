@@ -68,11 +68,14 @@ namespace Kinetix.Search
 
             var input = new AdvancedQueryInput<TDocument, TCriteria>
             {
-                ApiInput = new QueryInput<TCriteria>
+                SearchCriteria = new[]
                 {
-                    Criteria = criteria,
-                    Skip = 0,
-                    Top = queryInput?.Top ?? 10
+                    new QueryInput<TCriteria>
+                    {
+                        Criteria = criteria,
+                        Skip = 0,
+                        Top = queryInput?.Top ?? 10
+                    }
                 },
                 Security = queryInput?.Security,
                 AdditionalCriteria = queryInput?.Criteria

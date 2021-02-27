@@ -1,4 +1,5 @@
-﻿using Kinetix.Search.ComponentModel;
+﻿using System.Collections.Generic;
+using Kinetix.Search.ComponentModel;
 
 namespace Kinetix.Search.Model
 {
@@ -9,9 +10,9 @@ namespace Kinetix.Search.Model
          where TCriteria : Criteria, new()
     {
         /// <summary>
-        /// Entrée de l'API.
+        /// Critères de recherche, combinés en "ou".
         /// </summary>
-        public QueryInput<TCriteria> ApiInput
+        public IEnumerable<QueryInput<TCriteria>> SearchCriteria
         {
             get;
             set;

@@ -79,8 +79,8 @@ namespace Kinetix.Search.Elastic
         /// <param name="agg">Descripteur d'agrégation.</param>
         /// <param name="facet">Définition de la facet.</param>
         /// <param name="facetList">Définitions de toutes les facettes.</param>
-        /// <param name="selectedFacets">Facettes sélectionnées, pour filtrer.</param>
-        public void DefineAggregation<TDocument>(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition<TDocument> facet, ICollection<IFacetDefinition<TDocument>> facetList, IDictionary<string, FacetInput> inputFacets)
+        /// <param name="inputFacetsList">Facettes sélectionnées, pour filtrer (si plusieurs, combinées en "ou").</param>
+        public void DefineAggregation<TDocument>(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition<TDocument> facet, ICollection<IFacetDefinition<TDocument>> facetList, IEnumerable<IDictionary<string, FacetInput>> inputFacetsList)
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
@@ -120,26 +120,28 @@ namespace Kinetix.Search.Elastic
             };
 
             /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
-            var filters = inputFacets
-                 .Select(inf =>
-                 {
-                     /* On ne filtre pas sur la facette en cours. */
-                     if (inf.Key == facet.Code)
-                     {
-                         return null;
-                     }
+            var filtersList = inputFacetsList
+                .Select(inputFacets => inputFacets
+                    .Select(inf =>
+                    {
+                        /* On ne filtre pas sur la facette en cours. */
+                        if (inf.Key == facet.Code)
+                        {
+                            return null;
+                        }
 
-                     var targetFacet = facetList.Single(f => f.Code == inf.Key);
+                        var targetFacet = facetList.Single(f => f.Code == inf.Key);
 
-                     /* On ne filtre pas sur les facettes non multisélectionnables. */
-                     return !targetFacet.IsMultiSelectable
-                         ? null
-                         : BuildMultiSelectableFilter(inf.Value, targetFacet, def.Fields[targetFacet.FieldName].IsMultiValued);
-                 })
-                 .Where(sf => sf != null)
-                 .ToArray();
+                        /* On ne filtre pas sur les facettes non multisélectionnables. */
+                        return !targetFacet.IsMultiSelectable
+                            ? null
+                            : BuildMultiSelectableFilter(inf.Value, targetFacet, def.Fields[targetFacet.FieldName].IsMultiValued);
+                    })
+                    .Where(sf => sf != null)
+                    .ToArray())
+                .Where(inputFacets => inputFacets.Any());
 
-            if (!filters.Any())
+            if (!filtersList.Any() || inputFacetsList.Count() > 1)
             {
                 AggDescriptor(agg);
             }
@@ -147,7 +149,7 @@ namespace Kinetix.Search.Elastic
             {
                 agg.Filter(facet.Code, f => f
                     /* Crée le filtre sur les facettes multi-sélectionnables. */
-                    .Filter(f => f.Bool(b => b.Filter(filters)))
+                    .Filter(BuildOrQuery(filtersList.Select(BuildAndQuery).ToArray()))
                     .Aggregations(AggDescriptor));
             }
         }

@@ -55,14 +55,9 @@ namespace Kinetix.Search.Elastic
         {
             QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Term(t => t.Field(field).Value(value));
 
-            if (invert)
-            {
-                return q => q.Bool(b => b.MustNot(query));
-            }
-            else
-            {
-                return query;
-            }
+            return invert
+                ? (q => q.Bool(b => b.MustNot(query)))
+                : query;
         }
 
         /// <summary>
@@ -76,14 +71,9 @@ namespace Kinetix.Search.Elastic
         {
             QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Exists(t => t.Field(field));
 
-            if (invert)
-            {
-                return query;
-            }
-            else
-            {
-                return q => q.Bool(b => b.MustNot(query));
-            }
+            return invert
+                ? query
+                : (q => q.Bool(b => b.MustNot(query)));
         }
 
         /// <summary>
@@ -94,7 +84,12 @@ namespace Kinetix.Search.Elastic
         public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildAndQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
             where TDocument : class
         {
-            return q => q.Bool(b => b.Filter(subQueries));
+            return subQueries.Length switch
+            {
+                0 => q => q,
+                1 => subQueries[0],
+                _ => q => q.Bool(b => b.Filter(subQueries))
+            };
         }
 
         /// <summary>
@@ -103,11 +98,14 @@ namespace Kinetix.Search.Elastic
         /// <param name="subQueries">Sous-requêtes.</param>
         /// <returns>Requête.</returns>
         public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildOrQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
-            where TDocument : class
+        where TDocument : class
         {
-            return q => q.Bool(b => b
-                .Should(subQueries)
-                .MinimumShouldMatch(1));
+            return subQueries.Length switch
+            {
+                0 => q => q,
+                1 => subQueries[0],
+                _ => q => q.Bool(b => b.Should(subQueries).MinimumShouldMatch(1))
+            };
         }
     }
 }

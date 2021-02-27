@@ -44,12 +44,12 @@ namespace Kinetix.Search.Elastic.Querying
             var (hasPostFilter, postFilterQuery) = GetPostFilterSubQuery(input, facetHandler, def);
 
             /* Booléens */
-            var hasGroup = !string.IsNullOrEmpty(input.ApiInput.Group);
+            var hasGroup = GetGroupFieldName(input) != null;
             var hasFacet = facetDefList.Any();
 
-            /* Pagination. */
-            var skip = input.ApiInput.Skip;
-            var size = hasGroup ? 0 : input.ApiInput.Top ?? 500; // TODO Paramétrable ?
+            /* Pagination (si plusieurs critères non cohérents, on prend le max). */
+            var skip = input.SearchCriteria.Max(sc => sc.Skip);
+            var size = hasGroup ? 0 : input.SearchCriteria.Max(sc => sc.Top) ?? 500; // TODO Paramétrable ?
 
             return (SearchDescriptor<TDocument> s) =>
             {
@@ -80,7 +80,7 @@ namespace Kinetix.Search.Elastic.Querying
                             /* Facettage. */
                             foreach (var facetDef in facetDefList)
                             {
-                                facetHandler.DefineAggregation(a, facetDef, facetDefList, input.ApiInput.Facets);
+                                facetHandler.DefineAggregation(a, facetDef, facetDefList, input.SearchCriteria.Select(sc => sc.Facets));
                             }
                         }
                         if (hasGroup)
@@ -153,115 +153,120 @@ namespace Kinetix.Search.Elastic.Querying
             where TDocument : class
             where TCriteria : Criteria, new()
         {
-            var criteria = input.ApiInput.Criteria ?? new TCriteria();
-
-            /* Normalisation des paramètres. */
-            if (criteria.Query == "*" || string.IsNullOrWhiteSpace(criteria.Query))
-            {
-                criteria.Query = null;
-            }
-
             if (string.IsNullOrWhiteSpace(input.Security))
             {
                 input.Security = null;
             }
-
-            /* Récupération de la liste des champs texte sur lesquels rechercher, potentiellement filtrés par le critère. */
-            var searchFields = def.SearchFields
-                .Where(sf => criteria.SearchFields == null || criteria.SearchFields.Contains(sf.FieldName))
-                .Select(sf => sf.FieldName)
-                .ToArray();
 
             if (input.Security != null && def.SecurityField == null)
             {
                 throw new ElasticException($@"The Document ""{typeof(TDocument)}"" needs a Security category field to allow Query with security filtering.");
             }
 
-            /* Constuit la sous requête de query. */
-            var textSubQuery = criteria.Query != null && (criteria.SearchFields?.Any() ?? true)
-                ? BuildMultiMatchQuery<TDocument>(criteria.Query, searchFields)
-                : q => q;
-
             /* Constuit la sous requête de sécurité. */
             var securitySubQuery = input.Security != null
                 ? BuildInclusiveInclude<TDocument>(def.SecurityField.FieldName, input.Security)
                 : q => q;
 
-            /* Gestion des filtres additionnels. */
-            var criteriaProperties = typeof(TCriteria).GetProperties();
+            var isMultiCriteria = input.SearchCriteria.Count() > 1;
 
-            var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-
-            foreach (var field in def.Fields)
+            /* Construit la sous requête des différents critères. */
+            var criteriaSubQuery = BuildOrQuery(input.SearchCriteria.Select(sc =>
             {
-                var propName = field.PropertyName;
-                var propValue = input.AdditionalCriteria != null
-                    ? field.GetValue(input.AdditionalCriteria)
-                    : null;
+                var criteria = sc.Criteria ?? new TCriteria();
 
-                if (propValue == null)
+                /* Normalisation des paramètres. */
+                if (criteria.Query == "*" || string.IsNullOrWhiteSpace(criteria.Query))
                 {
-                    propValue = criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(input.ApiInput.Criteria);
+                    criteria.Query = null;
                 }
 
-                if (propValue != null)
+                /* Récupération de la liste des champs texte sur lesquels rechercher, potentiellement filtrés par le critère. */
+                var searchFields = def.SearchFields
+                    .Where(sf => criteria.SearchFields == null || criteria.SearchFields.Contains(sf.FieldName))
+                    .Select(sf => sf.FieldName)
+                    .ToArray();
+
+                /* Constuit la sous requête de query. */
+                var textSubQuery = criteria.Query != null && (criteria.SearchFields?.Any() ?? true)
+                    ? BuildMultiMatchQuery<TDocument>(criteria.Query, searchFields)
+                    : q => q;
+
+                /* Gestion des filtres additionnels. */
+                var criteriaProperties = typeof(TCriteria).GetProperties();
+
+                var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
+
+                foreach (var field in def.Fields)
                 {
-                    var propValueString = propValue switch
-                    {
-                        bool b => b ? "true" : "false",
-                        DateTime d => d.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                        _ => propValue.ToString()
-                    };
-
-                    switch (field.Indexing)
-                    {
-                        case SearchFieldIndexing.FullText:
-                            filterList.Add(BuildMultiMatchQuery<TDocument>(propValueString, field.FieldName));
-                            break;
-                        case SearchFieldIndexing.Term:
-                        case SearchFieldIndexing.Sort:
-                            filterList.Add(BuildFilter<TDocument>(field.FieldName, propValueString));
-                            break;
-                        default:
-                            throw new ElasticException($"Cannot filter on fields that are not indexed. Field: {field.FieldName}");
-                    }
-                }
-            }
-
-            /* Constuit la sous requête de filtres. */
-            var filterSubQuery = BuildAndQuery(filterList.ToArray());
-
-            /* Créé une sous-requête par facette. */
-            var facetSubQueryList = input.ApiInput.Facets
-                .Select(f =>
-                {
-                    /* Récupère la définition de la facette non multi-sélectionnable. */
-                    var facetDef = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == false && x.Code == f.Key);
-                    if (facetDef == null)
-                    {
-                        return null;
-                    }
-
-                    /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur (sélectionnée ou exclue). */
-                    return
-                        f.Value.Selected.Any()
-                            ? facetHandler.CreateFacetSubQuery<TDocument>(f.Value.Selected.First(), false, facetDef)
-                        : f.Value.Excluded.Any()
-                            ? facetHandler.CreateFacetSubQuery<TDocument>(f.Value.Excluded.First(), true, facetDef)
+                    var propName = field.PropertyName;
+                    var propValue = input.AdditionalCriteria != null
+                        ? field.GetValue(input.AdditionalCriteria)
                         : null;
-                })
-                .Where(f => f != null)
-                .ToArray();
 
-            /* Concatène en "ET" toutes les sous-requêtes de facettes. */
-            var monoValuedFacetsSubQuery = facetSubQueryList.Any()
-                ? BuildAndQuery(facetSubQueryList)
-                : q => q;
+                    if (propValue == null)
+                    {
+                        propValue = criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(sc.Criteria);
+                    }
 
-            return BuildAndQuery(
-                new[] { textSubQuery, securitySubQuery, filterSubQuery, monoValuedFacetsSubQuery }
-                .Concat(filters)
-                .ToArray());
+                    if (propValue != null)
+                    {
+                        var propValueString = propValue switch
+                        {
+                            bool b => b ? "true" : "false",
+                            DateTime d => d.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                            _ => propValue.ToString()
+                        };
+
+                        switch (field.Indexing)
+                        {
+                            case SearchFieldIndexing.FullText:
+                                filterList.Add(BuildMultiMatchQuery<TDocument>(propValueString, field.FieldName));
+                                break;
+                            case SearchFieldIndexing.Term:
+                            case SearchFieldIndexing.Sort:
+                                filterList.Add(BuildFilter<TDocument>(field.FieldName, propValueString));
+                                break;
+                            default:
+                                throw new ElasticException($"Cannot filter on fields that are not indexed. Field: {field.FieldName}");
+                        }
+                    }
+                }
+
+                /* Constuit la sous requête de filtres. */
+                var filterSubQuery = BuildAndQuery(filterList.ToArray());
+
+                /* Créé une sous-requête par facette. */
+                var facetSubQueryList = sc.Facets
+                    .Select(f =>
+                    {
+                        /* Récupère la définition de la facette non multi-sélectionnable. */
+                        var facetDef = input.FacetQueryDefinition.Facets.Single(x => x.Code == f.Key);
+                        if (facetDef.IsMultiSelectable && !isMultiCriteria)
+                        {
+                            return null;
+                        }
+
+                        /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur (sélectionnée ou exclue). */
+                        return facetDef.IsMultiSelectable
+                            ? facetHandler.BuildMultiSelectableFilter(f.Value, facetDef, def.Fields[facetDef.FieldName].IsMultiValued)
+                            : f.Value.Selected.Any()
+                                ? facetHandler.CreateFacetSubQuery(f.Value.Selected.First(), false, facetDef)
+                            : f.Value.Excluded.Any()
+                                ? facetHandler.CreateFacetSubQuery(f.Value.Excluded.First(), true, facetDef)
+                            : null;
+                    })
+                    .Where(f => f != null)
+                    .ToArray();
+
+                /* Concatène en "ET" toutes les sous-requêtes de facettes. */
+                var monoValuedFacetsSubQuery = BuildAndQuery(facetSubQueryList);
+
+                return BuildAndQuery(new[] { textSubQuery, filterSubQuery, monoValuedFacetsSubQuery });
+            })
+            .ToArray());
+
+            return BuildAndQuery(new[] { securitySubQuery, criteriaSubQuery }.Concat(filters).ToArray());
         }
 
         /// <summary>
@@ -278,26 +283,31 @@ namespace Kinetix.Search.Elastic.Querying
             where TDocument : class
             where TCriteria : Criteria, new()
         {
-            /* Créé une sous-requête par facette */
-            var facetSubQueryList = input.ApiInput.Facets
-                .Select(f =>
-                {
-                    /* Récupère la définition de la facette multi-sélectionnable. */
-                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == true && x.Code == f.Key);
+            if (input.SearchCriteria.Count() > 1)
+            {
+                return (false, q => q);
+            }
 
-                    return def == null
-                        ? null
-                        : facetHandler.BuildMultiSelectableFilter<TDocument>(f.Value, def, docDef.Fields[def.FieldName].IsMultiValued);
-                })
-                .Where(f => f != null)
-                .ToArray();
+            /* Créé une sous-requête par facette */
+            var facetSubQueriesList =
+                input.SearchCriteria.Select(sc =>
+                    sc.Facets.Select(f =>
+                    {
+                        /* Récupère la définition de la facette multi-sélectionnable. */
+                        var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == true && x.Code == f.Key);
+
+                        return def == null
+                            ? null
+                            : facetHandler.BuildMultiSelectableFilter(f.Value, def, docDef.Fields[def.FieldName].IsMultiValued);
+                    })
+                    .Where(f => f != null)
+                    .ToArray())
+                .Where(c => c.Any());
 
             /* Concatène en "ET" toutes les sous-requêtes. */
             return (
-                facetSubQueryList.Any(),
-                facetSubQueryList.Any()
-                    ? BuildAndQuery(facetSubQueryList)
-                    : q => q);
+                facetSubQueriesList.Any(),
+                BuildOrQuery(facetSubQueriesList.Select(BuildAndQuery).ToArray()));
         }
 
         /// <summary>
@@ -309,7 +319,8 @@ namespace Kinetix.Search.Elastic.Querying
             where TDocument : class
             where TCriteria : Criteria, new()
         {
-            var groupFacetName = input.ApiInput.Group;
+            // On groupe par le premier groupe renseigné.
+            var groupFacetName = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.Group))?.Group;
 
             /* Pas de groupement. */
             if (string.IsNullOrEmpty(groupFacetName))
@@ -336,7 +347,8 @@ namespace Kinetix.Search.Elastic.Querying
             where TDocument : class
             where TCriteria : Criteria, new()
         {
-            var fieldName = input.ApiInput.SortFieldName;
+            // On trie par le premier tri renseigné.
+            var fieldName = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.SortFieldName))?.SortFieldName;
 
             /* Cas de l'absence de tri. */
             if (string.IsNullOrEmpty(fieldName))
@@ -350,7 +362,9 @@ namespace Kinetix.Search.Elastic.Querying
                 : new SortDefinition
                 {
                     FieldName = def.Fields[fieldName].FieldName,
-                    Order = input.ApiInput.SortDesc ? SortOrder.Descending : SortOrder.Ascending
+
+                    // Seul le premier ordre est utilisé.
+                    Order = input.SearchCriteria.First().SortDesc ? SortOrder.Descending : SortOrder.Ascending
                 };
         }
 

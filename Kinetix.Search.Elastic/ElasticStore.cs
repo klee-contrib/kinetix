@@ -149,16 +149,34 @@ namespace Kinetix.Search.Elastic
             return AdvancedQuery(input, documentMapper, new Func<QueryContainerDescriptor<TDocument>, QueryContainer>[0]);
         }
 
-        /// <summary>
-        /// Effectue une recherche avancée.
-        /// </summary>
-        /// <param name="input">Entrée de la recherche.</param>
-        /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
-        /// <param name="filters">Filtres NEST additionnels.</param>
-        /// <returns>Sortie de la recherche.</returns>
-        public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+        /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />
+        public IMultiAdvancedQueryDescriptor MultiAdvancedQuery()
+        {
+            return new MultiAdvancedQueryDescriptor(_client, _documentDescriptor, _facetHandler);
+        }
+
+        /// <inheritdoc cref="ISearchStore.AdvancedCount" />
+        public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
             where TDocument : class
             where TCriteria : Criteria, new()
+        {
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
+            /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
+            var filterQuery = GetFilterAndPostFilterQuery(def, input, _facetHandler);
+            return _logger.LogQuery(_analytics, "AdvancedCount", () => _client
+                .Count<TDocument>(s => s.Query(filterQuery)))
+                .Count;
+        }
+
+        internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+           where TDocument : class
+           where TCriteria : Criteria, new()
         {
             if (input == null)
             {
@@ -174,7 +192,7 @@ namespace Kinetix.Search.Elastic
 
             /* Group */
             var groupFieldName = GetGroupFieldName(input);
-            var hasGroup = !string.IsNullOrEmpty(input.ApiInput.Group);
+            var hasGroup = groupFieldName != null;
 
             var res = _logger.LogQuery(_analytics, "AdvancedQuery", () => _client.Search(
                 GetAdvancedQueryDescriptor(def, input, _facetHandler, facetDefList, groupFieldName, filters)));
@@ -199,28 +217,24 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Ajout des valeurs de facettes manquantes (cas d'une valeur demandée par le client non trouvée par la recherche.) */
-            if (input.ApiInput.Facets != null)
+            foreach (var facet in input.SearchCriteria.SelectMany(sc => sc.Facets ?? new Dictionary<string, FacetInput>()))
             {
-                foreach (var facet in input.ApiInput.Facets)
+                var facetItems = facetListOutput.Single(f => f.Code == facet.Key).Values;
+                /* On ajoute un FacetItem par valeur non trouvée, avec un compte de 0. */
+                foreach (var value in facet.Value.Selected.Concat(facet.Value.Excluded))
                 {
-                    var facetItems = facetListOutput.Single(f => f.Code == facet.Key).Values;
-                    /* On ajoute un FacetItem par valeur non trouvée, avec un compte de 0. */
-                    foreach (var value in facet.Value.Selected.Concat(facet.Value.Excluded))
+                    if (!facetItems.Any(f => f.Code == value))
                     {
-                        if (!facetItems.Any(f => f.Code == value))
+                        var label = value == FacetConst.NotNullValue ? FacetConst.NotNullLabel :
+                           value == FacetConst.NullValue ? FacetConst.NullLabel
+                           : facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(value);
+
+                        facetItems.Add(new FacetItem
                         {
-
-                            var label = value == FacetConst.NotNullValue ? FacetConst.NotNullLabel :
-                               value == FacetConst.NullValue ? FacetConst.NullLabel
-                               : facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(value);
-
-                            facetItems.Add(new FacetItem
-                            {
-                                Code = value,
-                                Label = label,
-                                Count = 0
-                            });
-                        }
+                            Code = value,
+                            Label = label,
+                            Count = 0
+                        });
                     }
                 }
             }
@@ -243,7 +257,7 @@ namespace Kinetix.Search.Elastic
                     groupResultList.Add(new GroupResult<TOutput>
                     {
                         Code = group.Key.ToString(),
-                        Label = facetDefList.First(f => f.Code == input.ApiInput.Group).ResolveLabel(group.Key),
+                        Label = facetDefList.First(f => f.Code == input.SearchCriteria.First(sc => !string.IsNullOrEmpty(sc.Group)).Group).ResolveLabel(group.Key),
                         List = list,
                         TotalCount = (int)group.DocCount
                     });
@@ -288,31 +302,6 @@ namespace Kinetix.Search.Elastic
             };
 
             return output;
-        }
-
-        /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />
-        public IMultiAdvancedQueryDescriptor MultiAdvancedQuery()
-        {
-            return new MultiAdvancedQueryDescriptor(_client, _documentDescriptor, _facetHandler);
-        }
-
-        /// <inheritdoc cref="ISearchStore.AdvancedCount" />
-        public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : Criteria, new()
-        {
-            if (input == null)
-            {
-                throw new ArgumentNullException(nameof(input));
-            }
-
-            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-
-            /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
-            var filterQuery = GetFilterAndPostFilterQuery(def, input, _facetHandler);
-            return _logger.LogQuery(_analytics, "AdvancedCount", () => _client
-                .Count<TDocument>(s => s.Query(filterQuery)))
-                .Count;
         }
     }
 }
