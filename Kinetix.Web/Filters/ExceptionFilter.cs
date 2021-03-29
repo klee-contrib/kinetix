@@ -43,9 +43,9 @@ namespace Kinetix.Web.Filters
         {
             return exception switch
             {
-                EntityException ee => EntityExceptionHandler(ee),
                 BusinessException ce => BusinessExceptionHandler(ce),
                 DbUpdateException due => DbUpdateExceptionExceptionHandler(due),
+                InvalidOperationException { Source: "Microsoft.EntityFrameworkCore" } => MissingEntityException(),
                 _ => DefaultExceptionHandler(exception),
             };
         }
@@ -98,12 +98,6 @@ namespace Kinetix.Web.Filters
             return new ObjectResult(errorDico) { StatusCode = 400 };
         }
 
-
-        /// <summary>
-        /// Security exception handler method.
-        /// </summary>
-        /// <param name="ex">Current exception.</param>
-        /// <returns>Message.</returns>
         private IActionResult DefaultExceptionHandler(Exception ex)
         {
             var errors = new List<string> { ex.Message };
@@ -121,15 +115,14 @@ namespace Kinetix.Web.Filters
             return new ObjectResult(errorDico) { StatusCode = 500 };
         }
 
-        /// <summary>
-        /// Default execption handler.
-        /// </summary>
-        /// <param name="ex">Exception to handle.</param>
-        /// <returns>Http response.</returns>
-        private IActionResult EntityExceptionHandler(EntityException ex)
+        private IActionResult MissingEntityException()
         {
-            ex.AddError("type", "entity");
-            return new ObjectResult(ex.ErrorList) { StatusCode = 400 };
+            var errorDico = new Dictionary<string, object>
+            {
+                [EntityException.GlobalErrorKey] = new List<string> { "L'objet demandé n'existe pas." },
+            };
+
+            return new ObjectResult(errorDico) { StatusCode = 404 };
         }
     }
 }
