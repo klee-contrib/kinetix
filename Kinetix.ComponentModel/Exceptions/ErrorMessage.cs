@@ -21,6 +21,20 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <summary>
         /// Crée une nouvelle entrée.
         /// </summary>
+        /// <param name="message">Message d'erreur.</param>
+        /// <param name="code">Le code d'erreur.</param>
+        public ErrorMessage(string message, string typeCible, int objetCibleId, string section = null, string code = null)
+        {
+            Message = message;
+            Code = code;
+            TypeCible = typeCible;
+            ObjetCibleId = objetCibleId;
+            SectionCode = section;
+        }
+
+        /// <summary>
+        /// Crée une nouvelle entrée.
+        /// </summary>
         /// <param name="fieldName">Nom du champ.</param>
         /// <param name="message">Message d'erreur.</param>
         /// <param name="code">Le code d'erreur.</param>
@@ -35,6 +49,33 @@ namespace Kinetix.ComponentModel.Exceptions
         /// Le code de l'erreur.
         /// </summary>
         public string Code
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Le code de section.
+        /// </summary>
+        public string SectionCode
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// L'id cible
+        /// </summary>
+        public int? ObjetCibleId
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Le type de cible
+        /// </summary>
+        public string TypeCible
         {
             get;
             private set;
