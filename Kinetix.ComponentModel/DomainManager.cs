@@ -16,7 +16,7 @@ namespace Kinetix.ComponentModel
         /// <summary>
         /// Dictionnaire des domaines.
         /// </summary>
-        private readonly static Dictionary<Enum, IDomain> _domainDictionary = new Dictionary<Enum, IDomain>();
+        private readonly static Dictionary<Enum, IDomain> _domainDictionary = new();
 
         /// <summary>
         /// Récupère le domaine d'une propriété.

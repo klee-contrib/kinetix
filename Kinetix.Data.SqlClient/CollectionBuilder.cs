@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Text;
-using Kinetix.ComponentModel;
 
 namespace Kinetix.Data.SqlClient
 {

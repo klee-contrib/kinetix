@@ -12,6 +12,7 @@ namespace Kinetix.Web
             builder.Filters.AddService<CultureFilter>();
             builder.Filters.AddService<ExceptionFilter>();
             builder.Filters.AddService<TransactionFilter<TDbContext>>();
+            builder.Filters.AddService<ReferenceCheckerFilter>();
         }
     }
 }

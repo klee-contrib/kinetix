@@ -14,6 +14,7 @@ namespace Kinetix.Web
             services.AddTransient<CultureFilter>();
             services.AddTransient<ExceptionFilter>();
             services.AddTransient<TransactionFilter<TDbContext>>();
+            services.AddTransient<ReferenceCheckerFilter>();
 
             if (!services.Any(service => service.ServiceType == typeof(IReferenceManager)))
             {

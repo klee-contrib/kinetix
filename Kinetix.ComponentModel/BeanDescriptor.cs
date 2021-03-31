@@ -275,18 +275,21 @@ namespace Kinetix.ComponentModel
 
             if (!_beanDefinitionDictionnary.TryGetValue(descriptionType, out var definition))
             {
-                var table = (TableAttribute)TypeDescriptor.GetAttributes(beanType)[typeof(TableAttribute)];
-                var contractName = table?.Name;
-
-                var attrs = beanType.GetCustomAttributes(typeof(ReferenceAttribute), false);
-                var isReference = attrs.Length == 1;
-                var isStatic = isReference && ((ReferenceAttribute)attrs[0]).IsStatic;
                 var properties = CreateBeanPropertyCollection(beanType, bean);
-
-                definition = new BeanDefinition(beanType, properties, contractName, isReference, isStatic);
-                if (bean == null && !typeof(ICustomTypeDescriptor).IsAssignableFrom(beanType))
+                if (properties.Any())
                 {
-                    _beanDefinitionDictionnary[descriptionType] = definition;
+                    var table = beanType.GetCustomAttribute<TableAttribute>();
+                    var contractName = table?.Name;
+
+                    var reference = beanType.GetCustomAttribute<ReferenceAttribute>();
+                    var isReference = reference != null;
+                    var isStatic = reference?.IsStatic ?? false;
+
+                    definition = new BeanDefinition(beanType, properties, contractName, isReference, isStatic);
+                    if (bean == null && !typeof(ICustomTypeDescriptor).IsAssignableFrom(beanType))
+                    {
+                        _beanDefinitionDictionnary[descriptionType] = definition;
+                    }
                 }
             }
 

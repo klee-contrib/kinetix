@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Kinetix.ComponentModel;
 using Kinetix.Data.SqlClient;
 using Kinetix.Services;
 
@@ -198,32 +197,10 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("values");
             }
 
-            var primaryKey = BeanDescriptor.GetDefinition(typeof(T), true).PrimaryKey;
             using var tx = _serviceScopeManager.EnsureTransaction();
-            if (typeof(IBeanState).IsAssignableFrom(typeof(T)))
+            foreach (var value in values)
             {
-                foreach (var value in values)
-                {
-                    switch (((IBeanState)value).State)
-                    {
-                        case ChangeAction.Insert:
-                        case ChangeAction.Update:
-                            _store.Put(value, columnSelector);
-                            break;
-                        case ChangeAction.Delete:
-                            _store.Remove(primaryKey.GetValue(value));
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-            else
-            {
-                foreach (var value in values)
-                {
-                    _store.Put(value, columnSelector);
-                }
+                _store.Put(value, columnSelector);
             }
 
             tx.Complete();

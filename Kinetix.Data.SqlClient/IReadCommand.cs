@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace Kinetix.ComponentModel
+namespace Kinetix.Data.SqlClient
 {
     /// <summary>
     /// Interface de définition d'un broker d'accès aux données.

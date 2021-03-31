@@ -2,10 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using Kinetix.ComponentModel;
 using Kinetix.ComponentModel.Annotations;
+using Kinetix.ComponentModel.Exceptions;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +25,7 @@ namespace Kinetix.Services
 
         private readonly TimeSpan _referenceListCacheDuration;
         private readonly TimeSpan _staticListCacheDuration;
-        private static readonly object lockObj = new object();
+        private static readonly object lockObj = new();
 
         private readonly IDictionary<string, Accessor> _referenceAccessors = new Dictionary<string, Accessor>();
 
@@ -45,6 +45,63 @@ namespace Kinetix.Services
 
         /// <inheritdoc />
         public IEnumerable<string> ReferenceLists => _referenceAccessors.Values.Select(accessor => accessor.Name).OrderBy(x => x);
+
+        /// <inheritdoc cref="IReferenceManager.CheckReferenceKeys" />
+        public ErrorMessageCollection CheckReferenceKeys(object bean)
+        {
+            var errors = new ErrorMessageCollection();
+
+            if (bean is string || bean.GetType().IsValueType)
+            {
+                return errors;
+            }
+
+            if (bean is IEnumerable list)
+            {
+                foreach (var item in list)
+                {
+                    foreach (var error in CheckReferenceKeys(item))
+                    {
+                        errors.AddEntry(error);
+                    }
+                }
+            }
+            else
+            {
+                var descriptor = BeanDescriptor.GetDefinition(bean.GetType());
+                if (descriptor != null)
+                {
+                    foreach (var property in descriptor.Properties)
+                    {
+                        var value = property.GetValue(bean);
+                        if (value != null)
+                        {
+                            if (property.ReferenceType != null)
+                            {
+                                var refDescriptor = BeanDescriptor.GetDefinition(property.ReferenceType);
+                                if (refDescriptor.IsReference)
+                                {
+                                    var keyList = GetReferenceList(property.ReferenceType).Select(item => refDescriptor.PrimaryKey.GetValue(item).ToString());
+                                    if (!keyList.Contains(value.ToString()))
+                                    {
+                                        errors.AddEntry(new ErrorMessage($"La valeur '{value}' n'est pas valide pour la propriété '{property.PropertyName}'. Valeurs attendues : {string.Join(", ", keyList.Select(k => $"'{k}'"))}."));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                foreach (var error in CheckReferenceKeys(value))
+                                {
+                                    errors.AddEntry(error);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return errors;
+        }
 
         /// <inheritdoc cref="IReferenceManager.FlushCache" />
         public void FlushCache(string referenceName = null)
@@ -121,32 +178,25 @@ namespace Kinetix.Services
             return GetReferenceEntry(typeof(T).Name).GetReferenceObject(predicate);
         }
 
-        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object, Expression{Func{T, object}})" />
-        public string GetReferenceValue<T>(object primaryKey, Expression<Func<T, object>> propertySelector = null)
+        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object)" />
+        public string GetReferenceValue<T>(object primaryKey)
         {
             return primaryKey == null
                 ? null
-                : GetReferenceValue(GetReferenceObject<T>(primaryKey), propertySelector);
+                : GetReferenceValue(GetReferenceObject<T>(primaryKey));
         }
 
-        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(Func{T, bool}, Expression{Func{T, object}})" />
-        public string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null)
+        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(Func{T, bool})" />
+        public string GetReferenceValue<T>(Func<T, bool> predicate)
         {
-            return GetReferenceValue(GetReferenceObject(predicate), propertySelector);
+            return GetReferenceValue(GetReferenceObject(predicate));
         }
 
-        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(T, Expression{Func{T, object}}) />
-        public string GetReferenceValue<T>(T reference, Expression<Func<T, object>> propertySelector = null)
+        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(T) />
+        public string GetReferenceValue<T>(T reference)
         {
             var definition = BeanDescriptor.GetDefinition(reference);
-            var property = definition.DefaultProperty;
-
-            if (propertySelector?.Body is MemberExpression mb && mb.Member != null)
-            {
-                property = definition.Properties[mb.Member.Name];
-            }
-
-            return property.GetValue(reference).ToString();
+            return definition.DefaultProperty.GetValue(reference).ToString();
         }
 
         /// <inheritdoc cref="IReferenceManager.GetReferenceValue(Type, object) />

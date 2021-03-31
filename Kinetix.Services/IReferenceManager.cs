@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
+using Kinetix.ComponentModel.Exceptions;
 
 namespace Kinetix.Services
 {
@@ -13,6 +13,13 @@ namespace Kinetix.Services
         /// La liste des listes de références du manager.
         /// </summary>
         IEnumerable<string> ReferenceLists { get; }
+
+        /// <summary>
+        /// Vérifie que les valeurs de propriétés de réference d'un bean sont valides.
+        /// </summary>
+        /// <param name="bean">Le bean.</param>
+        /// <returns>Les erreurs éventuelles.</returns>
+        ErrorMessageCollection CheckReferenceKeys(object bean);
 
         /// <summary>
         /// Vide le cache de référence.
@@ -83,24 +90,21 @@ namespace Kinetix.Services
         /// </summary>
         /// <typeparam name="T">Le type de la liste de référence.</typeparam>
         /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
-        /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
-        string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null);
+        string GetReferenceValue<T>(Func<T, bool> predicate);
 
         /// <summary>
         /// Récupère la valeur d'un objet d'une liste de référence.
         /// </summary>
         /// <typeparam name="T">Le type de la liste de référence.</typeparam>
         /// <param name="primaryKey">Une clé primaire.</param>
-        /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
-        string GetReferenceValue<T>(object primaryKey, Expression<Func<T, object>> propertySelector = null);
+        string GetReferenceValue<T>(object primaryKey);
 
         /// <summary>
         /// Récupère la valeur d'un objet d'une liste de référence.
         /// </summary>
         /// <typeparam name="T">Le type de la liste de référence.</typeparam>
         /// <param name="reference">L'object dont on veut la valeur.</param>
-        /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
-        string GetReferenceValue<T>(T reference, Expression<Func<T, object>> propertySelector = null);
+        string GetReferenceValue<T>(T reference);
 
         /// <summary>
         /// Récupère la valeur d'un objet d'une liste de référence.
