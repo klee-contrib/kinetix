@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Kinetix.ComponentModel.Exceptions;
 
 namespace Kinetix.Services
 {
@@ -18,8 +17,7 @@ namespace Kinetix.Services
         /// Vérifie que les valeurs de propriétés de réference d'un bean sont valides.
         /// </summary>
         /// <param name="bean">Le bean.</param>
-        /// <returns>Les erreurs éventuelles.</returns>
-        ErrorMessageCollection CheckReferenceKeys(object bean);
+        void CheckReferenceKeys(object bean);
 
         /// <summary>
         /// Vide le cache de référence.

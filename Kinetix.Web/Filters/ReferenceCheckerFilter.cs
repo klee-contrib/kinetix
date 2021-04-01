@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using Kinetix.ComponentModel.Exceptions;
-using Kinetix.Services;
+﻿using Kinetix.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Kinetix.Web.Filters
@@ -22,11 +20,7 @@ namespace Kinetix.Web.Filters
         {
             foreach (var parameter in context.ActionArguments)
             {
-                var errors = _referenceManager.CheckReferenceKeys(parameter.Value);
-                if (errors.Any())
-                {
-                    throw new BusinessException(errors);
-                }
+                _referenceManager.CheckReferenceKeys(parameter.Value);
             }
         }
     }

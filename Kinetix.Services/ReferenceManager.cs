@@ -47,60 +47,13 @@ namespace Kinetix.Services
         public IEnumerable<string> ReferenceLists => _referenceAccessors.Values.Select(accessor => accessor.Name).OrderBy(x => x);
 
         /// <inheritdoc cref="IReferenceManager.CheckReferenceKeys" />
-        public ErrorMessageCollection CheckReferenceKeys(object bean)
+        public void CheckReferenceKeys(object bean)
         {
-            var errors = new ErrorMessageCollection();
-
-            if (bean is string || bean.GetType().IsValueType)
+            var errors = CheckReferenceKeysInternal(bean);
+            if (errors.Any())
             {
-                return errors;
+                throw new BusinessException(errors);
             }
-
-            if (bean is IEnumerable list)
-            {
-                foreach (var item in list)
-                {
-                    foreach (var error in CheckReferenceKeys(item))
-                    {
-                        errors.AddEntry(error);
-                    }
-                }
-            }
-            else
-            {
-                var descriptor = BeanDescriptor.GetDefinition(bean.GetType());
-                if (descriptor != null)
-                {
-                    foreach (var property in descriptor.Properties)
-                    {
-                        var value = property.GetValue(bean);
-                        if (value != null)
-                        {
-                            if (property.ReferenceType != null)
-                            {
-                                var refDescriptor = BeanDescriptor.GetDefinition(property.ReferenceType);
-                                if (refDescriptor.IsReference)
-                                {
-                                    var keyList = GetReferenceList(property.ReferenceType).Select(item => refDescriptor.PrimaryKey.GetValue(item).ToString());
-                                    if (!keyList.Contains(value.ToString()))
-                                    {
-                                        errors.AddEntry(new ErrorMessage($"La valeur '{value}' n'est pas valide pour la propriété '{property.PropertyName}'. Valeurs attendues : {string.Join(", ", keyList.Select(k => $"'{k}'"))}."));
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                foreach (var error in CheckReferenceKeys(value))
-                                {
-                                    errors.AddEntry(error);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return errors;
         }
 
         /// <inheritdoc cref="IReferenceManager.FlushCache" />
@@ -248,6 +201,62 @@ namespace Kinetix.Services
                     _referenceAccessors.Add(accessor.Name, accessor);
                 }
             }
+        }
+
+        private ErrorMessageCollection CheckReferenceKeysInternal(object bean)
+        {
+            var errors = new ErrorMessageCollection();
+
+            if (bean is string || bean.GetType().IsValueType)
+            {
+                return errors;
+            }
+
+            if (bean is IEnumerable list)
+            {
+                foreach (var item in list)
+                {
+                    foreach (var error in CheckReferenceKeysInternal(item))
+                    {
+                        errors.AddEntry(error);
+                    }
+                }
+            }
+            else
+            {
+                var descriptor = BeanDescriptor.GetDefinition(bean.GetType());
+                if (descriptor != null)
+                {
+                    foreach (var property in descriptor.Properties)
+                    {
+                        var value = property.GetValue(bean);
+                        if (value != null)
+                        {
+                            if (property.ReferenceType != null)
+                            {
+                                var refDescriptor = BeanDescriptor.GetDefinition(property.ReferenceType);
+                                if (refDescriptor.IsReference)
+                                {
+                                    var keyList = GetReferenceList(property.ReferenceType).Select(item => refDescriptor.PrimaryKey.GetValue(item).ToString());
+                                    if (!keyList.Contains(value.ToString()))
+                                    {
+                                        errors.AddEntry(new ErrorMessage($"La valeur '{value}' n'est pas valide pour la propriété '{property.PropertyName}'. Valeurs attendues : {string.Join(", ", keyList.Select(k => $"'{k}'"))}."));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                foreach (var error in CheckReferenceKeysInternal(value))
+                                {
+                                    errors.AddEntry(error);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return errors;
         }
 
         /// <summary>
