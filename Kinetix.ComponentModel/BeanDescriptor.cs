@@ -28,30 +28,12 @@ namespace Kinetix.ComponentModel
         /// Vérifie les contraintes sur un bean.
         /// </summary>
         /// <param name="bean">Bean à vérifier.</param>
-        /// <param name="allowPrimaryKeyNull">True si la clef primaire peut être null (insertion).</param>
-        public static void Check(object bean)
+        /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
+        public static void Check(object bean, IEnumerable<string> propertiesToCheck = null)
         {
             if (bean != null)
             {
-                GetDefinition(bean).Check(bean);
-            }
-        }
-
-        /// <summary>
-        /// Vérifie les contraintes sur les éléments contenus dans une collection.
-        /// </summary>
-        /// <param name="collection">Collection à vérifier.</param>
-        /// <typeparam name="T">Type des éléments de la collection.</typeparam>
-        public static void CheckAll<T>(ICollection<T> collection)
-        {
-            if (collection == null)
-            {
-                throw new ArgumentNullException("collection");
-            }
-
-            foreach (var obj in collection)
-            {
-                Check(obj);
+                GetDefinition(bean).Check(bean, propertiesToCheck);
             }
         }
 

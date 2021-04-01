@@ -224,7 +224,13 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("bean");
             }
 
-            BeanDescriptor.Check(bean);
+            BeanDescriptor.Check(
+                bean,
+                columnSelector != null
+                    ? Definition.Properties
+                        .Where(p => columnSelector.ColumnList.Contains(p.MemberName))
+                        .Select(p => p.PropertyName)
+                    : null);
 
             var value = Definition.PrimaryKey.GetValue(bean);
 

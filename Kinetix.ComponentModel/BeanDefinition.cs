@@ -114,19 +114,19 @@ namespace Kinetix.ComponentModel
         /// Vérifie les contraintes sur un bean.
         /// </summary>
         /// <param name="bean">Bean à vérifier.</param>
-        internal void Check(object bean)
+        /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
+        internal void Check(object bean, IEnumerable<string> propertiesToCheck = null)
         {
-            // On vérifie d'abord les contraintes sur les annotations posées sur les champs.
-            var validationResults = new List<ValidationResult>();
-            if (!Validator.TryValidateObject(bean, new ValidationContext(bean), validationResults, true))
-            {
-                throw new BusinessException(validationResults.Select(vr => new ErrorMessage(vr.ErrorMessage)));
-            }
-
-            // Puis sur le domaine.
             var errors = new ErrorMessageCollection();
-            foreach (var property in Properties)
+            foreach (var property in Properties.Where(prop => propertiesToCheck == null || propertiesToCheck.Contains(prop.PropertyName)))
             {
+                var validationResults = new List<ValidationResult>();
+                Validator.TryValidateProperty(property.GetValue(bean), new ValidationContext(bean) { MemberName = property.PropertyName }, validationResults);
+                foreach (var valRes in validationResults)
+                {
+                    errors.AddEntry(new ErrorMessage(valRes.ErrorMessage));
+                }
+
                 if (property.DomainName == null || property.IsReadOnly)
                 {
                     continue;

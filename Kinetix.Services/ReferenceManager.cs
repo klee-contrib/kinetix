@@ -207,7 +207,7 @@ namespace Kinetix.Services
         {
             var errors = new ErrorMessageCollection();
 
-            if (bean is string || bean.GetType().IsValueType)
+            if (bean is null || bean is string || bean.GetType().IsValueType)
             {
                 return errors;
             }
