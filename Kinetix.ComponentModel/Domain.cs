@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Kinetix.ComponentModel.Annotations;
 using Kinetix.ComponentModel.Exceptions;
 
@@ -181,55 +182,13 @@ namespace Kinetix.ComponentModel
         /// <param name="propertyDescriptor">Propriété.</param>
         /// <exception cref="InvalidCastException">En cas d'erreur de type.</exception>
         /// <exception cref="BusinessException">En cas d'erreur, le message décrit l'erreur.</exception>
-        public void CheckValue(object value, BeanPropertyDescriptor propertyDescriptor)
+        public ErrorMessageCollection CheckValue(object value, BeanPropertyDescriptor propertyDescriptor)
         {
-            if (propertyDescriptor == null)
-            {
-                throw new ArgumentNullException("propertyDescriptor");
-            }
-
-            CheckValueType(value, propertyDescriptor);
-            CheckValueValidation(value, propertyDescriptor);
-        }
-
-        /// <summary>
-        /// Vérifie la cohérence de la valeur passée et de la propriété
-        /// avec le domaine.
-        /// </summary>
-        /// <param name="value">Valeur.</param>
-        /// <param name="propertyDescriptor">Propriété.</param>
-        private static void CheckValueType(object value, BeanPropertyDescriptor propertyDescriptor)
-        {
-            propertyDescriptor.CheckValueType(value);
-        }
-
-        /// <summary>
-        /// Vérifie la cohérence de la valeur passée avec les attributs de validations du domaine.
-        /// </summary>
-        /// <param name="value">Valeur.</param>
-        /// <param name="propertyDescriptor">Propriété.</param>
-        private void CheckValueValidation(object value, BeanPropertyDescriptor propertyDescriptor)
-        {
-            if (ValidationAttributes != null)
-            {
-                foreach (var validationAttribute in ValidationAttributes)
-                {
-                    if (!validationAttribute.IsValid(value))
-                    {
-                        string errorMessage;
-                        try
-                        {
-                            errorMessage = validationAttribute.FormatErrorMessage(propertyDescriptor.PropertyName);
-                        }
-                        catch (Exception e)
-                        {
-                            throw new BusinessException(propertyDescriptor, "Impossible de formater le message d'erreur pour la propriété " + propertyDescriptor.PropertyName, e);
-                        }
-
-                        throw new BusinessException(propertyDescriptor, errorMessage);
-                    }
-                }
-            }
+            return propertyDescriptor == null
+                ? throw new ArgumentNullException("propertyDescriptor")
+                : ValidationAttributes != null
+                ? new ErrorMessageCollection(ValidationAttributes.Where(va => !va.IsValid(value)).Select(va => va.FormatErrorMessage(propertyDescriptor.PropertyName)))
+                : new ErrorMessageCollection();
         }
     }
 }

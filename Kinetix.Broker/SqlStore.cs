@@ -224,6 +224,8 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("bean");
             }
 
+            BeanDescriptor.Check(bean);
+
             var value = Definition.PrimaryKey.GetValue(bean);
 
             if (value == null && Definition.PrimaryKey.PropertyType == typeof(Guid?))

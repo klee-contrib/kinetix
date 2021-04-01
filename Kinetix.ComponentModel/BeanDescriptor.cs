@@ -8,7 +8,6 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Kinetix.ComponentModel.Annotations;
-using Kinetix.ComponentModel.Exceptions;
 
 namespace Kinetix.ComponentModel
 {
@@ -22,26 +21,19 @@ namespace Kinetix.ComponentModel
         /// </summary>
         private const string DefaultPropertyDefaultName = "Libelle";
 
-        private static readonly Dictionary<Type, BeanDefinition> _beanDefinitionDictionnary = new Dictionary<Type, BeanDefinition>();
-        private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> _resourceTypeMap = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
+        private static readonly Dictionary<Type, BeanDefinition> _beanDefinitionDictionnary = new();
+        private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> _resourceTypeMap = new();
 
         /// <summary>
         /// Vérifie les contraintes sur un bean.
         /// </summary>
         /// <param name="bean">Bean à vérifier.</param>
         /// <param name="allowPrimaryKeyNull">True si la clef primaire peut être null (insertion).</param>
-        public static void Check(object bean, bool allowPrimaryKeyNull = true)
+        public static void Check(object bean)
         {
             if (bean != null)
             {
-                try
-                {
-                    GetDefinition(bean).Check(bean, allowPrimaryKeyNull);
-                }
-                catch (BusinessException e)
-                {
-                    throw new BusinessException(e.Property, e.Property.Description + " " + e.Message, e);
-                }
+                GetDefinition(bean).Check(bean);
             }
         }
 
@@ -49,9 +41,8 @@ namespace Kinetix.ComponentModel
         /// Vérifie les contraintes sur les éléments contenus dans une collection.
         /// </summary>
         /// <param name="collection">Collection à vérifier.</param>
-        /// <param name="allowPrimaryKeyNull">True si la clef primaire peut être null (insertion).</param>
         /// <typeparam name="T">Type des éléments de la collection.</typeparam>
-        public static void CheckAll<T>(ICollection<T> collection, bool allowPrimaryKeyNull = true)
+        public static void CheckAll<T>(ICollection<T> collection)
         {
             if (collection == null)
             {
@@ -60,7 +51,7 @@ namespace Kinetix.ComponentModel
 
             foreach (var obj in collection)
             {
-                Check(obj, allowPrimaryKeyNull);
+                Check(obj);
             }
         }
 

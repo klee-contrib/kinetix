@@ -66,21 +66,6 @@ namespace Kinetix.ComponentModel
                 foreach (ValidationAttribute validationAttribute in property.GetCustomAttributes(typeof(ValidationAttribute), false))
                 {
                     validationAttributes.Add(validationAttribute);
-                    if (validationAttribute is RequiredAttribute requiredAttr)
-                    {
-                        requiredAttr.ErrorMessageResourceName = "ConstraintNotNull";
-                        requiredAttr.ErrorMessageResourceType = typeof(SR);
-                    }
-                    else if (validationAttribute is StringLengthAttribute strLenAttr)
-                    {
-                        strLenAttr.ErrorMessageResourceName = "ErrorConstraintStringLength";
-                        strLenAttr.ErrorMessageResourceType = typeof(SR);
-                    }
-                    else if (validationAttribute is RangeAttribute rangeAttr)
-                    {
-                        rangeAttr.ErrorMessageResourceName = "ConstraintIntervalBornes";
-                        rangeAttr.ErrorMessageResourceType = typeof(SR);
-                    }
                 }
 
                 var extraAttributes = new List<Attribute>();

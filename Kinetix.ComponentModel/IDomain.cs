@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Kinetix.ComponentModel.Exceptions;
 
 namespace Kinetix.ComponentModel
 {
@@ -53,6 +54,6 @@ namespace Kinetix.ComponentModel
         /// <param name="propertyDescriptor">Propriété.</param>
         /// <exception cref="System.InvalidCastException">En cas d'erreur de type.</exception>
         /// <exception cref="Exceptions.BusinessException">En cas d'erreur, le message décrit l'erreur.</exception>
-        void CheckValue(object value, BeanPropertyDescriptor propertyDescriptor);
+        ErrorMessageCollection CheckValue(object value, BeanPropertyDescriptor propertyDescriptor);
     }
 }

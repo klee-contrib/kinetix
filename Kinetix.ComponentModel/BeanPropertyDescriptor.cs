@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using Kinetix.ComponentModel.Exceptions;
 
@@ -261,21 +260,6 @@ namespace Kinetix.ComponentModel
         }
 
         /// <summary>
-        /// Valide les contraintes pour une propriété.
-        /// Le fait que la propriété soit requise ou non
-        /// est outrepassée par le champ booléen fourni si non-nul.
-        /// </summary>
-        /// <param name="value">Valeur de la propriété.</param>
-        /// <param name="isRequired">Si la propriété est requise.</param>
-        public void ValidConstraints(object value, bool? isRequired)
-        {
-
-            // Vérifie les contraintes sur le champ,
-            // la nullité du champ n'est pas vérifiée
-            ValidConstraints(value, true, isRequired);
-        }
-
-        /// <summary>
         /// Retourne une chaîne de caractère représentant l'objet.
         /// </summary>
         /// <returns>Chaîne de caractère représentant l'objet.</returns>
@@ -285,29 +269,12 @@ namespace Kinetix.ComponentModel
         }
 
         /// <summary>
-        /// Valide les contraintes pour une propriété.
+        /// Valide les contraintes de domaine pour une propriété.
         /// </summary>
         /// <param name="value">Valeur de la propriété.</param>
-        /// <param name="checkNullValue">True si la nullité doit être vérifiée.</param>
-        /// <param name="isForceRequirement">Si on force le fait que la propriété est requise ou non.</param>
-        internal void ValidConstraints(object value, bool checkNullValue, bool? isForceRequirement)
+        internal ErrorMessageCollection CheckDomain(object value)
         {
-            var isRequired = IsRequired;
-            if (isForceRequirement.HasValue)
-            {
-                isRequired = isForceRequirement.Value;
-            }
-
-            if (isRequired && checkNullValue)
-            {
-                var c = new RequiredAttribute { AllowEmptyStrings = false, ErrorMessageResourceType = typeof(SR), ErrorMessageResourceName = "ConstraintNotNull" };
-                if (!c.IsValid(value))
-                {
-                    throw new BusinessException(this, c.FormatErrorMessage(PropertyName));
-                }
-            }
-
-            Domain.CheckValue(value, this);
+            return Domain.CheckValue(value, this);
         }
 
         /// <summary>

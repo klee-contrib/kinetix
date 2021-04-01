@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Kinetix.ComponentModel.Exceptions;
 
 namespace Kinetix.ComponentModel
 {
@@ -37,7 +40,7 @@ namespace Kinetix.ComponentModel
                 }
             }
 
-            if(PrimaryKey == null)
+            if (PrimaryKey == null)
             {
                 PrimaryKey = properties.First();
             }
@@ -111,9 +114,17 @@ namespace Kinetix.ComponentModel
         /// Vérifie les contraintes sur un bean.
         /// </summary>
         /// <param name="bean">Bean à vérifier.</param>
-        /// <param name="allowPrimaryKeyNull">True si la clef primaire peut être null (insertion).</param>
-        internal void Check(object bean, bool allowPrimaryKeyNull)
+        internal void Check(object bean)
         {
+            // On vérifie d'abord les contraintes sur les annotations posées sur les champs.
+            var validationResults = new List<ValidationResult>();
+            if (!Validator.TryValidateObject(bean, new ValidationContext(bean), validationResults, true))
+            {
+                throw new BusinessException(validationResults.Select(vr => new ErrorMessage(vr.ErrorMessage)));
+            }
+
+            // Puis sur le domaine.
+            var errors = new ErrorMessageCollection();
             foreach (var property in Properties)
             {
                 if (property.DomainName == null || property.IsReadOnly)
@@ -121,8 +132,15 @@ namespace Kinetix.ComponentModel
                     continue;
                 }
 
-                var checkNull = property.IsPrimaryKey ? !allowPrimaryKeyNull : true;
-                property.ValidConstraints(property.GetValue(bean), checkNull, null);
+                foreach (var error in property.CheckDomain(property.GetValue(bean)))
+                {
+                    errors.AddEntry(error);
+                }
+            }
+
+            if (errors.Any())
+            {
+                throw new BusinessException(errors);
             }
         }
     }
