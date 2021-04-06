@@ -168,7 +168,9 @@ namespace Kinetix.Data.SqlClient
                     }
                     else if (property.PrimitiveType == typeof(string))
                     {
-                        metaData = new SqlMetaData(property.MemberName, SqlDbType.NVarChar, property.Domain.Length.Value);
+                        metaData = property.Domain.Length.HasValue
+                            ? new SqlMetaData(property.MemberName, SqlDbType.NVarChar, property.Domain.Length.Value)
+                            : new SqlMetaData(property.MemberName, SqlDbType.Text);
                     }
                     else if (property.PrimitiveType == typeof(DateTime))
                     {
