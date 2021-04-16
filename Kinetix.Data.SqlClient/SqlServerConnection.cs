@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.Common;
+using System.Data.SqlClient;
 
 namespace Kinetix.Data.SqlClient
 {
@@ -16,11 +16,10 @@ namespace Kinetix.Data.SqlClient
         /// <param name="dataSourceName">Nom de la datasource.</param>
         /// <param name="connectionFactory">Factory de connexions.</param>
         /// <param name="connectionString">Chaine de connexion.</param>
-        internal SqlServerConnection(string dataSourceName, DbProviderFactory connectionFactory, string connectionString)
+        internal SqlServerConnection(string dataSourceName, string connectionString)
         {
             DataSourceName = dataSourceName;
-            SqlConnection = connectionFactory.CreateConnection();
-            SqlConnection.ConnectionString = connectionString;
+            SqlConnection = new SqlConnection { ConnectionString = connectionString };
         }
 
         /// <summary>

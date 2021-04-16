@@ -5,7 +5,6 @@ using System.Data;
 using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading;
 using Kinetix.ComponentModel;
 
 namespace Kinetix.Data.SqlClient
@@ -48,7 +47,7 @@ namespace Kinetix.Data.SqlClient
         {
             // Création du module.
             var name = new AssemblyName { Name = _assemblyName };
-            _assemblyBuilder = Thread.GetDomain().DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
+            _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
             _dynamicModule = _assemblyBuilder.DefineDynamicModule(_assemblyName);
             _readBooleanMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod("ReadBoolean", BindingFlags.Static | BindingFlags.NonPublic, null, _abstractReadMethodParams, null);
             _readNonNullableBooleanMethodIndo = typeof(AbstractDataReaderAdapter).GetMethod("ReadNonNullableBoolean", BindingFlags.Static | BindingFlags.NonPublic, null, _abstractReadMethodParams, null);
@@ -90,7 +89,7 @@ namespace Kinetix.Data.SqlClient
 
             CreateReadMethod(tb, record, t);
 
-            var adapterType = tb.CreateType();
+            var adapterType = tb.CreateTypeInfo();
 
             return Activator.CreateInstance(adapterType);
         }

@@ -40,7 +40,7 @@ namespace Kinetix.Security
         /// <summary>
         /// Retourne le login de l'utilisateur.
         /// </summary>
-        public static string Login => Thread.CurrentPrincipal.Identity.Name;
+        public static string Login => Thread.CurrentPrincipal?.Identity.Name;
 
         /// <summary>
         /// Retourne le profil de l'utilisateur.
@@ -62,7 +62,7 @@ namespace Kinetix.Security
         /// </summary>
         /// <returns>Liste des droits de l'utilisateur courant.</returns>
         public static ICollection<string> Roles =>
-            !(Thread.CurrentPrincipal.Identity is ClaimsIdentity identity)
+            Thread.CurrentPrincipal?.Identity is not ClaimsIdentity identity
                 ? null
                 : identity
                     .FindAll(identity.RoleClaimType)
@@ -77,7 +77,7 @@ namespace Kinetix.Security
         /// <returns><code>True</code> si l'utilisateur possède le rôle.</returns>
         public static bool IsInRole(string role)
         {
-            return Thread.CurrentPrincipal.IsInRole(role);
+            return Thread.CurrentPrincipal?.IsInRole(role) ?? false;
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace Kinetix.Security
         /// <returns>Data.</returns>
         public static string GetString(string claimType)
         {
-            if (!(Thread.CurrentPrincipal.Identity is ClaimsIdentity identity))
+            if (Thread.CurrentPrincipal?.Identity is not ClaimsIdentity identity)
             {
                 return null;
             }
@@ -126,7 +126,7 @@ namespace Kinetix.Security
         /// <returns>Liste des valeurs.</returns>
         public static ICollection<string> GetStrings(string claimType)
         {
-            return !(Thread.CurrentPrincipal.Identity is ClaimsIdentity identity)
+            return Thread.CurrentPrincipal?.Identity is not ClaimsIdentity identity
                 ? null
                 : identity
                     .FindAll(claimType)
@@ -144,7 +144,7 @@ namespace Kinetix.Security
             var raw = GetString(claimType);
             return raw == null
                 ? null
-                : (int?)int.Parse(raw, CultureInfo.InvariantCulture);
+                : int.Parse(raw, CultureInfo.InvariantCulture);
         }
 
         /// <summary>

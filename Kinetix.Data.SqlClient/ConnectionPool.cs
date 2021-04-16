@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using Kinetix.Services;
@@ -60,10 +59,7 @@ namespace Kinetix.Data.SqlClient
 
             if (connection == null)
             {
-                connection = new SqlServerConnection(
-                    datasourceName,
-                    DbProviderFactories.GetFactory("System.Data.SqlClient"),
-                    _connectionSettings[datasourceName]);
+                connection = new SqlServerConnection(datasourceName, _connectionSettings[datasourceName]);
 
                 _serviceScopeManager.ActiveScope.Resources.Add(connection);
                 connection.Open();

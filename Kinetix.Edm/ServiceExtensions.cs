@@ -14,7 +14,7 @@ namespace Kinetix.Edm
                 .AddSingleton(new SharePointManager(edmSettings))
                 .AddScoped<EdmAnalytics>()
                 .AddScoped<IAnalytics, EdmAnalytics>()
-                .AddScoped(p => new EdmManager(
+                .AddScoped<IEdmManager>(p => new EdmManager(
                     p.GetService<SharePointManager>(),
                     p.GetService<EdmAnalytics>(),
                     p.GetService<ILogger<SharePointStore>>(),

@@ -8,9 +8,9 @@ namespace Kinetix.Edm
     /// <summary>
     /// Manager pour les stores de GED.
     /// </summary>
-    public sealed class EdmManager
+    public sealed class EdmManager : IEdmManager
     {
-        private readonly Dictionary<string, IEdmStore> _storeMap = new Dictionary<string, IEdmStore>();
+        private readonly Dictionary<string, IEdmStore> _storeMap = new();
         private readonly string[] _dataSourceNames;
         private readonly EdmAnalytics _edmAnalytics;
         private readonly ILogger<SharePointStore> _logger;
