@@ -28,7 +28,7 @@ namespace Kinetix.Search.Elastic
                     .TokenFilters(t => t
                         .EdgeNGram("edgengram", e => e
                             .MinGram(1)
-                            .MaxGram(20)))
+                            .MaxGram(50)))
                     .Tokenizers(t => t
                         .CharGroup("chargroup", c => c
                             .TokenizeOnCharacters(" ", "-", "'")))
