@@ -9,18 +9,17 @@ namespace Kinetix.Monitoring.Insights
 {
     public class InsightMonitoringStore : IMonitoringStore
     {
-        private TelemetryClient _telemetryClient;
+        private readonly TelemetryClient _telemetryClient;
 
         /// <summary>
         /// Liste des Operations en court d'execution
         /// </summary>
-        ConcurrentDictionary<Guid, IOperationHolder<DependencyTelemetry>> _holders = new ConcurrentDictionary<Guid, IOperationHolder<DependencyTelemetry>>();
+        readonly ConcurrentDictionary<Guid, IOperationHolder<DependencyTelemetry>> _holders = new();
 
         public InsightMonitoringStore(TelemetryClient telemetryClient)
         {
             _telemetryClient = telemetryClient;
         }
-
 
         public void AddProcess(Process process)
         {
@@ -28,7 +27,12 @@ namespace Kinetix.Monitoring.Insights
 
             if (success)
             {
-                holder.Telemetry.Success = !process.IsError;
+                if (process.IsError)
+                {
+                    holder.Telemetry.Success = false;
+                    holder.Telemetry.ResultCode = "Failed";
+                }
+
                 _telemetryClient.StopOperation(holder);
             }
         }
