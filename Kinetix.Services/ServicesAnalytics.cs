@@ -29,15 +29,15 @@ namespace Kinetix.Services
             _analyticsManager?.StartProcess(serviceName, Category);
         }
 
-        internal int StopService()
+        internal int StopService(bool isError = false)
         {
-            return _analyticsManager?.StopProcess() ?? 0;
+            return _analyticsManager?.StopProcess(isError) ?? 0;
         }
 
         internal void StopServiceInError()
         {
             _analyticsManager?.IncrementCounter(CounterTotalServiceErrorCount, 1);
-            StopService();
+            StopService(true);
         }
     }
 }

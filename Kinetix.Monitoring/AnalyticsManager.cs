@@ -35,13 +35,20 @@ namespace Kinetix.Monitoring
 
         public void StartProcess(string name, string category)
         {
-            _processes.Push(new Process(name, category));
+            var process = new Process(name, category);
+            _processes.Push(process);
+
+            foreach (var store in _stores)
+            {
+                store.StartProcess(process);
+            }
         }
 
-        public int StopProcess()
+        public int StopProcess(bool isError = false)
         {
             var stoppedProcess = _processes.Pop();
             stoppedProcess.End = DateTime.Now;
+            stoppedProcess.IsError = isError;
 
             if (_processes.Any())
             {

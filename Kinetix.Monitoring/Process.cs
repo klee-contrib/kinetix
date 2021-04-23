@@ -55,6 +55,11 @@ namespace Kinetix.Monitoring
         public DateTime? End { get; set; }
 
         /// <summary>
+        /// Process en erreur
+        /// </summary>
+        public bool IsError { get; internal set; }
+
+        /// <summary>
         /// Durée du processus (en ms).
         /// </summary>
         public int? Duration

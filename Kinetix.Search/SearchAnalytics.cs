@@ -59,15 +59,15 @@ namespace Kinetix.Search
             _analyticsManager?.StartProcess(commandName, Category);
         }
 
-        public int StopQuery()
+        public int StopQuery(bool isError = false)
         {
-            return _analyticsManager?.StopProcess() ?? 0;
+            return _analyticsManager?.StopProcess(isError) ?? 0;
         }
 
         public void StopQueryInError()
         {
             _analyticsManager?.IncrementCounter(CounterESErrorCount, 1);
-            StopQuery();
+            StopQuery(true);
         }
     }
 }

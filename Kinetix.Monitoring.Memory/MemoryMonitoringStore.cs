@@ -55,5 +55,10 @@ namespace Kinetix.Monitoring.Memory
                     _ => 0
                 }); ;
         }
+
+        public void StartProcess(Process process)
+        {
+            // R. NADA.
+        }
     }
 }
