@@ -44,10 +44,12 @@ namespace Kinetix.Search
         /// <param name="code">Code de la facette.</param>
         /// <param name="label">Libellé de la facette.</param>
         /// <param name="field">Champ sur lequel agit la facette.</param>
+        /// <param name="configurator">Configurateur de facette.</param>
         /// <returns>FacetQueryDefinitionBuilder.</returns>
-        public FacetQueryDefinitionBuilder<TDocument> AddBoolean(string code, string label, Expression<Func<TDocument, object>> field)
+        public FacetQueryDefinitionBuilder<TDocument> AddBoolean(string code, string label, Expression<Func<TDocument, object>> field, Action<BooleanFacet<TDocument>> configurator = null)
         {
             var facet = new BooleanFacet<TDocument>(code, label, field);
+            configurator?.Invoke(facet);
             Add(facet);
             return this;
         }
