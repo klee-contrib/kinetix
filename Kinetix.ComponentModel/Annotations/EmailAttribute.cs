@@ -14,9 +14,7 @@ namespace Kinetix.ComponentModel.Annotations
         /// <summary>
         /// Chaine d'expression régulière de validation des emails.
         /// </summary>
-        private const string _strRegex = @"^([a-zA-Z0-9_\-\.\+]+)@((\[[0-9]{1,3}" +
-                @"\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\" +
-                @".)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$";
+        private const string _strRegex = @"^(([^<>()[\]\\.,;:\s@\""]+(\.[^<>()[\]\\.,;:\s@\""]+)*)|(\"".+\""))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$";
 
         /// <summary>
         /// Expression régulière de validation des emails.
