@@ -36,9 +36,13 @@ namespace Kinetix.Search
             _indexManager = indexManager;
         }
 
+        public bool DisableFlush { get; set; }
+
         public void OnBeforeCommit()
         {
-            _indexManager.Flush();
+            if (!DisableFlush) { 
+                _indexManager.Flush();
+            }
         }
     }
 }
