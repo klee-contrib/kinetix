@@ -13,17 +13,17 @@ namespace Kinetix.Broker
     public class StandardBroker<T> : IBroker<T>
         where T : class, new()
     {
-        private readonly ServiceScopeManager _serviceScopeManager;
+        private readonly TransactionScopeManager _transactionScopeManager;
         private readonly IStore<T> _store;
 
         /// <summary>
         /// Constructeur.
         /// </summary>
-        /// <param name="serviceScopeManager">Manager de transactions.</param>
+        /// <param name="transactionScopeManager">Manager de transactions.</param>
         /// <param name="store">Store.</param>
-        public StandardBroker(ServiceScopeManager serviceScopeManager, IStore<T> store)
+        public StandardBroker(TransactionScopeManager transactionScopeManager, IStore<T> store)
         {
-            _serviceScopeManager = serviceScopeManager;
+            _transactionScopeManager = transactionScopeManager;
             _store = store;
         }
 
@@ -38,7 +38,7 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("primaryKey");
             }
 
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             _store.Remove(primaryKey);
             tx.Complete();
         }
@@ -80,7 +80,7 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("criteria");
             }
 
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             _store.RemoveAllByCriteria(criteria);
             tx.Complete();
         }
@@ -97,7 +97,7 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("primaryKey");
             }
 
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             var bean = _store.Load(primaryKey);
             tx.Complete();
             return bean;
@@ -110,7 +110,7 @@ namespace Kinetix.Broker
         /// <returns>Collection.</returns>
         public virtual IList<T> GetAll(QueryParameter queryParameter = null)
         {
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             var coll = _store.LoadAll(queryParameter);
             tx.Complete();
             return coll;
@@ -125,7 +125,7 @@ namespace Kinetix.Broker
         /// <returns>Collection.</returns>
         public virtual IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter queryParameter = null)
         {
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             var coll = _store.LoadAllByCriteria(criteria, queryParameter);
             tx.Complete();
             return coll;
@@ -145,7 +145,7 @@ namespace Kinetix.Broker
         /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
         public virtual T GetByCriteria(FilterCriteria criteria)
         {
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             var value = _store.LoadByCriteria(criteria);
             tx.Complete();
             return value;
@@ -159,7 +159,7 @@ namespace Kinetix.Broker
         /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
         public virtual T GetByCriteria(T criteria)
         {
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             var value = _store.LoadByCriteria(new FilterCriteria(criteria));
             tx.Complete();
             return value;
@@ -178,7 +178,7 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("bean");
             }
 
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             var primaryKey = _store.Put(bean, columnSelector);
             tx.Complete();
             return primaryKey;
@@ -197,7 +197,7 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("values");
             }
 
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             foreach (var value in values)
             {
                 _store.Put(value, columnSelector);
@@ -218,7 +218,7 @@ namespace Kinetix.Broker
                 throw new ArgumentNullException("values");
             }
 
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
             var result = _store.PutAll(values);
             tx.Complete();
             return result;

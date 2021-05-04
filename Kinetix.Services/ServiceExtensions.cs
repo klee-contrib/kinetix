@@ -122,7 +122,7 @@ namespace Kinetix.Services
             services
                 .AddMemoryCache()
                 .AddScoped<ServicesAnalytics>()
-                .AddScoped<ServiceScopeManager>()
+                .AddScoped<TransactionScopeManager>()
                 .AddScoped<IAnalytics, ServicesAnalytics>(p => p.GetService<ServicesAnalytics>())
                 .AddScoped<IReferenceManager>(provider =>
                 {

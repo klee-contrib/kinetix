@@ -8,7 +8,7 @@ namespace Kinetix.Services
     /// <summary>
     /// Manager de transactions.
     /// </summary>
-    public class ServiceScopeManager : IDisposable
+    public class TransactionScopeManager : IDisposable
     {
         private readonly Stack<ServiceScope> _scopes = new Stack<ServiceScope>();
 

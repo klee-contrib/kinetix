@@ -12,17 +12,17 @@ namespace Kinetix.Broker
     {
         private readonly Dictionary<string, IBroker> _brokerMap = new Dictionary<string, IBroker>();
         private readonly ILogger<BrokerManager> _logger;
-        private readonly ServiceScopeManager _serviceScopeManager;
+        private readonly TransactionScopeManager _transactionScopeManager;
 
         /// <summary>
         /// Constructeur.
         /// </summary>
         /// <param name="dataSources">Sources de données (la première sera la source par défaut).</param>
-        public BrokerManager(ConnectionPool connectionPool, ServiceScopeManager serviceScopeManager, ILogger<BrokerManager> logger)
+        public BrokerManager(ConnectionPool connectionPool, TransactionScopeManager transactionScopeManager, ILogger<BrokerManager> logger)
         {
             ConnectionPool = connectionPool;
             _logger = logger;
-            _serviceScopeManager = serviceScopeManager;
+            _transactionScopeManager = transactionScopeManager;
         }
 
         public ConnectionPool ConnectionPool { get; }
@@ -50,7 +50,7 @@ namespace Kinetix.Broker
                 }
                 else
                 {
-                    var broker = new StandardBroker<T>(_serviceScopeManager, new SqlServerStore<T>(dataSourceName, ConnectionPool, _logger));
+                    var broker = new StandardBroker<T>(_transactionScopeManager, new SqlServerStore<T>(dataSourceName, ConnectionPool, _logger));
                     _brokerMap.Add(key, broker);
                     return broker;
                 }

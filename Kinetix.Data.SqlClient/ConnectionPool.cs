@@ -15,16 +15,16 @@ namespace Kinetix.Data.SqlClient
         private readonly CommandParser _commandParser;
         private readonly int _defaultCommandTimeout;
         private readonly ILogger<SqlServerCommand> _logger;
-        private readonly ServiceScopeManager _serviceScopeManager;
+        private readonly TransactionScopeManager _transactionScopeManager;
 
-        public ConnectionPool(ServiceScopeManager serviceScopeManager, SqlServerAnalytics analytics, CommandParser commandParser, ILogger<SqlServerCommand> logger, SqlServerConfig config)
+        public ConnectionPool(TransactionScopeManager transactionScopeManager, SqlServerAnalytics analytics, CommandParser commandParser, ILogger<SqlServerCommand> logger, SqlServerConfig config)
         {
             _analytics = analytics;
             _commandParser = commandParser;
             _connectionSettings = config.ConnectionStrings;
             _defaultCommandTimeout = config.DefaultCommandTimeout;
             _logger = logger;
-            _serviceScopeManager = serviceScopeManager;
+            _transactionScopeManager = transactionScopeManager;
         }
 
         public SqlServerCommand GetSqlServerCommand(string connectionName, Assembly assembly, string resourcePath)
@@ -49,19 +49,19 @@ namespace Kinetix.Data.SqlClient
 
         private SqlServerConnection GetConnection(string datasourceName)
         {
-            if (_serviceScopeManager.ActiveScope == null)
+            if (_transactionScopeManager.ActiveScope == null)
             {
                 throw new InvalidOperationException("Impossible de récupérer une connection en dehors d'un scope de transaction.");
             }
 
-            var connection = _serviceScopeManager.ActiveScope.Resources.OfType<SqlServerConnection>()
+            var connection = _transactionScopeManager.ActiveScope.Resources.OfType<SqlServerConnection>()
                 .SingleOrDefault(c => c.DataSourceName == datasourceName);
 
             if (connection == null)
             {
                 connection = new SqlServerConnection(datasourceName, _connectionSettings[datasourceName]);
 
-                _serviceScopeManager.ActiveScope.Resources.Add(connection);
+                _transactionScopeManager.ActiveScope.Resources.Add(connection);
                 connection.Open();
             }
 

@@ -10,12 +10,12 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
     public class TransactionInterceptor : IInterceptor
     {
         private readonly IEnumerable<IOnBeforeCommit> _onBeforeCommits;
-        private readonly ServiceScopeManager _serviceScopeManager;
+        private readonly TransactionScopeManager _transactionScopeManager;
 
-        public TransactionInterceptor(IEnumerable<IOnBeforeCommit> onBeforeCommits, ServiceScopeManager serviceScopeManager)
+        public TransactionInterceptor(IEnumerable<IOnBeforeCommit> onBeforeCommits, TransactionScopeManager transactionScopeManager)
         {
             _onBeforeCommits = onBeforeCommits;
-            _serviceScopeManager = serviceScopeManager;
+            _transactionScopeManager = transactionScopeManager;
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
                 return;
             }
 
-            using var tx = _serviceScopeManager.EnsureTransaction();
+            using var tx = _transactionScopeManager.EnsureTransaction();
 
             invocation.Proceed();
             if (Transaction.Current.TransactionInformation.Status != TransactionStatus.Aborted)

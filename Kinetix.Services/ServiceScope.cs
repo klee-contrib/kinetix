@@ -37,7 +37,7 @@ namespace Kinetix.Services
         /// Manager.
         /// </summary>
 
-        internal ServiceScopeManager Manager { get; set; }
+        internal TransactionScopeManager Manager { get; set; }
 
         /// <summary>
         /// Crée une nouvelle transaction.
