@@ -24,17 +24,29 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
         /// <param name="invocation">Methode cible.</param>
         public void Intercept(IInvocation invocation)
         {
-            _serviceAnalytics.StartService($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
+            var noAnalytics = invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(true).Length > 0;
+
+            if (!noAnalytics)
+            {
+                _serviceAnalytics.StartService($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
+            }
 
             try
             {
                 invocation.Proceed();
-                var duration = _serviceAnalytics.StopService();
-                _logger.LogInformation($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({duration} ms)");
+                if (!noAnalytics)
+                {
+                    var duration = _serviceAnalytics.StopService();
+                    _logger.LogInformation($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({duration} ms)");
+                }
             }
             catch (Exception ex)
             {
-                _serviceAnalytics.StopServiceInError();
+                if (!noAnalytics)
+                {
+                    _serviceAnalytics.StopServiceInError();
+                }
+
                 _logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
                 throw;
             }

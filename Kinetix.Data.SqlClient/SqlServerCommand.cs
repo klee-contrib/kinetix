@@ -158,6 +158,11 @@ namespace Kinetix.Data.SqlClient
         IDataParameterCollection IReadCommand.Parameters => Parameters;
 
         /// <summary>
+        /// Désactive SqlServerAnalytics (logs...)
+        /// </summary>
+        public bool DisableAnalytics { get; set; }
+
+        /// <summary>
         /// Annule la commande.
         /// </summary>
         public void Cancel()
@@ -197,12 +202,12 @@ namespace Kinetix.Data.SqlClient
             if (rowsAffected < minRowsAffected)
             {
                 throw rowsAffected == 0
-                          ? new SqlServerException(SR.ExceptionZeroRowAffected)
-                          : new SqlServerException(
-                              string.Format(
-                                  CultureInfo.CurrentCulture,
-                                  SR.ExceptionTooFewRowsAffected,
-                                  rowsAffected));
+                    ? new SqlServerException(SR.ExceptionZeroRowAffected)
+                    : new SqlServerException(
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            SR.ExceptionTooFewRowsAffected,
+                            rowsAffected));
             }
 
             if (rowsAffected > maxRowsAffected)
@@ -351,7 +356,10 @@ namespace Kinetix.Data.SqlClient
                 _command = command;
                 _logger = logger;
 
-                _analytics.StartCommand(_command._commandName);
+                if (!_command.DisableAnalytics)
+                {
+                    _analytics.StartCommand(_command._commandName);
+                }
             }
 
             /// <summary>
@@ -361,9 +369,12 @@ namespace Kinetix.Data.SqlClient
             /// <returns>Exception.</returns>
             public Exception HandleException(DbException exception)
             {
-                _analytics.CountError();
+                if (!_command.DisableAnalytics)
+                {
+                    _analytics.CountError();
+                }
 
-                if (!(exception is SqlException sqlException))
+                if (exception is not SqlException sqlException)
                 {
                     return new SqlServerException(exception.Message, exception);
                 }
@@ -375,13 +386,20 @@ namespace Kinetix.Data.SqlClient
 
                     if (error.Number == 1205)
                     {
-                        // Erreur de deadlock.
-                        _analytics.CountDeadlock();
+                        if (!_command.DisableAnalytics)
+                        {
+                            // Erreur de deadlock.
+                            _analytics.CountDeadlock();
+                        }
                     }
                     else if (error.Class == TimeOutErrorClass && (error.Number == TimeOutErrorCode1 || error.Number == TimeOutErrorCode2))
                     {
-                        // Erreur de timeout.
-                        _analytics.CountTimeout();
+                        if (!_command.DisableAnalytics)
+                        {
+                            // Erreur de timeout.
+                            _analytics.CountTimeout();
+                        }
+
                         return new SqlServerTimeoutException(exception.Message, exception);
                     }
                     else if (error.Class == 16 && error.Number == 547)
@@ -403,7 +421,7 @@ namespace Kinetix.Data.SqlClient
 
                 return message != null
                     ? new BusinessException(message.Message, message.Code, exception)
-                    : (Exception)new SqlServerException(exception.Message, exception);
+                    : new SqlServerException(exception.Message, exception);
             }
 
             /// <summary>
@@ -411,18 +429,21 @@ namespace Kinetix.Data.SqlClient
             /// </summary>
             public void Dispose()
             {
-                var duration = _analytics.StopCommand();
-                _logger.LogInformation($"{_command._commandName} ({duration} ms)");
-                _logger.LogDebug(_command._innerCommand.CommandText);
-                foreach (var parameter in _command.Parameters)
+                if (!_command.DisableAnalytics)
                 {
-                    if (parameter.Value is byte[] dataArray)
+                    var duration = _analytics.StopCommand();
+                    _logger.LogInformation($"{_command._commandName} ({duration} ms)");
+                    _logger.LogDebug(_command._innerCommand.CommandText);
+                    foreach (var parameter in _command.Parameters)
                     {
-                        _logger.LogDebug($"{parameter.ParameterName} : byte[{dataArray.Length}]");
-                    }
-                    else
-                    {
-                        _logger.LogDebug($"{parameter.ParameterName}: {Convert.ToString(parameter.Value, CultureInfo.InvariantCulture)}");
+                        if (parameter.Value is byte[] dataArray)
+                        {
+                            _logger.LogDebug($"{parameter.ParameterName} : byte[{dataArray.Length}]");
+                        }
+                        else
+                        {
+                            _logger.LogDebug($"{parameter.ParameterName}: {Convert.ToString(parameter.Value, CultureInfo.InvariantCulture)}");
+                        }
                     }
                 }
 

@@ -10,7 +10,7 @@ namespace Kinetix.Services
     /// </summary>
     public class TransactionScopeManager : IDisposable
     {
-        private readonly Stack<ServiceScope> _scopes = new Stack<ServiceScope>();
+        private readonly Stack<ServiceScope> _scopes = new();
 
         /// <summary>
         /// Scope de transaction actif, contenant les ressources de la transaction.

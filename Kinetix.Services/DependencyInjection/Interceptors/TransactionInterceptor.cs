@@ -29,6 +29,7 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
                 invocation.Proceed();
                 return;
             }
+
             var noTransactionAttrs = invocation.Method.GetCustomAttributes<NoTransactionAttribute>(true);
             if (Transaction.Current == null && noTransactionAttrs.Length > 0)
             {
