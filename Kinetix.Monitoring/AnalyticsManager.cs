@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,7 +8,7 @@ namespace Kinetix.Monitoring
     public class AnalyticsManager
     {
         private readonly IEnumerable<IMonitoringStore> _stores;
-        private readonly Stack<Process> _processes = new Stack<Process>();
+        private readonly ConcurrentStack<Process> _processes = new ConcurrentStack<Process>();
 
         public AnalyticsManager(IEnumerable<IMonitoringStore> stores)
         {
@@ -18,7 +19,8 @@ namespace Kinetix.Monitoring
         {
             if (_processes.Any())
             {
-                _processes.Peek().IncrementValue(code, value);
+                _processes.TryPeek(out var peek);
+                peek.IncrementValue(code, value);
             }
         }
 
@@ -28,7 +30,8 @@ namespace Kinetix.Monitoring
             {
                 foreach (var code in codes)
                 {
-                    _processes.Peek().OwnCounters.Remove(code);
+                    _processes.TryPeek(out var peek);
+                    peek.OwnCounters.Remove(code);
                 }
             }
         }
@@ -46,13 +49,14 @@ namespace Kinetix.Monitoring
 
         public int StopProcess(bool isError = false)
         {
-            var stoppedProcess = _processes.Pop();
+            _processes.TryPop(out var stoppedProcess);
             stoppedProcess.End = DateTime.Now;
             stoppedProcess.IsError = isError;
 
             if (_processes.Any())
             {
-                _processes.Peek().SubProcesses.Add(stoppedProcess);
+                _processes.TryPeek(out var peek);
+                peek.SubProcesses.Add(stoppedProcess);
             }
 
             foreach (var store in _stores)
