@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -81,7 +82,7 @@ namespace Kinetix.Monitoring
         /// <summary>
         /// Retourne les compteurs du processus.
         /// </summary>
-        internal Dictionary<string, int> OwnCounters { get; } = new Dictionary<string, int>();
+        internal ConcurrentDictionary<string, int> OwnCounters { get; } = new();
 
         /// <summary>
         /// Retourne les compteurs totaux du processus, en incluant les sous-processus.

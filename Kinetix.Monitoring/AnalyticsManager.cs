@@ -8,7 +8,7 @@ namespace Kinetix.Monitoring
     public class AnalyticsManager
     {
         private readonly IEnumerable<IMonitoringStore> _stores;
-        private readonly ConcurrentStack<Process> _processes = new ConcurrentStack<Process>();
+        private readonly ConcurrentStack<Process> _processes = new();
 
         public AnalyticsManager(IEnumerable<IMonitoringStore> stores)
         {
@@ -31,7 +31,7 @@ namespace Kinetix.Monitoring
                 foreach (var code in codes)
                 {
                     _processes.TryPeek(out var peek);
-                    peek.OwnCounters.Remove(code);
+                    peek.OwnCounters.TryRemove(code, out var _);
                 }
             }
         }
@@ -56,7 +56,11 @@ namespace Kinetix.Monitoring
             if (_processes.Any())
             {
                 _processes.TryPeek(out var peek);
-                peek.SubProcesses.Add(stoppedProcess);
+
+                lock (_processes)
+                {
+                    peek.SubProcesses.Add(stoppedProcess);
+                }
             }
 
             foreach (var store in _stores)
