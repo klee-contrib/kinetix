@@ -1,5 +1,6 @@
 ﻿using System;
 using Castle.DynamicProxy;
+using Kinetix.Monitoring;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Services.DependencyInjection.Interceptors
@@ -10,12 +11,12 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
     public class AnalyticsInterceptor : IInterceptor
     {
         private readonly ILogger<Service> _logger;
-        private readonly ServicesAnalytics _serviceAnalytics;
+        private readonly AnalyticsManager _analytics;
 
-        public AnalyticsInterceptor(ILogger<Service> logger, ServicesAnalytics serviceAnalytics)
+        public AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager analytics)
         {
             _logger = logger;
-            _serviceAnalytics = serviceAnalytics;
+            _analytics = analytics;
         }
 
         /// <summary>
@@ -24,28 +25,26 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
         /// <param name="invocation">Methode cible.</param>
         public void Intercept(IInvocation invocation)
         {
-            var noAnalytics = invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(true).Length > 0;
+            _analytics.StartProcess($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", "Service");
 
-            if (!noAnalytics)
+            if (invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(true).Length > 0)
             {
-                _serviceAnalytics.StartService($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
+                _analytics.MarkProcessDisabled();
             }
 
             try
             {
                 invocation.Proceed();
-                if (!noAnalytics)
+                var process = _analytics.StopProcess();
+                if (!process.Disabled)
                 {
-                    var duration = _serviceAnalytics.StopService();
-                    _logger.LogInformation($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({duration} ms)");
+                    _logger.LogInformation($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({process.Duration} ms)");
                 }
             }
             catch (Exception ex)
             {
-                if (!noAnalytics)
-                {
-                    _serviceAnalytics.StopServiceInError();
-                }
+                _analytics.MarkProcessInError();
+                _analytics.StopProcess();
 
                 _logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
                 throw;

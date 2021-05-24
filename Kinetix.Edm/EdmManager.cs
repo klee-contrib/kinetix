@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Kinetix.Edm.SharePoint;
+using Kinetix.Monitoring;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Edm
@@ -12,7 +13,7 @@ namespace Kinetix.Edm
     {
         private readonly Dictionary<string, IEdmStore> _storeMap = new();
         private readonly string[] _dataSourceNames;
-        private readonly EdmAnalytics _edmAnalytics;
+        private readonly AnalyticsManager _analytics;
         private readonly ILogger<SharePointStore> _logger;
         private readonly SharePointManager _sharePointManager;
 
@@ -20,10 +21,10 @@ namespace Kinetix.Edm
         /// Constructeur.
         /// </summary>
         /// <param name="sharePointManager">Manager sharepoint.</param>
-        /// <param name="edmAnalytics">Analytics.</param>
+        /// <param name="analytics">Analytics.</param>
         /// <param name="logger">Logger.</param>
         /// <param name="dataSourceNames">Sources de données (la première sera la source par défaut).</param>
-        public EdmManager(SharePointManager sharePointManager, EdmAnalytics edmAnalytics, ILogger<SharePointStore> logger, params string[] dataSourceNames)
+        public EdmManager(SharePointManager sharePointManager, AnalyticsManager analytics, ILogger<SharePointStore> logger, params string[] dataSourceNames)
         {
             if (dataSourceNames.Length < 1)
             {
@@ -31,7 +32,7 @@ namespace Kinetix.Edm
             }
 
             _dataSourceNames = dataSourceNames;
-            _edmAnalytics = edmAnalytics;
+            _analytics = analytics;
             _logger = logger;
             _sharePointManager = sharePointManager;
         }
@@ -62,7 +63,7 @@ namespace Kinetix.Edm
                 }
                 else
                 {
-                    var store = new SharePointStore(dsName, _sharePointManager, _edmAnalytics, _logger);
+                    var store = new SharePointStore(dsName, _sharePointManager, _analytics, _logger);
                     _storeMap.Add(dsName, store);
                     return store;
                 }

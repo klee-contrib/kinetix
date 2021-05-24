@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Kinetix.ComponentModel.Exceptions;
+using Kinetix.Monitoring;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Data.SqlClient
@@ -20,7 +21,7 @@ namespace Kinetix.Data.SqlClient
         private const int TimeOutErrorCode1 = -2146232060;
         private const int TimeOutErrorCode2 = -2;
 
-        private readonly SqlServerAnalytics _analytics;
+        private readonly AnalyticsManager _analytics;
         private readonly string _commandName;
         private readonly ILogger<SqlServerCommand> _logger;
         private readonly string _parserKey;
@@ -29,7 +30,7 @@ namespace Kinetix.Data.SqlClient
         private IDbCommand _innerCommand;
         private SqlServerParameterCollection _parameterColl;
 
-        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, SqlServerAnalytics analytics, Assembly assembly, string resourcePath)
+        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, AnalyticsManager analytics, Assembly assembly, string resourcePath)
         {
             if (assembly == null)
             {
@@ -64,7 +65,7 @@ namespace Kinetix.Data.SqlClient
             _logger = logger;
         }
 
-        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, SqlServerAnalytics analytics, string procName)
+        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, AnalyticsManager analytics, string procName)
         {
             CommandParser = commandParser;
             _analytics = analytics;
@@ -76,7 +77,7 @@ namespace Kinetix.Data.SqlClient
             _logger = logger;
         }
 
-        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, SqlServerAnalytics analytics, string commandName, string commandText)
+        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, AnalyticsManager analytics, string commandName, string commandText)
         {
             CommandParser = commandParser;
             _analytics = analytics;
@@ -87,7 +88,7 @@ namespace Kinetix.Data.SqlClient
             _logger = logger;
         }
 
-        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, SqlServerAnalytics analytics, string commandName, CommandType commandType)
+        internal SqlServerCommand(SqlServerConnection connection, ILogger<SqlServerCommand> logger, CommandParser commandParser, AnalyticsManager analytics, string commandName, CommandType commandType)
         {
             CommandParser = commandParser;
             _analytics = analytics;
@@ -156,11 +157,6 @@ namespace Kinetix.Data.SqlClient
         /// Retourne la liste des paramétres de la commande.
         /// </summary>
         IDataParameterCollection IReadCommand.Parameters => Parameters;
-
-        /// <summary>
-        /// Désactive SqlServerAnalytics (logs...)
-        /// </summary>
-        public bool DisableAnalytics { get; set; }
 
         /// <summary>
         /// Annule la commande.
@@ -342,7 +338,7 @@ namespace Kinetix.Data.SqlClient
             private static readonly string foreignKeyConstraintPattern = "FK_[A-Z_]*";
             private static readonly string uniqueKeyConstraintPattern = "UK_[A-Z_]*";
 
-            private readonly SqlServerAnalytics _analytics;
+            private readonly AnalyticsManager _analytics;
             private readonly SqlServerCommand _command;
             private readonly ILogger<SqlServerCommand> _logger;
 
@@ -350,16 +346,13 @@ namespace Kinetix.Data.SqlClient
             /// Crée une nouvelle instance.
             /// </summary>
             /// <param name="command">Commande.</param>
-            public SqlCommandListener(SqlServerCommand command, SqlServerAnalytics analytics, ILogger<SqlServerCommand> logger)
+            public SqlCommandListener(SqlServerCommand command, AnalyticsManager analytics, ILogger<SqlServerCommand> logger)
             {
                 _analytics = analytics;
                 _command = command;
                 _logger = logger;
 
-                if (!_command.DisableAnalytics)
-                {
-                    _analytics.StartCommand(_command._commandName);
-                }
+                _analytics.StartProcess(_command._commandName, "Database", $"{_command._connection.Database} ({_command._connection.Server})");
             }
 
             /// <summary>
@@ -369,11 +362,6 @@ namespace Kinetix.Data.SqlClient
             /// <returns>Exception.</returns>
             public Exception HandleException(DbException exception)
             {
-                if (!_command.DisableAnalytics)
-                {
-                    _analytics.CountError();
-                }
-
                 if (exception is not SqlException sqlException)
                 {
                     return new SqlServerException(exception.Message, exception);
@@ -386,20 +374,10 @@ namespace Kinetix.Data.SqlClient
 
                     if (error.Number == 1205)
                     {
-                        if (!_command.DisableAnalytics)
-                        {
-                            // Erreur de deadlock.
-                            _analytics.CountDeadlock();
-                        }
+                        // Deadlock.
                     }
                     else if (error.Class == TimeOutErrorClass && (error.Number == TimeOutErrorCode1 || error.Number == TimeOutErrorCode2))
                     {
-                        if (!_command.DisableAnalytics)
-                        {
-                            // Erreur de timeout.
-                            _analytics.CountTimeout();
-                        }
-
                         return new SqlServerTimeoutException(exception.Message, exception);
                     }
                     else if (error.Class == 16 && error.Number == 547)
@@ -419,6 +397,7 @@ namespace Kinetix.Data.SqlClient
                     }
                 }
 
+                _analytics.MarkProcessInError();
                 return message != null
                     ? new BusinessException(message.Message, message.Code, exception)
                     : new SqlServerException(exception.Message, exception);
@@ -429,10 +408,10 @@ namespace Kinetix.Data.SqlClient
             /// </summary>
             public void Dispose()
             {
-                if (!_command.DisableAnalytics)
+                var process = _analytics.StopProcess();
+                if (!process.Disabled)
                 {
-                    var duration = _analytics.StopCommand();
-                    _logger.LogInformation($"{_command._commandName} ({duration} ms)");
+                    _logger.LogInformation($"{_command._commandName} ({process.Duration} ms)");
                     _logger.LogDebug(_command._innerCommand.CommandText);
                     foreach (var parameter in _command.Parameters)
                     {

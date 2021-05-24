@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using Kinetix.Monitoring;
 using Kinetix.Services;
 using Microsoft.Extensions.Logging;
 
@@ -10,14 +11,14 @@ namespace Kinetix.Data.SqlClient
 {
     public class ConnectionPool
     {
-        private readonly SqlServerAnalytics _analytics;
+        private readonly AnalyticsManager _analytics;
         private readonly Dictionary<string, string> _connectionSettings;
         private readonly CommandParser _commandParser;
         private readonly int _defaultCommandTimeout;
         private readonly ILogger<SqlServerCommand> _logger;
         private readonly TransactionScopeManager _transactionScopeManager;
 
-        public ConnectionPool(TransactionScopeManager transactionScopeManager, SqlServerAnalytics analytics, CommandParser commandParser, ILogger<SqlServerCommand> logger, SqlServerConfig config)
+        public ConnectionPool(TransactionScopeManager transactionScopeManager, AnalyticsManager analytics, CommandParser commandParser, ILogger<SqlServerCommand> logger, SqlServerConfig config)
         {
             _analytics = analytics;
             _commandParser = commandParser;

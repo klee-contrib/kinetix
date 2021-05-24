@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Kinetix.Monitoring
 {
@@ -15,60 +14,54 @@ namespace Kinetix.Monitoring
             _stores = stores;
         }
 
-        public void IncrementCounter(string code, int value)
+        public Process GetProcess()
         {
-            if (_processes.Any())
+            _processes.TryPeek(out var process);
+            return process;
+        }
+
+        public void MarkProcessDisabled()
+        {
+            var process = GetProcess();
+            if (process != null)
             {
-                _processes.TryPeek(out var peek);
-                peek.IncrementValue(code, value);
+                process.Disabled = true;
             }
         }
 
-        public void ResetCounters(IEnumerable<string> codes)
+        public void MarkProcessInError()
         {
-            if (_processes.Any())
+            var process = GetProcess();
+            if (process != null)
             {
-                foreach (var code in codes)
-                {
-                    _processes.TryPeek(out var peek);
-                    peek.OwnCounters.TryRemove(code, out var _);
-                }
+                process.Error = true;
             }
         }
 
-        public void StartProcess(string name, string category)
+        public void StartProcess(string name, string category, string target = null)
         {
-            var process = new Process(name, category);
+            var process = new Process();
+            _processes.TryPeek(out var parentProcess);
+            process.Disabled = parentProcess?.Disabled ?? false;
             _processes.Push(process);
 
             foreach (var store in _stores)
             {
-                store.StartProcess(process);
+                store.StartProcess(process.Id, name, category, target);
             }
         }
 
-        public int StopProcess(bool isError = false)
+        public Process StopProcess()
         {
-            _processes.TryPop(out var stoppedProcess);
-            stoppedProcess.End = DateTime.Now;
-            stoppedProcess.IsError = isError;
-
-            if (_processes.Any())
-            {
-                _processes.TryPeek(out var peek);
-
-                lock (_processes)
-                {
-                    peek.SubProcesses.Add(stoppedProcess);
-                }
-            }
+            _processes.TryPop(out var process);
+            process.EndTime = DateTime.Now;
 
             foreach (var store in _stores)
             {
-                store.AddProcess(stoppedProcess);
+                store.StopProcess(process.Id, !process.Error, process.Disabled);
             }
 
-            return stoppedProcess.Duration.Value;
+            return process;
         }
     }
 }

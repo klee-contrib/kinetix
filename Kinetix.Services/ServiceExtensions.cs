@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Kinetix.Monitoring;
 using Kinetix.Services.Annotations;
 using Kinetix.Services.DependencyInjection;
 using Kinetix.Services.DependencyInjection.Interceptors;
@@ -121,9 +120,7 @@ namespace Kinetix.Services
 
             services
                 .AddMemoryCache()
-                .AddScoped<ServicesAnalytics>()
                 .AddScoped<TransactionScopeManager>()
-                .AddScoped<IAnalytics, ServicesAnalytics>(p => p.GetService<ServicesAnalytics>())
                 .AddScoped<IReferenceManager>(provider =>
                 {
                     var referenceManager = new ReferenceManager(provider, config.StaticListCacheDuration, config.ReferenceListCacheDuration);

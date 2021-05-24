@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using Kinetix.Monitoring;
 using Kinetix.Search.Config;
 using Microsoft.Extensions.Logging;
 using Nest;
@@ -10,7 +11,7 @@ namespace Kinetix.Search.Elastic
     /// </summary>
     public sealed class ElasticManager
     {
-        private readonly SearchAnalytics _analytics;
+        private readonly AnalyticsManager _analytics;
         private readonly ElasticClient _client;
         private readonly SearchConfig _config;
         private readonly ILogger<ElasticManager> _logger;
@@ -18,7 +19,7 @@ namespace Kinetix.Search.Elastic
         /// <summary>
         /// Enregistre la configuration d'une connexion base de données.
         /// </summary>
-        public ElasticManager(ILogger<ElasticManager> logger, SearchConfig config, ElasticClient client, SearchAnalytics analytics)
+        public ElasticManager(ILogger<ElasticManager> logger, SearchConfig config, ElasticClient client, AnalyticsManager analytics)
         {
             _analytics = analytics;
             _client = client;
@@ -48,7 +49,7 @@ namespace Kinetix.Search.Elastic
                     && properties.Count == oldProperties.Count
                     && oldProperties.Zip(properties, (o, n) =>
                     {
-                        return o.Key == n.Key && ((o.Value, n.Value) switch
+                        return o.Key == n.Key && (o.Value, n.Value) switch
                         {
                             (IKeywordProperty okp, IKeywordProperty nkp)
                                 => okp.Name == nkp.Name && okp.Index == okp.Index,
@@ -59,7 +60,7 @@ namespace Kinetix.Search.Elastic
                             (IDateProperty odp, IDateProperty ndp)
                                 => odp.Name == ndp.Name && odp.Index == ndp.Index && odp.Format == ndp.Format,
                             _ => false
-                        });
+                        };
                     }).All(res => res);
 
                 shouldCreate = !mappingExists;

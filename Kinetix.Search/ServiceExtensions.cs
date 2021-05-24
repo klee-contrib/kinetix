@@ -1,4 +1,3 @@
-using Kinetix.Monitoring;
 using Kinetix.Search.MetaModel;
 using Kinetix.Services.DependencyInjection.Interceptors;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,9 +13,7 @@ namespace Kinetix.Search
         {
             services
                 .AddSingleton<DocumentDescriptor>()
-                .AddScoped<IndexManager>()
-                .AddScoped<SearchAnalytics>()
-                .AddScoped<IAnalytics, SearchAnalytics>();
+                .AddScoped<IndexManager>();
 
             if (flushOnCommit)
             {
@@ -40,7 +37,8 @@ namespace Kinetix.Search
 
         public void OnBeforeCommit()
         {
-            if (!DisableFlush) { 
+            if (!DisableFlush)
+            {
                 _indexManager.Flush();
             }
         }

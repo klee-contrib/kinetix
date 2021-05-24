@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Elasticsearch.Net;
+using Kinetix.Monitoring;
 using Kinetix.Search.MetaModel;
 using Microsoft.Extensions.Logging;
 using Nest;
@@ -12,7 +13,7 @@ namespace Kinetix.Search.Elastic
     {
         private int _operationCount = 0;
 
-        private readonly SearchAnalytics _analytics;
+        private readonly AnalyticsManager _analytics;
         private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor()
             .Timeout(TimeSpan.FromMinutes(1))
             .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(1)));
@@ -20,7 +21,7 @@ namespace Kinetix.Search.Elastic
         private readonly DocumentDescriptor _documentDescriptor;
         private readonly ILogger<ElasticStore> _logger;
 
-        internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger, SearchAnalytics analytics)
+        internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger, AnalyticsManager analytics)
         {
             _analytics = analytics;
             _documentDescriptor = documentDescriptor;
@@ -34,7 +35,6 @@ namespace Kinetix.Search.Elastic
         {
             _bulkDescriptor.Delete<TDocument>(d => d.Id(id));
             _operationCount++;
-            _analytics.CountDelete(1);
 
             return this;
         }
@@ -46,7 +46,6 @@ namespace Kinetix.Search.Elastic
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             _bulkDescriptor.Delete<TDocument>(d => d.Id(def.PrimaryKey.GetValue(bean).ToString()));
             _operationCount++;
-            _analytics.CountDelete(1);
 
             return this;
         }
@@ -59,7 +58,6 @@ namespace Kinetix.Search.Elastic
             {
                 _bulkDescriptor.DeleteMany<TDocument>(ids, (d, id) => d.Id(id));
                 _operationCount++;
-                _analytics.CountDelete(ids.Count());
             }
 
             return this;
@@ -76,7 +74,6 @@ namespace Kinetix.Search.Elastic
                     beans.Select(bean => def.PrimaryKey.GetValue(bean).ToString()),
                     (d, id) => d.Id(id));
                 _operationCount++;
-                _analytics.CountDelete(beans.Count());
             }
 
             return this;
@@ -92,7 +89,6 @@ namespace Kinetix.Search.Elastic
                 var id = def.PrimaryKey.GetValue(document).ToString();
                 _bulkDescriptor.Index<TDocument>(y => y.Document(document).Id(id));
                 _operationCount++;
-                _analytics.CountIndex(1);
             }
 
             return this;
@@ -109,7 +105,6 @@ namespace Kinetix.Search.Elastic
                     documents,
                     (b, document) => b.Id(def.PrimaryKey.GetValue(document).ToString()));
                 _operationCount++;
-                _analytics.CountIndex(documents.Count());
             }
 
             return this;

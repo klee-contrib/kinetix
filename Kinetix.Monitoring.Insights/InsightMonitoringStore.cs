@@ -21,30 +21,47 @@ namespace Kinetix.Monitoring.Insights
             _telemetryClient = telemetryClient;
         }
 
-        public void AddProcess(Process process)
+        public void StartProcess(Guid id, string name, string category, string target = null)
         {
-            var success = _holders.TryRemove(process.Id, out var holder);
-
-            if (success)
+            if (category != "Service" && category != "Database")
             {
-                if (process.IsError)
+                return;
+            }
+
+            var processName = string.Join(".", name.Split('.').Reverse().Take(2).Reverse());
+
+            if (category == "Service" && !processName.StartsWith("IService"))
+            {
+                return;
+            }
+
+            var holder = _telemetryClient.StartOperation<DependencyTelemetry>(processName);
+            holder.Telemetry.Type = category;
+
+            if (target != null)
+            {
+                holder.Telemetry.Target = target;
+            }
+
+            _holders.TryAdd(id, holder);
+        }
+
+        public void StopProcess(Guid id, bool success, bool disabled)
+        {
+            if (_holders.TryRemove(id, out var holder))
+            {
+                if (disabled)
+                {
+                    holder.Telemetry.Properties["disabled"] = "true";
+                }
+
+                if (!success)
                 {
                     holder.Telemetry.Success = false;
                     holder.Telemetry.ResultCode = "Failed";
                 }
 
                 _telemetryClient.StopOperation(holder);
-            }
-        }
-
-        public void StartProcess(Process process)
-        {
-            if (process.Category == "Service")
-            {
-                var processName = string.Join(".", process.Name.Split('.').Reverse().Take(2).Reverse());
-                var holder = _telemetryClient.StartOperation<DependencyTelemetry>(processName);
-                holder.Telemetry.Type = "InProc";
-                _holders.TryAdd(process.Id, holder);
             }
         }
     }

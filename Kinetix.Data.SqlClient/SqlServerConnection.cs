@@ -39,9 +39,14 @@ namespace Kinetix.Data.SqlClient
         public int ConnectionTimeout => SqlConnection.ConnectionTimeout;
 
         /// <summary>
-        /// Retourne le nom de la source de données utilisée par la connexion.
+        /// Retourne le nom de la base de données.
         /// </summary>
         public string Database => SqlConnection.Database;
+
+        /// <summary>
+        /// Retourne le nom du serveur de base de données.
+        /// </summary>
+        public string Server => ((SqlConnection)SqlConnection).DataSource;
 
         /// <summary>
         /// Retourne l'état de la connexion.

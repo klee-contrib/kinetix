@@ -1,6 +1,5 @@
 ﻿using System;
 using Kinetix.Data.SqlClient;
-using Kinetix.Monitoring;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Broker
@@ -16,8 +15,6 @@ namespace Kinetix.Broker
                 .AddSingleton(config)
                 .AddSingleton<SqlServerManager>()
                 .AddSingleton<CommandParser>()
-                .AddScoped<SqlServerAnalytics>()
-                .AddScoped<IAnalytics, SqlServerAnalytics>(p => p.GetService<SqlServerAnalytics>())
                 .AddScoped<ConnectionPool>()
                 .AddScoped<BrokerManager>();
         }

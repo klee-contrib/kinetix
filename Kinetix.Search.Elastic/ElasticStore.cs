@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kinetix.Monitoring;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Config;
 using Kinetix.Search.Elastic.Querying;
@@ -18,7 +19,7 @@ namespace Kinetix.Search.Elastic
     /// </summary>
     public class ElasticStore : ISearchStore
     {
-        private readonly SearchAnalytics _analytics;
+        private readonly AnalyticsManager _analytics;
         private readonly ElasticClient _client;
         private readonly SearchConfig _config;
         private readonly DocumentDescriptor _documentDescriptor;
@@ -27,7 +28,7 @@ namespace Kinetix.Search.Elastic
         private readonly ElasticMappingFactory _factory;
         private readonly ILogger<ElasticStore> _logger;
 
-        public ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, SearchAnalytics analytics, SearchConfig config)
+        public ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, AnalyticsManager analytics, SearchConfig config)
         {
             _analytics = analytics;
             _client = client;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Kinetix.Monitoring;
 using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
 
@@ -19,7 +20,7 @@ namespace Kinetix.Edm.SharePoint
         private static readonly byte[] EmptyFile = new byte[] { 0 };
 
         private readonly string _dataSourceName;
-        private readonly EdmAnalytics _edmAnalytics;
+        private readonly AnalyticsManager _analytics;
         private readonly ILogger<SharePointStore> _logger;
         private readonly SharePointManager _sharePointManager;
 
@@ -28,12 +29,12 @@ namespace Kinetix.Edm.SharePoint
         /// </summary>
         /// <param name="dataSourceName">Datasource de la GED.</param>
         /// <param name="sharePointManager">Manager sharepoint.</param>
-        /// <param name="edmAnalytics">Analytics.</param>
+        /// <param name="analytics">Analytics.</param>
         /// <param name="logger">Logger.</param>
-        public SharePointStore(string dataSourceName, SharePointManager sharePointManager, EdmAnalytics edmAnalytics, ILogger<SharePointStore> logger)
+        public SharePointStore(string dataSourceName, SharePointManager sharePointManager, AnalyticsManager analytics, ILogger<SharePointStore> logger)
         {
             _dataSourceName = dataSourceName;
-            _edmAnalytics = edmAnalytics;
+            _analytics = analytics;
             _logger = logger;
             _sharePointManager = sharePointManager;
         }
@@ -44,7 +45,7 @@ namespace Kinetix.Edm.SharePoint
         public EdmDocument Get(object edmId)
         {
             _logger.LogInformation("SharePoint GET " + edmId);
-            _edmAnalytics.StartQuery("Sharepoint.Get");
+            _analytics.StartProcess("Sharepoint.Get", "Sharepoint");
 
             try
             {
@@ -77,12 +78,12 @@ namespace Kinetix.Edm.SharePoint
             }
             catch
             {
-                _edmAnalytics.CountError();
+                _analytics.MarkProcessInError();
                 throw;
             }
             finally
             {
-                _edmAnalytics.StopQuery();
+                _analytics.StopProcess();
             }
         }
 
@@ -90,7 +91,7 @@ namespace Kinetix.Edm.SharePoint
         public EdmDocument GetByName(string path, string name)
         {
             _logger.LogInformation("SharePoint GET " + name);
-            _edmAnalytics.StartQuery("Sharepoint.GetByName");
+            _analytics.StartProcess("Sharepoint.GetByName", "Sharepoint");
 
             try
             {
@@ -150,12 +151,12 @@ namespace Kinetix.Edm.SharePoint
             }
             catch
             {
-                _edmAnalytics.CountError();
+                _analytics.MarkProcessInError();
                 throw;
             }
             finally
             {
-                _edmAnalytics.StopQuery();
+                _analytics.StopProcess();
             }
         }
 
@@ -163,7 +164,7 @@ namespace Kinetix.Edm.SharePoint
         public Dictionary<int, EdmDocument> GetItems(int[] gedIds)
         {
             _logger.LogInformation("SharePoint GET (" + gedIds.Length + " items)");
-            _edmAnalytics.StartQuery("Sharepoint.GetItems");
+            _analytics.StartProcess("Sharepoint.GetItems", "Sharepoint");
 
             try
             {
@@ -226,7 +227,6 @@ namespace Kinetix.Edm.SharePoint
                     }
                     catch (Exception e)
                     {
-                        _edmAnalytics.CountError();
                         _logger.LogError(e, $"Téléchargement sharepoint en échec : {item.DisplayName}");
                     }
                 });
@@ -235,12 +235,12 @@ namespace Kinetix.Edm.SharePoint
             }
             catch
             {
-                _edmAnalytics.CountError();
+                _analytics.MarkProcessInError();
                 throw;
             }
             finally
             {
-                _edmAnalytics.StopQuery();
+                _analytics.StopProcess();
             }
         }
 
@@ -248,7 +248,7 @@ namespace Kinetix.Edm.SharePoint
         public EdmDocument Put(EdmDocument document)
         {
             _logger.LogInformation("SharePoint PUT " + document.Name);
-            _edmAnalytics.StartQuery("Sharepoint.Put");
+            _analytics.StartProcess("Sharepoint.Put", "Sharepoint");
 
             /* L'utilisation de SaveBinaryDirect permet de dépasser la limite d'upload de 2Mo de SharePoint. */
             /* Toutefois elle ne fournit pas d'API pour les métadonnées et ne donne pas l'ID de fichier.
@@ -317,12 +317,12 @@ namespace Kinetix.Edm.SharePoint
             }
             catch
             {
-                _edmAnalytics.CountError();
+                _analytics.MarkProcessInError();
                 throw;
             }
             finally
             {
-                _edmAnalytics.StopQuery();
+                _analytics.StopProcess();
             }
         }
 
@@ -330,7 +330,7 @@ namespace Kinetix.Edm.SharePoint
         public void Remove(object edmId)
         {
             _logger.LogInformation("SharePoint REMOVE " + edmId);
-            _edmAnalytics.StartQuery("Sharepoint.Remove");
+            _analytics.StartProcess("Sharepoint.Remove", "Sharepoint");
 
             try
             {
@@ -362,12 +362,12 @@ namespace Kinetix.Edm.SharePoint
             }
             catch
             {
-                _edmAnalytics.CountError();
+                _analytics.MarkProcessInError();
                 throw;
             }
             finally
             {
-                _edmAnalytics.StopQuery();
+                _analytics.StopProcess();
             }
         }
 
@@ -375,7 +375,7 @@ namespace Kinetix.Edm.SharePoint
         public void RemoveByName(string path, string name)
         {
             _logger.LogInformation("SharePoint REMOVE " + name);
-            _edmAnalytics.StartQuery("Sharepoint.RemoveByName");
+            _analytics.StartProcess("Sharepoint.RemoveByName", "Sharepoint");
 
             try
             {
@@ -427,12 +427,12 @@ namespace Kinetix.Edm.SharePoint
             }
             catch
             {
-                _edmAnalytics.CountError();
+                _analytics.MarkProcessInError();
                 throw;
             }
             finally
             {
-                _edmAnalytics.StopQuery();
+                _analytics.StopProcess();
             }
         }
 

@@ -12,11 +12,9 @@ namespace Kinetix.Edm
         {
             return services
                 .AddSingleton(new SharePointManager(edmSettings))
-                .AddScoped<EdmAnalytics>()
-                .AddScoped<IAnalytics, EdmAnalytics>()
                 .AddScoped<IEdmManager>(p => new EdmManager(
                     p.GetService<SharePointManager>(),
-                    p.GetService<EdmAnalytics>(),
+                    p.GetService<AnalyticsManager>(),
                     p.GetService<ILogger<SharePointStore>>(),
                     edmSettings.Select(s => s.Name).ToArray()));
         }
