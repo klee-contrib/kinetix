@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Kinetix.ComponentModel.Exceptions;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +42,7 @@ namespace Kinetix.Web.Filters
 
         private IActionResult GetExceptionMessage(Exception exception)
         {
+            exception = exception is TargetInvocationException tex ? tex.InnerException : exception;
             return exception switch
             {
                 BusinessException ce => BusinessExceptionHandler(ce),
