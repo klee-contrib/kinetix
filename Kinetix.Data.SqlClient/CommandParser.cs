@@ -4,8 +4,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
 using System.Text;
-using System.Threading;
-using Kinetix.Security;
 using Microsoft.SqlServer.Server;
 
 namespace Kinetix.Data.SqlClient
@@ -47,17 +45,13 @@ namespace Kinetix.Data.SqlClient
 
         private const string TagStaticParStart = "{";
         private const string TagStaticParEnd = "}";
-        private const string CurrentUserIdParameterName = "CurrentUserId";
-        private const string CurrentUserProfileParamaterName = "CurrentUserProfile";
-        private const string IsRegularUserParameterName = "IsRegularUser";
-        private const string IsInRoleParamaterName = "IsInRole";
         private const string OrderParameterName = "Order";
         private const string MaxRows = "#MaxRows#";
         private const string Offset = "#Offset#";
 
         private readonly SqlServerManager _sqlServerManager;
-        private readonly Dictionary<string, bool> _keyTable = new Dictionary<string, bool>();
-        private readonly object _keyTableLock = new object();
+        private readonly Dictionary<string, bool> _keyTable = new();
+        private readonly object _keyTableLock = new();
 
         public CommandParser(SqlServerManager sqlServerManager)
         {
@@ -73,16 +67,6 @@ namespace Kinetix.Data.SqlClient
             /// Instruction IF.
             /// </summary>
             IfStatement,
-
-            /// <summary>
-            /// Paramétre UserId.
-            /// </summary>
-            CurrentUserIdParameter,
-
-            /// <summary>
-            /// Paramètre User.CodeProfil.
-            /// </summary>
-            CurrentUserProfileParameter,
 
             /// <summary>
             /// Constante.
@@ -144,13 +128,13 @@ namespace Kinetix.Data.SqlClient
             {
                 while (t != null)
                 {
-                    sqlBuilder.Append(commandText.Substring(currentPos, t.Position - currentPos));
+                    sqlBuilder.Append(commandText[currentPos..t.Position]);
                     currentPos = ProcessToken(command, commandText, sqlBuilder, t, true, queryParameter);
                     t = GetNextToken(commandText, currentPos);
                 }
             }
 
-            sqlBuilder.Append(commandText.Substring(currentPos));
+            sqlBuilder.Append(commandText[currentPos..]);
 
             command.CommandText = sqlBuilder.ToString();
             if (queryParameter != null)
@@ -218,22 +202,6 @@ namespace Kinetix.Data.SqlClient
             {
                 case TokenType.IfStatement:
                     return ParseExpression(sqlBuilder, command, commandText, t.Position, isExpressionEnabled, queryParameter) + 1;
-                case TokenType.CurrentUserIdParameter:
-                    if (isExpressionEnabled)
-                    {
-                        sqlBuilder.Append("@CURRENT_USER_ID");
-                        if (!command.Parameters.Contains("@CURRENT_USER_ID"))
-                        {
-                            var parameter = command.CreateParameter();
-                            parameter.ParameterName = "@CURRENT_USER_ID";
-                            var userId = StandardUser.UserId;
-                            parameter.Value = userId != null ? userId.Value : (object)0;
-
-                            command.Parameters.Add(parameter);
-                        }
-                    }
-
-                    return t.EndPosition + 1;
                 case TokenType.Constant:
                     if (isExpressionEnabled)
                     {
@@ -289,15 +257,6 @@ namespace Kinetix.Data.SqlClient
                 if (cstEndPos >= 0)
                 {
                     var constant = commandText.Substring(cstPos + 1, cstEndPos - cstPos - 1);
-                    if (CurrentUserIdParameterName.Equals(constant))
-                    {
-                        return new Token { Position = cstPos, Type = TokenType.CurrentUserIdParameter, EndPosition = cstEndPos };
-                    }
-
-                    if (CurrentUserProfileParamaterName.Equals(constant))
-                    {
-                        return new Token { Position = cstPos, Type = TokenType.CurrentUserProfileParameter, EndPosition = cstEndPos };
-                    }
 
                     if (OrderParameterName.Equals(constant))
                     {
@@ -358,7 +317,7 @@ namespace Kinetix.Data.SqlClient
             {
                 if (isExpressionEnabled)
                 {
-                    sqlBuilder.Append(commandText.Substring(currentPos, t.Position - currentPos));
+                    sqlBuilder.Append(commandText[currentPos..t.Position]);
                 }
 
                 currentPos = ProcessToken(command, commandText, sqlBuilder, t, isExpressionEnabled, queryParameter);
@@ -368,7 +327,7 @@ namespace Kinetix.Data.SqlClient
 
             if (isExpressionEnabled)
             {
-                sqlBuilder.Append(commandText.Substring(currentPos, nextClose - currentPos));
+                sqlBuilder.Append(commandText[currentPos..nextClose]);
             }
 
             return nextClose + 4;
@@ -421,25 +380,6 @@ namespace Kinetix.Data.SqlClient
             var array = expression.Split(':');
             var paramName = array[0].Trim();
 
-            if (paramName == TagStaticParStart + IsInRoleParamaterName + TagStaticParEnd)
-            {
-                for (var i = 1; i < array.Length; i++)
-                {
-                    var compareValue = ExtractDynamicValue(array[i]);
-                    if (Thread.CurrentPrincipal.IsInRole(compareValue))
-                    {
-                        return checkEquals;
-                    }
-                }
-
-                return !checkEquals;
-            }
-
-            if (paramName == TagStaticParStart + IsRegularUserParameterName + TagStaticParEnd)
-            {
-                return StandardUser.IsRegularUser;
-            }
-
             var value = ((IDbDataParameter)parameters["@" + paramName]).Value;
             if (DBNull.Value.Equals(value))
             {
@@ -473,21 +413,15 @@ namespace Kinetix.Data.SqlClient
         {
             if (value.StartsWith(TagStaticParStart, StringComparison.Ordinal) && value.EndsWith(TagStaticParEnd, StringComparison.Ordinal))
             {
-                var constant = value.Substring(1, value.Length - 2);
-                if (CurrentUserIdParameterName.Equals(constant))
+                var constant = value[1..^1];
+                var constantValue = _sqlServerManager.GetConstValueByShortName(constant);
+                if (constantValue == null)
                 {
-                    value = StandardUser.UserId.Value.ToString(CultureInfo.InvariantCulture);
+                    throw new NotSupportedException();
                 }
-                else
-                {
-                    var constantValue = _sqlServerManager.GetConstValueByShortName(constant);
-                    if (constantValue == null)
-                    {
-                        throw new NotSupportedException();
-                    }
 
-                    value = Convert.ToString(constantValue, CultureInfo.InvariantCulture);
-                }
+                value = Convert.ToString(constantValue, CultureInfo.InvariantCulture);
+
             }
 
             return value;
