@@ -14,5 +14,12 @@ namespace Kinetix.Web
             builder.Filters.AddService<TransactionFilter<TDbContext>>();
             builder.Filters.AddService<ReferenceCheckerFilter>();
         }
+
+        public static void ConfigureSerializer(this JsonOptions options)
+        {
+            options.JsonSerializerOptions.IgnoreNullValues = true;
+            options.JsonSerializerOptions.Converters.Add(new DateTimeConverter());
+            options.JsonSerializerOptions.Converters.Add(new TimeSpanConverter());
+        }
     }
 }

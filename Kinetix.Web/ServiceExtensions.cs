@@ -11,10 +11,10 @@ namespace Kinetix.Web
         public static IServiceCollection AddWeb<TDbContext>(this IServiceCollection services)
             where TDbContext : DbContext
         {
-            services.AddTransient<CultureFilter>();
-            services.AddTransient<ExceptionFilter>();
-            services.AddTransient<TransactionFilter<TDbContext>>();
-            services.AddTransient<ReferenceCheckerFilter>();
+            services.AddScoped<CultureFilter>();
+            services.AddScoped<ExceptionFilter>();
+            services.AddScoped<TransactionFilter<TDbContext>>();
+            services.AddScoped<ReferenceCheckerFilter>();
 
             if (!services.Any(service => service.ServiceType == typeof(IReferenceManager)))
             {
