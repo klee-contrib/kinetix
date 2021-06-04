@@ -27,10 +27,10 @@ namespace Kinetix.Search
     {
         private readonly IServiceProvider _provider;
 
-        private readonly HashSet<TDocument> _beansToDelete = new HashSet<TDocument>();
-        private readonly HashSet<TDocument> _beansToIndex = new HashSet<TDocument>();
-        private readonly HashSet<int> _idsToDelete = new HashSet<int>();
-        private readonly HashSet<int> _idsToIndex = new HashSet<int>();
+        private readonly HashSet<TDocument> _beansToDelete = new();
+        private readonly HashSet<TDocument> _beansToIndex = new();
+        private readonly HashSet<int> _idsToDelete = new();
+        private readonly HashSet<int> _idsToIndex = new();
 
         /// <summary>
         /// Constructeur.
@@ -62,7 +62,7 @@ namespace Kinetix.Search
             var loader = _provider.GetService<IDocumentLoader<TDocument>>();
             if (Reindex)
             {
-                var docs = loader.GetAll(false);
+                var docs = loader.GetAll(false).ToList();
                 return docs.Any()
                     ? bulk.IndexMany(docs)
                     : bulk;
@@ -84,7 +84,7 @@ namespace Kinetix.Search
                 }
                 else if (_beansToDelete.Count > 1)
                 {
-                    bulk.DeleteMany(_beansToDelete.ToList());
+                    bulk.DeleteMany(_beansToDelete);
                 }
 
                 if (_idsToIndex.Count == 1)
@@ -97,7 +97,7 @@ namespace Kinetix.Search
                 }
                 else if (_idsToIndex.Count > 1)
                 {
-                    var docs = loader.GetMany(_idsToIndex.ToList());
+                    var docs = loader.GetMany(_idsToIndex).ToList();
                     if (docs.Any())
                     {
                         bulk.IndexMany(docs);
@@ -114,7 +114,7 @@ namespace Kinetix.Search
                 }
                 else if (_beansToIndex.Count > 1)
                 {
-                    var docs = loader.GetMany(_beansToIndex.ToList());
+                    var docs = loader.GetMany(_beansToIndex).ToList();
                     if (docs.Any())
                     {
                         bulk.IndexMany(docs);

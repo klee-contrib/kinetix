@@ -58,7 +58,7 @@ namespace Kinetix.Search
         /// <typeparam name="TDocument">Type de document.</typeparam>
         /// <param name="documents">Documents à poser.</param>
         /// <returns>ISearchBulkDescriptor.</returns>
-        ISearchBulkDescriptor IndexMany<TDocument>(IEnumerable<TDocument> documents)
+        ISearchBulkDescriptor IndexMany<TDocument>(IList<TDocument> documents)
             where TDocument : class;
 
         /// <summary>

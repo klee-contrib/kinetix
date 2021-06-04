@@ -98,7 +98,10 @@ namespace Kinetix.Search.Elastic
         public void Index<TDocument>(TDocument document, bool refresh = true)
             where TDocument : class
         {
-            Bulk().Index(document).Run(refresh);
+            if (document != null)
+            {
+                Bulk().Index(document).Run(refresh);
+            }
         }
 
         /// <inheritdoc cref="ISearchStore.ResetIndex" />

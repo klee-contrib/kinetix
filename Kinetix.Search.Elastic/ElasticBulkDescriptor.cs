@@ -54,11 +54,8 @@ namespace Kinetix.Search.Elastic
         public ISearchBulkDescriptor DeleteMany<TDocument>(IEnumerable<string> ids)
             where TDocument : class
         {
-            if (ids.Any())
-            {
-                _bulkDescriptor.DeleteMany<TDocument>(ids, (d, id) => d.Id(id));
-                _operationCount++;
-            }
+            _bulkDescriptor.DeleteMany<TDocument>(ids, (d, id) => d.Id(id));
+            _operationCount++;
 
             return this;
         }
@@ -67,14 +64,11 @@ namespace Kinetix.Search.Elastic
         public ISearchBulkDescriptor DeleteMany<TDocument>(IEnumerable<TDocument> beans)
            where TDocument : class
         {
-            if (beans.Any())
-            {
-                var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-                _bulkDescriptor.DeleteMany<TDocument>(
-                    beans.Select(bean => def.PrimaryKey.GetValue(bean).ToString()),
-                    (d, id) => d.Id(id));
-                _operationCount++;
-            }
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+            _bulkDescriptor.DeleteMany<TDocument>(
+                beans.Select(bean => def.PrimaryKey.GetValue(bean).ToString()),
+                (d, id) => d.Id(id));
+            _operationCount++;
 
             return this;
         }
@@ -83,29 +77,23 @@ namespace Kinetix.Search.Elastic
         public ISearchBulkDescriptor Index<TDocument>(TDocument document)
             where TDocument : class
         {
-            if (document != null)
-            {
-                var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-                var id = def.PrimaryKey.GetValue(document).ToString();
-                _bulkDescriptor.Index<TDocument>(y => y.Document(document).Id(id));
-                _operationCount++;
-            }
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+            var id = def.PrimaryKey.GetValue(document).ToString();
+            _bulkDescriptor.Index<TDocument>(y => y.Document(document).Id(id));
+            _operationCount++;
 
             return this;
         }
 
         /// <inheritdoc cref="ISearchBulkDescriptor.IndexMany" />
-        public ISearchBulkDescriptor IndexMany<TDocument>(IEnumerable<TDocument> documents)
+        public ISearchBulkDescriptor IndexMany<TDocument>(IList<TDocument> documents)
             where TDocument : class
         {
-            if (documents.Any())
-            {
-                var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-                _bulkDescriptor.IndexMany(
-                    documents,
-                    (b, document) => b.Id(def.PrimaryKey.GetValue(document).ToString()));
-                _operationCount++;
-            }
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+            _bulkDescriptor.IndexMany(
+                documents,
+                (b, document) => b.Id(def.PrimaryKey.GetValue(document).ToString()));
+            _operationCount++;
 
             return this;
         }
