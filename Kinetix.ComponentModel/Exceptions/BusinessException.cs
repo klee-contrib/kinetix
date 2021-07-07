@@ -1,27 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
+using System.Linq;
 
 namespace Kinetix.ComponentModel.Exceptions
 {
     /// <summary>
     /// Erreur métier.
     /// </summary>
-    [Serializable]
     public class BusinessException : Exception
     {
         /// <summary>
         /// Crée un nouvelle exception.
         /// </summary>
-        public BusinessException()
-        {
-        }
-
-        /// <summary>
-        /// Crée un nouvelle exception.
-        /// </summary>
         /// <param name="errorCollection">Pile d'erreur.</param>
         public BusinessException(ErrorMessageCollection errorCollection)
+            : base (string.Empty)
         {
             Errors = errorCollection;
         }
@@ -39,23 +32,9 @@ namespace Kinetix.ComponentModel.Exceptions
         /// Crée une nouvelle exception.
         /// </summary>
         /// <param name="messageList">Liste de messages d'erreurs.</param>
-        public BusinessException(IEnumerable<string> messageList)
-        {
-            var erreurs = new ErrorMessageCollection();
-            foreach (var message in messageList)
-            {
-                erreurs.AddConstraintException(message);
-            }
-
-            Errors = erreurs;
-        }
-
-        /// <summary>
-        /// Crée une nouvelle exception.
-        /// </summary>
-        /// <param name="messageList">Liste de messages d'erreurs.</param>
         /// <param name="code">Le code de l'erreur.</param>
         public BusinessException(IEnumerable<ErrorMessage> messageList, string code = null)
+            : base(string.Empty)
         {
             Errors = new ErrorMessageCollection(messageList);
             Code = code;
@@ -78,20 +57,10 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="fieldName">Nom du champ en erreur.</param>
         /// <param name="message">Message d'erreur.</param>
         public BusinessException(string fieldName, string message)
+            : base(string.Empty)
         {
             Errors = new ErrorMessageCollection();
             Errors.AddEntry(fieldName, message);
-        }
-
-        /// <summary>
-        /// Crée une nouvelle exception.
-        /// </summary>
-        /// <param name="message">Description de l'exception.</param>
-        /// <param name="messageParameters">Message parameters.</param>
-        public BusinessException(string message, Dictionary<string, ErrorMessageParameter> messageParameters)
-            : base(message)
-        {
-            MessageParameters = messageParameters;
         }
 
         /// <summary>
@@ -102,18 +71,6 @@ namespace Kinetix.ComponentModel.Exceptions
         public BusinessException(string message, Exception innerException)
             : base(message, innerException)
         {
-        }
-
-        /// <summary>
-        /// Crée une nouvelle exception.
-        /// </summary>
-        /// <param name="property">Propriété associée à la violation de contrainte.</param>
-        /// <param name="message">Description de l'exception.</param>
-        /// <param name="innerException">Exception source.</param>
-        public BusinessException(BeanPropertyDescriptor property, string message, Exception innerException)
-            : base(message, innerException)
-        {
-            Property = property;
         }
 
         /// <summary>
@@ -143,16 +100,28 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <summary>
         /// Crée une nouvelle exception.
         /// </summary>
-        /// <param name="info">Information de sérialisation.</param>
-        /// <param name="context">Contexte de sérialisation.</param>
-        protected BusinessException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
+        /// <param name="fieldName">Nom du champ en erreur.</param>
+        /// <param name="message">Message d'erreur.</param>
+        /// <param name="code">Code d'erreur.</param>
+        public BusinessException(IEnumerable<ErrorMessage> errors, Exception innerException)
+            : base(string.Empty, innerException)
         {
-            if (info != null)
-            {
-                Property = (BeanPropertyDescriptor)info.GetValue("Property", typeof(BeanPropertyDescriptor));
-            }
+            Errors = new ErrorMessageCollection(errors);
         }
+
+        /// <summary>
+        /// Message d'erreur
+        /// </summary>
+        public override string Message 
+        { 
+            get => string.IsNullOrEmpty(base.Message) && Errors.HasError ? string.Join(", ", Errors.Select(s => s.Message)) : base.Message; 
+        }
+
+
+        /// <summary>
+        /// Message d'erreur d'origine
+        /// </summary>
+        public string BaseMessage => base.Message;
 
         /// <summary>
         /// Code d'erreur.
@@ -184,20 +153,6 @@ namespace Kinetix.ComponentModel.Exceptions
         {
             get;
             private set;
-        }
-
-        /// <summary>
-        /// Sérialise l'exception.
-        /// </summary>
-        /// <param name="info">Information de sérialisation.</param>
-        /// <param name="context">Contexte de sérialisation.</param>
-        public override void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            if (info != null)
-            {
-                base.GetObjectData(info, context);
-                info.AddValue("Property", Property);
-            }
         }
     }
 }

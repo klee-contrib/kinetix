@@ -75,11 +75,11 @@ namespace Kinetix.Web.Filters
                 }
             }
 
-            if (!string.IsNullOrEmpty(ex.Message))
+            if (!string.IsNullOrEmpty(ex.BaseMessage))
             {
                 if (!errorDico.ContainsKey(EntityException.GlobalErrorKey))
                 {
-                    errorDico.Add(EntityException.GlobalErrorKey, new List<string> { ex.Message });
+                    errorDico.Add(EntityException.GlobalErrorKey, new List<string> { ex.BaseMessage });
                 }
             }
 

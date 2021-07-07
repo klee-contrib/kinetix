@@ -46,8 +46,13 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
                 _analytics.MarkProcessInError();
                 _analytics.StopProcess();
 
+                if (ex is AggregateException)
+                {
+                    ex = ex.InnerException;
+                }
+
                 _logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
-                throw;
+                throw ex;
             }
         }
     }
