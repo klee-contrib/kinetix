@@ -43,7 +43,7 @@ namespace Kinetix.Search.Elastic
             if (indexExists)
             {
                 var properties = typeMapping.Properties;
-                var oldProperties = _client.GetMapping<T>().Indices.FirstOrDefault().Value?.Mappings.FirstOrDefault().Value?.Properties;
+                var oldProperties = _client.Indices.GetMapping<T>().Indices.FirstOrDefault().Value?.Mappings.Properties;
 
                 var mappingExists = oldProperties != null
                     && properties.Count == oldProperties.Count
@@ -73,7 +73,7 @@ namespace Kinetix.Search.Elastic
                     DeleteIndex<T>();
                 }
 
-                _logger.LogQuery(_analytics, "CreateIndex", () => _client.CreateIndex(
+                _logger.LogQuery(_analytics, "CreateIndex", () => _client.Indices.Create(
                     _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
                     new TIndexConfigurator().ConfigureIndex));
             }
@@ -91,7 +91,7 @@ namespace Kinetix.Search.Elastic
         public void DeleteIndex<T>()
         {
             _logger.LogQuery(_analytics, "DeleteIndex", () =>
-                _client.DeleteIndex(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T))));
+                _client.Indices.Delete(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T))));
         }
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Kinetix.Search.Elastic
         public bool DeleteIndexes()
         {
             var response = _logger.LogQuery(_analytics, "DeleteIndexes", () =>
-                _client.DeleteIndex($"{_config.Servers[ElasticConfigBuilder.ServerName].IndexName}*"));
+                _client.Indices.Delete($"{_config.Servers[ElasticConfigBuilder.ServerName].IndexName}*"));
             return response.Acknowledged;
         }
 
@@ -113,7 +113,7 @@ namespace Kinetix.Search.Elastic
         /// <returns><code>True</code> si l'index existe.</returns>
         public bool ExistIndex(ElasticClient client, string indexName)
         {
-            return _logger.LogQuery(_analytics, "IndexExists", () => client.IndexExists(indexName)).Exists;
+            return _logger.LogQuery(_analytics, "IndexExists", () => client.Indices.Exists(indexName)).Exists;
         }
 
         /// <summary>

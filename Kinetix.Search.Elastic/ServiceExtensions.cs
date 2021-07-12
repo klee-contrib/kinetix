@@ -38,7 +38,6 @@ namespace Kinetix.Search.Elastic
                             }
                             return js;
                         }))
-                        .DefaultTypeNameInferrer(SearchConfig.GetTypeNameForIndex)
                         .DisableDirectStreaming();
 
                     foreach (var documentType in config.DocumentTypes)

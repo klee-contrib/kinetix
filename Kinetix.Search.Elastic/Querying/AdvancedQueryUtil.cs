@@ -57,6 +57,7 @@ namespace Kinetix.Search.Elastic.Querying
                     /* Pagination */
                     .From(skip)
                     .Size(size)
+                    .TrackTotalHits()
 
                     /* Critère de filtrage. */
                     .Query(filterQuery)
