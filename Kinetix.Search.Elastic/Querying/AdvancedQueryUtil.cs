@@ -14,7 +14,7 @@ namespace Kinetix.Search.Elastic.Querying
     public static class AdvancedQueryUtil
     {
         public const string MissingGroupPrefix = "_Missing";
-        public const string TopHitName = "top";
+        public const string TopHitName = "groupTop";
 
         /// <summary>
         /// Construit le descripteur pour une recherche avancée.
