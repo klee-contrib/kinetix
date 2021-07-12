@@ -42,9 +42,9 @@ namespace Kinetix.Search.Elastic.Querying
                 def,
                 input,
                 _facetHandler,
+                new Func<QueryContainerDescriptor<TDocument>, QueryContainer>[0],
                 input.FacetQueryDefinition.Facets,
-                GetGroupFieldName(input),
-                new Func<QueryContainerDescriptor<TDocument>, QueryContainer>[0])(new SearchDescriptor<TDocument>()));
+                GetGroupFieldName(input))(new SearchDescriptor<TDocument>()));
             _documentMappers.Add(code, new DocumentMapper<TDocument, TOutput>(documentMapper));
             _searchLabels.Add((code, label));
             return this;

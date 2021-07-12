@@ -178,6 +178,53 @@ namespace Kinetix.Search.Elastic
                 .Count;
         }
 
+        internal async IAsyncEnumerable<TOutput> AdvancedQueryAllAsync<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+           where TDocument : class
+           where TCriteria : Criteria, new()
+        {
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+
+            var pit = await _logger.LogQueryAsync(_analytics, "CreatePit", () => _client.OpenPointInTimeAsync(
+                   _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(TDocument)),
+                   p => p.KeepAlive("1m")));
+
+            var pitId = pit.Id;
+            try
+            {
+                object[] searchAfter = null;
+
+                var search = true;
+                do
+                {
+                    var res = await _logger.LogQueryAsync(_analytics, $"AdvancedQueryWithPit", () => _client.SearchAsync(
+                        GetAdvancedQueryDescriptor(def, input, _facetHandler, filters, pitId: pitId, searchAfter: searchAfter)));
+
+                    foreach (var doc in res.Documents)
+                    {
+                        yield return documentMapper(doc);
+                    }
+
+                    if (res.Documents.Count == 10000)
+                    {
+                        searchAfter = res.Hits.Last().Sorts.ToArray();
+                    }
+                    else
+                    {
+                        search = false;
+                    }
+                } while (search);
+            }
+            finally
+            {
+                await _logger.LogQueryAsync(_analytics, "DeletePit", () => _client.ClosePointInTimeAsync(p => p.Id(pitId)));
+            }
+        }
+
         internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
            where TDocument : class
            where TCriteria : Criteria, new()
@@ -193,13 +240,12 @@ namespace Kinetix.Search.Elastic
             /* Facettage. */
             var facetDefList = input.FacetQueryDefinition.Facets;
             var hasFacet = facetDefList.Any();
-
             /* Group */
             var groupFieldName = GetGroupFieldName(input);
             var hasGroup = groupFieldName != null;
 
             var res = _logger.LogQuery(_analytics, "AdvancedQuery", () => _client.Search(
-                GetAdvancedQueryDescriptor(def, input, _facetHandler, facetDefList, groupFieldName, filters)));
+                GetAdvancedQueryDescriptor(def, input, _facetHandler, filters, facetDefList, groupFieldName)));
 
             /* Extraction des facettes. */
             var facetListOutput = new List<FacetOutput>();
@@ -296,7 +342,7 @@ namespace Kinetix.Search.Elastic
             }
 
             /* Construction de la sortie. */
-            var output = new QueryOutput<TOutput>
+            return new QueryOutput<TOutput>
             {
                 List = resultList,
                 Facets = facetListOutput,
@@ -304,8 +350,6 @@ namespace Kinetix.Search.Elastic
                 SearchFields = def.SearchFields.Select(tf => tf.FieldName).ToList(),
                 TotalCount = (int)res.Total
             };
-
-            return output;
         }
     }
 }

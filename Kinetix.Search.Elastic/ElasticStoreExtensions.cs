@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Model;
 using Nest;
@@ -22,6 +23,20 @@ namespace Kinetix.Search.Elastic
             where TCriteria : Criteria, new()
         {
             return ((ElasticStore)store).AdvancedQuery(input, documentMapper, filters);
+        }
+
+        /// <summary>
+        /// Effectue une recherche avancée et récupère tous les résultats (et uniquement les résultats).
+        /// </summary>
+        /// <param name="input">Entrée de la recherche.</param>
+        /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
+        /// <param name="filters">Filtres NEST additionnels.</param>
+        /// <returns>Résultats.</returns>
+        public static IAsyncEnumerable<TOutput> AdvancedQueryAllAsync<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+            where TDocument : class
+            where TCriteria : Criteria, new()
+        {
+            return ((ElasticStore)store).AdvancedQueryAllAsync(input, documentMapper, filters);
         }
     }
 }

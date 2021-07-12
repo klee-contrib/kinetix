@@ -12,11 +12,11 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Liste des facettes.
         /// </summary>
-        public IDictionary<string, FacetInput> Facets
+        public Dictionary<string, FacetInput> Facets
         {
             get;
             set;
-        } = new Dictionary<string, FacetInput>();
+        } = new();
 
         /// <summary>
         /// Critères de recherche.
@@ -25,7 +25,7 @@ namespace Kinetix.Search.ComponentModel
         {
             get;
             set;
-        } = new TCriteria();
+        } = new();
 
         /// <summary>
         /// Nom du champ pour grouper (parmi les noms de facettes).

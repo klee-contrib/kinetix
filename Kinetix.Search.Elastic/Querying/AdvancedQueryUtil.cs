@@ -30,9 +30,11 @@ namespace Kinetix.Search.Elastic.Querying
             DocumentDefinition def,
             AdvancedQueryInput<TDocument, TCriteria> input,
             FacetHandler facetHandler,
-            ICollection<IFacetDefinition<TDocument>> facetDefList,
-            string groupFieldName,
-            Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+            Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters,
+            ICollection<IFacetDefinition<TDocument>> facetDefList = null,
+            string groupFieldName = null,
+            string pitId = null,
+            object[] searchAfter = null)
             where TDocument : class
             where TCriteria : Criteria, new()
         {
@@ -45,7 +47,7 @@ namespace Kinetix.Search.Elastic.Querying
 
             /* Booléens */
             var hasGroup = GetGroupFieldName(input) != null;
-            var hasFacet = facetDefList.Any();
+            var hasFacet = facetDefList?.Any() ?? false;
 
             /* Pagination (si plusieurs critères non cohérents, on prend le max). */
             var skip = input.SearchCriteria.Max(sc => sc.Skip);
@@ -54,16 +56,26 @@ namespace Kinetix.Search.Elastic.Querying
             return (SearchDescriptor<TDocument> s) =>
             {
                 s
-                    /* Pagination */
-                    .From(skip)
-                    .Size(size)
-                    .TrackTotalHits()
-
                     /* Critère de filtrage. */
                     .Query(filterQuery)
 
                     /* Critère de post-filtrage. */
                     .PostFilter(postFilterQuery);
+
+                /* Pagination */
+                if (pitId == null)
+                {
+                    s.From(skip).Size(size).TrackTotalHits();
+                }
+                else
+                {
+                    s.Size(10000).PointInTime(pitId, p => p.KeepAlive("1m"));
+
+                    if (searchAfter != null)
+                    {
+                        s.SearchAfter(searchAfter);
+                    }
+                }
 
                 /* Tri */
                 if (sortDef.HasSort)

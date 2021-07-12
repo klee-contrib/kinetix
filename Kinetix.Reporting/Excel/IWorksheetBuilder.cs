@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using ClosedXML.Excel;
 
 namespace Kinetix.Reporting.Excel
@@ -41,6 +42,20 @@ namespace Kinetix.Reporting.Excel
         IWorksheetBuilder<T> Data(IEnumerable<T> data);
 
         /// <summary>
+        /// Configure la source de données pour la Worksheet.
+        /// </summary>
+        /// <param name="data">Les données.</param>
+        /// <returns>Builder.</returns>
+        IWorksheetBuilder<T> Data(IAsyncEnumerable<T> data);
+
+        /// <summary>
+        /// Configure le nombre de résultats maximum dans l'export.
+        /// </summary>
+        /// <param name="max"></param>
+        /// <returns></returns>
+        IWorksheetBuilder<T> MaxResults(int maxResults);
+
+        /// <summary>
         /// Transpose la feuille pour échanger les colonnes et les lignes.
         /// </summary>
         /// <returns>Builder.</returns>
@@ -51,6 +66,6 @@ namespace Kinetix.Reporting.Excel
         /// </summary>
         /// <param name="postBuildAction">Actions manuelles à effectuer sur la worksheet après construction.</param>
         /// <returns>ExcelBuilder.</returns>
-        IExcelBuilder Build(Action<IXLWorksheet> postBuildAction = null);
+        Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction = null);
     }
 }

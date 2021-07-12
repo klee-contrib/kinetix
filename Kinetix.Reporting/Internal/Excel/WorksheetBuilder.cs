@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Kinetix.ComponentModel;
+using Kinetix.ComponentModel.Annotations;
 using Kinetix.Reporting.Annotations;
 using Kinetix.Reporting.Excel;
 using Kinetix.Services;
@@ -18,6 +21,8 @@ namespace Kinetix.Reporting.Internal.Excel
         private readonly IXLWorksheet _worksheet;
 
         private IEnumerable<T> _data;
+        private IAsyncEnumerable<T> _dataAsync;
+        private int _maxResults;
         private bool _transpose = false;
 
         /// <summary>
@@ -34,11 +39,11 @@ namespace Kinetix.Reporting.Internal.Excel
         }
 
         /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
-        public IExcelBuilder Build(Action<IXLWorksheet> postBuildAction)
+        public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction)
         {
             for (var i = 0; i < _columns.Count; i++)
             {
-                var (label, selector) = _columns[i];
+                var (label, _) = _columns[i];
                 if (_transpose)
                 {
                     _worksheet.Cell(i + 1, 1).Value = label;
@@ -47,7 +52,11 @@ namespace Kinetix.Reporting.Internal.Excel
                 {
                     _worksheet.Cell(1, i + 1).Value = label;
                 }
+            }
 
+            var itemHandlers = _columns.Select((column, i) =>
+            {
+                var (_, selector) = column;
                 var definition = BeanDescriptor.GetDefinition(typeof(T));
                 (string True, string False) booleanFormat = default;
                 string dateFormat = null;
@@ -72,13 +81,14 @@ namespace Kinetix.Reporting.Internal.Excel
                     booleanFormat = property?.Domain.ExtraAttributes.OfType<BooleanFormatAttribute>().SingleOrDefault()?.Format ?? default;
                     dateFormat = property?.Domain.ExtraAttributes.OfType<DateFormatAttribute>().SingleOrDefault()?.Format;
                     numberFormat = property?.Domain.ExtraAttributes.OfType<NumberFormatAttribute>().SingleOrDefault()?.Format;
-                    referenceType = property?.ReferenceType;
+                    if (property?.ReferenceType?.GetCustomAttributes<ReferenceAttribute>().Any() ?? false)
+                    {
+                        referenceType = property.ReferenceType;
+                    }
                 }
 
-                var j = 1;
-                foreach (var item in _data)
+                return (Action<T, int>)((T item, int j) =>
                 {
-                    j++;
                     var cell = _transpose
                         ? _worksheet.Cell(i + 1, j)
                         : _worksheet.Cell(j, i + 1);
@@ -107,11 +117,50 @@ namespace Kinetix.Reporting.Internal.Excel
                     {
                         cell.Style.NumberFormat.Format = numberFormat;
                     }
+                });
+            });
+
+            if (_data != null)
+            {
+                var j = 1;
+                foreach (var item in _data)
+                {
+                    j++;
+                    foreach (var itemHandler in itemHandlers)
+                    {
+                        itemHandler(item, j);
+                    }
+
+                    if (j > _maxResults)
+                    {
+                        break;
+                    }
+                }
+            }
+            else if (_dataAsync != null)
+            {
+                var j = 1;
+                await foreach (var item in _dataAsync)
+                {
+                    j++;
+                    foreach (var itemHandler in itemHandlers)
+                    {
+                        itemHandler(item, j);
+                    }
+
+                    if (j > _maxResults)
+                    {
+                        break;
+                    }
                 }
             }
 
             _worksheet.ColumnsUsed().AdjustToContents();
-            postBuildAction?.Invoke(_worksheet);
+            if (postBuildAction != null)
+            {
+                await postBuildAction(_worksheet);
+
+            }
             return _excelBuilder;
         }
 
@@ -138,6 +187,20 @@ namespace Kinetix.Reporting.Internal.Excel
         public IWorksheetBuilder<T> Data(IEnumerable<T> data)
         {
             _data = data;
+            return this;
+        }
+
+        /// <inheritdoc cref="IWorksheetBuilder{T}.Data" />
+        public IWorksheetBuilder<T> Data(IAsyncEnumerable<T> dataAsync)
+        {
+            _dataAsync = dataAsync;
+            return this;
+        }
+
+        /// <inheritdoc cref="IWorksheetBuilder{T}.MaxResults" />
+        public IWorksheetBuilder<T> MaxResults(int maxResults)
+        {
+            _maxResults = maxResults;
             return this;
         }
 
