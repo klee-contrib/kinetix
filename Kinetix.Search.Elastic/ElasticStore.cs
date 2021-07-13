@@ -178,7 +178,7 @@ namespace Kinetix.Search.Elastic
                 .Count;
         }
 
-        internal async IAsyncEnumerable<TOutput> AdvancedQueryAllAsync<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+        internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
            where TDocument : class
            where TCriteria : Criteria, new()
         {
@@ -189,7 +189,7 @@ namespace Kinetix.Search.Elastic
 
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
-            var pit = await _logger.LogQueryAsync(_analytics, "CreatePit", () => _client.OpenPointInTimeAsync(
+            var pit = _logger.LogQuery(_analytics, "CreatePit", () => _client.OpenPointInTime(
                    _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(TDocument)),
                    p => p.KeepAlive("1m")));
 
@@ -201,7 +201,7 @@ namespace Kinetix.Search.Elastic
                 var search = true;
                 do
                 {
-                    var res = await _logger.LogQueryAsync(_analytics, $"AdvancedQueryWithPit", () => _client.SearchAsync(
+                    var res = _logger.LogQuery(_analytics, $"AdvancedQueryWithPit", () => _client.Search(
                         GetAdvancedQueryDescriptor(def, input, _facetHandler, filters, pitId: pitId, searchAfter: searchAfter)));
 
                     foreach (var doc in res.Documents)
@@ -221,7 +221,7 @@ namespace Kinetix.Search.Elastic
             }
             finally
             {
-                await _logger.LogQueryAsync(_analytics, "DeletePit", () => _client.ClosePointInTimeAsync(p => p.Id(pitId)));
+                _logger.LogQuery(_analytics, "DeletePit", () => _client.ClosePointInTime(p => p.Id(pitId)));
             }
         }
 
