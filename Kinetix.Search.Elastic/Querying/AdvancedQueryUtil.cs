@@ -53,6 +53,9 @@ namespace Kinetix.Search.Elastic.Querying
             var skip = input.SearchCriteria.Max(sc => sc.Skip);
             var size = hasGroup ? 0 : input.SearchCriteria.Max(sc => sc.Top) ?? 500; // TODO Paramétrable ?
 
+            /* Source filtering */
+            var sourceFields = input.SearchCriteria.SelectMany(sc => sc.Criteria.SourceFields ?? new string[0]).Distinct().ToArray();
+
             return (SearchDescriptor<TDocument> s) =>
             {
                 s
@@ -61,6 +64,11 @@ namespace Kinetix.Search.Elastic.Querying
 
                     /* Critère de post-filtrage. */
                     .PostFilter(postFilterQuery);
+
+                if (sourceFields.Any())
+                {
+                    s.Source(src => src.Includes(f => f.Fields(sourceFields)));
+                }
 
                 /* Pagination */
                 if (pitId == null)

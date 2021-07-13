@@ -24,5 +24,15 @@ namespace Kinetix.Search.ComponentModel
             get;
             set;
         }
+
+        /// <summary>
+        /// Liste des champs à inclure dans la recherche ES.
+        /// Si non renseigné (ou vide) : tous les champs seront inclus.
+        /// </summary>
+        public IList<string> SourceFields
+        {
+            get;
+            set;
+        }
     }
 }
