@@ -366,7 +366,14 @@ namespace Kinetix.Search.Elastic.Querying
             /* Cas de l'absence de tri. */
             if (string.IsNullOrEmpty(fieldName))
             {
-                return new SortDefinition();
+                // On trie "au hasard" par le premier champ indexé "Sort" qu'on a trouvé.
+                fieldName = def.Fields.FirstOrDefault(field => field.Indexing == SearchFieldIndexing.Sort)?.FieldName;
+
+                // Si y en a vraiment pas, on trie pas.
+                if (fieldName == null)
+                {
+                    return new SortDefinition();
+                }
             }
 
             /* Vérifie la présence du champ. */
