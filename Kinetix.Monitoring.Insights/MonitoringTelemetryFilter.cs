@@ -1,4 +1,5 @@
-﻿using Microsoft.ApplicationInsights.Channel;
+﻿using System;
+using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
@@ -34,6 +35,12 @@ namespace Kinetix.Monitoring.Insights
                 if (dt.Type == "SQL")
                 {
                     // Géré par Kinetix.Data.SqlClient déjà.
+                    return;
+                }
+
+                if (dt.Duration < TimeSpan.FromMilliseconds(10) && dt.Success == true)
+                {
+                    // C'est du bruit on vire.
                     return;
                 }
 
