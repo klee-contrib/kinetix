@@ -53,6 +53,15 @@ namespace Kinetix.Monitoring.Insights
                 return;
             }
 
+            // Filtre les exceptions depuis le middleware Analytics (elles sont déjà remontées par ailleurs).
+            if (item is ExceptionTelemetry et && et.Properties.TryGetValue("CategoryName", out var category))
+            {
+                if (category == "Kinetix.Services.Service")
+                {
+                    return;
+                }
+            }
+
             _next.Process(item);
         }
     }
