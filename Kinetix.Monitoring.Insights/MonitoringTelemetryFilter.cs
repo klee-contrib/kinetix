@@ -48,7 +48,14 @@ namespace Kinetix.Monitoring.Insights
             }
 
             // Filtre les diagnostics.
-            if (item is RequestTelemetry rt && rt.Name.Contains("GET") && (rt.Name.Contains("Ws/Local/Edition.svc") || rt.Name.Contains("ExecuteDiagnostic")))
+            var operationName = item.Context.Operation.Name;
+            if (operationName != null && (operationName.Contains("/health") || operationName.Contains("/diagnostic")))
+            {
+                return;
+            }
+
+            // Filtre l'appel qui vient du diagnostic de BFEdi.
+            if (item is RequestTelemetry rt && rt.Name.Contains("GET") && rt.Name.Contains("Ws/Local/Edition.svc"))
             {
                 return;
             }

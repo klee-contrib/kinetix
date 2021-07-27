@@ -11,7 +11,7 @@ namespace Kinetix.Data.SqlClient
         /// </summary>
         public const string DefaultConnection = "default";
 
-        internal Dictionary<string, string> ConnectionStrings { get; } = new Dictionary<string, string>();
+        public Dictionary<string, string> ConnectionStrings { get; } = new Dictionary<string, string>();
         internal List<Assembly> ConstDataTypes { get; } = new List<Assembly>();
         internal int DefaultCommandTimeout { get; private set; } = 30;
         internal List<ResourceManager> ResourceManagers { get; } = new List<ResourceManager>();
