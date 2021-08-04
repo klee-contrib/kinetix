@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.ExceptionServices;
 using Castle.DynamicProxy;
 using Kinetix.Monitoring;
 using Microsoft.Extensions.Logging;
@@ -52,7 +53,7 @@ namespace Kinetix.Services.DependencyInjection.Interceptors
                 }
 
                 _logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
-                throw ex;
+                ExceptionDispatchInfo.Capture(ex).Throw();
             }
         }
     }
