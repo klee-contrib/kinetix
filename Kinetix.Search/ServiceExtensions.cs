@@ -9,18 +9,12 @@ namespace Kinetix.Search
     /// </summary>
     public static class ServiceExtensions
     {
-        public static IServiceCollection AddSearch(this IServiceCollection services, bool flushOnCommit)
+        public static IServiceCollection AddSearch(this IServiceCollection services)
         {
-            services
+            return services
                 .AddSingleton<DocumentDescriptor>()
-                .AddScoped<IndexManager>();
-
-            if (flushOnCommit)
-            {
-                services.AddScoped<IOnBeforeCommit, FlushOnBeforeCommit>();
-            }
-
-            return services;
+                .AddScoped<IndexManager>()
+                .AddScoped<IOnBeforeCommit, FlushOnBeforeCommit>();
         }
     }
 

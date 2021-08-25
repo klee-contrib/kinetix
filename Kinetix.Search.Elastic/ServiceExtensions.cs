@@ -13,13 +13,13 @@ namespace Kinetix.Search.Elastic
     /// </summary>
     public static class ServiceExtensions
     {
-        public static IServiceCollection AddElasticSearch(this IServiceCollection services, SearchConfig searchConfig, bool flushOnCommit, Action<ElasticConfigBuilder> builder)
+        public static IServiceCollection AddElasticSearch(this IServiceCollection services, SearchConfig searchConfig, Action<ElasticConfigBuilder> builder)
         {
             var config = new ElasticConfigBuilder(services);
             builder(config);
 
             return services
-                .AddSearch(flushOnCommit)
+                .AddSearch()
                 .AddSingleton(provider =>
                 {
                     var server = searchConfig.GetServer(ElasticConfigBuilder.ServerName);
