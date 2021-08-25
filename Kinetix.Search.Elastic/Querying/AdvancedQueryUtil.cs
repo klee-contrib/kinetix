@@ -112,6 +112,7 @@ namespace Kinetix.Search.Elastic.Querying
                                     /* Groupement. */
                                     .Terms(groupFieldName, st => st
                                         .Field(groupFieldName)
+                                        .Size(50)
                                         .Aggregations(g => g.TopHits(TopHitName, x => x.Size(input.GroupSize))))
                                     /* Groupement pour les valeurs nulles */
                                     .Missing(groupFieldName + MissingGroupPrefix, st => st
