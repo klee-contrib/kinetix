@@ -1,81 +1,60 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Transactions;
+using System.Linq;
 
 namespace Kinetix.Services
 {
     /// <summary>
-    /// Permet de créer un nouveau contexte transactionnel.
+    /// Scope définissant une transaction en cours, muni de divers contextes transactionnels 
+    /// (exemple : une transaction ouverte en BDD est un contexte transactionnel).
     /// </summary>
     public class ServiceScope : IDisposable
     {
-        private readonly TransactionScope _scope;
+        private readonly ITransactionContext[] _contexts;
+        private readonly TransactionScopeManager _manager;
 
-        /// <summary>
-        /// Crée une nouvelle transaction.
-        /// </summary>
-        /// <param name="scopeOption">Option.</param>
-        internal ServiceScope(TransactionScopeOption scopeOption)
+        internal ServiceScope()
         {
-            _scope = scopeOption switch
-            {
-                TransactionScopeOption.Required => Transaction.Current == null
-                    ? new TransactionScope(scopeOption, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted, })
-                    : new TransactionScope(scopeOption),
-                TransactionScopeOption.RequiresNew => new TransactionScope(scopeOption, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted, }),
-                TransactionScopeOption.Suppress => new TransactionScope(scopeOption),
-                _ => throw new NotSupportedException(),
-            };
+            _contexts = new ITransactionContext[0];
+        }
+
+        internal ServiceScope(ITransactionContext[] contexts, TransactionScopeManager manager)
+        {
+            _contexts = contexts;
+            _manager = manager;
         }
 
         /// <summary>
-        /// Ressources.
-        /// </summary>
-        public IList<IDisposable> Resources { get; } = new List<IDisposable>();
-
-        /// <summary>
-        /// Manager.
-        /// </summary>
-
-        internal TransactionScopeManager Manager { get; set; }
-
-        /// <summary>
-        /// Crée une nouvelle transaction.
-        /// </summary>
-        /// <param name="scopeOption">Option.</param>
-        /// <param name="scopeTimeout">Timeout.</param>
-        internal ServiceScope(TransactionScopeOption scopeOption, TimeSpan scopeTimeout)
-        {
-            _scope = scopeOption switch
-            {
-                TransactionScopeOption.Required => Transaction.Current == null
-                    ? new TransactionScope(scopeOption, new TransactionOptions() { Timeout = scopeTimeout, IsolationLevel = IsolationLevel.ReadCommitted, })
-                    : new TransactionScope(scopeOption, new TransactionOptions() { Timeout = scopeTimeout, IsolationLevel = IsolationLevel.Unspecified }),
-                TransactionScopeOption.RequiresNew => new TransactionScope(scopeOption, new TransactionOptions() { Timeout = scopeTimeout, IsolationLevel = IsolationLevel.ReadCommitted, }),
-                TransactionScopeOption.Suppress => new TransactionScope(scopeOption, new TransactionOptions() { Timeout = scopeTimeout }),
-                _ => throw new NotSupportedException(),
-            };
-        }
-
-        /// <summary>
-        /// Termine le scope avec succès.
+        /// Marque le scope comme étant valide.
         /// </summary>
         public void Complete()
         {
-            _scope.Complete();
+            foreach (var context in _contexts)
+            {
+                context.Complete();
+            }
         }
 
         /// <summary>
-        /// Libère le contexte.
+        /// Libère le scope.
         /// </summary>
         public void Dispose()
         {
-            Manager?.PopScope(this);
-            _scope.Dispose();
-            foreach (var resource in Resources)
+            _manager?.PopScope(this);
+            foreach (var context in _contexts)
             {
-                resource.Dispose();
+                context.Dispose();
             }
+        }
+
+        /// <summary>
+        /// Récupère le contexte transactionnel demandé.
+        /// </summary>
+        /// <typeparam name="T">Type du contexte.</typeparam>
+        /// <returns>Le contexte.</returns>
+        public T GetContext<T>()
+            where T : ITransactionContext
+        {
+            return _contexts.OfType<T>().SingleOrDefault();
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Transactions;
 
 namespace Kinetix.Services
 {
@@ -10,39 +9,28 @@ namespace Kinetix.Services
     /// </summary>
     public class TransactionScopeManager : IDisposable
     {
+        private readonly IEnumerable<ITransactionContextProvider> _contextProviders;
         private readonly Stack<ServiceScope> _scopes = new();
 
+        public TransactionScopeManager(IEnumerable<ITransactionContextProvider> contextProviders)
+        {
+            _contextProviders = contextProviders;
+        }
+
         /// <summary>
-        /// Scope de transaction actif, contenant les ressources de la transaction.
+        /// Scope de transaction actif, avec ses contextes transactionnels.
         /// </summary>
         /// <remarks>(Un sous-scope créé par <see cref="EnsureTransaction"/> n'est pas le scope actif)</remarks>
-        public ServiceScope ActiveScope => _scopes.Peek();
+        public ServiceScope ActiveScope => _scopes.Any() ? _scopes.Peek() : null;
 
         /// <summary>
         /// Débute une nouvelle transaction, indépendante d'une éventuelle transaction existante.
         /// </summary>
-        /// <remarks>Cette transaction gérera ces propres ressources, comme ses connections en BDD par exemple.</remarks>
-        /// <param name="scopeTimeout">Timeout de la transaction.</param>
+        /// <remarks>Cette transaction gérera ces propres contextes, comme ses connections en BDD par exemple.</remarks>
         /// <returns>Scope de la transaction.</returns>
-        public ServiceScope BeginNewTransaction(TimeSpan? scopeTimeout = null)
+        public ServiceScope BeginNewTransaction()
         {
-            var scope = scopeTimeout.HasValue
-                ? new ServiceScope(TransactionScopeOption.RequiresNew, scopeTimeout.Value)
-                : new ServiceScope(TransactionScopeOption.RequiresNew);
-
-            scope.Manager = this;
-
-            _scopes.Push(scope);
-            return scope;
-        }
-
-        /// <summary>
-        /// Débute un nouveau scope sans transaction.
-        /// </summary>
-        /// <returns>Scope.</returns>
-        public ServiceScope BeginSuppressed()
-        {
-            var scope = new ServiceScope(TransactionScopeOption.Suppress) { Manager = this };
+            var scope = new ServiceScope(_contextProviders.Select(ctx => ctx.Create()).ToArray(), this);
             _scopes.Push(scope);
             return scope;
         }
@@ -53,15 +41,9 @@ namespace Kinetix.Services
         /// <returns>Scope de la transaction (actif si la transaction a été créee).</returns>
         public ServiceScope EnsureTransaction()
         {
-            var scope = new ServiceScope(TransactionScopeOption.Required);
-
-            if (!_scopes.Any())
-            {
-                scope.Manager = this;
-                _scopes.Push(scope);
-            }
-
-            return scope;
+            return ActiveScope != null
+                ? new ServiceScope()
+                : BeginNewTransaction();
         }
 
         /// <summary>

@@ -1,5 +1,6 @@
 ﻿using System;
 using Kinetix.Data.SqlClient;
+using Kinetix.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Broker
@@ -15,6 +16,7 @@ namespace Kinetix.Broker
                 .AddSingleton(config)
                 .AddSingleton<SqlServerManager>()
                 .AddSingleton<CommandParser>()
+                .AddSingleton<ITransactionContextProvider, SqlTransactionContextProvider>()
                 .AddScoped<ConnectionPool>()
                 .AddScoped<BrokerManager>();
         }

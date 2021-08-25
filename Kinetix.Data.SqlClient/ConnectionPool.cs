@@ -50,19 +50,19 @@ namespace Kinetix.Data.SqlClient
 
         private SqlServerConnection GetConnection(string datasourceName)
         {
-            if (_transactionScopeManager.ActiveScope == null)
+            var transactionContext = _transactionScopeManager.ActiveScope?.GetContext<SqlTransactionContext>();
+
+            if (transactionContext == null)
             {
                 throw new InvalidOperationException("Impossible de récupérer une connection en dehors d'un scope de transaction.");
             }
 
-            var connection = _transactionScopeManager.ActiveScope.Resources.OfType<SqlServerConnection>()
-                .SingleOrDefault(c => c.DataSourceName == datasourceName);
+            var connection = transactionContext.Connections.SingleOrDefault(c => c.DataSourceName == datasourceName);
 
             if (connection == null)
             {
                 connection = new SqlServerConnection(datasourceName, _connectionSettings[datasourceName]);
-
-                _transactionScopeManager.ActiveScope.Resources.Add(connection);
+                transactionContext.Connections.Add(connection);
                 connection.Open();
             }
 
