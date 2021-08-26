@@ -9,6 +9,8 @@ namespace Kinetix.Data.SqlClient
     {
         private readonly TransactionScope _scope = new(TransactionScopeOption.RequiresNew, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero });
 
+        public bool IsDatabaseContext => true;
+
         internal List<SqlServerConnection> Connections = new();
 
         public void Complete()

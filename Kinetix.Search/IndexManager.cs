@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kinetix.Search.Config;
+using Kinetix.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search
@@ -14,8 +16,7 @@ namespace Kinetix.Search
         private readonly ILogger<IndexManager> _logger;
         private readonly IServiceProvider _provider;
         private readonly ISearchStore _searchStore;
-
-        private readonly Dictionary<Type, IDocumentIndexor> _indexors = new Dictionary<Type, IDocumentIndexor>();
+        private readonly TransactionScopeManager _transactionScopeManager;
 
         /// <summary>
         /// Constructeur.
@@ -23,17 +24,14 @@ namespace Kinetix.Search
         /// <param name="logger">Logger.</param>
         /// <param name="provider">Composant injecté.</param>
         /// <param name="searchStore">Composant injecté.</param>
-        public IndexManager(ILogger<IndexManager> logger, IServiceProvider provider, ISearchStore searchStore)
+        /// <param name="transactionScopeManager">Composant injecté.</param>
+        public IndexManager(ILogger<IndexManager> logger, IServiceProvider provider, ISearchStore searchStore, TransactionScopeManager transactionScopeManager)
         {
             _logger = logger;
             _provider = provider;
             _searchStore = searchStore;
+            _transactionScopeManager = transactionScopeManager;
         }
-
-        /// <summary>
-        /// Attends ou non la réindexation dans ES avant de continuer (Refresh.WaitFor).
-        /// </summary>
-        public bool Refresh { get; set; } = true;
 
         /// <summary>
         /// Marque un document pour suppression dans son index.
@@ -45,7 +43,7 @@ namespace Kinetix.Search
             where TDocument : class
         {
             _logger.LogInformation($"RegisterDelete 1 {typeof(TDocument).Name}");
-            GetIndexor<TDocument>().RegisterDelete(id);
+            GetContext().RegisterDelete<TDocument>(id);
             return this;
         }
 
@@ -59,7 +57,7 @@ namespace Kinetix.Search
             where TDocument : class
         {
             _logger.LogInformation($"RegisterDelete 1 {typeof(TDocument).Name}");
-            GetIndexor<TDocument>().RegisterDelete(bean);
+            GetContext().RegisterDelete(bean);
             return this;
         }
 
@@ -109,7 +107,7 @@ namespace Kinetix.Search
             where TDocument : class
         {
             _logger.LogInformation($"RegisterIndex 1 {typeof(TDocument).Name}");
-            GetIndexor<TDocument>().RegisterIndex(id);
+            GetContext().RegisterIndex<TDocument>(id);
             return this;
         }
 
@@ -123,7 +121,7 @@ namespace Kinetix.Search
             where TDocument : class
         {
             _logger.LogInformation($"RegisterIndex 1 {typeof(TDocument).Name}");
-            GetIndexor<TDocument>().RegisterIndex(bean);
+            GetContext().RegisterIndex(bean);
             return this;
         }
 
@@ -171,38 +169,8 @@ namespace Kinetix.Search
            where TDocument : class
         {
             _logger.LogInformation($"Reindex {typeof(TDocument).Name}");
-            GetIndexor<TDocument>().Reindex = true;
+            GetContext().IndexAll<TDocument>();
             return this;
-        }
-
-        /// <summary>
-        /// Lance la suppression et la réindexation de tous les documents enregistrés dans cette instance de l'IndexManager.
-        /// A priori, cette méthode est lancée automatiquement à la fin de la transaction en cours, donc il ne devrait pas y avoir besoin de la lancer manuellement.
-        /// </summary>
-        /// <returns></returns>
-        public int Flush()
-        {
-            var bulk = _searchStore.Bulk();
-
-            try
-            {
-                foreach (var indexor in _indexors)
-                {
-                    _logger.LogInformation($"Prepare {indexor.Key.Name}");
-                    indexor.Value.PrepareBulkDescriptor(bulk);
-                }
-
-                return bulk.Run(Refresh);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Error while flushing : ");
-                throw;
-            }
-            finally
-            {
-                _indexors.Clear();
-            }
         }
 
         /// <summary>
@@ -214,6 +182,8 @@ namespace Kinetix.Search
         public int RebuildIndex<TDocument>(ILogger rebuildLogger = null)
             where TDocument : class
         {
+            using var tx = _transactionScopeManager.EnsureTransaction();
+
             var indexName = SearchConfig.GetTypeNameForIndex(typeof(TDocument));
 
             rebuildLogger?.LogInformation($"Index {indexName} rebuild started...");
@@ -224,7 +194,7 @@ namespace Kinetix.Search
             }
 
             rebuildLogger?.LogInformation($"Loading data for index {indexName}...");
-            var documents = GetIndexor<TDocument>().LoadAllDocuments(!indexCreated);
+            var documents = _provider.GetService<IDocumentLoader<TDocument>>().GetAll(!indexCreated);
             rebuildLogger?.LogInformation($"Data for index {indexName} loaded.");
             if (documents is ICollection<TDocument> coll)
             {
@@ -234,15 +204,10 @@ namespace Kinetix.Search
             return _searchStore.ResetIndex(documents, !indexCreated, rebuildLogger);
         }
 
-        private DocumentIndexor<TDocument> GetIndexor<TDocument>()
-            where TDocument : class
+        private IndexingTransactionContext GetContext()
         {
-            if (!_indexors.ContainsKey(typeof(TDocument)))
-            {
-                _indexors.Add(typeof(TDocument), new DocumentIndexor<TDocument>(_provider));
-            }
-
-            return (DocumentIndexor<TDocument>)_indexors[typeof(TDocument)];
+            var context = _transactionScopeManager.ActiveScope?.GetContext<IndexingTransactionContext>();
+            return context ?? throw new InvalidOperationException("Impossible d'enregistrer une réindexation en dehors d'un contexte de transaction.");
         }
     }
 }

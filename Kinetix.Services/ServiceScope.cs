@@ -40,7 +40,7 @@ namespace Kinetix.Services
         public void Dispose()
         {
             _manager?.PopScope(this);
-            foreach (var context in _contexts)
+            foreach (var context in _contexts.OrderByDescending(c => c.IsDatabaseContext))
             {
                 context.Dispose();
             }

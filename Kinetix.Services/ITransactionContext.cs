@@ -8,6 +8,11 @@ namespace Kinetix.Services
     public interface ITransactionContext : IDisposable
     {
         /// <summary>
+        /// Contexte de BDD (disposé en premier, peut être omis)
+        /// </summary>
+        bool IsDatabaseContext { get; }
+
+        /// <summary>
         /// Marque la transaction comme étant valide.
         /// </summary>
         void Complete();

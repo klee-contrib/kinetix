@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Kinetix.Services.DependencyInjection.Interceptors;
+﻿using Kinetix.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,36 +11,36 @@ namespace Kinetix.Web.Filters
         where TDbContext : DbContext
     {
         private readonly TDbContext _context;
-        private readonly IEnumerable<IOnBeforeCommit> _onBeforeCommits;
+        private readonly TransactionScopeManager _transactionScopeManager;
+        private ServiceScope _scope;
 
         /// <summary>
         /// Constructeur.
         /// </summary>
-        public TransactionFilter(TDbContext context, IEnumerable<IOnBeforeCommit> onBeforeCommits)
+        public TransactionFilter(TDbContext context, TransactionScopeManager transactionScopeManager)
         {
             _context = context;
-            _onBeforeCommits = onBeforeCommits;
+            _transactionScopeManager = transactionScopeManager;
         }
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
             if (context.Exception == null)
             {
-                foreach (var onBeforeCommit in _onBeforeCommits)
-                {
-                    onBeforeCommit.OnBeforeCommit();
-                }
-
+                _scope.Complete();
                 _context.Database.CommitTransaction();
             }
             else
             {
                 _context.Database.RollbackTransaction();
             }
+
+            _scope.Dispose();
         }
 
         public void OnActionExecuting(ActionExecutingContext context)
         {
+            _scope = _transactionScopeManager.EnsureTransaction();
             _context.Database.BeginTransaction();
         }
 
@@ -49,12 +48,15 @@ namespace Kinetix.Web.Filters
         {
             if (context.ModelState.IsValid)
             {
+                _scope.Complete();
                 _context.Database.CommitTransaction();
             }
             else
             {
                 _context.Database.RollbackTransaction();
             }
+
+            _scope.Dispose();
         }
 
         public void OnPageHandlerExecuting(PageHandlerExecutingContext context)
