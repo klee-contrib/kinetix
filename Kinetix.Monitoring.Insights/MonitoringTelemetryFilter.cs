@@ -25,13 +25,19 @@ namespace Kinetix.Monitoring.Insights
         public void Process(ITelemetry item)
         {
             // Vire toute la télémétrie tagguée "disabled".
-            if (item is ISupportProperties t && t.Properties.TryGetValue("disabled", out var _))
+            if (item is ISupportProperties t && t.Properties.ContainsKey("disabled"))
             {
                 return;
             }
 
             if (item is DependencyTelemetry dt)
             {
+                // Filtre les dépendances sans parent.
+                if (dt.Context.Operation.ParentId is null)
+                {
+                    return;
+                }
+
                 if (dt.Type == "SQL")
                 {
                     // Géré par Kinetix.Data.SqlClient déjà.
@@ -47,15 +53,13 @@ namespace Kinetix.Monitoring.Insights
                 dt.Type = dt.Type == "Service" ? "InProc" : dt.Type == "Database" ? "SQL" : dt.Type;
             }
 
-            // Filtre les diagnostics.
+            // Filtre les diagnostics et les appels aux listes de ref.
             var operationName = item.Context.Operation.Name;
-            if (operationName != null && (operationName.Contains("/health") || operationName.Contains("/diagnostic")))
-            {
-                return;
-            }
-
-            // Filtre l'appel qui vient du diagnostic de BFEdi.
-            if (item is RequestTelemetry rt && rt.Name.Contains("GET") && rt.Name.Contains("Ws/Local/Edition.svc"))
+            if (operationName != null && (
+                operationName.Contains("/health")
+                || operationName.Contains("/diagnostic")
+                || operationName.Contains("GET") && operationName.Contains("Ws/Local/Edition.svc")
+                || operationName.Contains("ReferenceList/Get")))
             {
                 return;
             }
