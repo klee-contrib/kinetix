@@ -5,7 +5,6 @@ using Kinetix.ComponentModel.Exceptions;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.EntityFrameworkCore;
 
 namespace Kinetix.Web.Filters
 {
@@ -46,7 +45,6 @@ namespace Kinetix.Web.Filters
             return exception switch
             {
                 BusinessException ce => BusinessExceptionHandler(ce),
-                DbUpdateException due => DbUpdateExceptionExceptionHandler(due),
                 InvalidOperationException { Source: "Microsoft.EntityFrameworkCore" } => MissingEntityException(),
                 _ => DefaultExceptionHandler(exception),
             };
@@ -87,15 +85,6 @@ namespace Kinetix.Web.Filters
             {
                 errorDico.Add(EntityException.CodeKey, ex.Code);
             }
-
-            return new ObjectResult(errorDico) { StatusCode = 400 };
-        }
-        private IActionResult DbUpdateExceptionExceptionHandler(DbUpdateException exception)
-        {
-            var errorDico = new Dictionary<string, object>
-            {
-                [EntityException.GlobalErrorKey] = new List<string> { exception.InnerException.Message }
-            };
 
             return new ObjectResult(errorDico) { StatusCode = 400 };
         }
