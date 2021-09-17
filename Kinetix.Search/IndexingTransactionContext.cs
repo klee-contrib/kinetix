@@ -59,6 +59,7 @@ namespace Kinetix.Search
                 catch (Exception e)
                 {
                     logger.LogError(e, "Error while indexing : ");
+                    throw;
                 }
 
                 _indexors.Clear();
