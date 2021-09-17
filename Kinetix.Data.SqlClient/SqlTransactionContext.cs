@@ -7,9 +7,7 @@ namespace Kinetix.Data.SqlClient
 {
     internal class SqlTransactionContext : ITransactionContext
     {
-        private readonly TransactionScope _scope = new(TransactionScopeOption.RequiresNew, new TransactionOptions() { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero });
-
-        public bool IsDatabaseContext => true;
+        private readonly TransactionScope _scope = new(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero });
 
         internal List<SqlServerConnection> Connections = new();
 
@@ -18,7 +16,15 @@ namespace Kinetix.Data.SqlClient
             _scope.Complete();
         }
 
-        public void Dispose()
+        public void OnAfterCommit()
+        {
+        }
+
+        public void OnBeforeCommit()
+        {
+        }
+
+        public void OnCommit()
         {
             foreach (var connection in Connections)
             {

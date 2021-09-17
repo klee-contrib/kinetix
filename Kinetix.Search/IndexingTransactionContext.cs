@@ -20,25 +20,27 @@ namespace Kinetix.Search
             _provider = provider;
         }
 
-        public bool IsDatabaseContext => false;
-
         /// <inheritdoc cref="ITransactionContext.Complete" />
         public void Complete()
         {
             _ok = true;
         }
 
-        /// <inheritdoc cref="IDisposable.Dispose" />
-        public void Dispose()
+        /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
+        public void OnAfterCommit()
+        {
+        }
+
+        /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
+        public void OnBeforeCommit()
         {
             if (_ok && _indexors.Any())
             {
-                using var scope = _provider.CreateScope();
-                var searchStore = scope.ServiceProvider.GetRequiredService<ISearchStore>();
-                var transactionScopeManager = scope.ServiceProvider.GetRequiredService<TransactionScopeManager>();
-                var logger = scope.ServiceProvider.GetRequiredService<ILogger<IndexingTransactionContext>>();
+                var searchStore = _provider.GetRequiredService<ISearchStore>();
+                var transactionScopeManager = _provider.GetRequiredService<TransactionScopeManager>();
+                var logger = _provider.GetRequiredService<ILogger<IndexingTransactionContext>>();
 
-                using var tx = transactionScopeManager.BeginNewTransaction();
+                using var tx = transactionScopeManager.EnsureTransaction();
 
                 var bulk = searchStore.Bulk();
 
@@ -49,7 +51,7 @@ namespace Kinetix.Search
                         logger.LogInformation($"Prepare {indexor.Key.Name}");
                         typeof(IndexingTransactionContext).GetMethod(nameof(PrepareBulkDescriptor), BindingFlags.Static | BindingFlags.NonPublic)
                             .MakeGenericMethod(indexor.Key)
-                            .Invoke(null, new object[] { scope.ServiceProvider, bulk, indexor.Value });
+                            .Invoke(null, new object[] { _provider, bulk, indexor.Value });
                     }
 
                     bulk.Run();
@@ -62,6 +64,11 @@ namespace Kinetix.Search
                 _indexors.Clear();
                 tx.Complete();
             }
+        }
+
+        /// <inheritdoc cref="ITransactionContext.OnCommit" />
+        public void OnCommit()
+        {
         }
 
         internal void IndexAll<TDocument>()

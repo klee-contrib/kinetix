@@ -39,10 +39,21 @@ namespace Kinetix.Services
         /// </summary>
         public void Dispose()
         {
-            _manager?.PopScope(this);
-            foreach (var context in _contexts.OrderByDescending(c => c.IsDatabaseContext))
+            foreach (var context in _contexts)
             {
-                context.Dispose();
+                context.OnBeforeCommit();
+            }
+
+            foreach (var context in _contexts)
+            {
+                context.OnCommit();
+            }
+
+            _manager?.PopScope(this);
+
+            foreach (var context in _contexts)
+            {
+                context.OnAfterCommit();
             }
         }
 

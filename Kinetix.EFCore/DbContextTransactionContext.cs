@@ -1,5 +1,4 @@
-﻿using System;
-using Kinetix.Services;
+﻿using Kinetix.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kinetix.EFCore
@@ -15,17 +14,24 @@ namespace Kinetix.EFCore
             _dbContext.Database.BeginTransaction();
         }
 
-        /// <inheritdoc cref="ITransactionContext.IsDatabaseContext" />
-        public bool IsDatabaseContext => true;
-
         /// <inheritdoc cref="ITransactionContext.Complete" />
         public void Complete()
         {
             _ok = true;
         }
 
-        /// <inheritdoc cref="IDisposable.Dispose" />
-        public void Dispose()
+        /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
+        public void OnAfterCommit()
+        {
+        }
+
+        /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
+        public void OnBeforeCommit()
+        {
+        }
+
+        /// <inheritdoc cref="ITransactionContext.OnCommit" />
+        public void OnCommit()
         {
             if (_ok)
             {

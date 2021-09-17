@@ -13,7 +13,7 @@ namespace Kinetix.Search
         {
             return services
                 .AddSingleton<DocumentDescriptor>()
-                .AddSingleton<ITransactionContextProvider, IndexingTransactionContextProvider>()
+                .AddScoped<ITransactionContextProvider, IndexingTransactionContextProvider>()
                 .AddScoped<IndexManager>();
         }
     }
