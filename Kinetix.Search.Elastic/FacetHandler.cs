@@ -231,8 +231,15 @@ namespace Kinetix.Search.Elastic
 
                 foreach (var facet in facetOutput)
                 {
-                    var value = referenceValues.Single(rf => rf.Code == facet.Code);
-                    value.Count = facet.Count;
+                    var value = referenceValues.SingleOrDefault(rf => rf.Code == facet.Code);
+                    if (value != null)
+                    {
+                        value.Count = facet.Count;
+                    }
+                    else
+                    {
+                        referenceValues.Add(facet); // A priori si on trouve pas la facette concernée c'est parce que c'est la missing.
+                    }
                 }
 
                 if (!rfDef.ShowEmptyReferenceValues)
