@@ -7,9 +7,4 @@
     <Version>0</Version>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Search.Models\Kinetix.Search.Models.csproj" />
-    <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
-  </ItemGroup>
-
 </Project>

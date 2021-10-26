@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Elasticsearch.Net;
 using Kinetix.Monitoring;
-using Kinetix.Search.MetaModel;
+using Kinetix.Search.DocumentModel;
 using Microsoft.Extensions.Logging;
 using Nest;
 

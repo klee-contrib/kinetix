@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Kinetix.Search.ComponentModel;
-using Kinetix.Search.Model;
+using Kinetix.Search.Models;
+using Kinetix.Search.Querying;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search

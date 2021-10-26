@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
+using Kinetix.Search.DocumentModel;
 using Kinetix.Search.Elastic.Mapping;
-using Kinetix.Search.MetaModel;
 using Microsoft.Extensions.DependencyInjection;
 using Nest;
 

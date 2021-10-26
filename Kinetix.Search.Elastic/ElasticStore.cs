@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kinetix.Monitoring;
-using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Config;
+using Kinetix.Search.DocumentModel;
 using Kinetix.Search.Elastic.Querying;
-using Kinetix.Search.MetaModel;
-using Kinetix.Search.Model;
+using Kinetix.Search.Models;
+using Kinetix.Search.Querying;
 using Microsoft.Extensions.Logging;
 using Nest;
 

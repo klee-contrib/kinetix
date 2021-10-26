@@ -1,6 +1,6 @@
 ﻿using System;
-using Kinetix.Search.Attributes;
-using Kinetix.Search.MetaModel;
+using Kinetix.Search.DocumentModel;
+using Kinetix.Search.Models.Annotations;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping
@@ -22,7 +22,7 @@ namespace Kinetix.Search.Elastic.Mapping
                     selector.Keyword(x => x.Name(field.FieldName)),
                 SearchFieldIndexing.Sort =>
                     selector.Keyword(x => x.Name(field.FieldName).Normalizer("keyword")),
-                SearchFieldIndexing.None => 
+                SearchFieldIndexing.None =>
                     selector.Text(x => x.Name(field.FieldName).Index(false)),
                 _ => throw new NotSupportedException(),
             };

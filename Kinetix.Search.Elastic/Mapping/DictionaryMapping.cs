@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Kinetix.Search.Attributes;
-using Kinetix.Search.MetaModel;
+using Kinetix.Search.DocumentModel;
+using Kinetix.Search.Models.Annotations;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping

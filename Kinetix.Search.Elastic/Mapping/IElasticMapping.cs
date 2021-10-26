@@ -1,4 +1,4 @@
-﻿using Kinetix.Search.MetaModel;
+﻿using Kinetix.Search.DocumentModel;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping

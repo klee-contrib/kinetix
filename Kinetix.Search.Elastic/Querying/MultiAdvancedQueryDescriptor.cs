@@ -2,9 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Kinetix.Search.ComponentModel;
-using Kinetix.Search.MetaModel;
-using Kinetix.Search.Model;
+using Kinetix.Search.DocumentModel;
+using Kinetix.Search.Models;
+using Kinetix.Search.Querying;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Querying
