@@ -98,7 +98,7 @@ namespace Kinetix.Search.Elastic
                 {
                     aa.Terms(facet.Code, st => st
                         .Field(facet.Field)
-                        .Size(50)
+                        .Size(200)
                         .Order(t => facet.Ordering switch
                         {
                             FacetOrdering.KeyAscending => t.KeyAscending(),
