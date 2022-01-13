@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection;
+using System.Transactions;
 using Kinetix.Data.SqlClient;
 using Kinetix.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +14,10 @@ namespace Kinetix.Broker
             var config = new SqlServerConfig();
             builder(config);
 
+            // Pour override le timeout par défaut à 10min.
+            SetTransactionManagerField("s_cachedMaxTimeout", true);
+            SetTransactionManagerField("s_maximumTimeout", TimeSpan.FromHours(1));
+
             return services
                 .AddSingleton(config)
                 .AddSingleton<SqlServerManager>()
@@ -19,6 +25,13 @@ namespace Kinetix.Broker
                 .AddSingleton<ITransactionContextProvider, SqlTransactionContextProvider>()
                 .AddScoped<ConnectionPool>()
                 .AddScoped<BrokerManager>();
+        }
+
+        static void SetTransactionManagerField(string fieldName, object value)
+        {
+            typeof(TransactionManager)
+                .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Static)
+                .SetValue(null, value);
         }
     }
 }
