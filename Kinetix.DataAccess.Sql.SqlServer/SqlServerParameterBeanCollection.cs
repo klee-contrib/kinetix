@@ -12,7 +12,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer
     /// Contient les informations nécéssaires à l'insertion et la mise à jour ensembliste des données.
     /// </summary>
     /// <typeparam name="T">Type du store.</typeparam>
-    public class SqlServerParameterBeanCollection<T> : SqlParameterBeanCollection<T>
+    internal class SqlServerParameterBeanCollection<T> : SqlParameterBeanCollection<T>
         where T : class, new()
     {
         private readonly List<SqlMetaData> _metadataList = new();

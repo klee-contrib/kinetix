@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Globalization;
-using System.Linq;
-using System.Text;
 using Kinetix.ComponentModel;
 
 namespace Kinetix.DataAccess.Sql
@@ -20,11 +16,6 @@ namespace Kinetix.DataAccess.Sql
         /// requêtes SQL Server.
         /// </summary>
         public const string ParamValue = "@";
-
-        /// <summary>
-        /// Map contenant les mots exclus de la recherche full texte.
-        /// </summary>
-        private static Dictionary<string, string> _noiseWordsMap;
 
         private readonly IDataParameterCollection _innerCollection;
 
@@ -77,63 +68,6 @@ namespace Kinetix.DataAccess.Sql
         /// Liste des paramètres.
         /// </summary>
         protected List<SqlDataParameter> List { get; } = new();
-
-        /// <summary>
-        /// Map contenant les mots exclus de la recherche full texte.
-        /// </summary>
-        private static Dictionary<string, string> NoiseWords
-        {
-            get
-            {
-                if (_noiseWordsMap == null)
-                {
-                    var noiseWords = new Dictionary<string, string>
-                    {
-                        { "A", null },
-                        { "B", null },
-                        { "C", null },
-                        { "D", null },
-                        { "E", null },
-                        { "F", null },
-                        { "G", null },
-                        { "H", null },
-                        { "I", null },
-                        { "J", null },
-                        { "K", null },
-                        { "L", null },
-                        { "M", null },
-                        { "N", null },
-                        { "O", null },
-                        { "P", null },
-                        { "Q", null },
-                        { "R", null },
-                        { "S", null },
-                        { "T", null },
-                        { "U", null },
-                        { "V", null },
-                        { "W", null },
-                        { "X", null },
-                        { "Y", null },
-                        { "Z", null },
-                        { "LA", null },
-                        { "LE", null },
-                        { "L'", null },
-                        { "LES", null },
-                        { "UN", null },
-                        { "UNE", null },
-                        { "DE", null },
-                        { "DES", null },
-                        { "DU", null },
-                        { "AU", null },
-                        { "AUX", null },
-                        { "À", null }
-                    };
-                    _noiseWordsMap = noiseWords;
-                }
-
-                return _noiseWordsMap;
-            }
-        }
 
         /// <summary>
         /// Obtient ou définit un paramètre de la collection.
@@ -228,122 +162,6 @@ namespace Kinetix.DataAccess.Sql
         void ICollection<SqlDataParameter>.Add(SqlDataParameter parameter)
         {
             Add(parameter);
-        }
-
-        /// <summary>
-        /// Ajoute comme nouveaux paramètres toutes les propriétés publiques primitives du bean considéré.
-        /// Le nom du paramètre correspond au nom de la propriété.
-        /// </summary>
-        /// <param name="bean">Le bean en question.</param>
-        /// <returns>La liste des paramètres ajoutés.</returns>
-        /// <exception cref="NotSupportedException">Si le bean contient une propriété non primitive.</exception>
-        public ICollection<SqlDataParameter> AddBeanProperties(object bean)
-        {
-            if (bean == null)
-            {
-                throw new ArgumentNullException("bean");
-            }
-
-            ICollection<SqlDataParameter> parameterList = new List<SqlDataParameter>();
-            var beanDefinition = BeanDescriptor.GetDefinition(bean);
-            foreach (var property in
-                beanDefinition.Properties.Where(property => property.PropertyType != typeof(ChangeAction)))
-            {
-                if (property.PrimitiveType == null)
-                {
-                    continue;
-                }
-
-                if (property.PrimitiveType.Name == "ICollection`1")
-                {
-                    continue;
-                }
-
-                var parameterName = property.MemberName ?? property.PropertyName;
-                var parameter = AddWithValue(parameterName, property.GetValue(bean));
-                parameterList.Add(parameter);
-            }
-
-            return parameterList;
-        }
-
-        /// <summary>
-        /// Ajout un nouveau paramètre en tant que critère de rechercher fulltext à partir de son nom et de sa valeur.
-        /// Le paramètre est un paramètre d'entrée.
-        /// </summary>
-        /// <param name="parameterName">Nom du paramètre.</param>
-        /// <param name="value">Valeur du paramètre.</param>
-        /// <returns>Paramètre.</returns>
-        public SqlDataParameter AddFullTextWithValue(string parameterName, string value)
-        {
-            var criteria = new StringBuilder();
-            if (value != null)
-            {
-                var words = value.Trim().Split(' ');
-                foreach (var word in words.Where(word => !NoiseWords.ContainsKey(word.ToUpperInvariant())))
-                {
-                    if (criteria.Length != 0)
-                    {
-                        criteria.Append(" AND ");
-                    }
-
-                    criteria.Append(string.Format(CultureInfo.CurrentCulture, "(FORMSOF(INFLECTIONAL, \"{0}\") OR FORMSOF(THESAURUS, \"{0}\"))", RemoveIllegalChar(word)));
-                }
-            }
-
-            return AddWithValue(parameterName, (value == null || string.IsNullOrEmpty(criteria.ToString())) ? null : criteria.ToString());
-        }
-
-        /// <summary>
-        /// Ajouter un paramètre structuré.
-        /// </summary>
-        /// <param name="parameterName">Nom du paramètre SQL Server.</param>
-        /// <param name="list">Collection des entiers.</param>
-        /// <param name="typeName">Nom défini par type de table.</param>
-        /// <returns>Le paramètre créé.</returns>
-        /// <typeparam name="T">Type interne de la collection.</typeparam>
-        public SqlDataParameter AddStructuredParameter<T>(string parameterName, ICollection<T> list, string typeName)
-            where T : new()
-        {
-            return AddStructuredParameter<T>(parameterName, list, typeName, null);
-        }
-
-        /// <summary>
-        /// Ajouter un paramètre structuré.
-        /// </summary>
-        /// <param name="parameterName">Nom du paramètre SQL Server.</param>
-        /// <param name="list">Collection des entiers.</param>
-        /// <param name="typeName">Nom défini par type de table.</param>
-        /// <param name="columnsAvailable">Définir des colonnes disponibles dans le paramètre table.</param>
-        /// <returns>Le paramètre créé.</returns>
-        /// <typeparam name="T">Type interne de la collection.</typeparam>
-        public SqlDataParameter AddStructuredParameter<T>(string parameterName, ICollection<T> list, string typeName, string[] columnsAvailable)
-            where T : new()
-        {
-            if (string.IsNullOrEmpty(parameterName))
-            {
-                throw new ArgumentNullException("parameterName");
-            }
-
-            if (list == null)
-            {
-                throw new ArgumentNullException("list");
-            }
-
-            if (typeName == null)
-            {
-                throw new ArgumentNullException("typeName");
-            }
-
-            var parameter = new SqlDataParameter(InnerCommand.CreateParameter())
-            {
-                ParameterName = parameterName,
-                Direction = ParameterDirection.Input,
-                Value = ConvertTo(list, columnsAvailable)
-            };
-            Add(parameter);
-
-            return parameter;
         }
 
         /// <summary>
@@ -456,21 +274,6 @@ namespace Kinetix.DataAccess.Sql
             }
 
             return AddWithValue(colName.ToString(), value);
-        }
-
-        /// <summary>
-        /// Ajoute un nouveau paramètre à partir de son nom et de sa valeur,
-        /// et null si la condition n'est pas rempli. Le paramètre est un paramètre
-        /// d'entrée.
-        /// </summary>
-        /// <param name="condition">Condition de non-nullité.</param>
-        /// <param name="parameterName">Nom du paramètre.</param>
-        /// <param name="valueIfTrue">Valeur du paramètre si vrai.</param>
-        /// <param name="valueIfFalse">Valeur du paramètre si faux.</param>
-        /// <returns>Paramètre.</returns>
-        public SqlDataParameter AddWithValue(bool condition, string parameterName, object valueIfTrue, object valueIfFalse)
-        {
-            return AddWithValue(parameterName, condition ? valueIfTrue : valueIfFalse);
         }
 
         /// <summary>
@@ -655,15 +458,6 @@ namespace Kinetix.DataAccess.Sql
         }
 
         /// <summary>
-        /// Ajoute une liste de bean en paramètre (La colonne InsertKey est obligatoire).
-        /// </summary>
-        /// <typeparam name="T">Type du bean.</typeparam>
-        /// <param name="collection">Collection à passer en paramètre.</param>
-        /// <returns>Parameter.</returns>
-        public abstract SqlDataParameter AddBeanCollectionProperties<T>(ICollection<T> collection)
-            where T : class, new();
-
-        /// <summary>
         /// Ajoute les paramètres pour une clause IN portant sur des entiers.
         /// </summary>
         /// <param name="parameterName">Nom du paramètre SQL Server.</param>
@@ -682,6 +476,15 @@ namespace Kinetix.DataAccess.Sql
         public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<string> list);
 
         /// <summary>
+        /// Ajoute une liste de bean en paramètre (La colonne InsertKey est obligatoire).
+        /// </summary>
+        /// <typeparam name="T">Type du bean.</typeparam>
+        /// <param name="collection">Collection à passer en paramètre.</param>
+        /// <returns>Parameter.</returns>
+        public abstract SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
+            where T : class, new();
+
+        /// <summary>
         /// Construit le paramètre pour une clause IN.
         /// </summary>
         /// <param name="parameterName">Nom du paramètre dans la requête.</param>
@@ -689,77 +492,6 @@ namespace Kinetix.DataAccess.Sql
         /// <param name="typeName">Nom du type en base de données.</param>
         /// <param name="sqlDbType">Type SQL du IN.</param>
         /// <returns>Le paramètre créé.</returns>
-        public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType);
-
-        /// <summary>
-        /// Remplir un DataTable basé sur une collection donnée.
-        /// </summary>
-        /// <typeparam name="T">Type d'entité.</typeparam>
-        /// <param name="list">Liste des objets.</param>
-        /// <param name="columnsAvailable">Les colonnes de tableau.</param>
-        /// <returns>DataTable.</returns>
-        private static DataTable ConvertTo<T>(ICollection<T> list, string[] columnsAvailable)
-            where T : new()
-        {
-            var table = CreateTable<T>(columnsAvailable);
-            var entityType = typeof(T);
-            var properties = TypeDescriptor.GetProperties(entityType);
-            foreach (var item in list)
-            {
-                var row = table.NewRow();
-                foreach (PropertyDescriptor prop in properties)
-                {
-                    if (columnsAvailable == null || columnsAvailable.Contains(prop.Name))
-                    {
-                        row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
-                    }
-                }
-
-                table.Rows.Add(row);
-            }
-
-            return table;
-        }
-
-        /// <summary>
-        /// Crée un DataTable basé sur une collection donnée.
-        /// </summary>
-        /// <typeparam name="T">Type d'entité.</typeparam>
-        /// <param name="columnsAvailable">Les colonnes de tableau.</param>
-        /// <returns>DataTable.</returns>
-        private static DataTable CreateTable<T>(string[] columnsAvailable)
-            where T : new()
-        {
-            var entityType = typeof(T);
-            var table = new DataTable(entityType.Name);
-            var properties = TypeDescriptor.GetProperties(entityType);
-            foreach (PropertyDescriptor prop in properties)
-            {
-                if (columnsAvailable == null || columnsAvailable.Contains(prop.Name))
-                {
-                    table.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
-                }
-            }
-
-            return table;
-        }
-
-        /// <summary>
-        /// Supprime les caractères spéciaux de la recherche.
-        /// </summary>
-        /// <param name="word">Mot sur quoi porte la recherche.</param>
-        /// <returns>Le mot transformé.</returns>
-        private static string RemoveIllegalChar(string word)
-        {
-            var replaceWord = word;
-            replaceWord = replaceWord.Replace("*", string.Empty);
-            replaceWord = replaceWord.Replace("<", string.Empty);
-            replaceWord = replaceWord.Replace(">", string.Empty);
-            replaceWord = replaceWord.Replace("\\", string.Empty);
-            replaceWord = replaceWord.Replace("/", string.Empty);
-            replaceWord = replaceWord.Replace(":", string.Empty);
-            replaceWord = replaceWord.Replace("?", string.Empty);
-            return replaceWord.Trim();
-        }
+        protected abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType);
     }
 }

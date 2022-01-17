@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -165,20 +166,76 @@ namespace Kinetix.DataAccess.Sql
         internal IDbConnection Connection { get; private set; }
 
         /// <summary>
+        /// Ajoute les paramètres pour une clause IN portant sur des entiers.
+        /// </summary>
+        /// <param name="parameterName">Nom du paramètre SQL Server.</param>
+        /// <param name="list">Collection des entiers à insérer dans le IN.</param>
+        /// <returns>La commande.</returns>
+        /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
+        public BaseSqlCommand AddInParameter(string parameterName, IEnumerable<int> list)
+        {
+            Parameters.AddInParameter(parameterName, list);
+            return this;
+        }
+
+        /// <summary>
+        /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
+        /// </summary>
+        /// <param name="parameterName">Nom du paramètre SQL Server.</param>
+        /// <param name="list">Collection des entiers à insérer dans le IN.</param>
+        /// <returns>La commande.</returns>
+        /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
+        public BaseSqlCommand AddInParameter(string parameterName, IEnumerable<string> list)
+        {
+            Parameters.AddInParameter(parameterName, list);
+            return this;
+        }
+
+        /// <summary>
+        /// Ajout un nouveau paramètre à partir d'une colonne et de sa valeur.
+        /// Le paramètre est un paramètre d'entrée.
+        /// </summary>
+        /// <param name="colName">Colonnne du paramètre.</param>
+        /// <param name="value">Valeur du paramètre.</param>
+        /// <returns>Commande.</returns>
+        public BaseSqlCommand AddParameter(Enum colName, object value)
+        {
+            Parameters.AddWithValue(colName, value);
+            return this;
+        }
+
+        /// <summary>
+        /// Ajout un nouveau paramètre à partir de son nom et de sa valeur.
+        /// Le paramètre est un paramètre d'entrée.
+        /// </summary>
+        /// <param name="parameterName">Nom du paramètre.</param>
+        /// <param name="value">Valeur du paramètre.</param>
+        /// <returns>Commande.</returns>
+        public BaseSqlCommand AddParameter(string parameterName, object value)
+        {
+            Parameters.AddWithValue(parameterName, value);
+            return this;
+        }
+
+        /// <summary>
+        /// Ajoute une liste de bean en paramètre (La colonne InsertKey est obligatoire).
+        /// </summary>
+        /// <typeparam name="T">Type du bean.</typeparam>
+        /// <param name="collection">Collection à passer en paramètre.</param>
+        /// <returns>La commande.</returns>
+        public BaseSqlCommand AddTableParameter<T>(ICollection<T> collection)
+                where T : class, new()
+        {
+            Parameters.AddTableParameter(collection);
+            return this;
+        }
+
+        /// <summary>
         /// Annule la commande.
         /// </summary>
         public void Cancel()
         {
             InnerCommand.Cancel();
-        }
-
-        /// <summary>
-        /// Crée un nouveau paramétre pour la commande.
-        /// </summary>
-        /// <returns>Paramètre.</returns>
-        public SqlDataParameter CreateParameter()
-        {
-            return new SqlDataParameter(InnerCommand.CreateParameter());
         }
 
         /// <summary>
@@ -324,6 +381,15 @@ namespace Kinetix.DataAccess.Sql
             }
 
             throw new SqlDataException(SR.ExceptionZeroRowAffected);
+        }
+
+        /// <summary>
+        /// Crée un nouveau paramètre pour la commande.
+        /// </summary>
+        /// <returns>Paramètre.</returns>
+        internal SqlDataParameter CreateParameter()
+        {
+            return new SqlDataParameter(InnerCommand.CreateParameter());
         }
 
         /// <summary>

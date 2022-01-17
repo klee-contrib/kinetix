@@ -720,12 +720,12 @@ namespace Kinetix.DataAccess.Sql.Broker
                 if (criteriaParam.Expression == Expression.Between)
                 {
                     var dateValues = (DateTime[])criteriaParam.Value;
-                    command.Parameters.AddWithValue(parameterName + "T1", dateValues[0]);
-                    command.Parameters.AddWithValue(parameterName + "T2", dateValues[1]);
+                    command.AddParameter(parameterName + "T1", dateValues[0]);
+                    command.AddParameter(parameterName + "T2", dateValues[1]);
                 }
                 else
                 {
-                    command.Parameters.AddWithValue(parameterName, criteriaParam.Value);
+                    command.AddParameter(parameterName, criteriaParam.Value);
                 }
 
                 commandText.Append(GetSqlString(parameterName, criteriaParam));

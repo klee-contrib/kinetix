@@ -12,7 +12,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer.Broker
     /// Store de base pour le stockage en base de données.
     /// </summary>
     /// <typeparam name="T">Type du store.</typeparam>
-    public class SqlServerStore<T> : SqlStore<T>
+    internal class SqlServerStore<T> : SqlStore<T>
         where T : class, new()
     {
         /// <summary>
@@ -53,7 +53,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer.Broker
             var sql = BuildInsertQuery(beanDefinition, true, columnSelector);
             var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
             command.CommandTimeout = 0;
-            command.Parameters.AddWithValue(primaryKey.MemberName, primaryKeyValue);
+            command.AddParameter(primaryKey.MemberName, primaryKeyValue);
             AddInsertParameters(bean, beanDefinition, command.Parameters, columnSelector);
             return command.ExecuteReader();
         }

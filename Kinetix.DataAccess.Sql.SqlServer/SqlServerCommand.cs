@@ -8,7 +8,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer
     /// <summary>
     /// Commande d'appel à SQL.
     /// </summary>
-    public class SqlServerCommand : BaseSqlCommand
+    internal class SqlServerCommand : BaseSqlCommand
     {
         private readonly AnalyticsManager _analytics;
         private readonly ILogger<SqlServerCommand> _logger;

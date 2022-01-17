@@ -10,7 +10,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer
     /// <summary>
     /// Classe permettant le suivi de l'éxécution des commandes.
     /// </summary>
-    public class SqlServerCommandListener : SqlCommandListener
+    internal class SqlServerCommandListener : SqlCommandListener
     {
         private const byte TimeOutErrorClass = 11;
         private const int TimeOutErrorCode1 = -2146232060;

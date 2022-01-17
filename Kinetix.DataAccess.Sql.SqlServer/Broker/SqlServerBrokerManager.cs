@@ -7,7 +7,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer.Broker
     /// <summary>
     /// Manager pour les brokers.
     /// </summary>
-    public class SqlServerBrokerManager : BrokerManager
+    internal class SqlServerBrokerManager : BrokerManager
     {
         private readonly ILogger<BrokerManager> _logger;
 

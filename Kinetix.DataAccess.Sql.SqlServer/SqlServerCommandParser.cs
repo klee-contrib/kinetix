@@ -9,7 +9,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer
     /// <summary>
     /// Analyseur de requête SQL Dynamique.
     /// </summary>
-    public class SqlServerCommandParser : CommandParser
+    internal class SqlServerCommandParser : CommandParser
     {
         /// <summary>
         /// Constructeur.

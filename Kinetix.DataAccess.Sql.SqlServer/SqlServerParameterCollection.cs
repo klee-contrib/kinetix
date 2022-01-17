@@ -10,7 +10,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer
     /// <summary>
     /// Collection de paramètres pour les commandes Sql Server.
     /// </summary>
-    public class SqlServerParameterCollection : SqlParameterCollection
+    internal class SqlServerParameterCollection : SqlParameterCollection
     {
         /// <summary>
         /// Nom de la colonne dans le type table.
@@ -42,14 +42,6 @@ namespace Kinetix.DataAccess.Sql.SqlServer
         }
 
         /// <inheritdoc />
-        public override SqlDataParameter AddBeanCollectionProperties<T>(ICollection<T> collection)
-        {
-            var parameter = new SqlServerParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
-            List.Add(parameter);
-            return parameter;
-        }
-
-        /// <inheritdoc />
         public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<int> list)
         {
             return AddInParameter(parameterName, list, IntDataType, SqlDbType.Int);
@@ -62,7 +54,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer
         }
 
         /// <inheritdoc />
-        public override SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
+        protected override SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
         {
             if (string.IsNullOrEmpty(parameterName))
             {
@@ -102,6 +94,14 @@ namespace Kinetix.DataAccess.Sql.SqlServer
 
             Add(parameter);
 
+            return parameter;
+        }
+
+        /// <inheritdoc />
+        public override SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
+        {
+            var parameter = new SqlServerParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
+            List.Add(parameter);
             return parameter;
         }
     }

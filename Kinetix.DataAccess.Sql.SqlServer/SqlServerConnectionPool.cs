@@ -11,7 +11,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer
     /// <summary>
     /// Pool de connections SQL Server.
     /// </summary>
-    public class SqlServerConnectionPool : ConnectionPool
+    internal class SqlServerConnectionPool : ConnectionPool
     {
         private readonly AnalyticsManager _analytics;
         private readonly CommandParser _commandParser;
