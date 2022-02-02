@@ -483,15 +483,5 @@ namespace Kinetix.DataAccess.Sql
         /// <returns>Parameter.</returns>
         public abstract SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
             where T : class, new();
-
-        /// <summary>
-        /// Construit le paramètre pour une clause IN.
-        /// </summary>
-        /// <param name="parameterName">Nom du paramètre dans la requête.</param>
-        /// <param name="list">Liste des valeurs du IN.</param>
-        /// <param name="typeName">Nom du type en base de données.</param>
-        /// <param name="sqlDbType">Type SQL du IN.</param>
-        /// <returns>Le paramètre créé.</returns>
-        protected abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType);
     }
 }

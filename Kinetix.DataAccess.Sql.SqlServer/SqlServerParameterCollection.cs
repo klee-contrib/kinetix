@@ -54,7 +54,14 @@ namespace Kinetix.DataAccess.Sql.SqlServer
         }
 
         /// <inheritdoc />
-        protected override SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
+        public override SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
+        {
+            var parameter = new SqlServerParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
+            List.Add(parameter);
+            return parameter;
+        }
+
+        private SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
         {
             if (string.IsNullOrEmpty(parameterName))
             {
@@ -94,14 +101,6 @@ namespace Kinetix.DataAccess.Sql.SqlServer
 
             Add(parameter);
 
-            return parameter;
-        }
-
-        /// <inheritdoc />
-        public override SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
-        {
-            var parameter = new SqlServerParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
-            List.Add(parameter);
             return parameter;
         }
     }

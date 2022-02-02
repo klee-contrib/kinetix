@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <LangVersion>latest</LangVersion>
+    <Version>0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql" Version="6.0.3" />
+    <PackageReference Include="System.Text.Json" Version="6.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kinetix.DataAccess.Sql\Kinetix.DataAccess.Sql.csproj" />
+  </ItemGroup>
+
+</Project>

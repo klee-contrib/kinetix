@@ -146,7 +146,7 @@ namespace Kinetix.DataAccess.Sql
                     }
 
                     var orderCol = FirstToUpper(sort);
-                    orderClause.Append('"' + orderCol + "\" " + ((MapSort[sort] == SortOrder.Desc) ? "desc" : "asc"));
+                    orderClause.Append($"{orderCol} {((MapSort[sort] == SortOrder.Desc) ? "desc" : "asc")}");
                 }
 
                 return orderClause.ToString();
