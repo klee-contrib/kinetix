@@ -11,7 +11,8 @@ namespace Kinetix.Web
                 .AddScoped<CultureFilter>()
                 .AddScoped<ExceptionFilter>()
                 .AddScoped<TransactionFilter>()
-                .AddScoped<ReferenceCheckerFilter>();
+                .AddScoped<ReferenceCheckerFilter>()
+                .AddScoped<UtcDateFilter>();
         }
     }
 }

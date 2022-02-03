@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
-using System.Globalization;
 using System.Reflection;
 using System.Reflection.Emit;
 using Kinetix.ComponentModel;
@@ -137,10 +136,10 @@ namespace Kinetix.DataAccess.Sql
             foreach (var property in definition.Properties)
             {
                 prop = t.GetProperty(property.PropertyName);
-                dic.Add(property.PropertyName, prop);
+                dic.Add(property.PropertyName.ToLowerInvariant(), prop);
                 if (property.MemberName != null)
                 {
-                    dic.Add(property.MemberName.ToUpper(CultureInfo.InvariantCulture), prop);
+                    dic.Add(property.MemberName.ToLowerInvariant(), prop);
                 }
             }
 
@@ -149,7 +148,7 @@ namespace Kinetix.DataAccess.Sql
             {
                 var fieldPathItems = record.GetName(i).Split('.');
 
-                if (dic.TryGetValue(fieldPathItems[0], out prop) || dic.TryGetValue(fieldPathItems[0].ToUpper(CultureInfo.InvariantCulture), out prop))
+                if (dic.TryGetValue(fieldPathItems[0].ToLowerInvariant(), out prop))
                 {
                     obj = bean;
                     if (fieldPathItems.Length > 1)

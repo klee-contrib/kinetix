@@ -10,7 +10,7 @@ namespace Kinetix.Web
         /// <inheritdoc />
         public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            return DateTimeOffset.Parse(reader.GetString()).DateTime;
+            return DateTimeOffset.Parse(reader.GetString()).UtcDateTime;
         }
 
         /// <inheritdoc />
