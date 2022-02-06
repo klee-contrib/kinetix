@@ -1,26 +1,24 @@
-﻿using System;
-using Npgsql;
+﻿using Npgsql;
 
-namespace Kinetix.DataAccess.Sql.Postgres
+namespace Kinetix.DataAccess.Sql.Postgres;
+
+/// <summary>
+/// Analyseur de requête SQL Dynamique.
+/// </summary>
+internal class PostgresCommandParser : CommandParser
 {
     /// <summary>
-    /// Analyseur de requête SQL Dynamique.
+    /// Constructeur.
     /// </summary>
-    internal class PostgresCommandParser : CommandParser
+    /// <param name="sqlManager">Composant injecté.</param>
+    public PostgresCommandParser(SqlManager sqlManager)
+        : base(sqlManager)
     {
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        /// <param name="sqlManager">Composant injecté.</param>
-        public PostgresCommandParser(SqlManager sqlManager)
-            : base(sqlManager)
-        {
-        }
+    }
 
-        /// <inheritdoc />
-        protected override bool IsNull(object parameter)
-        {
-            return DBNull.Value.Equals(((NpgsqlParameter)parameter).Value);
-        }
+    /// <inheritdoc />
+    protected override bool IsNull(object parameter)
+    {
+        return DBNull.Value.Equals(((NpgsqlParameter)parameter).Value);
     }
 }

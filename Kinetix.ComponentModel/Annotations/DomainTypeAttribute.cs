@@ -1,25 +1,22 @@
-﻿using System;
+﻿namespace Kinetix.ComponentModel.Annotations;
 
-namespace Kinetix.ComponentModel.Annotations
+/// <summary>
+/// Type C# associé au domaine.
+/// </summary>
+[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+public class DomainTypeAttribute : Attribute
 {
     /// <summary>
-    /// Type C# associé au domaine.
+    /// Constructeur.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-    public class DomainTypeAttribute : Attribute
+    /// <param name="type">Type.</param>
+    public DomainTypeAttribute(Type type)
     {
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        /// <param name="type">Type.</param>
-        public DomainTypeAttribute(Type type)
-        {
-            Type = type;
-        }
-
-        /// <summary>
-        /// Type.
-        /// </summary>
-        public Type Type { get; }
+        Type = type;
     }
+
+    /// <summary>
+    /// Type.
+    /// </summary>
+    public Type Type { get; }
 }

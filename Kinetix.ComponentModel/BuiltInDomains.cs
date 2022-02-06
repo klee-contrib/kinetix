@@ -1,68 +1,66 @@
-﻿using System;
-using Kinetix.ComponentModel.Annotations;
+﻿using Kinetix.ComponentModel.Annotations;
 
-namespace Kinetix.ComponentModel
+namespace Kinetix.ComponentModel;
+
+public enum BuiltInDomains
 {
-    public enum BuiltInDomains
-    {
-        [DomainType(typeof(bool))]
-        Boolean,
+    [DomainType(typeof(bool))]
+    Boolean,
 
-        [DomainType(typeof(byte))]
-        Byte,
+    [DomainType(typeof(byte))]
+    Byte,
 
-        [DomainType(typeof(DateTime))]
-        DateTime,
+    [DomainType(typeof(DateTime))]
+    DateTime,
 
-        [DomainType(typeof(decimal))]
-        Decimal,
+    [DomainType(typeof(decimal))]
+    Decimal,
 
-        [DomainType(typeof(double))]
-        Double,
+    [DomainType(typeof(double))]
+    Double,
 
-        [DomainType(typeof(float))]
-        Float,
+    [DomainType(typeof(float))]
+    Float,
 
-        [DomainType(typeof(int))]
-        Int,
+    [DomainType(typeof(int))]
+    Int,
 
-        [DomainType(typeof(long))]
-        Long,
+    [DomainType(typeof(long))]
+    Long,
 
-        [DomainType(typeof(sbyte))]
-        Sbyte,
+    [DomainType(typeof(sbyte))]
+    Sbyte,
 
-        [DomainType(typeof(short))]
-        Short,
+    [DomainType(typeof(short))]
+    Short,
 
-        [DomainType(typeof(string))]
-        String,
+    [DomainType(typeof(string))]
+    String,
 
-        [DomainType(typeof(uint))]
-        Uint,
+    [DomainType(typeof(uint))]
+    Uint,
 
-        [DomainType(typeof(ushort))]
-        Ushort,
+    [DomainType(typeof(ushort))]
+    Ushort,
 
-        [DomainType(typeof(ulong))]
-        Ulong,
+    [DomainType(typeof(ulong))]
+    Ulong,
 
-        [DomainType(typeof(byte[]))]
-        ByteArray,
+    [DomainType(typeof(byte[]))]
+    ByteArray,
 
-        [DomainType(typeof(Guid))]
-        Guid,
+    [DomainType(typeof(Guid))]
+    Guid,
 
-        [DomainType(typeof(char))]
-        Char,
+    [DomainType(typeof(char))]
+    Char,
 
-        [DomainType(typeof(TimeSpan))]
-        TimeSpan,
+    [DomainType(typeof(TimeSpan))]
+    TimeSpan,
 
-        [DomainType(typeof(string[]))]
-        StringArray,
+    [DomainType(typeof(string[]))]
+    StringArray,
 
-        [DomainType(typeof(int[]))]
-        IntArray
-    }
+    [DomainType(typeof(int[]))]
+    IntArray
 }

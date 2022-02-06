@@ -1,23 +1,20 @@
-﻿using Kinetix.Monitoring;
-using Kinetix.Monitoring.Insights;
-using Microsoft.ApplicationInsights;
+﻿using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Kinetix.Monitoring.Insights
+namespace Kinetix.Monitoring.Insights;
+
+/// <summary>
+/// Extension yolo
+/// </summary>
+public static class MonitoringInsightExtensions
 {
     /// <summary>
-    /// Extension yolo
+    /// Ajoute un MonitoringStore branché à Application Insights
     /// </summary>
-    public static class MonitoringInsightExtensions
+    /// <param name="config">Config monitoring</param>
+    /// <returns>Config monitoring</returns>
+    public static MonitoringConfig AddInsights(this MonitoringConfig config)
     {
-        /// <summary>
-        /// Ajoute un MonitoringStore branché à Application Insights
-        /// </summary>
-        /// <param name="config">Config monitoring</param>
-        /// <returns>Config monitoring</returns>
-        public static MonitoringConfig AddInsights(this MonitoringConfig config)
-        {
-            return config.AddStore(p => new InsightMonitoringStore(p.GetService<TelemetryClient>()));
-        }
+        return config.AddStore(p => new InsightMonitoringStore(p.GetService<TelemetryClient>()));
     }
 }

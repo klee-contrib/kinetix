@@ -1,18 +1,17 @@
-﻿namespace Kinetix.DataAccess.Sql
+﻿namespace Kinetix.DataAccess.Sql;
+
+/// <summary>
+/// Définit l'ordre de tri.
+/// </summary>
+public enum SortOrder
 {
     /// <summary>
-    /// Définit l'ordre de tri.
+    /// Tri ascendant.
     /// </summary>
-    public enum SortOrder
-    {
-        /// <summary>
-        /// Tri ascendant.
-        /// </summary>
-        Asc,
+    Asc,
 
-        /// <summary>
-        /// Tri descendant.
-        /// </summary>
-        Desc,
-    }
+    /// <summary>
+    /// Tri descendant.
+    /// </summary>
+    Desc,
 }

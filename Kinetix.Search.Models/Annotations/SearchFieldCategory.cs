@@ -1,28 +1,27 @@
-﻿namespace Kinetix.Search.Models.Annotations
+﻿namespace Kinetix.Search.Models.Annotations;
+
+/// <summary>
+/// Catégorie de champ pour le moteur de recherche.
+/// </summary>
+public enum SearchFieldCategory
 {
     /// <summary>
-    /// Catégorie de champ pour le moteur de recherche.
+    /// Champ normal.
     /// </summary>
-    public enum SearchFieldCategory
-    {
-        /// <summary>
-        /// Champ normal.
-        /// </summary>
-        None,
+    None,
 
-        /// <summary>
-        /// Champ ID 
-        /// </summary>
-        Id,
+    /// <summary>
+    /// Champ ID 
+    /// </summary>
+    Id,
 
-        /// <summary>
-        /// Champ de recherche 
-        /// </summary>
-        Search,
+    /// <summary>
+    /// Champ de recherche 
+    /// </summary>
+    Search,
 
-        /// <summary>
-        /// Champ de filtrage de sécurité 
-        /// </summary>
-        Security
-    }
+    /// <summary>
+    /// Champ de filtrage de sécurité 
+    /// </summary>
+    Security
 }

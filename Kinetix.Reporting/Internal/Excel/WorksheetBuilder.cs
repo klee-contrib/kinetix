@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Kinetix.ComponentModel;
 using Kinetix.ComponentModel.Annotations;
@@ -11,204 +7,203 @@ using Kinetix.Reporting.Annotations;
 using Kinetix.Reporting.Excel;
 using Kinetix.Services;
 
-namespace Kinetix.Reporting.Internal.Excel
+namespace Kinetix.Reporting.Internal.Excel;
+
+internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
 {
-    internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
+    private readonly IList<(string label, Expression<Func<T, object>> selector)> _columns = new List<(string label, Expression<Func<T, object>> selector)>();
+    private readonly IExcelBuilder _excelBuilder;
+    private readonly IReferenceManager _referenceManager;
+    private readonly IXLWorksheet _worksheet;
+
+    private IEnumerable<T> _data;
+    private IAsyncEnumerable<T> _dataAsync;
+    private int _maxResults;
+    private bool _transpose = false;
+
+    /// <summary>
+    /// Constructeur.
+    /// </summary>
+    /// <param name="referenceManager">ReferenceManager.</param>
+    /// <param name="excelBuilder">ExcelBuilder.</param>
+    /// <param name="worksheet">Worksheet.</param>
+    public WorksheetBuilder(ExcelBuilder excelBuilder, IReferenceManager referenceManager, IXLWorksheet worksheet)
     {
-        private readonly IList<(string label, Expression<Func<T, object>> selector)> _columns = new List<(string label, Expression<Func<T, object>> selector)>();
-        private readonly IExcelBuilder _excelBuilder;
-        private readonly IReferenceManager _referenceManager;
-        private readonly IXLWorksheet _worksheet;
+        _excelBuilder = excelBuilder;
+        _referenceManager = referenceManager;
+        _worksheet = worksheet;
+    }
 
-        private IEnumerable<T> _data;
-        private IAsyncEnumerable<T> _dataAsync;
-        private int _maxResults;
-        private bool _transpose = false;
-
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        /// <param name="referenceManager">ReferenceManager.</param>
-        /// <param name="excelBuilder">ExcelBuilder.</param>
-        /// <param name="worksheet">Worksheet.</param>
-        public WorksheetBuilder(ExcelBuilder excelBuilder, IReferenceManager referenceManager, IXLWorksheet worksheet)
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
+    public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction)
+    {
+        for (var i = 0; i < _columns.Count; i++)
         {
-            _excelBuilder = excelBuilder;
-            _referenceManager = referenceManager;
-            _worksheet = worksheet;
+            var (label, _) = _columns[i];
+            if (_transpose)
+            {
+                _worksheet.Cell(i + 1, 1).Value = label;
+            }
+            else
+            {
+                _worksheet.Cell(1, i + 1).Value = label;
+            }
         }
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
-        public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction)
+        var itemHandlers = _columns.Select((column, i) =>
         {
-            for (var i = 0; i < _columns.Count; i++)
+            var (_, selector) = column;
+            var definition = BeanDescriptor.GetDefinition(typeof(T));
+            (string True, string False) booleanFormat = default;
+            string dateFormat = null;
+            string numberFormat = null;
+            Type referenceType = null;
+
+            if (selector.Body is not MemberExpression me)
             {
-                var (label, _) = _columns[i];
-                if (_transpose)
+                me = (selector.Body as UnaryExpression)?.Operand as MemberExpression;
+            }
+
+            if (me != null)
+            {
+                var def = definition;
+
+                if (me.Expression is MethodCallExpression mce)
                 {
-                    _worksheet.Cell(i + 1, 1).Value = label;
+                    def = BeanDescriptor.GetDefinition(mce.Type);
+                }
+
+                var property = def.Properties.SingleOrDefault(p => p.PropertyName == me.Member.Name);
+                booleanFormat = property?.Domain.ExtraAttributes.OfType<BooleanFormatAttribute>().SingleOrDefault()?.Format ?? default;
+                dateFormat = property?.Domain.ExtraAttributes.OfType<DateFormatAttribute>().SingleOrDefault()?.Format;
+                numberFormat = property?.Domain.ExtraAttributes.OfType<NumberFormatAttribute>().SingleOrDefault()?.Format;
+                if (property?.ReferenceType?.GetCustomAttributes<ReferenceAttribute>().Any() ?? false)
+                {
+                    referenceType = property.ReferenceType;
+                }
+            }
+
+            return (Action<T, int>)((T item, int j) =>
+            {
+                var cell = _transpose
+                    ? _worksheet.Cell(i + 1, j)
+                    : _worksheet.Cell(j, i + 1);
+
+                var value = selector.Compile()(item);
+
+                if (referenceType != null)
+                {
+                    cell.SetValue(_referenceManager.GetReferenceValue(referenceType, value));
+                }
+                else if (booleanFormat != default && value is bool b)
+                {
+                    cell.SetValue(b ? booleanFormat.True : booleanFormat.False);
                 }
                 else
                 {
-                    _worksheet.Cell(1, i + 1).Value = label;
-                }
-            }
-
-            var itemHandlers = _columns.Select((column, i) =>
-            {
-                var (_, selector) = column;
-                var definition = BeanDescriptor.GetDefinition(typeof(T));
-                (string True, string False) booleanFormat = default;
-                string dateFormat = null;
-                string numberFormat = null;
-                Type referenceType = null;
-
-                if (selector.Body is not MemberExpression me)
-                {
-                    me = (selector.Body as UnaryExpression)?.Operand as MemberExpression;
+                    cell.SetValue(value);
                 }
 
-                if (me != null)
+                if (dateFormat != null)
                 {
-                    var def = definition;
-
-                    if (me.Expression is MethodCallExpression mce)
-                    {
-                        def = BeanDescriptor.GetDefinition(mce.Type);
-                    }
-
-                    var property = def.Properties.SingleOrDefault(p => p.PropertyName == me.Member.Name);
-                    booleanFormat = property?.Domain.ExtraAttributes.OfType<BooleanFormatAttribute>().SingleOrDefault()?.Format ?? default;
-                    dateFormat = property?.Domain.ExtraAttributes.OfType<DateFormatAttribute>().SingleOrDefault()?.Format;
-                    numberFormat = property?.Domain.ExtraAttributes.OfType<NumberFormatAttribute>().SingleOrDefault()?.Format;
-                    if (property?.ReferenceType?.GetCustomAttributes<ReferenceAttribute>().Any() ?? false)
-                    {
-                        referenceType = property.ReferenceType;
-                    }
+                    cell.Style.DateFormat.Format = dateFormat;
                 }
 
-                return (Action<T, int>)((T item, int j) =>
+                if (numberFormat != null)
                 {
-                    var cell = _transpose
-                        ? _worksheet.Cell(i + 1, j)
-                        : _worksheet.Cell(j, i + 1);
-
-                    var value = selector.Compile()(item);
-
-                    if (referenceType != null)
-                    {
-                        cell.SetValue(_referenceManager.GetReferenceValue(referenceType, value));
-                    }
-                    else if (booleanFormat != default && value is bool b)
-                    {
-                        cell.SetValue(b ? booleanFormat.True : booleanFormat.False);
-                    }
-                    else
-                    {
-                        cell.SetValue(value);
-                    }
-
-                    if (dateFormat != null)
-                    {
-                        cell.Style.DateFormat.Format = dateFormat;
-                    }
-
-                    if (numberFormat != null)
-                    {
-                        cell.Style.NumberFormat.Format = numberFormat;
-                    }
-                });
+                    cell.Style.NumberFormat.Format = numberFormat;
+                }
             });
+        });
 
-            if (_data != null)
+        if (_data != null)
+        {
+            var j = 1;
+            foreach (var item in _data)
             {
-                var j = 1;
-                foreach (var item in _data)
+                j++;
+                foreach (var itemHandler in itemHandlers)
                 {
-                    j++;
-                    foreach (var itemHandler in itemHandlers)
-                    {
-                        itemHandler(item, j);
-                    }
+                    itemHandler(item, j);
+                }
 
-                    if (j > _maxResults)
-                    {
-                        break;
-                    }
+                if (j > _maxResults)
+                {
+                    break;
                 }
             }
-            else if (_dataAsync != null)
+        }
+        else if (_dataAsync != null)
+        {
+            var j = 1;
+            await foreach (var item in _dataAsync)
             {
-                var j = 1;
-                await foreach (var item in _dataAsync)
+                j++;
+                foreach (var itemHandler in itemHandlers)
                 {
-                    j++;
-                    foreach (var itemHandler in itemHandlers)
-                    {
-                        itemHandler(item, j);
-                    }
+                    itemHandler(item, j);
+                }
 
-                    if (j > _maxResults)
-                    {
-                        break;
-                    }
+                if (j > _maxResults)
+                {
+                    break;
                 }
             }
-
-            _worksheet.ColumnsUsed().AdjustToContents();
-            if (postBuildAction != null)
-            {
-                await postBuildAction(_worksheet);
-
-            }
-            return _excelBuilder;
         }
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.Column(Func{T, object})" />
-        public IWorksheetBuilder<T> Column(Expression<Func<T, object>> selector)
+        _worksheet.ColumnsUsed().AdjustToContents();
+        if (postBuildAction != null)
         {
-            return Column(string.Empty, selector);
-        }
+            await postBuildAction(_worksheet);
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string)" />
-        public IWorksheetBuilder<T> Column(string label = null)
-        {
-            return Column(label, _ => null);
         }
+        return _excelBuilder;
+    }
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string, Func{T, object})" />
-        public IWorksheetBuilder<T> Column(string label, Expression<Func<T, object>> selector)
-        {
-            _columns.Add((label, selector));
-            return this;
-        }
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(Func{T, object})" />
+    public IWorksheetBuilder<T> Column(Expression<Func<T, object>> selector)
+    {
+        return Column(string.Empty, selector);
+    }
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.Data" />
-        public IWorksheetBuilder<T> Data(IEnumerable<T> data)
-        {
-            _data = data;
-            return this;
-        }
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string)" />
+    public IWorksheetBuilder<T> Column(string label = null)
+    {
+        return Column(label, _ => null);
+    }
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.Data" />
-        public IWorksheetBuilder<T> Data(IAsyncEnumerable<T> dataAsync)
-        {
-            _dataAsync = dataAsync;
-            return this;
-        }
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string, Func{T, object})" />
+    public IWorksheetBuilder<T> Column(string label, Expression<Func<T, object>> selector)
+    {
+        _columns.Add((label, selector));
+        return this;
+    }
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.MaxResults" />
-        public IWorksheetBuilder<T> MaxResults(int maxResults)
-        {
-            _maxResults = maxResults;
-            return this;
-        }
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Data" />
+    public IWorksheetBuilder<T> Data(IEnumerable<T> data)
+    {
+        _data = data;
+        return this;
+    }
 
-        /// <inheritdoc cref="IWorksheetBuilder{T}.Transpose" />
-        public IWorksheetBuilder<T> Transpose()
-        {
-            _transpose = true;
-            return this;
-        }
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Data" />
+    public IWorksheetBuilder<T> Data(IAsyncEnumerable<T> dataAsync)
+    {
+        _dataAsync = dataAsync;
+        return this;
+    }
+
+    /// <inheritdoc cref="IWorksheetBuilder{T}.MaxResults" />
+    public IWorksheetBuilder<T> MaxResults(int maxResults)
+    {
+        _maxResults = maxResults;
+        return this;
+    }
+
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Transpose" />
+    public IWorksheetBuilder<T> Transpose()
+    {
+        _transpose = true;
+        return this;
     }
 }

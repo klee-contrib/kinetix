@@ -1,24 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Castle.DynamicProxy;
+﻿using Castle.DynamicProxy;
 
-namespace Kinetix.Services.DependencyInjection
+namespace Kinetix.Services.DependencyInjection;
+
+public class InterceptionOptions
 {
-    public class InterceptionOptions
+    private readonly IDictionary<Type, Type> _interceptors = new Dictionary<Type, Type>();
+
+    public InterceptionOptions With<TInterceptor>() where TInterceptor : IInterceptor
     {
-        private readonly IDictionary<Type, Type> _interceptors = new Dictionary<Type, Type>();
-
-        public InterceptionOptions With<TInterceptor>() where TInterceptor : IInterceptor
+        if (!_interceptors.ContainsKey(typeof(TInterceptor)))
         {
-            if (!_interceptors.ContainsKey(typeof(TInterceptor)))
-            {
-                _interceptors.Add(typeof(TInterceptor), typeof(TInterceptor));
-            }
-
-            return this;
+            _interceptors.Add(typeof(TInterceptor), typeof(TInterceptor));
         }
 
-        public List<Type> Interceptors => _interceptors.Values.ToList();
+        return this;
     }
+
+    public List<Type> Interceptors => _interceptors.Values.ToList();
 }

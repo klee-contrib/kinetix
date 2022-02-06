@@ -1,18 +1,17 @@
-﻿namespace Kinetix.ComponentModel.Exceptions
+﻿namespace Kinetix.ComponentModel.Exceptions;
+
+/// <summary>
+/// Parameter of an error message sent from Server to client.
+/// </summary>
+public class ErrorMessageParameter
 {
     /// <summary>
-    /// Parameter of an error message sent from Server to client.
+    /// Value of the parameter.
     /// </summary>
-    public class ErrorMessageParameter
-    {
-        /// <summary>
-        /// Value of the parameter.
-        /// </summary>
-        public object Value { get; set; }
+    public object Value { get; set; }
 
-        /// <summary>
-        /// Domain of the parameter.
-        /// </summary>
-        public string Domain { get; set; }
-    }
+    /// <summary>
+    /// Domain of the parameter.
+    /// </summary>
+    public string Domain { get; set; }
 }

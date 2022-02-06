@@ -1,27 +1,26 @@
 ﻿using Kinetix.Services;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Kinetix.Web.Filters
+namespace Kinetix.Web.Filters;
+
+public class ReferenceCheckerFilter : IActionFilter
 {
-    public class ReferenceCheckerFilter : IActionFilter
+    private readonly IReferenceManager _referenceManager;
+
+    public ReferenceCheckerFilter(IReferenceManager referenceManager)
     {
-        private readonly IReferenceManager _referenceManager;
+        _referenceManager = referenceManager;
+    }
 
-        public ReferenceCheckerFilter(IReferenceManager referenceManager)
-        {
-            _referenceManager = referenceManager;
-        }
+    public void OnActionExecuted(ActionExecutedContext context)
+    {
+    }
 
-        public void OnActionExecuted(ActionExecutedContext context)
+    public void OnActionExecuting(ActionExecutingContext context)
+    {
+        foreach (var parameter in context.ActionArguments)
         {
-        }
-
-        public void OnActionExecuting(ActionExecutingContext context)
-        {
-            foreach (var parameter in context.ActionArguments)
-            {
-                _referenceManager.CheckReferenceKeys(parameter.Value);
-            }
+            _referenceManager.CheckReferenceKeys(parameter.Value);
         }
     }
 }

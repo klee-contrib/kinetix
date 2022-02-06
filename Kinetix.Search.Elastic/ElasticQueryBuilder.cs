@@ -1,111 +1,108 @@
-﻿using System;
-using System.Collections.Generic;
-using Nest;
+﻿using Nest;
 
-namespace Kinetix.Search.Elastic
+namespace Kinetix.Search.Elastic;
+
+/// <summary>
+/// Builder de requête ElasticSearch.
+/// </summary>
+public static class ElasticQueryBuilder
 {
     /// <summary>
-    /// Builder de requête ElasticSearch.
+    /// Construit une requête pour une recherche textuelle.
     /// </summary>
-    public static class ElasticQueryBuilder
-    {
-        /// <summary>
-        /// Construit une requête pour une recherche textuelle.
-        /// </summary>
-        /// <param name="text">Texte de recherche.</param>
-        /// <param name="fields">Champs de recherche.</param>
-        /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiMatchQuery<TDocument>(string text, params string[] fields)
-            where TDocument : class
-        {
-            return q => q.MultiMatch(m => m
-                .Query(text)
-                .Operator(Operator.And)
-                .Type(TextQueryType.CrossFields)
-                .Fields(fields));
-        }
-
-        /// <summary>
-        /// Construit une requête pour inclure une valeur parmi plusieurs.
-        /// </summary>
-        /// <param name="field">Champ.</param>
-        /// <param name="codes">Liste de valeurs à inclure.</param>
-        /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildInclusiveInclude<TDocument>(string field, string codes)
-            where TDocument : class
-        {
-            var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-            foreach (var word in codes.Split(' '))
-            {
-                clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
-            }
-
-            return q => q.Bool(b => b.Should(clauses).MinimumShouldMatch(1));
-        }
-
-        /// <summary>
-        /// Construit une requête pour le filtrage exacte (sélection de facette, ...).
-        /// </summary>
-        /// <param name="field">Champ.</param>
-        /// <param name="value">Valeur.</param>
-        /// <param name="invert">Inverse le filtre.</param>
-        /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value, bool invert = false)
-            where TDocument : class
-        {
-            QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Term(t => t.Field(field).Value(value));
-
-            return invert
-                ? (q => q.Bool(b => b.MustNot(query)))
-                : query;
-        }
-
-        /// <summary>
-        /// Construit une requête pour un champ qui doit manquer (équivalent d'une valeur NULL).
-        /// </summary>
-        /// <param name="field">Champ.</param>
-        /// <param name="invert">Inverse le filtre.</param>
-        /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(string field, bool invert = false)
-            where TDocument : class
-        {
-            QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Exists(t => t.Field(field));
-
-            return invert
-                ? query
-                : (q => q.Bool(b => b.MustNot(query)));
-        }
-
-        /// <summary>
-        /// Construit une requête avec des AND sur des sous-requêtes.
-        /// </summary>
-        /// <param name="subQueries">Sous-requêtes.</param>
-        /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildAndQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
-            where TDocument : class
-        {
-            return subQueries.Length switch
-            {
-                0 => q => q,
-                1 => subQueries[0],
-                _ => q => q.Bool(b => b.Filter(subQueries))
-            };
-        }
-
-        /// <summary>
-        /// Construit une requête avec des OR sur des sous-requêtes.
-        /// </summary>
-        /// <param name="subQueries">Sous-requêtes.</param>
-        /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildOrQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
+    /// <param name="text">Texte de recherche.</param>
+    /// <param name="fields">Champs de recherche.</param>
+    /// <returns>Requête.</returns>
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiMatchQuery<TDocument>(string text, params string[] fields)
         where TDocument : class
+    {
+        return q => q.MultiMatch(m => m
+            .Query(text)
+            .Operator(Operator.And)
+            .Type(TextQueryType.CrossFields)
+            .Fields(fields));
+    }
+
+    /// <summary>
+    /// Construit une requête pour inclure une valeur parmi plusieurs.
+    /// </summary>
+    /// <param name="field">Champ.</param>
+    /// <param name="codes">Liste de valeurs à inclure.</param>
+    /// <returns>Requête.</returns>
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildInclusiveInclude<TDocument>(string field, string codes)
+        where TDocument : class
+    {
+        var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
+        foreach (var word in codes.Split(' '))
         {
-            return subQueries.Length switch
-            {
-                0 => q => q,
-                1 => subQueries[0],
-                _ => q => q.Bool(b => b.Should(subQueries).MinimumShouldMatch(1))
-            };
+            clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
         }
+
+        return q => q.Bool(b => b.Should(clauses).MinimumShouldMatch(1));
+    }
+
+    /// <summary>
+    /// Construit une requête pour le filtrage exacte (sélection de facette, ...).
+    /// </summary>
+    /// <param name="field">Champ.</param>
+    /// <param name="value">Valeur.</param>
+    /// <param name="invert">Inverse le filtre.</param>
+    /// <returns>Requête.</returns>
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value, bool invert = false)
+        where TDocument : class
+    {
+        QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Term(t => t.Field(field).Value(value));
+
+        return invert
+            ? (q => q.Bool(b => b.MustNot(query)))
+            : query;
+    }
+
+    /// <summary>
+    /// Construit une requête pour un champ qui doit manquer (équivalent d'une valeur NULL).
+    /// </summary>
+    /// <param name="field">Champ.</param>
+    /// <param name="invert">Inverse le filtre.</param>
+    /// <returns>Requête.</returns>
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(string field, bool invert = false)
+        where TDocument : class
+    {
+        QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Exists(t => t.Field(field));
+
+        return invert
+            ? query
+            : (q => q.Bool(b => b.MustNot(query)));
+    }
+
+    /// <summary>
+    /// Construit une requête avec des AND sur des sous-requêtes.
+    /// </summary>
+    /// <param name="subQueries">Sous-requêtes.</param>
+    /// <returns>Requête.</returns>
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildAndQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
+        where TDocument : class
+    {
+        return subQueries.Length switch
+        {
+            0 => q => q,
+            1 => subQueries[0],
+            _ => q => q.Bool(b => b.Filter(subQueries))
+        };
+    }
+
+    /// <summary>
+    /// Construit une requête avec des OR sur des sous-requêtes.
+    /// </summary>
+    /// <param name="subQueries">Sous-requêtes.</param>
+    /// <returns>Requête.</returns>
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildOrQuery<TDocument>(params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries)
+    where TDocument : class
+    {
+        return subQueries.Length switch
+        {
+            0 => q => q,
+            1 => subQueries[0],
+            _ => q => q.Bool(b => b.Should(subQueries).MinimumShouldMatch(1))
+        };
     }
 }

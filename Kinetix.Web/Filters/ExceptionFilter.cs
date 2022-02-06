@@ -1,119 +1,116 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using Kinetix.ComponentModel.Exceptions;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Kinetix.Web.Filters
+namespace Kinetix.Web.Filters;
+
+/// <summary>
+/// Filtre pour gérer les exceptions.
+/// </summary>
+public class ExceptionFilter : IExceptionFilter
 {
+    private readonly TelemetryClient _telemetryClient;
+
     /// <summary>
-    /// Filtre pour gérer les exceptions.
+    /// Constructeur.
     /// </summary>
-    public class ExceptionFilter : IExceptionFilter
+    /// <param name="telemetryClient">Composant injecté.</param>
+    public ExceptionFilter(TelemetryClient telemetryClient)
     {
-        private readonly TelemetryClient _telemetryClient;
+        _telemetryClient = telemetryClient;
+    }
 
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        /// <param name="telemetryClient">Composant injecté.</param>
-        public ExceptionFilter(TelemetryClient telemetryClient)
+    /// <summary>
+    /// A chaque exception.
+    /// </summary>
+    /// <param name="context">Contexte de l'exception.</param>
+    public void OnException(ExceptionContext context)
+    {
+        var msg = GetExceptionMessage(context.Exception);
+        if (msg != null)
         {
-            _telemetryClient = telemetryClient;
+            context.Result = msg;
         }
 
-        /// <summary>
-        /// A chaque exception.
-        /// </summary>
-        /// <param name="context">Contexte de l'exception.</param>
-        public void OnException(ExceptionContext context)
-        {
-            var msg = GetExceptionMessage(context.Exception);
-            if (msg != null)
-            {
-                context.Result = msg;
-            }
+        _telemetryClient.TrackException(context.Exception);
+    }
 
-            _telemetryClient.TrackException(context.Exception);
-        }
-
-        private IActionResult GetExceptionMessage(Exception exception)
+    private IActionResult GetExceptionMessage(Exception exception)
+    {
+        exception = exception is TargetInvocationException tex ? tex.InnerException : exception;
+        return exception switch
         {
-            exception = exception is TargetInvocationException tex ? tex.InnerException : exception;
-            return exception switch
-            {
-                BusinessException ce => BusinessExceptionHandler(ce),
-                InvalidOperationException { Source: "Microsoft.EntityFrameworkCore" } => MissingEntityException(),
-                _ => DefaultExceptionHandler(exception),
-            };
-        }
+            BusinessException ce => BusinessExceptionHandler(ce),
+            InvalidOperationException { Source: "Microsoft.EntityFrameworkCore" } => MissingEntityException(),
+            _ => DefaultExceptionHandler(exception),
+        };
+    }
 
-        private IActionResult BusinessExceptionHandler(BusinessException ex)
+    private IActionResult BusinessExceptionHandler(BusinessException ex)
+    {
+        var errorDico = new Dictionary<string, object>();
+        if (ex.Errors != null && ex.Errors.HasError)
         {
-            var errorDico = new Dictionary<string, object>();
-            if (ex.Errors != null && ex.Errors.HasError)
+            foreach (var error in ex.Errors)
             {
-                foreach (var error in ex.Errors)
+                if (string.IsNullOrEmpty(error.FieldName))
                 {
-                    if (string.IsNullOrEmpty(error.FieldName))
+                    if (!errorDico.ContainsKey(EntityException.GlobalErrorKey))
                     {
-                        if (!errorDico.ContainsKey(EntityException.GlobalErrorKey))
-                        {
-                            errorDico.Add(EntityException.GlobalErrorKey, new List<string>());
-                        }
+                        errorDico.Add(EntityException.GlobalErrorKey, new List<string>());
+                    }
 
-                        ((ICollection<string>)errorDico[EntityException.GlobalErrorKey]).Add(error.Message);
-                    }
-                    else
-                    {
-                        errorDico.Add(error.FieldName, error.Message);
-                    }
+                    ((ICollection<string>)errorDico[EntityException.GlobalErrorKey]).Add(error.Message);
+                }
+                else
+                {
+                    errorDico.Add(error.FieldName, error.Message);
                 }
             }
-
-            if (!string.IsNullOrEmpty(ex.BaseMessage))
-            {
-                if (!errorDico.ContainsKey(EntityException.GlobalErrorKey))
-                {
-                    errorDico.Add(EntityException.GlobalErrorKey, new List<string> { ex.BaseMessage });
-                }
-            }
-
-            if (ex.Code != null)
-            {
-                errorDico.Add(EntityException.CodeKey, ex.Code);
-            }
-
-            return new ObjectResult(errorDico) { StatusCode = 400 };
         }
 
-        private IActionResult DefaultExceptionHandler(Exception ex)
+        if (!string.IsNullOrEmpty(ex.BaseMessage))
         {
-            var errors = new List<string> { ex.Message };
-            var errorDico = new Dictionary<string, object>
+            if (!errorDico.ContainsKey(EntityException.GlobalErrorKey))
             {
-                [EntityException.GlobalErrorKey] = errors
-            };
-
-            while (ex.InnerException != null)
-            {
-                ex = ex.InnerException;
-                errors.Add(ex.Message);
+                errorDico.Add(EntityException.GlobalErrorKey, new List<string> { ex.BaseMessage });
             }
-
-            return new ObjectResult(errorDico) { StatusCode = 500 };
         }
 
-        private IActionResult MissingEntityException()
+        if (ex.Code != null)
         {
-            var errorDico = new Dictionary<string, object>
-            {
-                [EntityException.GlobalErrorKey] = new List<string> { "L'objet demandé n'existe pas." },
-            };
-
-            return new ObjectResult(errorDico) { StatusCode = 404 };
+            errorDico.Add(EntityException.CodeKey, ex.Code);
         }
+
+        return new ObjectResult(errorDico) { StatusCode = 400 };
+    }
+
+    private IActionResult DefaultExceptionHandler(Exception ex)
+    {
+        var errors = new List<string> { ex.Message };
+        var errorDico = new Dictionary<string, object>
+        {
+            [EntityException.GlobalErrorKey] = errors
+        };
+
+        while (ex.InnerException != null)
+        {
+            ex = ex.InnerException;
+            errors.Add(ex.Message);
+        }
+
+        return new ObjectResult(errorDico) { StatusCode = 500 };
+    }
+
+    private IActionResult MissingEntityException()
+    {
+        var errorDico = new Dictionary<string, object>
+        {
+            [EntityException.GlobalErrorKey] = new List<string> { "L'objet demandé n'existe pas." },
+        };
+
+        return new ObjectResult(errorDico) { StatusCode = 404 };
     }
 }

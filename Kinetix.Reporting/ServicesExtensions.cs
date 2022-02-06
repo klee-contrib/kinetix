@@ -1,18 +1,17 @@
 ﻿using Kinetix.Reporting.Internal;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Kinetix.Reporting
+namespace Kinetix.Reporting;
+
+public static class ServicesExtensions
 {
-    public static class ServicesExtensions
+    /// <summary>
+    /// Ajoute les services pourt le reporting.
+    /// </summary>
+    /// <param name="services">ServiceCollection.</param>
+    /// <returns>ServiceCollection.</returns>
+    public static IServiceCollection AddReporting(this IServiceCollection services)
     {
-        /// <summary>
-        /// Ajoute les services pourt le reporting.
-        /// </summary>
-        /// <param name="services">ServiceCollection.</param>
-        /// <returns>ServiceCollection.</returns>
-        public static IServiceCollection AddReporting(this IServiceCollection services)
-        {
-            return services.AddScoped<IReportBuilder, ReportBuilder>();
-        }
+        return services.AddScoped<IReportBuilder, ReportBuilder>();
     }
 }

@@ -1,60 +1,58 @@
-﻿using System;
-using System.Runtime.ExceptionServices;
+﻿using System.Runtime.ExceptionServices;
 using Castle.DynamicProxy;
 using Kinetix.Monitoring;
 using Microsoft.Extensions.Logging;
 
-namespace Kinetix.Services.DependencyInjection.Interceptors
-{
-    /// <summary>
-    /// Intercepteur pour analytics + log.
-    /// </summary>
-    public class AnalyticsInterceptor : IInterceptor
-    {
-        private readonly ILogger<Service> _logger;
-        private readonly AnalyticsManager _analytics;
+namespace Kinetix.Services.DependencyInjection.Interceptors;
 
-        public AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager analytics)
+/// <summary>
+/// Intercepteur pour analytics + log.
+/// </summary>
+public class AnalyticsInterceptor : IInterceptor
+{
+    private readonly ILogger<Service> _logger;
+    private readonly AnalyticsManager _analytics;
+
+    public AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager analytics)
+    {
+        _logger = logger;
+        _analytics = analytics;
+    }
+
+    /// <summary>
+    /// Invocation de la méthode, rajoute les advices nécessaires.
+    /// </summary>
+    /// <param name="invocation">Methode cible.</param>
+    public void Intercept(IInvocation invocation)
+    {
+        _analytics.StartProcess($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", "Service");
+
+        if (invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(true).Length > 0)
         {
-            _logger = logger;
-            _analytics = analytics;
+            _analytics.MarkProcessDisabled();
         }
 
-        /// <summary>
-        /// Invocation de la méthode, rajoute les advices nécessaires.
-        /// </summary>
-        /// <param name="invocation">Methode cible.</param>
-        public void Intercept(IInvocation invocation)
+        try
         {
-            _analytics.StartProcess($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", "Service");
-
-            if (invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(true).Length > 0)
+            invocation.Proceed();
+            var process = _analytics.StopProcess();
+            if (!process.Disabled)
             {
-                _analytics.MarkProcessDisabled();
+                _logger.LogInformation($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({process.Duration} ms)");
+            }
+        }
+        catch (Exception ex)
+        {
+            _analytics.MarkProcessInError();
+            _analytics.StopProcess();
+
+            if (ex is AggregateException)
+            {
+                ex = ex.InnerException;
             }
 
-            try
-            {
-                invocation.Proceed();
-                var process = _analytics.StopProcess();
-                if (!process.Disabled)
-                {
-                    _logger.LogInformation($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({process.Duration} ms)");
-                }
-            }
-            catch (Exception ex)
-            {
-                _analytics.MarkProcessInError();
-                _analytics.StopProcess();
-
-                if (ex is AggregateException)
-                {
-                    ex = ex.InnerException;
-                }
-
-                _logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
-                ExceptionDispatchInfo.Capture(ex).Throw();
-            }
+            _logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
+            ExceptionDispatchInfo.Capture(ex).Throw();
         }
     }
 }

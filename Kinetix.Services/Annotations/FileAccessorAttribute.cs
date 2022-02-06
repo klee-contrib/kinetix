@@ -1,21 +1,18 @@
-﻿using System;
+﻿namespace Kinetix.Services.Annotations;
 
-namespace Kinetix.Services.Annotations
+/// <summary>
+/// Attribut indiquant qu'une méthode permet l'accès à une
+/// liste de reférence.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public sealed class ReferenceAccessorAttribute : Attribute
 {
     /// <summary>
-    /// Attribut indiquant qu'une méthode permet l'accès à une
-    /// liste de reférence.
+    /// Retourne le nom de l'accesseur.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method)]
-    public sealed class ReferenceAccessorAttribute : Attribute
+    public string Name
     {
-        /// <summary>
-        /// Retourne le nom de l'accesseur.
-        /// </summary>
-        public string Name
-        {
-            get;
-            set;
-        }
+        get;
+        set;
     }
 }

@@ -1,19 +1,17 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace Kinetix.Services.Annotations
+namespace Kinetix.Services.Annotations;
+
+/// <summary>
+/// Enregistre l'implémentation dans le container d'injection de dépendances.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class RegisterImplAttribute : Attribute
 {
-    /// <summary>
-    /// Enregistre l'implémentation dans le container d'injection de dépendances.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]
-    public sealed class RegisterImplAttribute : Attribute
-    {
-        public ServiceLifetime Lifetime { get; private set; }
+    public ServiceLifetime Lifetime { get; private set; }
 
-        public RegisterImplAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped)
-        {
-            Lifetime = lifetime;
-        }
+    public RegisterImplAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped)
+    {
+        Lifetime = lifetime;
     }
 }

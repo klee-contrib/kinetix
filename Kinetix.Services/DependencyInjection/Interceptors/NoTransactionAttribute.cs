@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace Kinetix.Services.DependencyInjection.Interceptors;
 
-namespace Kinetix.Services.DependencyInjection.Interceptors
+[AttributeUsage(AttributeTargets.Method)]
+public class NoTransactionAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Method)]
-    public class NoTransactionAttribute : Attribute
-    {
-    }
 }

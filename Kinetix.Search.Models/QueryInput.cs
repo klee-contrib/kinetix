@@ -1,9 +1,8 @@
-﻿namespace Kinetix.Search.Models
+﻿namespace Kinetix.Search.Models;
+
+/// <summary>
+/// Entrée d'une recherche avancée.
+/// </summary>
+public class QueryInput : QueryInput<Criteria>
 {
-    /// <summary>
-    /// Entrée d'une recherche avancée.
-    /// </summary>
-    public class QueryInput : QueryInput<Criteria>
-    {
-    }
 }

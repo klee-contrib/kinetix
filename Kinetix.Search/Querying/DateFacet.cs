@@ -1,29 +1,27 @@
-﻿using System;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-namespace Kinetix.Search.Querying
+namespace Kinetix.Search.Querying;
+
+/// <summary>
+/// Facette de date.
+/// </summary>
+/// <typeparam name="TDocument">Type de document.</typeparam>
+public class DateFacet<TDocument> : TermFacet<TDocument>
 {
     /// <summary>
-    /// Facette de date.
+    /// Constructeur.
     /// </summary>
-    /// <typeparam name="TDocument">Type de document.</typeparam>
-    public class DateFacet<TDocument> : TermFacet<TDocument>
+    /// <param name="code">Code de la facette.</param>
+    /// <param name="label">Libellé de la facette.</param>
+    /// <param name="field">Champ sur lequel agit la facette.</param>
+    public DateFacet(string code, string label, Expression<Func<TDocument, object>> field)
+        : base(code, label, field)
     {
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        /// <param name="code">Code de la facette.</param>
-        /// <param name="label">Libellé de la facette.</param>
-        /// <param name="field">Champ sur lequel agit la facette.</param>
-        public DateFacet(string code, string label, Expression<Func<TDocument, object>> field)
-            : base(code, label, field)
-        {
-        }
+    }
 
-        /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
-        public override string ResolveLabel(string primaryKey)
-        {
-            return DateTime.Parse(primaryKey).ToString("dd/MM/yyyy");
-        }
+    /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
+    public override string ResolveLabel(string primaryKey)
+    {
+        return DateTime.Parse(primaryKey).ToString("dd/MM/yyyy");
     }
 }

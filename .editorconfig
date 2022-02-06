@@ -1,0 +1,8 @@
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_diagnostic.IDE0005.severity = warning
+dotnet_diagnostic.CA1822.severity = none
+dotnet_diagnostic.CA2254.severity = none
+dotnet_diagnostic.CS1591.severity = none
+dotnet_diagnostic.CS3001.severity = none
+dotnet_diagnostic.CS3002.severity = none

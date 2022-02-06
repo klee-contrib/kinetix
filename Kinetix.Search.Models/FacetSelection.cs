@@ -1,26 +1,25 @@
-﻿namespace Kinetix.Search.Models
+﻿namespace Kinetix.Search.Models;
+
+/// <summary>
+/// Sélection de facette pour une entrée de recherche.
+/// </summary>
+public class FacetSelection
 {
     /// <summary>
-    /// Sélection de facette pour une entrée de recherche.
+    /// Nom de la facette.
     /// </summary>
-    public class FacetSelection
+    public string Key
     {
-        /// <summary>
-        /// Nom de la facette.
-        /// </summary>
-        public string Key
-        {
-            get;
-            set;
-        }
+        get;
+        set;
+    }
 
-        /// <summary>
-        /// Valeur sélectionnée de la facette.
-        /// </summary>
-        public string Value
-        {
-            get;
-            set;
-        }
+    /// <summary>
+    /// Valeur sélectionnée de la facette.
+    /// </summary>
+    public string Value
+    {
+        get;
+        set;
     }
 }

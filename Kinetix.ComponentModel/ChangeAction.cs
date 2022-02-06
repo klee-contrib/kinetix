@@ -1,10 +1,9 @@
-﻿namespace Kinetix.ComponentModel
+﻿namespace Kinetix.ComponentModel;
+
+public enum ChangeAction
 {
-    public enum ChangeAction
-    {
-        None,
-        Delete,
-        Insert,
-        Update
-    }
+    None,
+    Delete,
+    Insert,
+    Update
 }

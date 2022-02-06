@@ -1,17 +1,16 @@
 ﻿using Kinetix.Reporting.Excel;
 
-namespace Kinetix.Reporting
+namespace Kinetix.Reporting;
+
+/// <summary>
+/// Permet de construire des rapports.
+/// </summary>
+public interface IReportBuilder
 {
     /// <summary>
-    /// Permet de construire des rapports.
+    /// Crée un rapport Excel.
     /// </summary>
-    public interface IReportBuilder
-    {
-        /// <summary>
-        /// Crée un rapport Excel.
-        /// </summary>
-        /// <param name="fileName">Nom du fichier.</param>
-        /// <returns></returns>
-        IExcelBuilder CreateExcelReport(string fileName);
-    }
+    /// <param name="fileName">Nom du fichier.</param>
+    /// <returns></returns>
+    IExcelBuilder CreateExcelReport(string fileName);
 }

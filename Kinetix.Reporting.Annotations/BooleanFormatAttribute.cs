@@ -1,15 +1,12 @@
-﻿using System;
+﻿namespace Kinetix.Reporting.Annotations;
 
-namespace Kinetix.Reporting.Annotations
+[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+public class BooleanFormatAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-    public class BooleanFormatAttribute : Attribute
+    public BooleanFormatAttribute(string @true, string @false)
     {
-        public BooleanFormatAttribute(string @true, string @false)
-        {
-            Format = (@true, @false);
-        }
-
-        public (string True, string False) Format { get; set; }
+        Format = (@true, @false);
     }
+
+    public (string True, string False) Format { get; set; }
 }

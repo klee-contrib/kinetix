@@ -1,43 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
-namespace Kinetix.Search.Config
+namespace Kinetix.Search.Config;
+
+/// <summary>
+/// Section de configuration du moteur de recherche.
+/// </summary>
+public class SearchConfig
 {
-    /// <summary>
-    /// Section de configuration du moteur de recherche.
-    /// </summary>
-    public class SearchConfig
+    public Dictionary<string, SearchConfigItem> Servers { get; set; }
+
+    public int ClusterSize { get; set; } = 5000;
+
+    public string GetIndexNameForType(string dataSourceName, Type documentType)
     {
-        public Dictionary<string, SearchConfigItem> Servers { get; set; }
+        var connSettings = GetServer(dataSourceName);
+        return $@"{connSettings.IndexName}_{GetTypeNameForIndex(documentType)}";
+    }
 
-        public int ClusterSize { get; set; } = 5000;
-
-        public string GetIndexNameForType(string dataSourceName, Type documentType)
+    public SearchConfigItem GetServer(string dataSourceName)
+    {
+        if (!Servers.TryGetValue(dataSourceName, out var server))
         {
-            var connSettings = GetServer(dataSourceName);
-            return $@"{connSettings.IndexName}_{GetTypeNameForIndex(documentType)}";
+            throw new ArgumentException($@"Le server de recherche ""{dataSourceName}"" est introuvable dans la configuration.");
         }
 
-        public SearchConfigItem GetServer(string dataSourceName)
-        {
-            if (!Servers.TryGetValue(dataSourceName, out var server))
-            {
-                throw new ArgumentException($@"Le server de recherche ""{dataSourceName}"" est introuvable dans la configuration.");
-            }
+        return server;
+    }
 
-            return server;
-        }
-
-        /// <summary>
-        /// Récupère le nom du document pour déterminer le nom de l'index.
-        /// </summary>
-        /// <param name="documentType">Type du document.</param>
-        /// <returns>Nom.</returns>
-        public static string GetTypeNameForIndex(Type documentType)
-        {
-            return Regex.Replace(Regex.Replace(documentType.Name, "Document$", string.Empty), @"\p{Lu}", m => "_" + m.Value)
-                .Substring(1).ToLowerInvariant();
-        }
+    /// <summary>
+    /// Récupère le nom du document pour déterminer le nom de l'index.
+    /// </summary>
+    /// <param name="documentType">Type du document.</param>
+    /// <returns>Nom.</returns>
+    public static string GetTypeNameForIndex(Type documentType)
+    {
+        return Regex.Replace(Regex.Replace(documentType.Name, "Document$", string.Empty), @"\p{Lu}", m => "_" + m.Value)
+            .Substring(1).ToLowerInvariant();
     }
 }

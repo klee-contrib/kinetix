@@ -1,12 +1,9 @@
-﻿using System;
+﻿namespace Kinetix.Services.Annotations;
 
-namespace Kinetix.Services.Annotations
+/// <summary>
+/// Attribut indiquant qu'une méthode permet l'accès à un fichier.
+/// </summary>
+[AttributeUsage(AttributeTargets.Method)]
+public sealed class FileAccessorAttribute : Attribute
 {
-    /// <summary>
-    /// Attribut indiquant qu'une méthode permet l'accès à un fichier.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Method)]
-    public sealed class FileAccessorAttribute : Attribute
-    {
-    }
 }

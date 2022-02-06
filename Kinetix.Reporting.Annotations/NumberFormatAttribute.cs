@@ -1,15 +1,12 @@
-﻿using System;
+﻿namespace Kinetix.Reporting.Annotations;
 
-namespace Kinetix.Reporting.Annotations
+[AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+public class NumberFormatAttribute : Attribute
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-    public class NumberFormatAttribute : Attribute
+    public NumberFormatAttribute(string format)
     {
-        public NumberFormatAttribute(string format)
-        {
-            Format = format;
-        }
-
-        public string Format { get; set; }
+        Format = format;
     }
+
+    public string Format { get; set; }
 }

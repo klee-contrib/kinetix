@@ -1,107 +1,104 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Data;
 using System.Data.SqlClient;
 using Microsoft.SqlServer.Server;
 
-namespace Kinetix.DataAccess.Sql.SqlServer
+namespace Kinetix.DataAccess.Sql.SqlServer;
+
+/// <summary>
+/// Collection de paramètres pour les commandes Sql Server.
+/// </summary>
+internal class SqlServerParameterCollection : SqlParameterCollection
 {
     /// <summary>
-    /// Collection de paramètres pour les commandes Sql Server.
+    /// Nom de la colonne dans le type table.
     /// </summary>
-    internal class SqlServerParameterCollection : SqlParameterCollection
+    private const string ColDataTypeName = "n";
+
+    /// <summary>
+    /// Nom du type SQL Server dédié aux int.
+    /// </summary>
+    private const string IntDataType = "type_int_list";
+
+    /// <summary>
+    /// Nom du type SQL Server dédié aux varchar.
+    /// </summary>
+    private const string VarCharDataType = "type_varchar_list";
+
+    /// <summary>
+    /// Taille du champ du type SQL Server dédié aux varchar.
+    /// </summary>
+    private const int VarCharLength = 20;
+
+    /// <summary>
+    /// Constructeur.
+    /// </summary>
+    /// <param name="command">Commande SQL.</param>
+    public SqlServerParameterCollection(IDbCommand command)
+        : base(command)
     {
-        /// <summary>
-        /// Nom de la colonne dans le type table.
-        /// </summary>
-        private const string ColDataTypeName = "n";
+    }
 
-        /// <summary>
-        /// Nom du type SQL Server dédié aux int.
-        /// </summary>
-        private const string IntDataType = "type_int_list";
+    /// <inheritdoc />
+    public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<int> list)
+    {
+        return AddInParameter(parameterName, list, IntDataType, SqlDbType.Int);
+    }
 
-        /// <summary>
-        /// Nom du type SQL Server dédié aux varchar.
-        /// </summary>
-        private const string VarCharDataType = "type_varchar_list";
+    /// <inheritdoc />
+    public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<string> list)
+    {
+        return AddInParameter(parameterName, list, VarCharDataType, SqlDbType.VarChar);
+    }
 
-        /// <summary>
-        /// Taille du champ du type SQL Server dédié aux varchar.
-        /// </summary>
-        private const int VarCharLength = 20;
+    /// <inheritdoc />
+    public override SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
+    {
+        var parameter = new SqlServerParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
+        List.Add(parameter);
+        return parameter;
+    }
 
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        /// <param name="command">Commande SQL.</param>
-        public SqlServerParameterCollection(IDbCommand command)
-            : base(command)
+    private SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
+    {
+        if (string.IsNullOrEmpty(parameterName))
         {
+            throw new ArgumentNullException("parameterName");
         }
 
-        /// <inheritdoc />
-        public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<int> list)
+        if (list == null)
         {
-            return AddInParameter(parameterName, list, IntDataType, SqlDbType.Int);
+            throw new ArgumentNullException("list");
         }
 
-        /// <inheritdoc />
-        public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<string> list)
+        var metaData = sqlDbType == SqlDbType.VarChar ? new SqlMetaData(ColDataTypeName, sqlDbType, VarCharLength) : new SqlMetaData(ColDataTypeName, sqlDbType);
+        var dataRecordList = new List<SqlDataRecord>();
+        foreach (var item in list)
         {
-            return AddInParameter(parameterName, list, VarCharDataType, SqlDbType.VarChar);
+            var record = new SqlDataRecord(metaData);
+            record.SetValue(0, item);
+            dataRecordList.Add(record);
         }
 
-        /// <inheritdoc />
-        public override SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
+        if (dataRecordList.Count == 0)
         {
-            var parameter = new SqlServerParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
-            List.Add(parameter);
-            return parameter;
+            var record = new SqlDataRecord(metaData);
+            record.SetValue(0, null);
+            dataRecordList.Add(record);
         }
 
-        private SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
+        var parameter = new SqlDataParameter(InnerCommand.CreateParameter())
         {
-            if (string.IsNullOrEmpty(parameterName))
-            {
-                throw new ArgumentNullException("parameterName");
-            }
+            ParameterName = ParamValue + parameterName,
+            Direction = ParameterDirection.Input,
+            Value = dataRecordList
+        };
 
-            if (list == null)
-            {
-                throw new ArgumentNullException("list");
-            }
+        ((SqlParameter)parameter.InnerParameter).SqlDbType = SqlDbType.Structured;
+        ((SqlParameter)parameter.InnerParameter).TypeName = typeName;
 
-            var metaData = sqlDbType == SqlDbType.VarChar ? new SqlMetaData(ColDataTypeName, sqlDbType, VarCharLength) : new SqlMetaData(ColDataTypeName, sqlDbType);
-            var dataRecordList = new List<SqlDataRecord>();
-            foreach (var item in list)
-            {
-                var record = new SqlDataRecord(metaData);
-                record.SetValue(0, item);
-                dataRecordList.Add(record);
-            }
+        Add(parameter);
 
-            if (dataRecordList.Count == 0)
-            {
-                var record = new SqlDataRecord(metaData);
-                record.SetValue(0, null);
-                dataRecordList.Add(record);
-            }
-
-            var parameter = new SqlDataParameter(InnerCommand.CreateParameter())
-            {
-                ParameterName = ParamValue + parameterName,
-                Direction = ParameterDirection.Input,
-                Value = dataRecordList
-            };
-
-            ((SqlParameter)parameter.InnerParameter).SqlDbType = SqlDbType.Structured;
-            ((SqlParameter)parameter.InnerParameter).TypeName = typeName;
-
-            Add(parameter);
-
-            return parameter;
-        }
+        return parameter;
     }
 }

@@ -2,25 +2,24 @@
 using Kinetix.Reporting.Internal.Excel;
 using Kinetix.Services;
 
-namespace Kinetix.Reporting.Internal
+namespace Kinetix.Reporting.Internal;
+
+internal class ReportBuilder : IReportBuilder
 {
-    internal class ReportBuilder : IReportBuilder
+    private readonly IReferenceManager _referenceManager;
+
+    /// <summary>
+    /// Constructeur.
+    /// </summary>
+    /// <param name="referenceManager">ReferenceManager injecté.</param>
+    public ReportBuilder(IReferenceManager referenceManager)
     {
-        private readonly IReferenceManager _referenceManager;
+        _referenceManager = referenceManager;
+    }
 
-        /// <summary>
-        /// Constructeur.
-        /// </summary>
-        /// <param name="referenceManager">ReferenceManager injecté.</param>
-        public ReportBuilder(IReferenceManager referenceManager)
-        {
-            _referenceManager = referenceManager;
-        }
-
-        /// <inheritdoc cref="IReportBuilder.CreateExcelReport" />
-        public IExcelBuilder CreateExcelReport(string fileName)
-        {
-            return new ExcelBuilder(fileName, _referenceManager);
-        }
+    /// <inheritdoc cref="IReportBuilder.CreateExcelReport" />
+    public IExcelBuilder CreateExcelReport(string fileName)
+    {
+        return new ExcelBuilder(fileName, _referenceManager);
     }
 }
