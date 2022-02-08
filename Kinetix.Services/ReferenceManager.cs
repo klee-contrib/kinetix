@@ -1,8 +1,8 @@
 ﻿using System.Collections;
 using System.Reflection;
-using Kinetix.ComponentModel;
-using Kinetix.ComponentModel.Annotations;
-using Kinetix.ComponentModel.Exceptions;
+using Kinetix.Modeling;
+using Kinetix.Modeling.Annotations;
+using Kinetix.Modeling.Exceptions;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;

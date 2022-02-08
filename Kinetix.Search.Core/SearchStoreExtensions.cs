@@ -1,0 +1,85 @@
+﻿using Kinetix.Search.Models;
+using Kinetix.Search.Core.Querying;
+
+namespace Kinetix.Search.Core;
+
+/// <summary>
+/// Extensions pour ISearchStore.
+/// </summary>
+public static class SearchStoreExtensions
+{
+    /// <summary>
+    /// Effectue une requête sur le champ texte.
+    /// </summary>
+    /// <param name="store">Store de recherche.</param>
+    /// <param name="queryInput">Query input.</param>
+    /// <returns>Résultat.</returns>
+    public static (IEnumerable<TDocument> data, int totalCount) Query<TDocument>(this ISearchStore store, BasicQueryInput<TDocument> queryInput)
+        where TDocument : class
+    {
+        return store.Query(queryInput, x => x);
+    }
+
+    /// <summary>
+    /// Effectue une requête sur le champ texte.
+    /// </summary>
+    /// <param name="store">Store de recherche.</param>
+    /// <param name="queryInput">Query input.</param>
+    /// <param name="documentMapper">Mapper de document.</param>
+    /// <returns>Résultat.</returns>
+    public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, Func<TDocument, TOutput> documentMapper)
+        where TDocument : class
+    {
+        return store.Query(queryInput, new Criteria { Query = queryInput.Query }, documentMapper);
+    }
+
+    /// <summary>
+    /// Effectue une requête sur le champ texte.
+    /// </summary>
+    /// <param name="store">Store de recherche.</param>
+    /// <param name="criteria">Critère de recherche.</param>
+    /// <param name="documentMapper">Mapper de document.</param>
+    /// <returns>Résultat.</returns>
+    public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, TCriteria criteria, Func<TDocument, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : Criteria, new()
+    {
+        return store.Query(null, criteria, documentMapper);
+    }
+
+    /// <summary>
+    /// Effectue une requête sur le champ texte.
+    /// </summary>
+    /// <param name="store">Store de recherche.</param>
+    /// <param name="queryInput">Query input.</param>
+    /// <param name="criteria">Critère de recherche.</param>
+    /// <param name="documentMapper">Mapper de document.</param>
+    /// <returns>Résultat.</returns>
+    public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, TCriteria criteria, Func<TDocument, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : Criteria, new()
+    {
+        if (string.IsNullOrEmpty(criteria.Query))
+        {
+            return (new List<TOutput>(), 0);
+        }
+
+        var input = new AdvancedQueryInput<TDocument, TCriteria>
+        {
+            SearchCriteria = new[]
+            {
+                    new QueryInput<TCriteria>
+                    {
+                        Criteria = criteria,
+                        Skip = 0,
+                        Top = queryInput?.Top ?? 10
+                    }
+                },
+            Security = queryInput?.Security,
+            AdditionalCriteria = queryInput?.Criteria
+        };
+
+        var output = store.AdvancedQuery(input, documentMapper);
+        return (output.List, output.TotalCount.Value);
+    }
+}

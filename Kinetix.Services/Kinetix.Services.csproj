@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.ComponentModel\Kinetix.ComponentModel.csproj" />
-    <ProjectReference Include="..\Kinetix.Monitoring\Kinetix.Monitoring.csproj" />
+    <ProjectReference Include="..\Kinetix.Modeling\Kinetix.Modeling.csproj" />
+    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 using Kinetix.Services.Annotations;
 
 namespace Kinetix.Services;

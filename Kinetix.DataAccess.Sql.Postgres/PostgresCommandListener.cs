@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
-using Kinetix.ComponentModel.Exceptions;
-using Kinetix.Monitoring;
+using Kinetix.Modeling.Exceptions;
+using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 

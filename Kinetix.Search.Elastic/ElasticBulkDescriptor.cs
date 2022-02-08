@@ -1,6 +1,7 @@
 ﻿using Elasticsearch.Net;
-using Kinetix.Monitoring;
-using Kinetix.Search.DocumentModel;
+using Kinetix.Monitoring.Core;
+using Kinetix.Search.Core;
+using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
 using Nest;
 

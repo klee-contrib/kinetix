@@ -1,6 +1,6 @@
 ﻿using System.Runtime.ExceptionServices;
 using Castle.DynamicProxy;
-using Kinetix.Monitoring;
+using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Services.DependencyInjection.Interceptors;

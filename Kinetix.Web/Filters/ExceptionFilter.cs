@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using Kinetix.ComponentModel.Exceptions;
+using Kinetix.Modeling.Exceptions;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;

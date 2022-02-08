@@ -1,4 +1,4 @@
-﻿using Kinetix.ComponentModel;
+﻿using Kinetix.Modeling;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kinetix.Web;

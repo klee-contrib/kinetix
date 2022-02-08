@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Kinetix.Monitoring.Core;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;

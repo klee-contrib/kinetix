@@ -1,5 +1,6 @@
 ﻿using Elasticsearch.Net;
-using Kinetix.Search.Config;
+using Kinetix.Search.Core;
+using Kinetix.Search.Core.Config;
 using Microsoft.Extensions.DependencyInjection;
 using Nest;
 using Nest.JsonNetSerializer;

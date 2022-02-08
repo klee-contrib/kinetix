@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 using System.Reflection;
-using Kinetix.Monitoring;
+using Kinetix.Monitoring.Core;
 using Kinetix.Services;
 using Microsoft.Extensions.Logging;
 

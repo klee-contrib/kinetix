@@ -1,4 +1,4 @@
-﻿using Kinetix.Search.DocumentModel;
+﻿using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Elastic.Mapping;
 using Microsoft.Extensions.DependencyInjection;
 using Nest;

@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Kinetix.Monitoring;
+using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.DataAccess.Sql;

@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Text;
 using System.Text.Json.Nodes;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 using Npgsql;
 using NpgsqlTypes;
 

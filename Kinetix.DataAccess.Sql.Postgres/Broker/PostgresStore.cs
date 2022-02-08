@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using System.Text;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 using Kinetix.DataAccess.Sql.Broker;
 using Microsoft.Extensions.Logging;
 

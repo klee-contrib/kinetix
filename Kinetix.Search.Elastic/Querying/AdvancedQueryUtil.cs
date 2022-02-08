@@ -1,7 +1,7 @@
-﻿using Kinetix.Search.DocumentModel;
+﻿using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Models;
 using Kinetix.Search.Models.Annotations;
-using Kinetix.Search.Querying;
+using Kinetix.Search.Core.Querying;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Querying;

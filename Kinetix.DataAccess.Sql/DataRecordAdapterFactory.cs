@@ -2,7 +2,7 @@
 using System.Data;
 using System.Reflection;
 using System.Reflection.Emit;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 
 namespace Kinetix.DataAccess.Sql;
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.ApplicationInsights;
+﻿using Kinetix.Monitoring.Core;
+using Microsoft.ApplicationInsights;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Monitoring.Insights;

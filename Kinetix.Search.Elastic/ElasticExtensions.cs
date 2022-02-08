@@ -1,4 +1,4 @@
-﻿using Kinetix.Monitoring;
+﻿using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 using Nest;
 

@@ -1,9 +1,10 @@
-﻿using Kinetix.Monitoring;
-using Kinetix.Search.Config;
-using Kinetix.Search.DocumentModel;
+﻿using Kinetix.Monitoring.Core;
+using Kinetix.Search.Core;
+using Kinetix.Search.Core.Config;
+using Kinetix.Search.Core.DocumentModel;
+using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Elastic.Querying;
 using Kinetix.Search.Models;
-using Kinetix.Search.Querying;
 using Microsoft.Extensions.Logging;
 using Nest;
 

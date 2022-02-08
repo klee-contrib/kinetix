@@ -1,5 +1,6 @@
-﻿using Kinetix.Search.Models;
-using Kinetix.Search.Querying;
+﻿using Kinetix.Search.Core;
+using Kinetix.Search.Core.Querying;
+using Kinetix.Search.Models;
 using Nest;
 
 namespace Kinetix.Search.Elastic;

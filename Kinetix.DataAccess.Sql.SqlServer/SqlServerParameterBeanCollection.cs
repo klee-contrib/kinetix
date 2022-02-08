@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 using System.Text;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 using Microsoft.SqlServer.Server;
 
 namespace Kinetix.DataAccess.Sql.SqlServer;

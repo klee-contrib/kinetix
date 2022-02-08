@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Text;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 
 namespace Kinetix.DataAccess.Sql;
 

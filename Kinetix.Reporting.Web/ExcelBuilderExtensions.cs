@@ -1,5 +1,5 @@
 ﻿using ClosedXML.Excel;
-using Kinetix.Reporting.Excel;
+using Kinetix.Reporting.Core.Excel;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kinetix.Reporting.Web;

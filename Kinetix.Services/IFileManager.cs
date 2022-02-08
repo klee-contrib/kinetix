@@ -1,4 +1,4 @@
-﻿using Kinetix.ComponentModel;
+﻿using Kinetix.Modeling;
 
 namespace Kinetix.Services;
 

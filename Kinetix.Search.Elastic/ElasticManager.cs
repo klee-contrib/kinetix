@@ -1,5 +1,5 @@
-﻿using Kinetix.Monitoring;
-using Kinetix.Search.Config;
+﻿using Kinetix.Monitoring.Core;
+using Kinetix.Search.Core.Config;
 using Microsoft.Extensions.Logging;
 using Nest;
 

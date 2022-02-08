@@ -13,6 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Monitoring\Kinetix.Monitoring.csproj" />
+    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
   </ItemGroup>
 </Project>

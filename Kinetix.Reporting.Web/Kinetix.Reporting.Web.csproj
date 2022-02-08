@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Reporting\Kinetix.Reporting.csproj" />
+    <ProjectReference Include="..\Kinetix.Reporting.Core\Kinetix.Reporting.Core.csproj" />
     <ProjectReference Include="..\Kinetix.Web\Kinetix.Web.csproj" />
   </ItemGroup>
 

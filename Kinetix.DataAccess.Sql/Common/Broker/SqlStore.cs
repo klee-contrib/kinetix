@@ -2,7 +2,7 @@
 using System.Data;
 using System.Globalization;
 using System.Text;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.DataAccess.Sql.Broker;

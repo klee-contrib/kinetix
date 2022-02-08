@@ -1,6 +1,6 @@
-﻿using Kinetix.Search.DocumentModel;
+﻿using Kinetix.Search.Core.DocumentModel;
+using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
-using Kinetix.Search.Querying;
 using Nest;
 
 namespace Kinetix.Search.Elastic;
@@ -121,7 +121,7 @@ public class FacetHandler
             .Select(inputFacets => inputFacets
                 .Select(inf =>
                 {
-                        /* On ne filtre pas sur la facette en cours. */
+                    /* On ne filtre pas sur la facette en cours. */
                     if (inf.Key == facet.Code)
                     {
                         return null;
@@ -129,7 +129,7 @@ public class FacetHandler
 
                     var targetFacet = facetList.Single(f => f.Code == inf.Key);
 
-                        /* On ne filtre pas sur les facettes non multisélectionnables. */
+                    /* On ne filtre pas sur les facettes non multisélectionnables. */
                     return !targetFacet.IsMultiSelectable
                         ? null
                         : BuildMultiSelectableFilter(inf.Value, targetFacet, def.Fields[targetFacet.FieldName].IsMultiValued);

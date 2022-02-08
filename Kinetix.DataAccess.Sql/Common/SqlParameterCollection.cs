@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 using System.Data;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 
 namespace Kinetix.DataAccess.Sql;
 

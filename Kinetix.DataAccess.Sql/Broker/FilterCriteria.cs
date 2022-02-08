@@ -1,5 +1,5 @@
 ﻿using System.Collections.ObjectModel;
-using Kinetix.ComponentModel;
+using Kinetix.Modeling;
 
 namespace Kinetix.DataAccess.Sql.Broker;
 

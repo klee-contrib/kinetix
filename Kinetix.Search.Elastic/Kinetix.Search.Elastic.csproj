@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Search\Kinetix.Search.csproj" />
+    <ProjectReference Include="..\Kinetix.Search.Core\Kinetix.Search.Core.csproj" />
   </ItemGroup>
 
 </Project>
