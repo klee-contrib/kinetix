@@ -7,28 +7,17 @@ namespace Kinetix.ComponentModel.Annotations
     /// <summary>
     /// Contrainte sur les dates.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public sealed class DateAttribute : ValidationAttribute
     {
         /// <summary>
         /// Constructeur.
         /// </summary>
         /// <param name="precision">Précision.</param>
-        public DateAttribute(int precision)
+        public DateAttribute()
         {
-            Precision = precision;
-
             ErrorMessageResourceType = typeof(SR);
             ErrorMessageResourceName = "DateContraintError";
-        }
-
-        /// <summary>
-        /// Retourne la précision.
-        /// </summary>
-        public int Precision
-        {
-            get;
-            private set;
         }
 
         /// <summary>
@@ -41,8 +30,7 @@ namespace Kinetix.ComponentModel.Annotations
             if (value is string strValue)
             {
                 return string.IsNullOrEmpty(strValue)
-                    ? true
-                    : DateTime.TryParse(strValue, out var testedValue) && CheckRange(testedValue);
+                    || DateTime.TryParse(strValue, out var testedValue) && CheckRange(testedValue);
             }
 
             var dateValue = (DateTime?)value;

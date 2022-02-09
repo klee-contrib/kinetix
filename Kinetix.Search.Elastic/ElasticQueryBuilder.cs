@@ -44,47 +44,46 @@ namespace Kinetix.Search.Elastic
         }
 
         /// <summary>
-        /// Construit une requête pour exclure des valeurs.
-        /// </summary>
-        /// <param name="field">Champ.</param>
-        /// <param name="codes">Liste de valeurs à exclure.</param>
-        /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildExcludeQuery<TDocument>(string field, string codes)
-            where TDocument : class
-        {
-            return q => q.Bool(b =>
-            {
-                var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-                foreach (var word in codes.Split(' '))
-                {
-                    clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
-                }
-
-                return b.MustNot(clauses);
-            });
-        }
-
-        /// <summary>
         /// Construit une requête pour le filtrage exacte (sélection de facette, ...).
         /// </summary>
         /// <param name="field">Champ.</param>
         /// <param name="value">Valeur.</param>
+        /// <param name="invert">Inverse le filtre.</param>
         /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(string field, string value, bool invert = false)
             where TDocument : class
         {
-            return q => q.Term(t => t.Field(field).Value(value));
+            QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Term(t => t.Field(field).Value(value));
+
+            if (invert)
+            {
+                return q => q.Bool(b => b.MustNot(query));
+            }
+            else
+            {
+                return query;
+            }
         }
 
         /// <summary>
         /// Construit une requête pour un champ qui doit manquer (équivalent d'une valeur NULL).
         /// </summary>
         /// <param name="field">Champ.</param>
+        /// <param name="invert">Inverse le filtre.</param>
         /// <returns>Requête.</returns>
-        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(string field)
+        public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(string field, bool invert = false)
             where TDocument : class
         {
-            return q => q.Bool(b => b.MustNot(m => m.Exists(t => t.Field(field))));
+            QueryContainer query(QueryContainerDescriptor<TDocument> q) => q.Exists(t => t.Field(field));
+
+            if (invert)
+            {
+                return query;
+            }
+            else
+            {
+                return q => q.Bool(b => b.MustNot(query));
+            }
         }
 
         /// <summary>

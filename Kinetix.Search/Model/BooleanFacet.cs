@@ -1,32 +1,40 @@
-﻿namespace Kinetix.Search.Model
+﻿using System;
+using System.Linq.Expressions;
+
+namespace Kinetix.Search.Model
 {
     /// <summary>
     /// Facette de booléen.
     /// </summary>
-    public class BooleanFacet : IFacetDefinition
+    /// <typeparam name="TDocument">Type de document.</typeparam>
+    public class BooleanFacet<TDocument> : TermFacet<TDocument>
     {
-        /// <inheritdoc />
-        public string Code { get; set; }
+        /// <summary>
+        /// Constructeur.
+        /// </summary>
+        /// <param name="code">Code de la facette.</param>
+        /// <param name="label">Libellé de la facette.</param>
+        /// <param name="field">Champ sur lequel agit la facette.</param>
+        public BooleanFacet(string code, string label, Expression<Func<TDocument, object>> field)
+            : base(code, label, field)
+        {
+        }
 
-        /// <inheritdoc />
-        public string Label { get; set; }
+        /// <inheritdoc cref="IFacetDefinition.IsMultiSelectable" />
+        public override bool IsMultiSelectable => false;
 
-        /// <inheritdoc />
-        public string FieldName { get; set; }
+        /// <inheritdoc cref="IFacetDefinition.CanExclude" />
+        public override bool CanExclude => false;
 
-        /// <inheritdoc />
-        public bool IsMultiSelectable => false;
-
-        /// <inheritdoc />
-        public bool HasMissing { get; set; } = true;
-
-        /// <inheritdoc />
-        public FacetOrdering Ordering { get; set; } = FacetOrdering.KeyDescending;
+        /// <inheritdoc cref="IFacetDefinition.Ordering" />
+        public override FacetOrdering Ordering => FacetOrdering.KeyDescending;
 
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
-        public string ResolveLabel(object primaryKey)
+        public override string ResolveLabel(string primaryKey)
         {
-            return (string)primaryKey == "1" || (string)primaryKey == "true" ? "focus.search.results.yes" : "focus.search.results.no";
+            return primaryKey == "1" || primaryKey == "true"
+                ? "focus.search.results.yes"
+                : "focus.search.results.no";
         }
     }
 }

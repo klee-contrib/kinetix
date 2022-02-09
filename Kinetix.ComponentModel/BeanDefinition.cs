@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace Kinetix.ComponentModel
 {
@@ -25,7 +26,7 @@ namespace Kinetix.ComponentModel
             IsStatic = isStatic;
             foreach (var property in properties)
             {
-                if (property.IsPrimaryKey)
+                if (property.IsPrimaryKey && PrimaryKey == null)
                 {
                     PrimaryKey = property;
                 }
@@ -35,6 +36,12 @@ namespace Kinetix.ComponentModel
                     DefaultProperty = property;
                 }
             }
+
+            if(PrimaryKey == null)
+            {
+                PrimaryKey = properties.First();
+            }
+
         }
 
         /// <summary>

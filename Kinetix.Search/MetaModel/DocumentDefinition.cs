@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using Kinetix.Search.ComponentModel;
+using System.Reflection;
+using Kinetix.Search.Attributes;
 
 namespace Kinetix.Search.MetaModel
 {
@@ -20,6 +20,7 @@ namespace Kinetix.Search.MetaModel
         {
             BeanType = beanType;
             Fields = properties;
+            IgnoreOnPartialRebuild = beanType.GetCustomAttribute<IgnoreOnPartialRebuildAttribute>();
             foreach (var property in properties)
             {
                 switch (property.Category)
@@ -28,7 +29,7 @@ namespace Kinetix.Search.MetaModel
                         PrimaryKey.AddProperty(property);
                         break;
                     case SearchFieldCategory.Search:
-                        TextFields.Add(property);
+                        SearchFields.Add(property);
                         break;
                     case SearchFieldCategory.Security:
                         SecurityField = property;
@@ -36,11 +37,16 @@ namespace Kinetix.Search.MetaModel
                     default:
                         break;
                 }
+
+                if (property.IsPartialRebuildDate)
+                {
+                    PartialRebuildDate = property;
+                }
             }
 
-            if (properties.Count(prop => prop.Category == SearchFieldCategory.Security) > 1)
+            if ((IgnoreOnPartialRebuild?.OlderThanDays ?? 0) > 0 && PartialRebuildDate == null)
             {
-                throw new NotSupportedException($"{beanType} has multiple Security fields");
+                throw new NotSupportedException($"{beanType} must have a partial rebuild date property if 'OlderThanDays' > 0.");
             }
         }
 
@@ -65,7 +71,7 @@ namespace Kinetix.Search.MetaModel
         /// <summary>
         /// Retourne les propriétés de recherche textuelle.
         /// </summary>
-        public ICollection<DocumentFieldDescriptor> TextFields
+        public ICollection<DocumentFieldDescriptor> SearchFields
         {
             get;
             private set;
@@ -84,6 +90,24 @@ namespace Kinetix.Search.MetaModel
         /// Retourne la liste des propriétés d'un bean.
         /// </summary>
         public DocumentFieldDescriptorCollection Fields
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Précise si le document a une condition de rebuild partiel.
+        /// </summary>
+        public IgnoreOnPartialRebuildAttribute IgnoreOnPartialRebuild
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Retourne la propriété de date qui contrôle le rebuild partiel.
+        /// </summary>
+        public DocumentFieldDescriptor PartialRebuildDate
         {
             get;
             private set;

@@ -11,7 +11,7 @@ namespace Kinetix.Services.Annotations
     {
         public ServiceLifetime Lifetime { get; private set; }
 
-        public RegisterImplAttribute(ServiceLifetime lifetime = ServiceLifetime.Transient)
+        public RegisterImplAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped)
         {
             Lifetime = lifetime;
         }

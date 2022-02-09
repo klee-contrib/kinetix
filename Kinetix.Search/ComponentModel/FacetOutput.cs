@@ -26,9 +26,27 @@ namespace Kinetix.Search.ComponentModel
         }
 
         /// <summary>
-        /// Facettes multi sélectionnable.
+        /// Si la facette est multi sélectionnable.
         /// </summary>
-        public bool? IsMultiSelectable
+        public bool IsMultiSelectable
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Si le champ facetté peut avoir plusieurs valeurs.
+        /// </summary>
+        public bool IsMultiValued
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// S'il est possible d'exclure des valeurs de facette.
+        /// </summary>
+        public bool CanExclude
         {
             get;
             set;

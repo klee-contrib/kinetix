@@ -20,25 +20,16 @@ namespace Kinetix.Search.Model
         /// <summary>
         /// Définition de la recherhe à facette.
         /// </summary>
-        public FacetQueryDefinition FacetQueryDefinition
+        public FacetQueryDefinition<TDocument> FacetQueryDefinition
         {
             get;
             set;
-        }
+        } = new FacetQueryDefinition<TDocument>();
 
         /// <summary>
         /// Filtrage de sécurité.
         /// </summary>
         public string Security
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Portefeuille de l'utilisateur.
-        /// </summary>
-        public string Portfolio
         {
             get;
             set;

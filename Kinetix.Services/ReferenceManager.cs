@@ -9,7 +9,6 @@ using Kinetix.ComponentModel.Annotations;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Services
 {
@@ -21,10 +20,8 @@ namespace Kinetix.Services
         private const string ReferenceListsCache = "ReferenceLists";
         private const string StaticListsCache = "StaticLists";
 
-        private readonly BeanDescriptor _beanDescriptor;
         private readonly IMemoryCache _cache;
         private readonly IServiceProvider _provider;
-        private readonly ILogger<ReferenceManager> _logger;
 
         private readonly TimeSpan _referenceListCacheDuration;
         private readonly TimeSpan _staticListCacheDuration;
@@ -36,15 +33,13 @@ namespace Kinetix.Services
         /// Constructeur.
         /// </summary>
         /// <param name="provider">Service provider.</param>
-        /// <param name="referenceListCacheDuration">Durée du cache des listes de références (par défaut : 10 minutes).</param>
-        /// <param name="staticListCacheDuration">Durée du cache des listes statiques (par défaut : 1 heure).</param>
-        public ReferenceManager(IServiceProvider provider, TimeSpan? staticListCacheDuration = null, TimeSpan? referenceListCacheDuration = null)
+        /// <param name="referenceListCacheDuration">Durée du cache des listes de références.</param>
+        /// <param name="staticListCacheDuration">Durée du cache des listes statiques.</param>
+        public ReferenceManager(IServiceProvider provider, TimeSpan staticListCacheDuration, TimeSpan referenceListCacheDuration)
         {
-            _beanDescriptor = provider.GetService<BeanDescriptor>();
             _cache = provider.GetService<IMemoryCache>();
-            _logger = provider.GetService<ILogger<ReferenceManager>>();
-            _referenceListCacheDuration = referenceListCacheDuration ?? TimeSpan.FromMinutes(10);
-            _staticListCacheDuration = staticListCacheDuration ?? TimeSpan.FromHours(1);
+            _referenceListCacheDuration = referenceListCacheDuration;
+            _staticListCacheDuration = staticListCacheDuration;
             _provider = provider;
         }
 
@@ -97,7 +92,7 @@ namespace Kinetix.Services
         public ICollection<T> GetReferenceList<T>(T criteria)
         {
             var beanPropertyDescriptorList =
-                _beanDescriptor.GetDefinition(criteria).Properties
+                BeanDescriptor.GetDefinition(criteria).Properties
                     .Where(property => property.GetValue(criteria) != null);
 
             return GetReferenceList<T>()
@@ -108,7 +103,7 @@ namespace Kinetix.Services
         /// <inheritdoc cref="IReferenceManager.GetReferenceList" />
         public ICollection<T> GetReferenceList<T>(object[] primaryKeys)
         {
-            var definition = _beanDescriptor.GetDefinition(typeof(T));
+            var definition = BeanDescriptor.GetDefinition(typeof(T));
             return GetReferenceList<T>()
                 .Where(bean => primaryKeys.Contains(definition.PrimaryKey.GetValue(bean)))
                 .ToList();
@@ -126,19 +121,24 @@ namespace Kinetix.Services
             return GetReferenceEntry(typeof(T).Name).GetReferenceObject(predicate);
         }
 
+        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object, Expression{Func{T, object}})" />
         public string GetReferenceValue<T>(object primaryKey, Expression<Func<T, object>> propertySelector = null)
         {
-            return GetReferenceValue(GetReferenceObject<T>(primaryKey), propertySelector);
+            return primaryKey == null
+                ? null
+                : GetReferenceValue(GetReferenceObject<T>(primaryKey), propertySelector);
         }
 
+        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(Func{T, bool}, Expression{Func{T, object}})" />
         public string GetReferenceValue<T>(Func<T, bool> predicate, Expression<Func<T, object>> propertySelector = null)
         {
             return GetReferenceValue(GetReferenceObject(predicate), propertySelector);
         }
 
+        /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(T, Expression{Func{T, object}}) />
         public string GetReferenceValue<T>(T reference, Expression<Func<T, object>> propertySelector = null)
         {
-            var definition = _beanDescriptor.GetDefinition(reference);
+            var definition = BeanDescriptor.GetDefinition(reference);
             var property = definition.DefaultProperty;
 
             if (propertySelector?.Body is MemberExpression mb && mb.Member != null)
@@ -146,7 +146,15 @@ namespace Kinetix.Services
                 property = definition.Properties[mb.Member.Name];
             }
 
-            return property.ConvertToString(property.GetValue(reference));
+            return property.GetValue(reference).ToString();
+        }
+
+        /// <inheritdoc cref="IReferenceManager.GetReferenceValue(Type, object) />
+        public string GetReferenceValue(Type type, object primaryKey)
+        {
+            return primaryKey == null
+                ? null
+                : GetReferenceValue(GetReferenceEntry(type.Name).GetReferenceObject(primaryKey));
         }
 
         /// <summary>
@@ -181,6 +189,7 @@ namespace Kinetix.Services
                         ReferenceType = returnType.GetGenericArguments()[0],
                         Name = attribute.Name ?? returnType.GetGenericArguments()[0].Name
                     };
+
                     if (_referenceAccessors.ContainsKey(accessor.Name))
                     {
                         throw new NotSupportedException();
@@ -199,17 +208,15 @@ namespace Kinetix.Services
         private ReferenceCache GetCacheByType(Type type)
         {
             var attr = type.GetCustomAttribute<ReferenceAttribute>();
-            if (attr == null)
-            {
-                throw new NotSupportedException($"Le type {type} n'est pas une liste de référence.");
-            }
-
-            return _cache.GetOrCreate(attr.IsStatic ? StaticListsCache : ReferenceListsCache, cacheEntry =>
-            {
-                cacheEntry.AbsoluteExpirationRelativeToNow = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
-                return new ReferenceCache();
-            });
+            return attr == null
+                ? throw new NotSupportedException($"Le type {type} n'est pas une liste de référence.")
+                : _cache.GetOrCreate(attr.IsStatic ? StaticListsCache : ReferenceListsCache, cacheEntry =>
+                {
+                    cacheEntry.AbsoluteExpirationRelativeToNow = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
+                    return new ReferenceCache();
+                });
         }
+
 
         /// <summary>
         /// Récupère l'entrée du cache associé à la référence demandée.
@@ -245,7 +252,7 @@ namespace Kinetix.Services
         private ReferenceEntry BuildReferenceEntry(string referenceName)
         {
             var referenceList = InvokeReferenceAccessor(referenceName);
-            return new ReferenceEntry(referenceList, _beanDescriptor.GetDefinition(GetTypeFromName(referenceName)));
+            return new ReferenceEntry(referenceList, BeanDescriptor.GetDefinition(GetTypeFromName(referenceName)));
         }
 
         /// <summary>
@@ -266,12 +273,9 @@ namespace Kinetix.Services
             var list = accessor.Method.Invoke(service, null);
 
             var coll = (ICollection)list;
-            if (coll == null)
-            {
-                throw new ArgumentException(list.GetType().Name);
-            }
-
-            return coll.Cast<object>().ToList();
+            return coll == null
+                ? throw new ArgumentException(list.GetType().Name)
+                : coll.Cast<object>().ToList();
         }
     }
 }

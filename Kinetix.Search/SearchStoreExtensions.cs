@@ -32,24 +32,50 @@ namespace Kinetix.Search
         public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, Func<TDocument, TOutput> documentMapper)
             where TDocument : class
         {
-            if (string.IsNullOrEmpty(queryInput.Query))
+            return store.Query(queryInput, new Criteria { Query = queryInput.Query }, documentMapper);
+        }
+
+        /// <summary>
+        /// Effectue une requête sur le champ texte.
+        /// </summary>
+        /// <param name="store">Store de recherche.</param>
+        /// <param name="criteria">Critère de recherche.</param>
+        /// <param name="documentMapper">Mapper de document.</param>
+        /// <returns>Résultat.</returns>
+        public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, TCriteria criteria, Func<TDocument, TOutput> documentMapper)
+            where TDocument : class
+            where TCriteria : Criteria, new()
+        {
+            return store.Query(null, criteria, documentMapper);
+        }
+
+        /// <summary>
+        /// Effectue une requête sur le champ texte.
+        /// </summary>
+        /// <param name="store">Store de recherche.</param>
+        /// <param name="queryInput">Query input.</param>
+        /// <param name="criteria">Critère de recherche.</param>
+        /// <param name="documentMapper">Mapper de document.</param>
+        /// <returns>Résultat.</returns>
+        public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, TCriteria criteria, Func<TDocument, TOutput> documentMapper)
+            where TDocument : class
+            where TCriteria : Criteria, new()
+        {
+            if (string.IsNullOrEmpty(criteria.Query))
             {
                 return (new List<TOutput>(), 0);
             }
 
-            var input = new AdvancedQueryInput<TDocument, Criteria>
+            var input = new AdvancedQueryInput<TDocument, TCriteria>
             {
-                ApiInput = new QueryInput
+                ApiInput = new QueryInput<TCriteria>
                 {
-                    Criteria = new Criteria
-                    {
-                        Query = queryInput.Query
-                    },
+                    Criteria = criteria,
                     Skip = 0,
-                    Top = queryInput.Top ?? 10
+                    Top = queryInput?.Top ?? 10
                 },
-                Security = queryInput.Security,
-                AdditionalCriteria = queryInput.Criteria
+                Security = queryInput?.Security,
+                AdditionalCriteria = queryInput?.Criteria
             };
 
             var output = store.AdvancedQuery(input, documentMapper);

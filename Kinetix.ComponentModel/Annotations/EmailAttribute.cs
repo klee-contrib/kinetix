@@ -8,7 +8,7 @@ namespace Kinetix.ComponentModel.Annotations
     /// <summary>
     /// Attribut de validation lié aux emails.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public sealed class EmailAttribute : StringLengthAttribute
     {
         /// <summary>

@@ -1,4 +1,6 @@
-﻿namespace Kinetix.Search.ComponentModel
+﻿using System.Collections.Generic;
+
+namespace Kinetix.Search.ComponentModel
 {
     /// <summary>
     /// Entrée d'une recherche avancée.
@@ -10,11 +12,11 @@
         /// <summary>
         /// Liste des facettes.
         /// </summary>
-        public FacetListInput Facets
+        public IDictionary<string, FacetInput> Facets
         {
             get;
             set;
-        }
+        } = new Dictionary<string, FacetInput>();
 
         /// <summary>
         /// Critères de recherche.
@@ -23,7 +25,7 @@
         {
             get;
             set;
-        }
+        } = new TCriteria();
 
         /// <summary>
         /// Nom du champ pour grouper (parmi les noms de facettes).
@@ -55,7 +57,7 @@
         /// <summary>
         /// Nombre d'éléments à sauter pour la pagination.
         /// </summary>
-        public int? Skip
+        public int Skip
         {
             get;
             set;

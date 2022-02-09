@@ -1,26 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Elasticsearch.Net;
-using Kinetix.Search.Elastic.Querying;
 using Kinetix.Search.MetaModel;
 using Microsoft.Extensions.Logging;
 using Nest;
 
 namespace Kinetix.Search.Elastic
 {
-    using static AdvancedQueryUtil;
-
     public class ElasticBulkDescriptor : ISearchBulkDescriptor
     {
         private int _operationCount = 0;
 
-        private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor();
+        private readonly SearchAnalytics _analytics;
+        private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor()
+            .Timeout(TimeSpan.FromMinutes(1))
+            .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(1)));
         private readonly ElasticClient _client;
         private readonly DocumentDescriptor _documentDescriptor;
         private readonly ILogger<ElasticStore> _logger;
 
-        internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger)
+        internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger, SearchAnalytics analytics)
         {
+            _analytics = analytics;
             _documentDescriptor = documentDescriptor;
             _client = client;
             _logger = logger;
@@ -32,6 +34,7 @@ namespace Kinetix.Search.Elastic
         {
             _bulkDescriptor.Delete<TDocument>(d => d.Id(id));
             _operationCount++;
+            _analytics.CountDelete(1);
 
             return this;
         }
@@ -43,6 +46,7 @@ namespace Kinetix.Search.Elastic
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
             _bulkDescriptor.Delete<TDocument>(d => d.Id(def.PrimaryKey.GetValue(bean).ToString()));
             _operationCount++;
+            _analytics.CountDelete(1);
 
             return this;
         }
@@ -55,6 +59,7 @@ namespace Kinetix.Search.Elastic
             {
                 _bulkDescriptor.DeleteMany<TDocument>(ids, (d, id) => d.Id(id));
                 _operationCount++;
+                _analytics.CountDelete(ids.Count());
             }
 
             return this;
@@ -71,6 +76,7 @@ namespace Kinetix.Search.Elastic
                     beans.Select(bean => def.PrimaryKey.GetValue(bean).ToString()),
                     (d, id) => d.Id(id));
                 _operationCount++;
+                _analytics.CountDelete(beans.Count());
             }
 
             return this;
@@ -84,8 +90,9 @@ namespace Kinetix.Search.Elastic
             {
                 var def = _documentDescriptor.GetDefinition(typeof(TDocument));
                 var id = def.PrimaryKey.GetValue(document).ToString();
-                _bulkDescriptor.Index<TDocument>(y => y.Document(FormatSortFields(def, document)).Id(id));
+                _bulkDescriptor.Index<TDocument>(y => y.Document(document).Id(id));
                 _operationCount++;
+                _analytics.CountIndex(1);
             }
 
             return this;
@@ -99,22 +106,25 @@ namespace Kinetix.Search.Elastic
             {
                 var def = _documentDescriptor.GetDefinition(typeof(TDocument));
                 _bulkDescriptor.IndexMany(
-                    documents.Select(document => FormatSortFields(def, document)),
+                    documents,
                     (b, document) => b.Id(def.PrimaryKey.GetValue(document).ToString()));
                 _operationCount++;
+                _analytics.CountIndex(documents.Count());
             }
 
             return this;
         }
 
         /// <inheritdoc cref="ISearchBulkDescriptor.Run" />
-        public void Run(bool refresh = true)
+        public int Run(bool refresh = true)
         {
             if (_operationCount > 0)
             {
-                _logger.LogQuery($"Index {_operationCount}", () =>
-                    _client.Bulk(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False)));
+                _logger.LogQuery(_analytics, $"Index {_operationCount}", () =>
+                     _client.Bulk(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False)));
             }
+
+            return _operationCount;
         }
     }
 }

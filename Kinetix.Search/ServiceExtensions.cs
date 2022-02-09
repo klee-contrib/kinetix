@@ -1,4 +1,6 @@
-﻿using Kinetix.Search.MetaModel;
+using Kinetix.Monitoring;
+using Kinetix.Search.MetaModel;
+using Kinetix.Services.DependencyInjection.Interceptors;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Search
@@ -8,11 +10,35 @@ namespace Kinetix.Search
     /// </summary>
     public static class ServiceExtensions
     {
-        public static IServiceCollection AddSearch(this IServiceCollection services, string defaultDataSourceName)
+        public static IServiceCollection AddSearch(this IServiceCollection services, bool flushOnCommit)
         {
-            return services
+            services
                 .AddSingleton<DocumentDescriptor>()
-                .AddScoped<IndexManager>();
+                .AddScoped<IndexManager>()
+                .AddScoped<SearchAnalytics>()
+                .AddScoped<IAnalytics, SearchAnalytics>();
+
+            if (flushOnCommit)
+            {
+                services.AddScoped<IOnBeforeCommit, FlushOnBeforeCommit>();
+            }
+
+            return services;
+        }
+    }
+
+    public class FlushOnBeforeCommit : IOnBeforeCommit
+    {
+        private readonly IndexManager _indexManager;
+
+        public FlushOnBeforeCommit(IndexManager indexManager)
+        {
+            _indexManager = indexManager;
+        }
+
+        public void OnBeforeCommit()
+        {
+            _indexManager.Flush();
         }
     }
 }

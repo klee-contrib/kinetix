@@ -101,5 +101,12 @@ namespace Kinetix.Services
         /// <param name="reference">L'object dont on veut la valeur.</param>
         /// <param name="propertySelector">Une expression pour sélectionner une autre propriété de valeur.</param>
         string GetReferenceValue<T>(T reference, Expression<Func<T, object>> propertySelector = null);
+
+        /// <summary>
+        /// Récupère la valeur d'un objet d'une liste de référence.
+        /// </summary>
+        /// <param name="type">Le type de la liste de référence.</param>
+        /// <param name="primaryKey">Une clé primaire.</param>
+        string GetReferenceValue(Type type, object primaryKey);
     }
 }

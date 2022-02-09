@@ -59,7 +59,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// Ajoute une exception à la liste des erreurs.
         /// </summary>
         /// <param name="ce">Exception.</param>
-        public void AddConstraintException(ConstraintException ce)
+        public void AddConstraintException(BusinessException ce)
         {
             if (ce == null)
             {
@@ -86,7 +86,7 @@ namespace Kinetix.ComponentModel.Exceptions
         /// <param name="message">Le message de l'exception.</param>
         public void AddConstraintException(string message)
         {
-            AddConstraintException(new ConstraintException(message));
+            AddConstraintException(new BusinessException(message));
         }
 
         /// <summary>
@@ -120,6 +120,18 @@ namespace Kinetix.ComponentModel.Exceptions
         }
 
         /// <summary>
+        /// Ajoute des entrées à la pile d'erreur.
+        /// </summary>
+        /// <param name="errorMessages">Message d'erreur.</param>
+        public void AddEntries(ErrorMessageCollection errorMessages)
+        {
+            foreach (var message in errorMessages)
+            {
+                _entryList.Add(message);
+            }
+        }
+
+        /// <summary>
         /// Ajoute une pile d'erreur à la pile courante.
         /// </summary>
         /// <param name="fieldPrefix">Préfixe à utiliser.</param>
@@ -144,7 +156,7 @@ namespace Kinetix.ComponentModel.Exceptions
         {
             if (HasError)
             {
-                throw new ConstraintException(this);
+                throw new BusinessException(this);
             }
         }
 

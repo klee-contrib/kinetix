@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using Kinetix.Search.ComponentModel;
+using Kinetix.Search.Attributes;
 
 namespace Kinetix.Search.MetaModel
 {
@@ -28,12 +29,51 @@ namespace Kinetix.Search.MetaModel
         /// <returns>Description des propriétés.</returns>
         public DocumentDefinition GetDefinition(Type beanType)
         {
-            if (beanType == null)
-            {
-                throw new ArgumentNullException("beanType");
-            }
+            return beanType == null
+                ? throw new ArgumentNullException("beanType")
+                : GetDefinitionInternal(beanType);
+        }
 
-            return GetDefinitionInternal(beanType);
+        private IEnumerable<DocumentFieldDescriptor> GetProperties(Type beanType, string prefix = null, bool isMultiValued = false)
+        {
+            foreach (var property in beanType.GetProperties())
+            {
+                var fieldName = ToCamelCase(property.Name);
+                var isArray = property.PropertyType.IsArray;
+                var propertyType = Nullable.GetUnderlyingType(property.PropertyType)
+                    ?? (property.PropertyType.IsArray
+                        ? property.PropertyType.GetElementType()
+                        : property.PropertyType);
+
+                if (propertyType.GetProperties().Any(prop => prop.GetCustomAttribute<SearchFieldAttribute>() != null))
+                {
+                    foreach (var subProperty in GetProperties(propertyType, prefix != null ? $"{prefix}.{fieldName}" : fieldName, isArray || isMultiValued))
+                    {
+                        yield return subProperty;
+                    }
+                }
+                else
+                {
+                    var searchAttr = property.GetCustomAttribute<SearchFieldAttribute>();
+                    var dateAttr = property.GetCustomAttribute<PartialRebuildDatePropertyAttribute>();
+
+                    var description = new DocumentFieldDescriptor
+                    {
+                        PropertyName = property.Name,
+                        FieldName = prefix != null ? $"{prefix}.{fieldName}" : fieldName,
+                        PropertyType = propertyType,
+                        Category = searchAttr?.Category ?? SearchFieldCategory.None,
+                        Indexing = searchAttr?.Indexing ?? SearchFieldIndexing.None,
+                        PkOrder = searchAttr?.PkOrder ?? 0,
+                        IsPartialRebuildDate = dateAttr != null,
+                        IsMultiValued = isArray || isMultiValued
+                    };
+
+                    yield return description.IsPartialRebuildDate && description.PropertyType != typeof(DateTime)
+                        ? throw new NotSupportedException($"{beanType}: the {description.FieldName} property must be of type 'DateTime'.")
+                        : description;
+                }
+            }
         }
 
         /// <summary>
@@ -44,26 +84,19 @@ namespace Kinetix.Search.MetaModel
         private DocumentFieldDescriptorCollection CreateCollection(Type beanType)
         {
             var coll = new DocumentFieldDescriptorCollection(beanType);
-
-            foreach (var property in beanType.GetProperties())
+            foreach (var description in GetProperties(beanType))
             {
-                var searchAttr = property.GetCustomAttribute<SearchFieldAttribute>();
+                coll[description.FieldName] = description;
+            }
 
-                var fieldName = ToCamelCase(property.Name);
-                var description = new DocumentFieldDescriptor
-                {
-                    PropertyName = property.Name,
-                    FieldName = fieldName,
-                    PropertyType = Nullable.GetUnderlyingType(property.PropertyType)
-                        ?? (property.PropertyType.IsArray
-                            ? property.PropertyType.GetElementType()
-                            : property.PropertyType),
-                    Category = searchAttr?.Category ?? SearchFieldCategory.None,
-                    Indexing = searchAttr?.Indexing ?? SearchFieldIndexing.None,
-                    PkOrder = searchAttr?.PkOrder ?? 0
-                };
+            if (coll.Count(prop => prop.Category == SearchFieldCategory.Security) > 1)
+            {
+                throw new NotSupportedException($"{beanType} has multiple security properties");
+            }
 
-                coll[description.PropertyName] = description;
+            if (coll.Count(d => d.IsPartialRebuildDate) > 1)
+            {
+                throw new NotSupportedException($"{beanType} has multiple partial rebuild date properties.");
             }
 
             return coll;

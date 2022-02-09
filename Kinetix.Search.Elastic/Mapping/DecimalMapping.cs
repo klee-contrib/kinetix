@@ -1,5 +1,5 @@
 ﻿using System;
-using Kinetix.Search.ComponentModel;
+using Kinetix.Search.Attributes;
 using Kinetix.Search.MetaModel;
 using Nest;
 
@@ -17,18 +17,12 @@ namespace Kinetix.Search.Elastic.Mapping
             switch (field.Indexing)
             {
                 case SearchFieldIndexing.FullText:
-                    return selector.Text(x => x
-                        .Name(field.FieldName)
-                        .Analyzer("text")
-                        .SearchAnalyzer("search_text"));
+                    return selector.Text(x => x.Name(field.FieldName).Analyzer("text").SearchAnalyzer("search_text"));
                 case SearchFieldIndexing.Term:
                 case SearchFieldIndexing.Sort:
-                    return selector.Number(x => x
-                        .Name(field.FieldName));
+                    return selector.Number(x => x.Name(field.FieldName));
                 case SearchFieldIndexing.None:
-                    return selector.Number(x => x
-                        .Name(field.FieldName)
-                        .Index(false));
+                    return selector.Number(x => x.Name(field.FieldName).Index(false));
                 default:
                     throw new NotSupportedException();
             }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Search.Model;
+using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search
 {
@@ -11,9 +12,10 @@ namespace Kinetix.Search
     public interface ISearchStore
     {
         /// <summary>
-        /// Créé l'index.
+        /// S'assure que l'index existe, avec le mapping à jour.
         /// </summary>
-        void CreateDocumentType<TDocument>()
+        /// <returns>True si l'index a été (re)créé.</returns>
+        bool EnsureIndex<TDocument>()
             where TDocument : class;
 
         /// <summary>
@@ -42,28 +44,34 @@ namespace Kinetix.Search
         /// Supprime un document de l'index.
         /// </summary>
         /// <param name="id">ID du document.</param>
-        void Delete<TDocument>(string id)
+        /// <param name="refresh">Attends ou non la réindexation.</param>
+        void Delete<TDocument>(string id, bool refresh = true)
             where TDocument : class;
 
         /// <summary>
         /// Supprime un document de l'index.
         /// </summary>
         /// <param name="bean">La clé composite.</param>
-        void Delete<TDocument>(TDocument bean)
+        /// <param name="refresh">Attends ou non la réindexation.</param>
+        void Delete<TDocument>(TDocument bean, bool refresh = true)
             where TDocument : class;
 
         /// <summary>
         /// Pose un document dans l'index.
         /// </summary>
         /// <param name="document">Document à poser.</param>
-        void Index<TDocument>(TDocument document)
+        /// <param name="refresh">Attends ou non la réindexation.</param>
+        void Index<TDocument>(TDocument document, bool refresh = true)
             where TDocument : class;
 
         /// <summary>
         /// Réinitialise l'index avec les documents fournis.
         /// </summary>
-        /// <param name="documentList">Liste de documents.</param>
-        void IndexAll<TDocument>(IEnumerable<TDocument> documentList)
+        /// <param name="documents">Documents.</param>
+        /// <param name="partialRebuild">Reconstruction partielle (si un index à jour existe déjà).</param>
+        /// <param name="rebuildLogger">Logger custom pour suivre l'avancement de la réindexation.</param>
+        /// <returns>Le nombre de documents.</returns>
+        int ResetIndex<TDocument>(IEnumerable<TDocument> documents, bool partialRebuild, ILogger rebuildLogger = null)
             where TDocument : class;
 
         /// <summary>

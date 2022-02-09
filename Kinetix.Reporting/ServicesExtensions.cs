@@ -12,7 +12,7 @@ namespace Kinetix.Reporting
         /// <returns>ServiceCollection.</returns>
         public static IServiceCollection AddReporting(this IServiceCollection services)
         {
-            return services.AddSingleton<IReportBuilder, ReportBuilder>();
+            return services.AddScoped<IReportBuilder, ReportBuilder>();
         }
     }
 }

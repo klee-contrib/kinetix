@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Kinetix.Search.Elastic.Mapping;
 using Kinetix.Search.MetaModel;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,7 +33,7 @@ namespace Kinetix.Search.Elastic
         public PropertiesDescriptor<T> AddFields<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptorCollection fields)
              where T : class
         {
-            foreach (var field in fields)
+            foreach (var field in fields.OrderBy(field => field.FieldName))
             {
                 AddField(selector, field);
             }

@@ -1,91 +1,83 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Kinetix.ComponentModel;
 using Kinetix.Search.ComponentModel;
 using Kinetix.Services;
 
 namespace Kinetix.Search.Model
 {
-    public abstract class ReferenceFacet : IFacetDefinition
+    /// <summary>
+    /// Facette de référence.
+    /// </summary>
+    /// <typeparam name="TDocument">Type de document.</typeparam>
+    public abstract class ReferenceFacet<TDocument> : TermFacet<TDocument>
     {
-        /// <inheritdoc />
-        public string Code { get; set; }
-
-        /// <inheritdoc />
-        public string Label { get; set; }
-
-        /// <inheritdoc />
-        public string FieldName { get; set; }
-
-        /// <inheritdoc />
-        public bool IsMultiSelectable { get; set; } = false;
-
-        /// <inheritdoc />
-        public bool HasMissing { get; set; } = true;
-
-        /// <inheritdoc />
-        public FacetOrdering Ordering { get; set; } = FacetOrdering.CountDescending;
+        /// <summary>
+        /// Constructeur.
+        /// </summary>
+        /// <param name="code">Code de la facette.</param>
+        /// <param name="label">Libellé de la facette.</param>
+        /// <param name="field">Champ sur lequel agit la facette.</param>
+        protected ReferenceFacet(string code, string label, Expression<Func<TDocument, object>> field)
+            : base(code, label, field)
+        {
+        }
 
         /// <summary>
         /// Affiche l'intégralité des valeurs de la liste de référence dans les résultats de facettes, même si les buckets sont vides.
-        /// Nécessite le BeanDescriptor.
         /// </summary>
         public bool ShowEmptyReferenceValues { get; set; } = false;
-
-        /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
-        public abstract string ResolveLabel(object primaryKey);
 
         /// <summary>
         /// Récupère la liste de référence associée à la facette.
         /// </summary>
         /// <returns></returns>
-        public abstract IEnumerable<FacetItem> GetReferenceList();
+        public abstract IList<FacetItem> GetReferenceList();
     }
 
     /// <summary>
     /// Facette de référence.
     /// </summary>
+    /// <typeparam name="TDocument">Type de document.</typeparam>
     /// <typeparam name="T">Type de la référence.</typeparam>
-    public class ReferenceFacet<T> : ReferenceFacet
+    public class ReferenceFacet<TDocument, T> : ReferenceFacet<TDocument>
         where T : new()
     {
         private readonly IReferenceManager _referenceManager;
-        private readonly BeanDescriptor _beanDescriptor;
 
         /// <summary>
-        /// Construit une facette de liste de référénce.
+        /// Constructeur.
         /// </summary>
         /// <param name="referenceManager">ReferenceManager.</param>
-        /// <param name="beanDescriptor">BeanDescriptor, nécessaire si ShowEmptyReferenceValues = true.</param>
-        public ReferenceFacet(IReferenceManager referenceManager, BeanDescriptor beanDescriptor = null)
+        /// <param name="code">Code de la facette.</param>
+        /// <param name="label">Libellé de la facette.</param>
+        /// <param name="field">Champ sur lequel agit la facette.</param>
+        public ReferenceFacet(IReferenceManager referenceManager, string code, string label, Expression<Func<TDocument, object>> field)
+            : base(code, label, field)
         {
             _referenceManager = referenceManager;
-            _beanDescriptor = beanDescriptor;
         }
 
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
-        public override string ResolveLabel(object primaryKey)
+        public override string ResolveLabel(string primaryKey)
         {
             return _referenceManager.GetReferenceValue<T>(primaryKey);
         }
 
         /// <inheritdoc />
-        public override IEnumerable<FacetItem> GetReferenceList()
+        public override IList<FacetItem> GetReferenceList()
         {
-            if (_beanDescriptor == null)
-            {
-                throw new InvalidOperationException($"Veuillez renseigner le BeanDescriptor avec ShowEmptyReferenceValues = true pour la facette sur le type {typeof(T).Name}");
-            }
-
-            var def = _beanDescriptor.GetDefinition(typeof(T));
+            var def = BeanDescriptor.GetDefinition(typeof(T));
             return _referenceManager.GetReferenceList<T>()
                 .Select(item => new FacetItem
                 {
                     Code = def.PrimaryKey.GetValue(item).ToString(),
                     Label = (string)def.DefaultProperty.GetValue(item),
                     Count = 0
-                });
+                })
+                .ToList();
         }
     }
 }

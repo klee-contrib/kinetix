@@ -11,7 +11,7 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Liste de résultats (cas d'une recherche sans groupe).
         /// </summary>
-        public ICollection<TDocument> List
+        public IList<TDocument> List
         {
             get;
             set;
@@ -20,7 +20,7 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Groupe de liste de résultats (cas d'une recherche avec groupe).
         /// </summary>
-        public ICollection<GroupResult<TDocument>> Groups
+        public IList<GroupResult<TDocument>> Groups
         {
             get;
             set;
@@ -29,7 +29,16 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Facettes sélectionnées.
         /// </summary>
-        public ICollection<FacetOutput> Facets
+        public IList<FacetOutput> Facets
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Champs de recherche disponibles.
+        /// </summary>
+        public IList<string> SearchFields
         {
             get;
             set;

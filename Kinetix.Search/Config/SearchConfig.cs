@@ -11,6 +11,8 @@ namespace Kinetix.Search.Config
     {
         public Dictionary<string, SearchConfigItem> Servers { get; set; }
 
+        public int ClusterSize { get; set; } = 5000;
+
         public string GetIndexNameForType(string dataSourceName, Type documentType)
         {
             var connSettings = GetServer(dataSourceName);

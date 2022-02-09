@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Kinetix.Services.DependencyInjection;
 
 namespace Kinetix.Services
 {
@@ -9,24 +10,59 @@ namespace Kinetix.Services
     /// </summary>
     public class ServicesConfig
     {
-        /// <summary>
-        /// Préfixe des assemblies de services à charger.
-        /// </summary>
-        public string ServiceAssemblyPrefix { get; set; }
+        internal string ServiceAssemblyPrefix { get; set; }
+        internal List<Assembly> ServiceAssemblies { get; } = new List<Assembly>();
+
+        internal TimeSpan ReferenceListCacheDuration { get; private set; } = TimeSpan.FromMinutes(10);
+        internal TimeSpan StaticListCacheDuration { get; private set; } = TimeSpan.FromHours(1);
 
         /// <summary>
-        /// Assemblies de services.
+        /// Permet de remplacer les intercepteurs posés par défaut.
         /// </summary>
-        public ICollection<Assembly> ServiceAssemblies { get; set; }
+        public Func<Type, Action<InterceptionOptions>> InterceptionOptions { get; set; }
 
         /// <summary>
-        /// Durée du cache de listes statiques.
+        /// Enregistre des assemblies à parcourir pour enregistrer des services.
         /// </summary>
-        public TimeSpan? StaticListCacheDuration { get; set; }
+        /// <param name="assemblies">Assemblies.</param>
+        /// <returns>Config.</returns>
+        public ServicesConfig AddAssemblies(params Assembly[] assemblies)
+        {
+            ServiceAssemblies.AddRange(assemblies);
+            return this;
+        }
 
         /// <summary>
-        /// Durée du cache de listes de références.
+        /// Remplace les intercepteurs posés par défaut, en fonction du type de service.
         /// </summary>
-        public TimeSpan? ReferenceListCacheDuration { get; set; }
+        /// <param name="options">Fonction déterminant les intercepteurs à poser par type.</param>
+        /// <returns>Config.</returns>
+        public ServicesConfig WithInterceptors(Func<Type, Action<InterceptionOptions>> options)
+        {
+            InterceptionOptions = options;
+            return this;
+        }
+
+        /// <summary>
+        /// Spécifie la durée du cache des listes de référence non statiques.
+        /// </summary>
+        /// <param name="duration">Durée.</param>
+        /// <returns>Config.</returns>
+        public ServicesConfig WithReferenceListCacheDuration(TimeSpan duration)
+        {
+            ReferenceListCacheDuration = duration;
+            return this;
+        }
+
+        /// <summary>
+        /// Spécifie la durée du cache des listes statiques.
+        /// </summary>
+        /// <param name="duration">Durée.</param>
+        /// <returns>Config.</returns>
+        public ServicesConfig WithStaticListCacheDuration(TimeSpan duration)
+        {
+            StaticListCacheDuration = duration;
+            return this;
+        }
     }
 }

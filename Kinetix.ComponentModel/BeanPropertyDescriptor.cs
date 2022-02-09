@@ -11,8 +11,7 @@ namespace Kinetix.ComponentModel
     /// </summary>
     public sealed class BeanPropertyDescriptor
     {
-        private IDomainChecker _domainChecker;
-        private IDomainManager _domainManager;
+        private IDomain _domainChecker;
 
         /// <summary>
         /// Crée une nouvelle instance.
@@ -30,12 +29,11 @@ namespace Kinetix.ComponentModel
         /// <param name="isReadOnly"><code>True</code> si la propriété est en lecture seule, <code>False</code> sinon.</param>
         /// <param name="isBrowsable">Indique si la propriété est affichable.</param>
         internal BeanPropertyDescriptor(
-            IDomainManager domainManager,
             string propertyName,
             string memberName,
             Type propertyType,
             string description,
-            string domainName,
+            Enum domainName,
             bool isPrimaryKey,
             bool isDefault,
             bool isRequired,
@@ -43,7 +41,6 @@ namespace Kinetix.ComponentModel
             bool isReadOnly,
             bool isBrowsable)
         {
-            _domainManager = domainManager;
             PropertyName = propertyName;
             MemberName = memberName;
             PropertyType = propertyType;
@@ -72,7 +69,7 @@ namespace Kinetix.ComponentModel
         /// <summary>
         /// Obtient le nom du domaine.
         /// </summary>
-        public string DomainName
+        public Enum DomainName
         {
             get;
             private set;
@@ -174,11 +171,6 @@ namespace Kinetix.ComponentModel
         }
 
         /// <summary>
-        /// Retourne l'unité associée au format.
-        /// </summary>
-        public string Unit => Domain?.Unit;
-
-        /// <summary>
         /// Retourne si la propriété est en lecture seule.
         /// </summary>
         public bool IsReadOnly
@@ -190,13 +182,13 @@ namespace Kinetix.ComponentModel
         /// <summary>
         /// Retourne le domaine associé à la propriété.
         /// </summary>
-        public IDomainChecker Domain
+        public IDomain Domain
         {
             get
             {
                 if (_domainChecker == null)
                 {
-                    _domainChecker = _domainManager.GetDomain(this);
+                    _domainChecker = DomainManager.GetDomain(this);
                 }
 
                 return _domainChecker;
@@ -234,12 +226,6 @@ namespace Kinetix.ComponentModel
                 return;
             }
 
-            if (value is ExtendedValue extValue)
-            {
-                CheckValueType(extValue.Value);
-                return;
-            }
-
             throw new NotSupportedException(string.Format(
                 CultureInfo.CurrentUICulture,
                 SR.ExceptionTypeDescription,
@@ -247,46 +233,13 @@ namespace Kinetix.ComponentModel
         }
 
         /// <summary>
-        /// Convertit une chaine de texte en valeur.
-        /// </summary>
-        /// <param name="value">Chaine de caractère.</param>
-        /// <returns>Valeur.</returns>
-        public object ConvertFromString(string value)
-        {
-            return Domain.ConvertFromString(value, this);
-        }
-
-        /// <summary>
-        /// Convertit la valeur d'une propriété en string.
-        /// </summary>
-        /// <param name="value">Valeur.</param>
-        /// <returns>Chaine de texte.</returns>
-        public string ConvertToString(object value)
-        {
-            return Domain.ConvertToString(value, this);
-        }
-
-        /// <summary>
         /// Retourne la valeur de la propriété pour un objet.
         /// </summary>
         /// <param name="bean">Objet.</param>
-        /// <param name="noExtendedValue">Si <code>True</code> alors retourne la valeur associée à l'ExtendedValue, sinon la valeur réelle de la propriété.</param>
         /// <returns>Valeur.</returns>
-        public object GetValue(object bean, bool noExtendedValue = false)
+        public object GetValue(object bean)
         {
-            var value = TypeDescriptor.GetProperties(bean)[PropertyName].GetValue(bean);
-            if (noExtendedValue || Domain == null || Domain.MetadataPropertySuffix == null)
-            {
-                return value;
-            }
-
-            var propertyDescriptor = TypeDescriptor.GetProperties(bean)[PropertyName + Domain.MetadataPropertySuffix];
-            if (propertyDescriptor == null)
-            {
-                throw new NotSupportedException("ExtendedValue requires a " + PropertyName + Domain.MetadataPropertySuffix + " property to enable automatic precision.");
-            }
-
-            return new ExtendedValue(value, propertyDescriptor.GetValue(bean));
+            return TypeDescriptor.GetProperties(bean)[PropertyName].GetValue(bean);
         }
 
         /// <summary>
@@ -303,16 +256,8 @@ namespace Kinetix.ComponentModel
                 throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, SR.ReadOnlyProperty, PropertyName));
             }
 
-            if (Domain == null || Domain.MetadataPropertySuffix == null)
-            {
-                descriptor.SetValue(bean, value);
-                return;
-            }
-
-            var extValue = (ExtendedValue)value;
-            descriptor.SetValue(bean, extValue.Value);
-            var metadataDescriptor = TypeDescriptor.GetProperties(bean)[PropertyName + Domain.MetadataPropertySuffix];
-            metadataDescriptor.SetValue(bean, extValue.Metadata);
+            descriptor.SetValue(bean, value);
+            return;
         }
 
         /// <summary>
@@ -356,16 +301,9 @@ namespace Kinetix.ComponentModel
             if (isRequired && checkNullValue)
             {
                 var c = new RequiredAttribute { AllowEmptyStrings = false, ErrorMessageResourceType = typeof(SR), ErrorMessageResourceName = "ConstraintNotNull" };
-                if (value is ExtendedValue extVal)
+                if (!c.IsValid(value))
                 {
-                    if (!c.IsValid(extVal.Value) || !c.IsValid(extVal.Metadata))
-                    {
-                        throw new ConstraintException(this, c.FormatErrorMessage(PropertyName));
-                    }
-                }
-                else if (!c.IsValid(value))
-                {
-                    throw new ConstraintException(this, c.FormatErrorMessage(PropertyName));
+                    throw new BusinessException(this, c.FormatErrorMessage(PropertyName));
                 }
             }
 

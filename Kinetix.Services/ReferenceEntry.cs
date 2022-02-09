@@ -56,6 +56,16 @@ namespace Kinetix.Services
         /// <returns>Objet.</returns>
         public T GetReferenceObject<T>(object primaryKey)
         {
+            return (T)GetReferenceObject(primaryKey);
+        }
+
+        /// <summary>
+        /// Retourne un objet de référence.
+        /// </summary>
+        /// <param name="primaryKey">Clé primaire.</param>
+        /// <returns>Objet.</returns>
+        public object GetReferenceObject(object primaryKey)
+        {
             /* Si on a la PK en string alors que c'est un ID, par ex depuis ElasticSearch. */
             if (_primaryKey.PrimitiveType == typeof(int) && primaryKey.GetType() == typeof(string))
             {
@@ -65,7 +75,7 @@ namespace Kinetix.Services
             /* Cherche la valeur pour la locale demandée. */
             if (_referenceMap.TryGetValue(primaryKey, out var value))
             {
-                return (T)value;
+                return value;
             }
             else
             {

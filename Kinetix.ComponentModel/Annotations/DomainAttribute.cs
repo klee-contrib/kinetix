@@ -12,20 +12,15 @@ namespace Kinetix.ComponentModel.Annotations
         /// Constructeur.
         /// </summary>
         /// <param name="name">Nom du domaine.</param>
-        public DomainAttribute(string name)
+        public DomainAttribute(object name)
         {
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentNullException("name");
-            }
-
-            Name = name;
+            Name = (Enum)name;
         }
 
         /// <summary>
         /// Obtient le nom du domaine.
         /// </summary>
-        public string Name
+        public Enum Name
         {
             get;
             private set;

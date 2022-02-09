@@ -1,5 +1,5 @@
 ﻿using System;
-using Kinetix.Search.ComponentModel;
+using Kinetix.Search.Attributes;
 using Kinetix.Search.MetaModel;
 using Nest;
 
@@ -16,13 +16,11 @@ namespace Kinetix.Search.Elastic.Mapping
         {
             switch (field.Indexing)
             {
+                case SearchFieldIndexing.Term:
                 case SearchFieldIndexing.Sort:
-                    return selector.Date(x => x
-                        .Name(field.FieldName));
+                    return selector.Date(x => x.Name(field.FieldName).Format("date_time_no_millis"));
                 case SearchFieldIndexing.None:
-                    return selector.Date(x => x
-                        .Name(field.FieldName)
-                        .Index(false));
+                    return selector.Date(x => x.Name(field.FieldName).Format("date_time_no_millis").Index(false));
                 default:
                     throw new NotSupportedException();
             }

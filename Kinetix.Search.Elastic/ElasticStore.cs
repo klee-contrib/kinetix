@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Kinetix.Search.ComponentModel;
-using Kinetix.Search.Elastic.Faceting;
+using Kinetix.Search.Config;
 using Kinetix.Search.Elastic.Querying;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
@@ -18,35 +18,43 @@ namespace Kinetix.Search.Elastic
     /// </summary>
     public class ElasticStore : ISearchStore
     {
-        /// <summary>
-        /// Taille de cluster pour l'insertion en masse.
-        /// </summary>
-        private const int ClusterSize = 1000;
-
+        private readonly SearchAnalytics _analytics;
         private readonly ElasticClient _client;
+        private readonly SearchConfig _config;
         private readonly DocumentDescriptor _documentDescriptor;
-        private readonly ILogger<ElasticStore> _logger;
+        private readonly ElasticManager _elasticManager;
+        private readonly FacetHandler _facetHandler;
         private readonly ElasticMappingFactory _factory;
-        private readonly IFacetHandler _portfolioHandler;
-        private readonly IFacetHandler _standardHandler;
+        private readonly ILogger<ElasticStore> _logger;
 
-        public ElasticStore(ILogger<ElasticStore> logger, DocumentDescriptor documentDescriptor, ElasticClient client, ElasticMappingFactory factory, StandardFacetHandler standardHandler, PortfolioFacetHandler portfolioHandler)
+        public ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, SearchAnalytics analytics, SearchConfig config)
         {
+            _analytics = analytics;
             _client = client;
+            _config = config;
             _documentDescriptor = documentDescriptor;
+            _elasticManager = elasticManager;
+            _facetHandler = facetHandler;
             _factory = factory;
             _logger = logger;
-            _portfolioHandler = portfolioHandler;
-            _standardHandler = standardHandler;
         }
 
-        /// <inheritdoc cref="ISearchStore.CreateDocumentType" />
-        public void CreateDocumentType<TDocument>()
+        /// <inheritdoc cref="ISearchStore.EnsureIndex" />
+        public bool EnsureIndex<TDocument>()
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            _logger.LogQuery("Map", () =>
-                _client.Map<TDocument>(x => x.Properties(selector => _factory.AddFields(selector, def.Fields))));
+            var mapping = new PutMappingDescriptor<TDocument>()
+                .Properties(selector => _factory.AddFields(selector, def.Fields));
+
+            var indexCreated = _elasticManager.InitIndex<TDocument, DefaultIndexConfigurator>(mapping);
+
+            if (indexCreated)
+            {
+                _logger.LogQuery(_analytics, "Map", () => _client.Map<TDocument>(_ => mapping));
+            }
+
+            return indexCreated;
         }
 
         /// <inheritdoc cref="ISearchStore.Get{TDocument}(string)" />
@@ -54,7 +62,7 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(id))).Source;
+            return _logger.LogQuery(_analytics, "Get", () => _client.Get(new DocumentPath<TDocument>(id))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore.Get{TDocument}(TDocument)" />
@@ -62,65 +70,75 @@ namespace Kinetix.Search.Elastic
             where TDocument : class
         {
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-            return _logger.LogQuery("Get", () => _client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValue(bean).ToString()))).Source;
+            return _logger.LogQuery(_analytics, "Get", () => _client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValue(bean).ToString()))).Source;
         }
 
         /// <inheritdoc cref="ISearchStore.Bulk" />
         public ISearchBulkDescriptor Bulk()
         {
-            return new ElasticBulkDescriptor(_documentDescriptor, _client, _logger);
+            return new ElasticBulkDescriptor(_documentDescriptor, _client, _logger, _analytics);
         }
 
         /// <inheritdoc cref="ISearchStore.Delete(string)" />
-        public void Delete<TDocument>(string id)
+        public void Delete<TDocument>(string id, bool refresh = true)
             where TDocument : class
         {
-            Bulk().Delete<TDocument>(id).Run();
+            Bulk().Delete<TDocument>(id).Run(refresh);
         }
 
         /// <inheritdoc cref="ISearchStore.Delete{TDocument}(TDocument)" />
-        public void Delete<TDocument>(TDocument bean)
+        public void Delete<TDocument>(TDocument bean, bool refresh = true)
             where TDocument : class
         {
-            Bulk().Delete(bean).Run();
+            Bulk().Delete(bean).Run(refresh);
         }
 
         /// <inheritdoc cref="ISearchStore.Index" />
-        public void Index<TDocument>(TDocument document)
+        public void Index<TDocument>(TDocument document, bool refresh = true)
             where TDocument : class
         {
-            Bulk().Index(document).Run();
+            Bulk().Index(document).Run(refresh);
         }
 
-        /// <inheritdoc cref="ISearchStore.IndexAll" />
-        public void IndexAll<TDocument>(IEnumerable<TDocument> documentList)
+        /// <inheritdoc cref="ISearchStore.ResetIndex" />
+        public int ResetIndex<TDocument>(IEnumerable<TDocument> documents, bool partialRebuild, ILogger rebuildLogger = null)
             where TDocument : class
         {
-            /* On vide l'index. */
-            _logger.LogQuery("DeleteAll", () => _client.DeleteByQuery<TDocument>(d => d));
+            var indexName = SearchConfig.GetTypeNameForIndex(typeof(TDocument));
+            var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
-            var documents = documentList.ToList();
-
-            if (!documents.Any())
+            /* On vide l'index des documents obsolètes. */
+            if (!partialRebuild || def.IgnoreOnPartialRebuild == null || def.IgnoreOnPartialRebuild.OlderThanDays > 0)
             {
-                return;
+                rebuildLogger?.LogInformation($"Deleting existing documents for {indexName}...");
+
+                var deleteRes = _logger.LogQuery(_analytics, "DeleteAllByQuery", () => _client.DeleteByQuery<TDocument>(d =>
+                    (partialRebuild && def.IgnoreOnPartialRebuild != null
+                        ? d.Query(q => q.DateRange(d => d
+                            .Field(def.PartialRebuildDate.FieldName)
+                            .GreaterThan(DateTime.UtcNow.Date.AddDays(-def.IgnoreOnPartialRebuild.OlderThanDays))))
+                        : d.Query(q => q.MatchAll()))
+                    .Timeout(TimeSpan.FromMinutes(5))
+                    .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(5)))));
+
+                rebuildLogger?.LogInformation($"{deleteRes.Deleted} documents deleted.");
             }
 
-            /* Découpage en cluster. */
-            var total = documents.Count;
-            var left = total % ClusterSize;
-            var clusterNb = (total - left) / ClusterSize + (left > 0 ? 1 : 0);
 
-            for (var i = 1; i <= clusterNb; i++)
+            rebuildLogger?.LogInformation($"Starting indexation for index {indexName}...");
+
+            /* Indexation en cluster */
+            var count = 0;
+            foreach (var cluster in documents.SelectCluster(_config.ClusterSize))
             {
-                /* Extraction du cluster. */
-                var cluster = documents
-                    .Skip((i - 1) * ClusterSize)
-                    .Take(ClusterSize);
-
-                /* Indexation en masse du cluster. */
                 Bulk().IndexMany(cluster).Run(false);
+                count += cluster.Count;
+                rebuildLogger?.LogInformation($"{count} documents indexed.");
             }
+
+            rebuildLogger?.LogInformation($"Indexation of index {indexName} is complete.");
+
+            return count;
         }
 
         /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
@@ -151,15 +169,15 @@ namespace Kinetix.Search.Elastic
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
             /* Facettage. */
-            var facetDefList = GetFacetDefinitionList(input, GetHandler);
+            var facetDefList = input.FacetQueryDefinition.Facets;
             var hasFacet = facetDefList.Any();
 
             /* Group */
-            var groupFieldName = GetGroupFieldName(def, input);
+            var groupFieldName = GetGroupFieldName(input);
             var hasGroup = !string.IsNullOrEmpty(input.ApiInput.Group);
 
-            var res = _logger.LogQuery("AdvancedQuery", () => _client.Search(
-                GetAdvancedQueryDescriptor(def, input, GetHandler, facetDefList, groupFieldName, filters)));
+            var res = _logger.LogQuery(_analytics, "AdvancedQuery", () => _client.Search(
+                GetAdvancedQueryDescriptor(def, input, _facetHandler, facetDefList, groupFieldName, filters)));
 
             /* Extraction des facettes. */
             var facetListOutput = new List<FacetOutput>();
@@ -173,7 +191,9 @@ namespace Kinetix.Search.Elastic
                         Code = facetDef.Code,
                         Label = facetDef.Label,
                         IsMultiSelectable = facetDef.IsMultiSelectable,
-                        Values = GetHandler(facetDef).ExtractFacetItemList(aggs, facetDef, res.Total)
+                        IsMultiValued = def.Fields[facetDef.FieldName].IsMultiValued,
+                        CanExclude = facetDef.CanExclude,
+                        Values = _facetHandler.ExtractFacetItemList(aggs, facetDef)
                     });
                 }
             }
@@ -185,14 +205,19 @@ namespace Kinetix.Search.Elastic
                 {
                     var facetItems = facetListOutput.Single(f => f.Code == facet.Key).Values;
                     /* On ajoute un FacetItem par valeur non trouvée, avec un compte de 0. */
-                    foreach (var value in facet.Value)
+                    foreach (var value in facet.Value.Selected.Concat(facet.Value.Excluded))
                     {
                         if (!facetItems.Any(f => f.Code == value))
                         {
+
+                            var label = value == FacetConst.NotNullValue ? FacetConst.NotNullLabel :
+                               value == FacetConst.NullValue ? FacetConst.NullLabel
+                               : facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(value);
+
                             facetItems.Add(new FacetItem
                             {
                                 Code = value,
-                                Label = facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(value),
+                                Label = label,
                                 Count = 0
                             });
                         }
@@ -228,7 +253,7 @@ namespace Kinetix.Search.Elastic
                 var missingBucket = res.Aggregations.Missing(groupFieldName + MissingGroupPrefix);
                 if (missingBucket == null)
                 {
-                    missingBucket = res.Aggregations.Filter(groupFieldName + MissingGroupPrefix).Missing(groupFieldName + MissingGroupPrefix);
+                    missingBucket = res.Aggregations.Filter(groupFieldName).Missing(groupFieldName + MissingGroupPrefix);
                 }
 
                 var nullDocs = missingBucket.TopHits(TopHitName).Documents<TDocument>().Select(documentMapper).ToList();
@@ -258,6 +283,7 @@ namespace Kinetix.Search.Elastic
                 List = resultList,
                 Facets = facetListOutput,
                 Groups = groupResultList,
+                SearchFields = def.SearchFields.Select(tf => tf.FieldName).ToList(),
                 TotalCount = (int)res.Total
             };
 
@@ -267,7 +293,7 @@ namespace Kinetix.Search.Elastic
         /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />
         public IMultiAdvancedQueryDescriptor MultiAdvancedQuery()
         {
-            return new MultiAdvancedQueryDescriptor(_client, _documentDescriptor, GetHandler);
+            return new MultiAdvancedQueryDescriptor(_client, _documentDescriptor, _facetHandler);
         }
 
         /// <inheritdoc cref="ISearchStore.AdvancedCount" />
@@ -283,20 +309,10 @@ namespace Kinetix.Search.Elastic
             var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
             /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
-            var filterQuery = GetFilterAndPostFilterQuery(def, input, GetHandler);
-            return _logger.LogQuery("AdvancedCount", () => _client
+            var filterQuery = GetFilterAndPostFilterQuery(def, input, _facetHandler);
+            return _logger.LogQuery(_analytics, "AdvancedCount", () => _client
                 .Count<TDocument>(s => s.Query(filterQuery)))
                 .Count;
-        }
-
-        /// <summary>
-        /// Renvoie le handler de facet pour une définition de facet.
-        /// </summary>
-        /// <param name="def">Définition de facet.</param>
-        /// <returns>Handler.</returns>
-        private IFacetHandler GetHandler(IFacetDefinition def)
-        {
-            return def.GetType() == typeof(PortfolioFacet) ? _portfolioHandler : _standardHandler;
         }
     }
 }

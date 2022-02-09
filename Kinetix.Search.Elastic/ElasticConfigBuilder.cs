@@ -12,7 +12,7 @@ namespace Kinetix.Search.Elastic
     /// </summary>
     public class ElasticConfigBuilder
     {
-        internal const string ServerName = "Elastic6";
+        public const string ServerName = "Elastic6";
 
         private readonly IServiceCollection _services;
 

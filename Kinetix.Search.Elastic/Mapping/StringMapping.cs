@@ -1,5 +1,5 @@
 ﻿using System;
-using Kinetix.Search.ComponentModel;
+using Kinetix.Search.Attributes;
 using Kinetix.Search.MetaModel;
 using Nest;
 
@@ -14,23 +14,18 @@ namespace Kinetix.Search.Elastic.Mapping
         public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
             where TDocument : class
         {
-            switch (field.Indexing)
+            return field.Indexing switch
             {
-                case SearchFieldIndexing.FullText:
-                    return selector.Text(x => x
-                        .Name(field.FieldName)
-                        .Analyzer("text")
-                        .SearchAnalyzer("search_text"));
-                case SearchFieldIndexing.Term:
-                case SearchFieldIndexing.Sort:
-                    return selector.Keyword(x => x.Name(field.FieldName));
-                case SearchFieldIndexing.None:
-                    return selector.Text(x => x
-                        .Name(field.FieldName)
-                        .Index(false));
-                default:
-                    throw new NotSupportedException();
-            }
+                SearchFieldIndexing.FullText =>
+                    selector.Text(x => x.Name(field.FieldName).Analyzer("text").SearchAnalyzer("search_text")),
+                SearchFieldIndexing.Term =>
+                    selector.Keyword(x => x.Name(field.FieldName)),
+                SearchFieldIndexing.Sort =>
+                    selector.Keyword(x => x.Name(field.FieldName).Normalizer("keyword")),
+                SearchFieldIndexing.None => 
+                    selector.Text(x => x.Name(field.FieldName).Index(false)),
+                _ => throw new NotSupportedException(),
+            };
         }
     }
 }

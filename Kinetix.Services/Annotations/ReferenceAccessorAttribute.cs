@@ -3,19 +3,10 @@
 namespace Kinetix.Services.Annotations
 {
     /// <summary>
-    /// Attribut indiquant qu'une méthode permet l'accès à une
-    /// liste de reférence.
+    /// Attribut indiquant qu'une méthode permet l'accès à un fichier.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method)]
-    public sealed class ReferenceAccessorAttribute : Attribute
+    public sealed class FileAccessorAttribute : Attribute
     {
-        /// <summary>
-        /// Retourne le nom de l'accesseur.
-        /// </summary>
-        public string Name
-        {
-            get;
-            set;
-        }
     }
 }

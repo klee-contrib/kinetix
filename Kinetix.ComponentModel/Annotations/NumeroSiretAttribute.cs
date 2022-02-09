@@ -8,7 +8,7 @@ namespace Kinetix.ComponentModel.Annotations
     /// <summary>
     /// Contrainte sur les numéros SIRET.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public sealed class NumeroSiretAttribute : ValidationAttribute
     {
         /// <summary>

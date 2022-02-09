@@ -31,8 +31,8 @@ namespace Kinetix.Web.Filters
             {
                 case EntityException ee:
                     return EntityExceptionHandler(ee);
-                case ConstraintException ce:
-                    return ConstraintExceptionHandler(ce);
+                case BusinessException ce:
+                    return BusinessExceptionHandler(ce);
                 case DbUpdateException due:
                     return DbUpdateExceptionExceptionHandler(due);
                 default:
@@ -40,7 +40,7 @@ namespace Kinetix.Web.Filters
             }
         }
 
-        private IActionResult ConstraintExceptionHandler(ConstraintException ex)
+        private IActionResult BusinessExceptionHandler(BusinessException ex)
         {
             var errorDico = new Dictionary<string, object>();
             if (ex.Errors != null && ex.Errors.HasError)

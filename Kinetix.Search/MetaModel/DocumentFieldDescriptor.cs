@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
-using Kinetix.Search.ComponentModel;
+using Kinetix.Search.Attributes;
 
 namespace Kinetix.Search.MetaModel
 {
@@ -65,6 +65,24 @@ namespace Kinetix.Search.MetaModel
         }
 
         /// <summary>
+        /// S'agit-il de la propriété contrôlant le rebuild partiel.
+        /// </summary>
+        public bool IsPartialRebuildDate
+        {
+            get;
+            internal set;
+        }
+
+        /// <summary>
+        /// S'agit-il de la propriété qui peut avoir plusieurs valeurs.
+        /// </summary>
+        public bool IsMultiValued
+        {
+            get;
+            internal set;
+        }
+
+        /// <summary>
         /// Retourne la valeur de la propriété pour un objet.
         /// </summary>
         /// <param name="bean">Objet.</param>
@@ -92,7 +110,7 @@ namespace Kinetix.Search.MetaModel
         /// <returns>Chaîne de caractère représentant l'objet.</returns>
         public override string ToString()
         {
-            return PropertyName;
+            return FieldName;
         }
     }
 }

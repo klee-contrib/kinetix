@@ -1,25 +1,25 @@
 ﻿using System;
 using System.IO;
 using ClosedXML.Excel;
-using Kinetix.ComponentModel;
 using Kinetix.Reporting.Excel;
+using Kinetix.Services;
 
 namespace Kinetix.Reporting.Internal.Excel
 {
     internal class ExcelBuilder : IExcelBuilder
     {
+        private readonly IReferenceManager _referenceManager;
         private readonly IXLWorkbook _workbook = new XLWorkbook();
-        private readonly BeanDescriptor _beanDescriptor;
 
         /// <summary>
         /// Constructeur.
         /// </summary>
-        /// <param name="beanDescriptor">BeanDescriptor.</param>
         /// <param name="fileName">Nom du fichier.</param>
-        public ExcelBuilder(BeanDescriptor beanDescriptor, string fileName)
+        /// <param name="referenceManager">ReferenceManager.</param>
+        public ExcelBuilder(string fileName, IReferenceManager referenceManager)
         {
-            _beanDescriptor = beanDescriptor;
             FileName = fileName;
+            _referenceManager = referenceManager;
         }
 
         /// <inheritdoc />
@@ -28,7 +28,7 @@ namespace Kinetix.Reporting.Internal.Excel
         /// <inheritdoc cref="IWorksheetBuilder{T}.AddWorksheet" />
         public IWorksheetBuilder<T> AddWorksheet<T>(string name)
         {
-            return new WorksheetBuilder<T>(_beanDescriptor, _workbook.AddWorksheet(name), this);
+            return new WorksheetBuilder<T>(this, _referenceManager, _workbook.AddWorksheet(name));
         }
 
         /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />

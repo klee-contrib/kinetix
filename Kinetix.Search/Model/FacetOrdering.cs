@@ -23,6 +23,11 @@
         /// <summary>
         /// Par valeur de clé décroissante.
         /// </summary>
-        KeyDescending
+        KeyDescending,
+
+        /// <summary>
+        /// Pour une liste de référence, tri par ordre.
+        /// </summary>
+        ReferenceOrder
     }
 }

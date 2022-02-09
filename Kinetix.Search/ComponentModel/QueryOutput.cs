@@ -8,9 +8,9 @@ namespace Kinetix.Search.ComponentModel
     public class QueryOutput
     {
         /// <summary>
-        /// Groupe de liste de résultats (cas d'une recherche avec groupe).
+        /// Groupe de liste de résultats.
         /// </summary>
-        public ICollection<GroupResult> Groups
+        public IList<GroupResult> Groups
         {
             get;
             set;
@@ -19,7 +19,7 @@ namespace Kinetix.Search.ComponentModel
         /// <summary>
         /// Facettes sélectionnées.
         /// </summary>
-        public ICollection<FacetOutput> Facets
+        public IList<FacetOutput> Facets
         {
             get;
             set;
@@ -29,15 +29,6 @@ namespace Kinetix.Search.ComponentModel
         /// Nombre total d'éléments.
         /// </summary>
         public long? TotalCount
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Rappel de l'entrée de la recherche.
-        /// </summary>
-        public QueryInput Query
         {
             get;
             set;

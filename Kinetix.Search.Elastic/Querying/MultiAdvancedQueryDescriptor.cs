@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Kinetix.Search.ComponentModel;
-using Kinetix.Search.Elastic.Faceting;
 using Kinetix.Search.MetaModel;
 using Kinetix.Search.Model;
 using Nest;
@@ -16,16 +15,16 @@ namespace Kinetix.Search.Elastic.Querying
     {
         private readonly ElasticClient _client;
         private readonly DocumentDescriptor _documentDescriptor;
-        private readonly Func<IFacetDefinition, IFacetHandler> _getFacetHandler;
+        private readonly FacetHandler _facetHandler;
         private readonly IDictionary<string, IDocumentMapper> _documentMappers = new Dictionary<string, IDocumentMapper>();
         private readonly IDictionary<string, ISearchRequest> _searchDescriptors = new Dictionary<string, ISearchRequest>();
         private readonly IList<(string code, string label)> _searchLabels = new List<(string, string)>();
 
-        public MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescriptor documentDescriptor, Func<IFacetDefinition, IFacetHandler> getFacetHandler)
+        public MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescriptor documentDescriptor, FacetHandler facetHandler)
         {
             _client = client;
             _documentDescriptor = documentDescriptor;
-            _getFacetHandler = getFacetHandler;
+            _facetHandler = facetHandler;
         }
 
         /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery" />
@@ -39,9 +38,9 @@ namespace Kinetix.Search.Elastic.Querying
             _searchDescriptors.Add(code, GetAdvancedQueryDescriptor(
                 def,
                 input,
-                _getFacetHandler,
-                GetFacetDefinitionList(input, _getFacetHandler),
-                GetGroupFieldName(def, input),
+                _facetHandler,
+                input.FacetQueryDefinition.Facets,
+                GetGroupFieldName(input),
                 new Func<QueryContainerDescriptor<TDocument>, QueryContainer>[0])(new SearchDescriptor<TDocument>()));
             _documentMappers.Add(code, new DocumentMapper<TDocument, TOutput>(documentMapper));
             _searchLabels.Add((code, label));

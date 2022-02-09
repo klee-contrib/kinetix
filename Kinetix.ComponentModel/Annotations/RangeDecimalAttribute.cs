@@ -1,14 +1,13 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using Kinetix.ComponentModel.Formatters;
 
 namespace Kinetix.ComponentModel.Annotations
 {
     /// <summary>
     /// Class attribute for range of decimal objects.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
     public sealed class RangeDecimalAttribute : RangeAttribute
     {
         /// <summary>
@@ -88,15 +87,12 @@ namespace Kinetix.ComponentModel.Annotations
         public override bool IsValid(object value)
         {
             var s = value as string;
-            if (string.IsNullOrEmpty(s))
-            {
-                return base.IsValid(value);
-            }
-
-            var d = (decimal)new FormatterDecimal().ConvertFromString(s);
-            return base.IsValid(s.Replace(',', '.')) &&
-                (IsMinimumIncluded || (double)d > (double)Minimum) &&
-                (IsMaximumIncluded || (double)d < (double)Maximum);
+            return string.IsNullOrEmpty(s)
+                ? base.IsValid(value)
+                : decimal.TryParse(s, out var d)
+                    && base.IsValid(s.Replace(',', '.'))
+                    && (IsMinimumIncluded || (double)d > (double)Minimum)
+                    && (IsMaximumIncluded || (double)d < (double)Maximum);
         }
     }
 }

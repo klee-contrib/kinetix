@@ -3,7 +3,7 @@
     /// <summary>
     /// Item de facette.
     /// </summary>
-    public struct FacetItem
+    public class FacetItem
     {
         /// <summary>
         /// Code de la facette.

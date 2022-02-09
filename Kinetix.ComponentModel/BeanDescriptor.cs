@@ -15,30 +15,22 @@ namespace Kinetix.ComponentModel
     /// <summary>
     /// Fournit la description d'un bean.
     /// </summary>
-    public sealed class BeanDescriptor
+    public static class BeanDescriptor
     {
         /// <summary>
         /// Nom par défaut de la propriété par défaut d'un bean, pour l'affichage du libellé de l'objet.
         /// </summary>
         private const string DefaultPropertyDefaultName = "Libelle";
 
-        private readonly Dictionary<Type, Dictionary<string, PropertyInfo>> _resourceTypeMap = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
-
-        private readonly Dictionary<Type, BeanDefinition> _beanDefinitionDictionnary = new Dictionary<Type, BeanDefinition>();
-
-        private readonly IDomainManager _domainManager;
-
-        public BeanDescriptor(IDomainManager domainManager)
-        {
-            _domainManager = domainManager;
-        }
+        private static readonly Dictionary<Type, BeanDefinition> _beanDefinitionDictionnary = new Dictionary<Type, BeanDefinition>();
+        private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> _resourceTypeMap = new Dictionary<Type, Dictionary<string, PropertyInfo>>();
 
         /// <summary>
         /// Vérifie les contraintes sur un bean.
         /// </summary>
         /// <param name="bean">Bean à vérifier.</param>
         /// <param name="allowPrimaryKeyNull">True si la clef primaire peut être null (insertion).</param>
-        public void Check(object bean, bool allowPrimaryKeyNull = true)
+        public static void Check(object bean, bool allowPrimaryKeyNull = true)
         {
             if (bean != null)
             {
@@ -46,9 +38,9 @@ namespace Kinetix.ComponentModel
                 {
                     GetDefinition(bean).Check(bean, allowPrimaryKeyNull);
                 }
-                catch (ConstraintException e)
+                catch (BusinessException e)
                 {
-                    throw new ConstraintException(e.Property, e.Property.Description + " " + e.Message, e);
+                    throw new BusinessException(e.Property, e.Property.Description + " " + e.Message, e);
                 }
             }
         }
@@ -59,7 +51,7 @@ namespace Kinetix.ComponentModel
         /// <param name="collection">Collection à vérifier.</param>
         /// <param name="allowPrimaryKeyNull">True si la clef primaire peut être null (insertion).</param>
         /// <typeparam name="T">Type des éléments de la collection.</typeparam>
-        public void CheckAll<T>(ICollection<T> collection, bool allowPrimaryKeyNull = true)
+        public static void CheckAll<T>(ICollection<T> collection, bool allowPrimaryKeyNull = true)
         {
             if (collection == null)
             {
@@ -77,7 +69,7 @@ namespace Kinetix.ComponentModel
         /// </summary>
         /// <param name="collection">Collection générique de bean.</param>
         /// <returns>Description des propriétés des beans.</returns>
-        public BeanDefinition GetCollectionDefinition(object collection)
+        public static BeanDefinition GetCollectionDefinition(object collection)
         {
             if (collection == null)
             {
@@ -132,7 +124,7 @@ namespace Kinetix.ComponentModel
         /// </summary>
         /// <param name="bean">Objet.</param>
         /// <returns>Description des propriétés.</returns>
-        public BeanDefinition GetDefinition(object bean)
+        public static BeanDefinition GetDefinition(object bean)
         {
             if (bean == null)
             {
@@ -148,7 +140,7 @@ namespace Kinetix.ComponentModel
         /// <param name="beanType">Type du bean.</param>
         /// <param name="ignoreCustomTypeDesc">Si true, retourne un définition même si le type implémente ICustomTypeDescriptor.</param>
         /// <returns>Description des propriétés.</returns>
-        public BeanDefinition GetDefinition(Type beanType, bool ignoreCustomTypeDesc = false)
+        public static BeanDefinition GetDefinition(Type beanType, bool ignoreCustomTypeDesc = false)
         {
             if (beanType == null)
             {
@@ -167,9 +159,9 @@ namespace Kinetix.ComponentModel
         /// Efface la définition d'un bean du singleton.
         /// </summary>
         /// <param name="descriptionType">Type portant la description.</param>
-        public void ClearDefinition(Type descriptionType)
+        public static void ClearDefinition(Type descriptionType)
         {
-            ClearDefinitionCore(descriptionType);
+            _beanDefinitionDictionnary.Remove(descriptionType);
         }
 
         /// <summary>
@@ -179,7 +171,7 @@ namespace Kinetix.ComponentModel
         /// <param name="defaultProperty">Propriété par défaut.</param>
         /// <param name="beanType">Type du bean.</param>
         /// <returns>Collection.</returns>
-        private BeanPropertyDescriptorCollection CreateCollection(PropertyDescriptorCollection properties, PropertyDescriptor defaultProperty, Type beanType)
+        private static BeanPropertyDescriptorCollection CreateCollection(PropertyDescriptorCollection properties, PropertyDescriptor defaultProperty, Type beanType)
         {
             var coll = new BeanPropertyDescriptorCollection(beanType);
             for (var i = 0; i < properties.Count; i++)
@@ -192,7 +184,6 @@ namespace Kinetix.ComponentModel
                 var colAttr = (ColumnAttribute)property.Attributes[typeof(ColumnAttribute)];
                 var domainAttr = (DomainAttribute)property.Attributes[typeof(DomainAttribute)];
                 var requiredAttr = (RequiredAttribute)property.Attributes[typeof(RequiredAttribute)];
-                var genericArgumentArray = beanType.GetGenericArguments();
 
                 string display = null;
                 if (displayAttr != null)
@@ -228,7 +219,6 @@ namespace Kinetix.ComponentModel
                 var isReadonly = property.IsReadOnly;
 
                 var description = new BeanPropertyDescriptor(
-                    _domainManager,
                     property.Name,
                     memberName,
                     property.PropertyType,
@@ -240,10 +230,6 @@ namespace Kinetix.ComponentModel
                     referenceType,
                     isReadonly,
                     isBrowsable);
-                if (domainName != null)
-                {
-                    _domainManager.GetDomain(description);
-                }
 
                 coll.Add(description);
             }
@@ -258,7 +244,7 @@ namespace Kinetix.ComponentModel
         /// <param name="metadataType">Type portant les compléments de description.</param>
         /// <param name="bean">Bean dynamic.</param>
         /// <returns>Description des propriétés.</returns>
-        private BeanPropertyDescriptorCollection CreateBeanPropertyCollection(Type beanType, object bean)
+        private static BeanPropertyDescriptorCollection CreateBeanPropertyCollection(Type beanType, object bean)
         {
             PropertyDescriptor defaultProperty;
             PropertyDescriptorCollection properties;
@@ -283,7 +269,7 @@ namespace Kinetix.ComponentModel
         /// <param name="beanType">Type du bean.</param>
         /// <param name="bean">Bean.</param>
         /// <returns>Description des propriétés.</returns>
-        private BeanDefinition GetDefinitionInternal(Type beanType, object bean)
+        private static BeanDefinition GetDefinitionInternal(Type beanType, object bean)
         {
             var descriptionType = beanType;
 
@@ -294,7 +280,7 @@ namespace Kinetix.ComponentModel
 
                 var attrs = beanType.GetCustomAttributes(typeof(ReferenceAttribute), false);
                 var isReference = attrs.Length == 1;
-                var isStatic = isReference ? ((ReferenceAttribute)attrs[0]).IsStatic : false;
+                var isStatic = isReference && ((ReferenceAttribute)attrs[0]).IsStatic;
                 var properties = CreateBeanPropertyCollection(beanType, bean);
 
                 definition = new BeanDefinition(beanType, properties, contractName, isReference, isStatic);
@@ -305,15 +291,6 @@ namespace Kinetix.ComponentModel
             }
 
             return definition;
-        }
-
-        /// <summary>
-        /// Efface la description d'un type.
-        /// </summary>
-        /// <param name="descriptionType">Type portant la description.</param>
-        private void ClearDefinitionCore(Type descriptionType)
-        {
-            _beanDefinitionDictionnary.Remove(descriptionType);
         }
     }
 }

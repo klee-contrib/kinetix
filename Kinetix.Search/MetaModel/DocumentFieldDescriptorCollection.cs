@@ -26,25 +26,25 @@ namespace Kinetix.Search.MetaModel
         }
 
         /// <summary>
-        /// Retourne la description d'une propriété à partir de son nom.
+        /// Retourne la description d'un champ à partir de son nom.
         /// </summary>
-        /// <param name="propertyName">Nom de la propriété.</param>
+        /// <param name="fieldName">Nom du champ.</param>
         /// <returns>Description de la propriété.</returns>
-        public DocumentFieldDescriptor this[string propertyName]
+        public DocumentFieldDescriptor this[string fieldName]
         {
             get
             {
                 try
                 {
-                    return _properties[propertyName];
+                    return _properties[fieldName];
                 }
                 catch (KeyNotFoundException e)
                 {
-                    throw new ArgumentException("Propriété " + propertyName + " non trouvée pour le type " + _beanType.FullName + ".", e);
+                    throw new ArgumentException("Champ " + fieldName + " non trouvée pour le type " + _beanType.FullName + ".", e);
                 }
             }
 
-            set => _properties[propertyName] = value;
+            set => _properties[fieldName] = value;
         }
 
         /// <summary>

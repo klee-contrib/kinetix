@@ -2,14 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <LangVersion>latest</LangVersion>
+    <Version>0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClosedXML" Version="0.94.2" />
+    <PackageReference Include="ClosedXML" Version="0.95.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.ComponentModel\Kinetix.ComponentModel.csproj" />
+    <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
   </ItemGroup>
 
 </Project>

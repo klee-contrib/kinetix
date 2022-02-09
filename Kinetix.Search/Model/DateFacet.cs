@@ -1,35 +1,29 @@
 ﻿using System;
-using System.Globalization;
+using System.Linq.Expressions;
 
 namespace Kinetix.Search.Model
 {
     /// <summary>
     /// Facette de date.
     /// </summary>
-    public class DateFacet : IFacetDefinition
+    /// <typeparam name="TDocument">Type de document.</typeparam>
+    public class DateFacet<TDocument> : TermFacet<TDocument>
     {
-        /// <inheritdoc />
-        public string Code { get; set; }
-
-        /// <inheritdoc />
-        public string Label { get; set; }
-
-        /// <inheritdoc />
-        public string FieldName { get; set; }
-
-        /// <inheritdoc />
-        public bool IsMultiSelectable { get; set; } = false;
-
-        /// <inheritdoc />
-        public bool HasMissing { get; set; } = true;
-
-        /// <inheritdoc />
-        public FacetOrdering Ordering { get; set; } = FacetOrdering.CountDescending;
+        /// <summary>
+        /// Constructeur.
+        /// </summary>
+        /// <param name="code">Code de la facette.</param>
+        /// <param name="label">Libellé de la facette.</param>
+        /// <param name="field">Champ sur lequel agit la facette.</param>
+        public DateFacet(string code, string label, Expression<Func<TDocument, object>> field)
+            : base(code, label, field)
+        {
+        }
 
         /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
-        public string ResolveLabel(object primaryKey)
+        public override string ResolveLabel(string primaryKey)
         {
-            return DateTime.ParseExact((string)primaryKey, "yyyyMMdd", CultureInfo.CurrentCulture).ToString("dd/MM/yyyy");
+            return DateTime.Parse(primaryKey).ToString("dd/MM/yyyy");
         }
     }
 }

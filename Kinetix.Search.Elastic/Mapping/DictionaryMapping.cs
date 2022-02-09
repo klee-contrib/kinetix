@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Kinetix.Search.ComponentModel;
+using Kinetix.Search.Attributes;
 using Kinetix.Search.MetaModel;
 using Nest;
 
@@ -15,13 +15,11 @@ namespace Kinetix.Search.Elastic.Mapping
         public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
             where TDocument : class
         {
-            switch (field.Indexing)
+            return field.Indexing switch
             {
-                case SearchFieldIndexing.None:
-                    return selector.Object<object>(x => x.Name(field.FieldName));
-                default:
-                    throw new NotSupportedException();
-            }
+                SearchFieldIndexing.None => selector.Object<object>(x => x.Name(field.FieldName)),
+                _ => throw new NotSupportedException(),
+            };
         }
     }
 }

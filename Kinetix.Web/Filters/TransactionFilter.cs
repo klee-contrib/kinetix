@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using System.Collections.Generic;
+using Kinetix.Services.DependencyInjection.Interceptors;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kinetix.Web.Filters
@@ -10,19 +12,26 @@ namespace Kinetix.Web.Filters
         where TDbContext : DbContext
     {
         private readonly TDbContext _context;
+        private readonly IEnumerable<IOnBeforeCommit> _onBeforeCommits;
 
         /// <summary>
         /// Constructeur.
         /// </summary>
-        public TransactionFilter(TDbContext context)
+        public TransactionFilter(TDbContext context, IEnumerable<IOnBeforeCommit> onBeforeCommits)
         {
             _context = context;
+            _onBeforeCommits = onBeforeCommits;
         }
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
             if (context.Exception == null)
             {
+                foreach (var onBeforeCommit in _onBeforeCommits)
+                {
+                    onBeforeCommit.OnBeforeCommit();
+                }
+
                 _context.Database.CommitTransaction();
             }
             else

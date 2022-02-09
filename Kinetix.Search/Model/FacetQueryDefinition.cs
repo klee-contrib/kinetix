@@ -6,13 +6,14 @@ namespace Kinetix.Search.Model
     /// <summary>
     /// Définition d'une recherche à facettes.
     /// </summary>
-    public class FacetQueryDefinition
+    /// <typeparam name="TDocument">Type de document.</typeparam>
+    public class FacetQueryDefinition<TDocument>
     {
         /// <summary>
         /// Créé une nouvelle instance de FacetQueryDefinition.
         /// </summary>
         /// <param name="facets">Facettes.</param>
-        public FacetQueryDefinition(params IFacetDefinition[] facets)
+        public FacetQueryDefinition(params IFacetDefinition<TDocument>[] facets)
         {
             Facets = facets.ToList();
         }
@@ -29,7 +30,7 @@ namespace Kinetix.Search.Model
         /// <summary>
         /// Liste des facettes.
         /// </summary>
-        public ICollection<IFacetDefinition> Facets
+        public ICollection<IFacetDefinition<TDocument>> Facets
         {
             get;
             private set;

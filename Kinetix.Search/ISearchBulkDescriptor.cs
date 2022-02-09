@@ -8,7 +8,7 @@ namespace Kinetix.Search
     public interface ISearchBulkDescriptor
     {
         /// <summary>
-        /// Supprime un document de l'index.
+        /// Supprime un document d'un index.
         /// </summary>
         /// <typeparam name="TDocument">Type de document.</typeparam>
         /// <param name="id">ID du document.</param>
@@ -17,7 +17,7 @@ namespace Kinetix.Search
             where TDocument : class;
 
         /// <summary>
-        /// Supprime un document de l'index.
+        /// Supprime un document d'un index.
         /// </summary>
         /// <typeparam name="TDocument">Type de document.</typeparam>
         /// <param name="bean">La clé composite.</param>
@@ -26,7 +26,7 @@ namespace Kinetix.Search
             where TDocument : class;
 
         /// <summary>
-        /// Supprime des documents de l'index.
+        /// Supprime des documents d'un index.
         /// </summary>
         /// <typeparam name="TDocument">Type de document.</typeparam>
         /// <param name="ids">IDs des document.</param>
@@ -35,7 +35,7 @@ namespace Kinetix.Search
             where TDocument : class;
 
         /// <summary>
-        /// Supprime des document de l'index.
+        /// Supprime des document d'un index.
         /// </summary>
         /// <typeparam name="TDocument">Type de document.</typeparam>
         /// <param name="beans">Les clés composites.</param>
@@ -44,7 +44,7 @@ namespace Kinetix.Search
             where TDocument : class;
 
         /// <summary>
-        /// Pose un document dans l'index.
+        /// Pose un document dans un index.
         /// </summary>
         /// <typeparam name="TDocument">Type de document.</typeparam>
         /// <param name="document">Document à poser.</param>
@@ -53,7 +53,7 @@ namespace Kinetix.Search
             where TDocument : class;
 
         /// <summary>
-        /// Pose des documents dans l'index.
+        /// Pose des documents dans un index.
         /// </summary>
         /// <typeparam name="TDocument">Type de document.</typeparam>
         /// <param name="documents">Documents à poser.</param>
@@ -65,6 +65,7 @@ namespace Kinetix.Search
         /// Effectue la requête.
         /// </summary>
         /// <param name="refresh">Attends ou non la réindexation.</param>
-        void Run(bool refresh = true);
+        /// <returns>Le nombre de documents indexés et supprimés.</returns>
+        int Run(bool refresh = true);
     }
 }

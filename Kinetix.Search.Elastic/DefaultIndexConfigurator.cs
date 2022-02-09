@@ -36,9 +36,19 @@ namespace Kinetix.Search.Elastic
                             Tokenizer = "chargroup",
                             Filter = new[] { "asciifolding", "lowercase" }
                         }
+                    },
+                    Normalizers = new Normalizers
+                    {
+                        ["keyword"] = new CustomNormalizer
+                        {
+                            Filter = new[] { "asciifolding", "lowercase" }
+                        }
                     }
                 }
             };
+
+            IndexSettings.Add("index.translog.retention.age", "30m");
+            IndexSettings.Add("index.translog.retention.size", "64mb");
 
             Configure();
         }
