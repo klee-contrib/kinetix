@@ -17,7 +17,7 @@ public class ExceptionFilter : IExceptionFilter
     /// Constructeur.
     /// </summary>
     /// <param name="telemetryClient">Composant injecté.</param>
-    public ExceptionFilter(TelemetryClient telemetryClient)
+    public ExceptionFilter(TelemetryClient telemetryClient = null)
     {
         _telemetryClient = telemetryClient;
     }
@@ -34,7 +34,7 @@ public class ExceptionFilter : IExceptionFilter
             context.Result = msg;
         }
 
-        _telemetryClient.TrackException(context.Exception);
+        _telemetryClient?.TrackException(context.Exception);
     }
 
     private IActionResult GetExceptionMessage(Exception exception)
