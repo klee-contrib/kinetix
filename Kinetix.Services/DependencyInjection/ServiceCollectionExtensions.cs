@@ -103,33 +103,6 @@ public static class ServiceCollectionExtensions
             ServiceLifetime.Singleton);
     }
 
-    public static IServiceCollection AddInterceptedDummy(this IServiceCollection services, Type contractType, Action<InterceptionOptions> configurator)
-    {
-        var interceptionOptions = new InterceptionOptions();
-        configurator(interceptionOptions);
-
-        interceptionOptions.Interceptors.ForEach(services.TryAddScoped);
-
-        services.Add(ServiceDescriptor.Describe(contractType,
-            sp =>
-            {
-                var interceptorInstances = interceptionOptions.Interceptors
-                    .Select(sp.GetRequiredService)
-                    .Cast<IInterceptor>()
-                    .ToArray();
-
-                return _proxyGenerator
-                    .CreateInterfaceProxyWithTarget(
-                        contractType,
-                        DummyFactory.GetDummy(contractType),
-                        ProxyGenerationOptions.Default,
-                        interceptorInstances);
-            },
-            ServiceLifetime.Scoped));
-
-        return services;
-    }
-
     private static IServiceCollection Add(
         this IServiceCollection services,
         Type contractType,
