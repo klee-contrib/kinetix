@@ -35,6 +35,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kinetix.User", "Kinetix.Use
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kinetix.Web", "Kinetix.Web\Kinetix.Web.csproj", "{D2AAC602-38E8-4FC4-B2DD-03AF94E0CADD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kinetix.Services.Annotations", "Kinetix.Services.Annotations\Kinetix.Services.Annotations.csproj", "{E3FEAFD9-0BED-425E-B9C0-B749379F8C86}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +107,10 @@ Global
 		{D2AAC602-38E8-4FC4-B2DD-03AF94E0CADD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2AAC602-38E8-4FC4-B2DD-03AF94E0CADD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2AAC602-38E8-4FC4-B2DD-03AF94E0CADD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3FEAFD9-0BED-425E-B9C0-B749379F8C86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3FEAFD9-0BED-425E-B9C0-B749379F8C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3FEAFD9-0BED-425E-B9C0-B749379F8C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3FEAFD9-0BED-425E-B9C0-B749379F8C86}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

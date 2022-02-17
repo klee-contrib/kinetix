@@ -11,7 +11,7 @@
     <PackageOutputPath>../.nupkg</PackageOutputPath>
     <Version>1.0.1</Version>
     <Authors>JabX</Authors>
-    <Description>Module de reporting Kinetix.</Description>
+    <Description>Annotations pour les services Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>
@@ -27,12 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ClosedXML" Version="0.95.4" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Reporting.Annotations\Kinetix.Reporting.Annotations.csproj" />
-    <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
   </ItemGroup>
 
 </Project>
