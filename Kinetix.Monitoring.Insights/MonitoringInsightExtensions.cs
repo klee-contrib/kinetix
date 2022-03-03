@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Kinetix.Monitoring.Insights;
 
 /// <summary>
-/// Extension yolo
+/// Méthode d'extension pour la config du monitoring.
 /// </summary>
 public static class MonitoringInsightExtensions
 {

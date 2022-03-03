@@ -35,7 +35,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kinetix.User", "Kinetix.Use
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kinetix.Web", "Kinetix.Web\Kinetix.Web.csproj", "{D2AAC602-38E8-4FC4-B2DD-03AF94E0CADD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kinetix.Services.Annotations", "Kinetix.Services.Annotations\Kinetix.Services.Annotations.csproj", "{E3FEAFD9-0BED-425E-B9C0-B749379F8C86}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kinetix.Services.Annotations", "Kinetix.Services.Annotations\Kinetix.Services.Annotations.csproj", "{E3FEAFD9-0BED-425E-B9C0-B749379F8C86}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{BB4CA2A8-A849-4135-9139-9CDF3265EEB8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

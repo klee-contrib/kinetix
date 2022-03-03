@@ -5,7 +5,6 @@ using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Kinetix.Monitoring.Insights;
 
-
 /// <summary>
 /// Vire la télémétrie AI des dépendances sans opération parente (ex : ping des batchs).
 /// </summary>

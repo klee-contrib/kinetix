@@ -6,6 +6,9 @@ using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Kinetix.Monitoring.Insights;
 
+/// <summary>
+/// Store de monitoring qui pousse dans AppInsights.
+/// </summary>
 public class InsightMonitoringStore : IMonitoringStore
 {
     private readonly TelemetryClient _telemetryClient;
@@ -20,6 +23,7 @@ public class InsightMonitoringStore : IMonitoringStore
         _telemetryClient = telemetryClient;
     }
 
+    /// <inheritdoc cref="IMonitoringStore.StartProcess" />
     public void StartProcess(Guid id, string name, string category, string target = null)
     {
         if (category != "Service" && category != "Database")
@@ -45,6 +49,7 @@ public class InsightMonitoringStore : IMonitoringStore
         _holders.TryAdd(id, holder);
     }
 
+    /// <inheritdoc cref="IMonitoringStore.StopProcess" />
     public void StopProcess(Guid id, bool success, bool disabled)
     {
         if (_holders.TryRemove(id, out var holder))
