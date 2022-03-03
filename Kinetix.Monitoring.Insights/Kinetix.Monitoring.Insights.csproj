@@ -9,7 +9,7 @@
 
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>JabX</Authors>
     <Description>Module AppInsights pour le monitoring Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.20.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>

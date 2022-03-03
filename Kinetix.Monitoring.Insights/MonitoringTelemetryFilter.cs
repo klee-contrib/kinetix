@@ -1,8 +1,10 @@
-﻿using Microsoft.ApplicationInsights.Channel;
+﻿using System.Text.RegularExpressions;
+using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Kinetix.Monitoring.Insights;
+
 
 /// <summary>
 /// Vire la télémétrie AI des dépendances sans opération parente (ex : ping des batchs).
@@ -10,6 +12,8 @@ namespace Kinetix.Monitoring.Insights;
 public class MonitoringTelemetryFilter : ITelemetryProcessor
 {
     private readonly ITelemetryProcessor _next;
+
+    private Regex sqlServerRegex = new(".+ \\| .+");
 
     /// <summary>
     /// Constructeur.
@@ -37,9 +41,8 @@ public class MonitoringTelemetryFilter : ITelemetryProcessor
                 return;
             }
 
-            if (dt.Type == "SQL")
+            if (dt.Type == "SQL" && sqlServerRegex.IsMatch(dt.Target))
             {
-                // Géré par Kinetix.Data.SqlClient déjà.
                 return;
             }
 
