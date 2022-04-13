@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Kinetix.Modeling.Exceptions;
+using Kinetix.Services.DependencyInjection.Interceptors;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -28,18 +29,24 @@ public class ExceptionFilter : IExceptionFilter
     /// <param name="context">Contexte de l'exception.</param>
     public void OnException(ExceptionContext context)
     {
-        var msg = GetExceptionMessage(context.Exception);
+        var exception = context.Exception switch
+        {
+            TargetInvocationException tex => tex.InnerException,
+            InterceptedException iex => iex.InnerException,
+            _ => context.Exception
+        };
+
+        var msg = GetExceptionMessage(exception);
         if (msg != null)
         {
             context.Result = msg;
         }
 
-        _telemetryClient?.TrackException(context.Exception);
+        _telemetryClient?.TrackException(exception);
     }
 
     private IActionResult GetExceptionMessage(Exception exception)
     {
-        exception = exception is TargetInvocationException tex ? tex.InnerException : exception;
         return exception switch
         {
             BusinessException ce => BusinessExceptionHandler(ce),

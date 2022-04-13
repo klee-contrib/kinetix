@@ -1,4 +1,4 @@
-﻿using System.Runtime.ExceptionServices;
+﻿using System.Diagnostics;
 using Castle.DynamicProxy;
 using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
@@ -23,6 +23,7 @@ public class AnalyticsInterceptor : IInterceptor
     /// Invocation de la méthode, rajoute les advices nécessaires.
     /// </summary>
     /// <param name="invocation">Methode cible.</param>
+    [DebuggerNonUserCode]
     public void Intercept(IInvocation invocation)
     {
         _analytics.StartProcess($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", "Service");
@@ -52,7 +53,7 @@ public class AnalyticsInterceptor : IInterceptor
             }
 
             _logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
-            ExceptionDispatchInfo.Capture(ex).Throw();
+            throw new InterceptedException($"Une erreur est survenue sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", ex);
         }
     }
 }

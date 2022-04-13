@@ -67,13 +67,13 @@ public class ReferenceManager : IReferenceManager
         }
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
+    /// <inheritdoc cref="IReferenceManager.GetReferenceList(Type)" />
     public ICollection<object> GetReferenceList(Type type)
     {
         return GetReferenceEntry(type.Name).List;
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
+    /// <inheritdoc cref="IReferenceManager.GetReferenceList(string)" />
     public ICollection<object> GetReferenceList(string referenceName)
     {
         return GetReferenceEntry(referenceName).List;
@@ -95,7 +95,7 @@ public class ReferenceManager : IReferenceManager
             .ToList();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceListByCriteria" />
+    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(T)" />
     public ICollection<T> GetReferenceList<T>(T criteria)
     {
         var beanPropertyDescriptorList =
@@ -107,7 +107,7 @@ public class ReferenceManager : IReferenceManager
             .ToList();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList" />
+    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(object[])" />
     public ICollection<T> GetReferenceList<T>(object[] primaryKeys)
     {
         var definition = BeanDescriptor.GetDefinition(typeof(T));
@@ -122,7 +122,7 @@ public class ReferenceManager : IReferenceManager
         return GetReferenceEntry(typeof(T).Name).GetReferenceObject<T>(primaryKey);
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceObject(Func{T, bool}, string)" />
+    /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(Func{T, bool})" />
     public T GetReferenceObject<T>(Func<T, bool> predicate)
     {
         return GetReferenceEntry(typeof(T).Name).GetReferenceObject(predicate);
@@ -142,14 +142,14 @@ public class ReferenceManager : IReferenceManager
         return GetReferenceValue(GetReferenceObject(predicate));
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(T) />
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(T)" />
     public string GetReferenceValue<T>(T reference)
     {
         var definition = BeanDescriptor.GetDefinition(reference);
         return definition.DefaultProperty.GetValue(reference).ToString();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue(Type, object) />
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValue(Type, object)" />
     public string GetReferenceValue(Type type, object primaryKey)
     {
         return primaryKey == null
