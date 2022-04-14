@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>JabX</Authors>
     <Description>Utilitaires Kinetix pour ASP.NET Core.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

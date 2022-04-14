@@ -29,12 +29,16 @@ public class ExceptionFilter : IExceptionFilter
     /// <param name="context">Contexte de l'exception.</param>
     public void OnException(ExceptionContext context)
     {
-        var exception = context.Exception switch
+        var exception = context.Exception;
+        while (exception is TargetInvocationException || exception is InterceptedException)
         {
-            TargetInvocationException tex => tex.InnerException,
-            InterceptedException iex => iex.InnerException,
-            _ => context.Exception
-        };
+            exception = exception switch
+            {
+                TargetInvocationException tex => tex.InnerException,
+                InterceptedException iex => iex.InnerException,
+                _ => exception
+            };
+        }
 
         var msg = GetExceptionMessage(exception);
         if (msg != null)
