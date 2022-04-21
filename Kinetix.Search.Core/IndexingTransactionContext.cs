@@ -99,8 +99,6 @@ internal class IndexingTransactionContext : ITransactionContext
         return GetState<TDocument>().RegisterIndex(bean);
     }
 
-
-    /// <inheritDoc cref="IDocumentIndexor.PrepareBulkDescriptor" />
     private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument>(IServiceProvider provider, ISearchBulkDescriptor bulk, IIndexingDocumentState _state)
         where TDocument : class
     {

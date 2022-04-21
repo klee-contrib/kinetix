@@ -19,7 +19,7 @@ public class DateFacet<TDocument> : TermFacet<TDocument>
     {
     }
 
-    /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
+    /// <inheritdoc />
     public override string ResolveLabel(string primaryKey)
     {
         return DateTime.Parse(primaryKey).ToString("dd/MM/yyyy");

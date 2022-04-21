@@ -13,6 +13,7 @@ public static class ElasticStoreExtensions
     /// <summary>
     /// Effectue une recherche avancée.
     /// </summary>
+    /// <param name="store">Store.</param>
     /// <param name="input">Entrée de la recherche.</param>
     /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
     /// <param name="filters">Filtres NEST additionnels.</param>
@@ -27,6 +28,7 @@ public static class ElasticStoreExtensions
     /// <summary>
     /// Effectue une recherche avancée et récupère tous les résultats (et uniquement les résultats).
     /// </summary>
+    /// <param name="store">Store.</param>
     /// <param name="input">Entrée de la recherche.</param>
     /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
     /// <param name="filters">Filtres NEST additionnels.</param>

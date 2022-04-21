@@ -19,16 +19,16 @@ public class BooleanFacet<TDocument> : TermFacet<TDocument>
     {
     }
 
-    /// <inheritdoc cref="IFacetDefinition.IsMultiSelectable" />
+    /// <inheritdoc />
     public override bool IsMultiSelectable => false;
 
-    /// <inheritdoc cref="IFacetDefinition.CanExclude" />
+    /// <inheritdoc />
     public override bool CanExclude => false;
 
-    /// <inheritdoc cref="IFacetDefinition.Ordering" />
+    /// <inheritdoc />
     public override FacetOrdering Ordering => FacetOrdering.KeyDescending;
 
-    /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
+    /// <inheritdoc />
     public override string ResolveLabel(string primaryKey)
     {
         return primaryKey == "1" || primaryKey == "true"

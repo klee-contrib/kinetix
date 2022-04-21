@@ -18,7 +18,7 @@ public class FacetHandler
     /// <summary>
     /// Créé une nouvelle instance de StandardFacetHandler.
     /// </summary>
-    /// <param name="document">Définition du document.</param>
+    /// <param name="documentDescriptor">Descripteur de documents.</param>
     public FacetHandler(DocumentDescriptor documentDescriptor)
     {
         _documentDescriptor = documentDescriptor;
@@ -30,6 +30,7 @@ public class FacetHandler
     /// <typeparam name="TDocument">Type du document.</typeparam>
     /// <param name="input">Entrée de facette.</param>
     /// <param name="facetDef">Définition de facette.</param>
+    /// <param name="isMultiValued">Si multi valué.</param>
     /// <returns></returns>
     public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiSelectableFilter<TDocument>(FacetInput input, IFacetDefinition<TDocument> facetDef, bool isMultiValued)
          where TDocument : class

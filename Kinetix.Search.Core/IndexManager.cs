@@ -193,9 +193,9 @@ public class IndexManager
         rebuildLogger?.LogInformation($"Loading data for index {indexName}...");
         var documents = _provider.GetService<IDocumentLoader<TDocument>>().GetAll(!indexCreated);
         rebuildLogger?.LogInformation($"Data for index {indexName} loaded.");
-        if (documents is ICollection<TDocument> coll)
+        if (documents.TryGetNonEnumeratedCount(out var count))
         {
-            rebuildLogger?.LogInformation($"{coll.Count} documents ready for indexation.");
+            rebuildLogger?.LogInformation($"{count} documents ready for indexation.");
         }
 
         return _searchStore.ResetIndex(documents, !indexCreated, rebuildLogger);

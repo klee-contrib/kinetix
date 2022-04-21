@@ -1,7 +1,7 @@
 ﻿using Kinetix.Search.Core.DocumentModel;
+using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
 using Kinetix.Search.Models.Annotations;
-using Kinetix.Search.Core.Querying;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Querying;
@@ -18,10 +18,12 @@ public static class AdvancedQueryUtil
     /// </summary>
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
-    /// <param name="getFacetHandler">Getter sur le handler de facette.</param>
+    /// <param name="facetHandler">Handler de facette.</param>
+    /// <param name="filters">Filtres NEST additionnels.</param>
     /// <param name="facetDefList">Liste des facettes.</param>
     /// <param name="groupFieldName">Nom du champ sur lequel grouper.</param>
-    /// <param name="filters">Filtres NEST additionnels.</param>
+    /// <param name="pitId">Id du PIT, si recheche paginée.</param>
+    /// <param name="searchAfter">Id du dernier élément retourné, si paginé.</param>
     /// <returns>Le descripteur.</returns>
     public static Func<SearchDescriptor<TDocument>, ISearchRequest> GetAdvancedQueryDescriptor<TDocument, TCriteria>(
         DocumentDefinition def,
@@ -67,7 +69,7 @@ public static class AdvancedQueryUtil
                 s.Source(src => src.Includes(f => f.Fields(sourceFields)));
             }
 
-                /* Pagination */
+            /* Pagination */
             if (pitId == null)
             {
                 s.From(skip).Size(size).TrackTotalHits();
@@ -82,20 +84,20 @@ public static class AdvancedQueryUtil
                 }
             }
 
-                /* Tri */
+            /* Tri */
             if (sortDef.HasSort)
             {
                 s.Sort(x => x.Field(sortDef.FieldName, sortDef.Order));
             }
 
-                /* Aggrégations. */
+            /* Aggrégations. */
             if (hasFacet || hasGroup)
             {
                 s.Aggregations(a =>
                 {
                     if (hasFacet)
                     {
-                            /* Facettage. */
+                        /* Facettage. */
                         foreach (var facetDef in facetDefList)
                         {
                             facetHandler.DefineAggregation(a, facetDef, facetDefList, input.SearchCriteria.Select(sc => sc.Facets));
@@ -119,7 +121,7 @@ public static class AdvancedQueryUtil
 
                         if (hasPostFilter)
                         {
-                                /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
+                            /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
                             a.Filter(groupFieldName, f => f
                                 .Filter(postFilterQuery)
                                 .Aggregations(AggDescriptor));
@@ -143,7 +145,7 @@ public static class AdvancedQueryUtil
     /// </summary>
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
-    /// <param name="getFacetHandler">Getter sur le handler de facette.</param>
+    /// <param name="facetHandler">Handler de facette.</param>
     /// <returns></returns>
     public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterAndPostFilterQuery<TDocument, TCriteria>(
         DocumentDefinition def,
@@ -161,7 +163,7 @@ public static class AdvancedQueryUtil
     /// </summary>
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
-    /// <param name="getFacetHandler">Getter sur le handler de facette.</param>
+    /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="filters">Filtres NEST additionnels.</param>
     /// <returns>Requête de filtrage.</returns>
     private static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TDocument, TCriteria>(
@@ -194,24 +196,24 @@ public static class AdvancedQueryUtil
         {
             var criteria = sc.Criteria ?? new TCriteria();
 
-                /* Normalisation des paramètres. */
+            /* Normalisation des paramètres. */
             if (criteria.Query == "*" || string.IsNullOrWhiteSpace(criteria.Query))
             {
                 criteria.Query = null;
             }
 
-                /* Récupération de la liste des champs texte sur lesquels rechercher, potentiellement filtrés par le critère. */
+            /* Récupération de la liste des champs texte sur lesquels rechercher, potentiellement filtrés par le critère. */
             var searchFields = def.SearchFields
                 .Where(sf => criteria.SearchFields == null || criteria.SearchFields.Contains(sf.FieldName))
                 .Select(sf => sf.FieldName)
                 .ToArray();
 
-                /* Constuit la sous requête de query. */
+            /* Constuit la sous requête de query. */
             var textSubQuery = criteria.Query != null && (criteria.SearchFields?.Any() ?? true)
                 ? BuildMultiMatchQuery<TDocument>(criteria.Query, searchFields)
                 : q => q;
 
-                /* Gestion des filtres additionnels. */
+            /* Gestion des filtres additionnels. */
             var criteriaProperties = typeof(TCriteria).GetProperties();
 
             var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
@@ -252,21 +254,21 @@ public static class AdvancedQueryUtil
                 }
             }
 
-                /* Constuit la sous requête de filtres. */
+            /* Constuit la sous requête de filtres. */
             var filterSubQuery = BuildAndQuery(filterList.ToArray());
 
-                /* Créé une sous-requête par facette. */
+            /* Créé une sous-requête par facette. */
             var facetSubQueryList = sc.Facets
                 .Select(f =>
                 {
-                        /* Récupère la définition de la facette non multi-sélectionnable. */
+                    /* Récupère la définition de la facette non multi-sélectionnable. */
                     var facetDef = input.FacetQueryDefinition.Facets.Single(x => x.Code == f.Key);
                     if (facetDef.IsMultiSelectable && !isMultiCriteria)
                     {
                         return null;
                     }
 
-                        /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur (sélectionnée ou exclue). */
+                    /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur (sélectionnée ou exclue). */
                     return facetDef.IsMultiSelectable
                         ? facetHandler.BuildMultiSelectableFilter(f.Value, facetDef, def.Fields[facetDef.FieldName].IsMultiValued)
                         : f.Value.Selected.Any()
@@ -278,7 +280,7 @@ public static class AdvancedQueryUtil
                 .Where(f => f != null)
                 .ToArray();
 
-                /* Concatène en "ET" toutes les sous-requêtes de facettes. */
+            /* Concatène en "ET" toutes les sous-requêtes de facettes. */
             var monoValuedFacetsSubQuery = BuildAndQuery(facetSubQueryList);
 
             return BuildAndQuery(new[] { textSubQuery, filterSubQuery, monoValuedFacetsSubQuery });
@@ -292,7 +294,7 @@ public static class AdvancedQueryUtil
     /// Créé la sous-requête de post-filtrage pour les facettes multi-sélectionnables.
     /// </summary>
     /// <param name="input">Input de la recherche.</param>
-    /// <param name="getFacetHandler">Getter sur le handler de facette.</param>
+    /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="docDef">Document.</param>
     /// <returns>Sous-requête.</returns>
     private static (bool hasPostFilter, Func<QueryContainerDescriptor<TDocument>, QueryContainer> query) GetPostFilterSubQuery<TDocument, TCriteria>(
@@ -312,7 +314,7 @@ public static class AdvancedQueryUtil
             input.SearchCriteria.Select(sc =>
                 sc.Facets.Select(f =>
                 {
-                        /* Récupère la définition de la facette multi-sélectionnable. */
+                    /* Récupère la définition de la facette multi-sélectionnable. */
                     var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == true && x.Code == f.Key);
 
                     return def == null
@@ -389,8 +391,8 @@ public static class AdvancedQueryUtil
             {
                 FieldName = def.Fields[fieldName].FieldName,
 
-                    // Seul le premier ordre est utilisé.
-                    Order = input.SearchCriteria.First().SortDesc ? SortOrder.Descending : SortOrder.Ascending
+                // Seul le premier ordre est utilisé.
+                Order = input.SearchCriteria.First().SortDesc ? SortOrder.Descending : SortOrder.Ascending
             };
     }
 

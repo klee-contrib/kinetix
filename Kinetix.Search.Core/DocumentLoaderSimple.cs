@@ -24,6 +24,6 @@ public abstract class DocumentLoaderSimple<TDocument> : IDocumentLoader<TDocumen
         throw new NotSupportedException();
     }
 
-    /// <inheritdoc cref="IDocumentLoader{TDocument}.GetMany(int)" />
+    /// <inheritdoc cref="IDocumentLoader{TDocument}.GetMany(IEnumerable{int})" />
     public abstract IEnumerable<TDocument> GetMany(IEnumerable<int> ids);
 }

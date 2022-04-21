@@ -21,16 +21,16 @@ public class TermFacet<TDocument> : IFacetDefinition<TDocument>
         Field = field;
     }
 
-    /// <inheritdoc cref="IFacetDefinition.Code" />
+    /// <inheritdoc />
     public string Code { get; }
 
-    /// <inheritdoc cref="IFacetDefinition.Label" />
+    /// <inheritdoc />
     public string Label { get; }
 
-    /// <inheritdoc cref="IFacetDefinition.Field" />
+    /// <inheritdoc />
     public Expression<Func<TDocument, object>> Field { get; }
 
-    /// <inheritdoc cref="IFacetDefinition.FieldName" />
+    /// <inheritdoc />
     public string FieldName => Field.Body switch
     {
         UnaryExpression ue => HandleMember((MemberExpression)ue.Operand),
@@ -38,19 +38,19 @@ public class TermFacet<TDocument> : IFacetDefinition<TDocument>
         _ => throw new ArgumentException("Incorrect facet field definition.")
     };
 
-    /// <inheritdoc cref="IFacetDefinition.IsMultiSelectable" />
+    /// <inheritdoc />
     public virtual bool IsMultiSelectable { get; set; } = false;
 
-    /// <inheritdoc cref="IFacetDefinition.CanExclude" />
+    /// <inheritdoc />
     public virtual bool CanExclude { get; set; } = false;
 
-    /// <inheritdoc cref="IFacetDefinition.HasMissing" />
+    /// <inheritdoc />
     public virtual bool HasMissing { get; set; } = true;
 
-    /// <inheritdoc cref="IFacetDefinition.Ordering" />
+    /// <inheritdoc />
     public virtual FacetOrdering Ordering { get; set; } = FacetOrdering.CountDescending;
 
-    /// <inheritdoc cref="IFacetDefinition.ResolveLabel" />
+    /// <inheritdoc />
     public virtual string ResolveLabel(string primaryKey)
     {
         return primaryKey;

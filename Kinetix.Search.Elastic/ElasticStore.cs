@@ -78,14 +78,14 @@ public class ElasticStore : ISearchStore
         return new ElasticBulkDescriptor(_documentDescriptor, _client, _logger, _analytics);
     }
 
-    /// <inheritdoc cref="ISearchStore.Delete(string)" />
+    /// <inheritdoc cref="ISearchStore.Delete(string, bool)" />
     public void Delete<TDocument>(string id, bool refresh = true)
         where TDocument : class
     {
         Bulk().Delete<TDocument>(id).Run(refresh);
     }
 
-    /// <inheritdoc cref="ISearchStore.Delete{TDocument}(TDocument)" />
+    /// <inheritdoc cref="ISearchStore.Delete{TDocument}(TDocument, bool)" />
     public void Delete<TDocument>(TDocument bean, bool refresh = true)
         where TDocument : class
     {
@@ -110,22 +110,19 @@ public class ElasticStore : ISearchStore
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
         /* On vide l'index des documents obsolètes. */
-        if (!partialRebuild || def.IgnoreOnPartialRebuild == null || def.IgnoreOnPartialRebuild.OlderThanDays > 0)
+        if (partialRebuild && def.IgnoreOnPartialRebuild?.OlderThanDays > 0)
         {
-            rebuildLogger?.LogInformation($"Deleting existing documents for {indexName}...");
+            rebuildLogger?.LogInformation($"Partial rebuild. Deleting recent documents for {indexName}...");
 
             var deleteRes = _logger.LogQuery(_analytics, "DeleteAllByQuery", () => _client.DeleteByQuery<TDocument>(d =>
-                (partialRebuild && def.IgnoreOnPartialRebuild != null
-                    ? d.Query(q => q.DateRange(d => d
-                        .Field(def.PartialRebuildDate.FieldName)
-                        .GreaterThan(DateTime.UtcNow.Date.AddDays(-def.IgnoreOnPartialRebuild.OlderThanDays))))
-                    : d.Query(q => q.MatchAll()))
+                d.Query(q => q.DateRange(d => d
+                    .Field(def.PartialRebuildDate.FieldName)
+                    .GreaterThan(DateTime.UtcNow.Date.AddDays(-def.IgnoreOnPartialRebuild.OlderThanDays))))
                 .Timeout(TimeSpan.FromMinutes(5))
                 .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(5)))));
 
             rebuildLogger?.LogInformation($"{deleteRes.Deleted} documents deleted.");
         }
-
 
         rebuildLogger?.LogInformation($"Starting indexation for index {indexName}...");
 

@@ -48,7 +48,7 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         return this;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.Delete{TDocument}(IEnumerable{string})" />
+    /// <inheritdoc cref="ISearchBulkDescriptor.DeleteMany{TDocument}(IEnumerable{string})" />
     public ISearchBulkDescriptor DeleteMany<TDocument>(IEnumerable<string> ids)
         where TDocument : class
     {
@@ -58,7 +58,7 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         return this;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.Delete{TDocument}(IEnumerable{TDocument})" />
+    /// <inheritdoc cref="ISearchBulkDescriptor.DeleteMany{TDocument}(IEnumerable{TDocument})" />
     public ISearchBulkDescriptor DeleteMany<TDocument>(IEnumerable<TDocument> beans)
        where TDocument : class
     {

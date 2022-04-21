@@ -7,6 +7,7 @@ namespace Kinetix.Search.Core.Querying;
 /// Builder de requête pour la recherche avancée.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
+/// <typeparam name="TCriteria">Type du critère.</typeparam>
 public class AdvancedQueryInputBuilder<TDocument, TCriteria>
      where TCriteria : Criteria, new()
 {

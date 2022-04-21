@@ -1,5 +1,6 @@
 ﻿using Kinetix.Monitoring.Core;
 using Kinetix.Search.Core.Config;
+using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
 using Nest;
 
@@ -13,16 +14,18 @@ public sealed class ElasticManager
     private readonly AnalyticsManager _analytics;
     private readonly ElasticClient _client;
     private readonly SearchConfig _config;
+    private readonly DocumentDescriptor _documentDescriptor;
     private readonly ILogger<ElasticManager> _logger;
 
     /// <summary>
     /// Enregistre la configuration d'une connexion base de données.
     /// </summary>
-    public ElasticManager(ILogger<ElasticManager> logger, SearchConfig config, ElasticClient client, AnalyticsManager analytics)
+    public ElasticManager(ILogger<ElasticManager> logger, SearchConfig config, ElasticClient client, AnalyticsManager analytics, DocumentDescriptor documentDescriptor)
     {
         _analytics = analytics;
         _client = client;
         _config = config;
+        _documentDescriptor = documentDescriptor;
         _logger = logger;
     }
 
@@ -37,9 +40,10 @@ public sealed class ElasticManager
     {
         var indexName = _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T));
         var indexExists = ExistIndex(_client, indexName);
-        var shouldCreate = !indexExists;
+        var def = _documentDescriptor.GetDefinition(typeof(T));
+        var shouldCreate = !indexExists || def.IgnoreOnPartialRebuild == null;
 
-        if (indexExists)
+        if (!shouldCreate)
         {
             var properties = typeMapping.Properties;
             var oldProperties = _client.Indices.GetMapping<T>().Indices.FirstOrDefault().Value?.Mappings.Properties;
