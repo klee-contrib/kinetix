@@ -6,7 +6,6 @@ namespace Kinetix.EFCore;
 internal class DbContextTransactionContext : ITransactionContext
 {
     private readonly DbContext _dbContext;
-    private bool _ok = false;
 
     public DbContextTransactionContext(DbContext dbContext)
     {
@@ -14,11 +13,8 @@ internal class DbContextTransactionContext : ITransactionContext
         _dbContext.Database.BeginTransaction();
     }
 
-    /// <inheritdoc cref="ITransactionContext.Complete" />
-    public void Complete()
-    {
-        _ok = true;
-    }
+    /// <inheritdoc />
+    public bool Completed { get; set; }
 
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
     public void OnAfterCommit()
@@ -33,7 +29,7 @@ internal class DbContextTransactionContext : ITransactionContext
     /// <inheritdoc cref="ITransactionContext.OnCommit" />
     public void OnCommit()
     {
-        if (_ok)
+        if (Completed)
         {
             _dbContext.Database.CommitTransaction();
         }

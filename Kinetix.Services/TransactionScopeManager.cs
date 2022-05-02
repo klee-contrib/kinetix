@@ -1,4 +1,6 @@
-﻿namespace Kinetix.Services;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Kinetix.Services;
 
 /// <summary>
 /// Manager de transactions.
@@ -6,11 +8,13 @@
 public class TransactionScopeManager : IDisposable
 {
     private readonly IEnumerable<ITransactionContextProvider> _contextProviders;
+    private readonly ILogger<ServiceScope> _logger;
     private readonly Stack<ServiceScope> _scopes = new();
 
-    public TransactionScopeManager(IEnumerable<ITransactionContextProvider> contextProviders)
+    public TransactionScopeManager(IEnumerable<ITransactionContextProvider> contextProviders, ILogger<ServiceScope> logger)
     {
         _contextProviders = contextProviders;
+        _logger = logger;
     }
 
     /// <summary>
@@ -26,7 +30,7 @@ public class TransactionScopeManager : IDisposable
     /// <returns>Scope de la transaction.</returns>
     public ServiceScope BeginNewTransaction()
     {
-        var scope = new ServiceScope(_contextProviders.Select(ctx => ctx.Create()).ToArray(), this);
+        var scope = new ServiceScope(_contextProviders.Select(ctx => ctx.Create()).ToArray(), _logger, this);
         _scopes.Push(scope);
         return scope;
     }

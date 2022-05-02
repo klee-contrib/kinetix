@@ -11,16 +11,13 @@ internal class SqlTransactionContext : ITransactionContext
 {
     private readonly TransactionScope _scope = new(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero });
 
+    /// <inheritdoc />
+    public bool Completed { get; set; }
+
     /// <summary>
     /// Connections.
     /// </summary>
     internal Dictionary<string, IDbConnection> Connections { get; } = new();
-
-    /// <inheritdoc cref="ITransactionContext.Complete" />
-    public void Complete()
-    {
-        _scope.Complete();
-    }
 
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
     public void OnAfterCommit()
@@ -38,6 +35,11 @@ internal class SqlTransactionContext : ITransactionContext
         foreach (var connection in Connections)
         {
             connection.Value.Dispose();
+        }
+
+        if (Completed)
+        {
+            _scope.Complete();
         }
 
         _scope.Dispose();

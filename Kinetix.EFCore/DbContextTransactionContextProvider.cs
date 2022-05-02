@@ -14,7 +14,7 @@ internal class DbContextTransactionContextProvider<TDbContext> : ITransactionCon
     }
 
 
-    /// <inheritdoc cref="ITransactionContext.Create" />
+    /// <inheritdoc cref="ITransactionContextProvider.Create" />
     public ITransactionContext Create()
     {
         return new DbContextTransactionContext(_dbContext);

@@ -10,18 +10,13 @@ internal class IndexingTransactionContext : ITransactionContext
     private readonly Dictionary<Type, IIndexingDocumentState> _indexors = new();
     private readonly IServiceProvider _provider;
 
-    private bool _ok;
-
     public IndexingTransactionContext(IServiceProvider provider)
     {
         _provider = provider;
     }
 
-    /// <inheritdoc cref="ITransactionContext.Complete" />
-    public void Complete()
-    {
-        _ok = true;
-    }
+    /// <inheritdoc />
+    public bool Completed { get; set; }
 
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
     public void OnAfterCommit()
@@ -31,7 +26,7 @@ internal class IndexingTransactionContext : ITransactionContext
     /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
     public void OnBeforeCommit()
     {
-        if (_ok && _indexors.Any())
+        if (Completed && _indexors.Any())
         {
             var searchStore = _provider.GetRequiredService<ISearchStore>();
             var transactionScopeManager = _provider.GetRequiredService<TransactionScopeManager>();

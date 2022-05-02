@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>JabX</Authors>
     <Description>Module pour intégrer EF Core dans les transactions Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

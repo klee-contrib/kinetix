@@ -1,4 +1,6 @@
-﻿namespace Kinetix.Services;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Kinetix.Services;
 
 /// <summary>
 /// Scope définissant une transaction en cours, muni de divers contextes transactionnels 
@@ -7,6 +9,7 @@
 public class ServiceScope : IDisposable
 {
     private readonly ITransactionContext[] _contexts;
+    private readonly ILogger<ServiceScope> _logger;
     private readonly TransactionScopeManager _manager;
 
     internal ServiceScope()
@@ -14,9 +17,10 @@ public class ServiceScope : IDisposable
         _contexts = Array.Empty<ITransactionContext>();
     }
 
-    internal ServiceScope(ITransactionContext[] contexts, TransactionScopeManager manager)
+    internal ServiceScope(ITransactionContext[] contexts, ILogger<ServiceScope> logger, TransactionScopeManager manager)
     {
         _contexts = contexts;
+        _logger = logger;
         _manager = manager;
     }
 
@@ -27,7 +31,7 @@ public class ServiceScope : IDisposable
     {
         foreach (var context in _contexts)
         {
-            context.Complete();
+            context.Completed = true;
         }
     }
 
@@ -36,9 +40,23 @@ public class ServiceScope : IDisposable
     /// </summary>
     public void Dispose()
     {
-        foreach (var context in _contexts)
+        Exception onBeforeException = null;
+
+        try
         {
-            context.OnBeforeCommit();
+            foreach (var context in _contexts)
+            {
+                context.OnBeforeCommit();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Une erreur est survenue lors de la préparation du commit de la transaction courante.");
+            onBeforeException = ex;
+            foreach (var context in _contexts)
+            {
+                context.Completed = false;
+            }
         }
 
         foreach (var context in _contexts)
@@ -48,9 +66,21 @@ public class ServiceScope : IDisposable
 
         _manager?.PopScope(this);
 
-        foreach (var context in _contexts)
+        if (onBeforeException != null)
         {
-            context.OnAfterCommit();
+            throw onBeforeException;
+        }
+
+        try
+        {
+            foreach (var context in _contexts)
+            {
+                context.OnAfterCommit();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
         }
     }
 

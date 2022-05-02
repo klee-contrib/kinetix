@@ -8,7 +8,7 @@ public interface ITransactionContext
     /// <summary>
     /// Marque la transaction comme étant valide.
     /// </summary>
-    void Complete();
+    bool Completed { get; set; }
 
     /// <summary>
     /// Action a exécuter après le commit du scope courant.
