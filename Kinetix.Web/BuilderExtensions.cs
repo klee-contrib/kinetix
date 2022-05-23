@@ -6,13 +6,15 @@ namespace Kinetix.Web;
 
 public static class BuilderExtensions
 {
-    public static void AddWeb(this MvcOptions builder)
+    public static MvcOptions AddWeb(this MvcOptions builder)
     {
         builder.Filters.AddService<CultureFilter>();
         builder.Filters.AddService<ExceptionFilter>();
         builder.Filters.AddService<TransactionFilter>();
         builder.Filters.AddService<ReferenceCheckerFilter>();
         builder.Filters.AddService<UtcDateFilter>();
+        
+        return builder;
     }
 
     public static void ConfigureSerializer(this JsonOptions options)
