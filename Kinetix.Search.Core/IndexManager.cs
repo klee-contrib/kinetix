@@ -15,6 +15,8 @@ public class IndexManager
     private readonly ISearchStore _searchStore;
     private readonly TransactionScopeManager _transactionScopeManager;
 
+    private bool _waitForRefresh = true;
+
     /// <summary>
     /// Constructeur.
     /// </summary>
@@ -28,6 +30,23 @@ public class IndexManager
         _provider = provider;
         _searchStore = searchStore;
         _transactionScopeManager = transactionScopeManager;
+    }
+
+    /// <summary>
+    /// Attends le refresh de l'index lors du commit ou non. Par défaut: true.
+    /// </summary>
+    public bool WaitForRefresh
+    {
+        get => _waitForRefresh;
+        set
+        {
+            _waitForRefresh = value;
+            var context = _transactionScopeManager.ActiveScope?.GetContext<IndexingTransactionContext>();
+            if (context != null)
+            {
+                context.WaitForRefresh = value;
+            }
+        }
     }
 
     /// <summary>
@@ -204,6 +223,13 @@ public class IndexManager
     private IndexingTransactionContext GetContext()
     {
         var context = _transactionScopeManager.ActiveScope?.GetContext<IndexingTransactionContext>();
-        return context ?? throw new InvalidOperationException("Impossible d'enregistrer une réindexation en dehors d'un contexte de transaction.");
+
+        if (context != null)
+        {
+            context.WaitForRefresh = _waitForRefresh;
+            return context;
+        }
+
+        throw new InvalidOperationException("Impossible d'enregistrer une réindexation en dehors d'un contexte de transaction.");
     }
 }

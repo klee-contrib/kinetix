@@ -18,6 +18,11 @@ internal class IndexingTransactionContext : ITransactionContext
     /// <inheritdoc />
     public bool Completed { get; set; }
 
+    /// <summary>
+    /// Attends le refresh de l'index lors du commit ou non. Par défaut: true.
+    /// </summary>
+    internal bool WaitForRefresh { get; set; } = true;
+
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
     public void OnAfterCommit()
     {
@@ -46,7 +51,7 @@ internal class IndexingTransactionContext : ITransactionContext
                         .Invoke(null, new object[] { _provider, bulk, indexor.Value });
                 }
 
-                bulk.Run();
+                bulk.Run(WaitForRefresh);
             }
             catch (Exception e)
             {
