@@ -468,10 +468,19 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
     /// </summary>
     /// <param name="parameterName">Nom du paramètre SQL Server.</param>
-    /// <param name="list">Collection des entiers à insérer dans le IN.</param>
+    /// <param name="list">Collection des strings à insérer dans le IN.</param>
     /// <returns>Le paramètre créé.</returns>
     /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
     public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<string> list);
+
+    /// <summary>
+    /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
+    /// </summary>
+    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
+    /// <param name="list">Collection des guids à insérer dans le IN.</param>
+    /// <returns>Le paramètre créé.</returns>
+    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
+    public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<Guid> list);
 
     /// <summary>
     /// Ajoute une liste de bean en paramètre (La colonne InsertKey est obligatoire).

@@ -26,6 +26,11 @@ internal class SqlServerParameterCollection : SqlParameterCollection
     private const string VarCharDataType = "type_varchar_list";
 
     /// <summary>
+    /// Nom du type SQL Server dédié aux uniqueidentifier.
+    /// </summary>
+    private const string UniqueIdentifierDataType = "type_uniqueidentifier_list";
+
+    /// <summary>
     /// Taille du champ du type SQL Server dédié aux varchar.
     /// </summary>
     private const int VarCharLength = 20;
@@ -49,6 +54,12 @@ internal class SqlServerParameterCollection : SqlParameterCollection
     public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<string> list)
     {
         return AddInParameter(parameterName, list, VarCharDataType, SqlDbType.VarChar);
+    }
+
+    /// <inheritdoc />
+    public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<Guid> list)
+    {
+        return AddInParameter(parameterName, list, UniqueIdentifierDataType, SqlDbType.UniqueIdentifier);
     }
 
     /// <inheritdoc />
