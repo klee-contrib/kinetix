@@ -179,10 +179,23 @@ public abstract class BaseSqlCommand
     /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
     /// </summary>
     /// <param name="parameterName">Nom du paramètre SQL Server.</param>
-    /// <param name="list">Collection des entiers à insérer dans le IN.</param>
-    /// <returns>La commande.</returns>
+    /// <param name="list">Collection des strings à insérer dans le IN.</param>
+    /// <returns>Le paramètre créé.</returns>
     /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
     public BaseSqlCommand AddInParameter(string parameterName, IEnumerable<string> list)
+    {
+        Parameters.AddInParameter(parameterName, list);
+        return this;
+    }
+
+    /// <summary>
+    /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
+    /// </summary>
+    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
+    /// <param name="list">Collection des guids à insérer dans le IN.</param>
+    /// <returns>Le paramètre créé.</returns>
+    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
+    public BaseSqlCommand AddInParameter(string parameterName, IEnumerable<Guid> list)
     {
         Parameters.AddInParameter(parameterName, list);
         return this;
