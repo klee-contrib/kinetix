@@ -12,7 +12,6 @@ public sealed class DateAttribute : ValidationAttribute
     /// <summary>
     /// Constructeur.
     /// </summary>
-    /// <param name="precision">Précision.</param>
     public DateAttribute()
     {
         ErrorMessageResourceType = typeof(SR);

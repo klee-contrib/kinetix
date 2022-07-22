@@ -96,9 +96,8 @@ public class BusinessException : Exception
     /// <summary>
     /// Crée une nouvelle exception.
     /// </summary>
-    /// <param name="fieldName">Nom du champ en erreur.</param>
-    /// <param name="message">Message d'erreur.</param>
-    /// <param name="code">Code d'erreur.</param>
+    /// <param name="errors">Liste d'erreurs.</param>
+    /// <param name="innerException">Exception source.</param>
     public BusinessException(IEnumerable<ErrorMessage> errors, Exception innerException)
         : base(string.Empty, innerException)
     {

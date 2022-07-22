@@ -43,7 +43,7 @@ public static class BeanDescriptor
     {
         if (collection == null)
         {
-            throw new ArgumentNullException("collection");
+            throw new ArgumentNullException(nameof(collection));
         }
 
         var collectionType = collection.GetType();
@@ -59,7 +59,7 @@ public static class BeanDescriptor
                     CultureInfo.CurrentCulture,
                     SR.ExceptionTypeDescription,
                     collection.GetType().FullName),
-                "collection");
+                nameof(collection));
         }
 
         var genericDefinition = collectionType.GetGenericTypeDefinition();
@@ -98,7 +98,7 @@ public static class BeanDescriptor
     {
         if (bean == null)
         {
-            throw new ArgumentNullException("bean");
+            throw new ArgumentNullException(nameof(bean));
         }
 
         return GetDefinitionInternal(bean.GetType(), bean);
@@ -114,7 +114,7 @@ public static class BeanDescriptor
     {
         if (beanType == null)
         {
-            throw new ArgumentNullException("beanType");
+            throw new ArgumentNullException(nameof(beanType));
         }
 
         if (!ignoreCustomTypeDesc && typeof(ICustomTypeDescriptor).IsAssignableFrom(beanType))
@@ -211,7 +211,6 @@ public static class BeanDescriptor
     /// Retourne la description des propriétés d'un objet sous forme d'une collection.
     /// </summary>
     /// <param name="beanType">Type du bean.</param>
-    /// <param name="metadataType">Type portant les compléments de description.</param>
     /// <param name="bean">Bean dynamic.</param>
     /// <returns>Description des propriétés.</returns>
     private static BeanPropertyDescriptorCollection CreateBeanPropertyCollection(Type beanType, object bean)

@@ -14,7 +14,6 @@ public sealed class BeanPropertyDescriptor
     /// <summary>
     /// Crée une nouvelle instance.
     /// </summary>
-    /// <param name="domainManager">DomainManager.</param>
     /// <param name="propertyName">Nom de la propriété.</param>
     /// <param name="memberName">Nom du membre (DataMemberAttribute).</param>
     /// <param name="propertyType">Type de la propriété.</param>

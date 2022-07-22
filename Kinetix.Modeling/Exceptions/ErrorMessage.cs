@@ -22,6 +22,9 @@ public sealed class ErrorMessage
     /// Crée une nouvelle entrée.
     /// </summary>
     /// <param name="message">Message d'erreur.</param>
+    /// <param name="typeCible">Type cible.</param>
+    /// <param name="objetCibleId">Id de l'objet cible.</param>
+    /// <param name="section">Section cible.</param>
     /// <param name="code">Le code d'erreur.</param>
     public ErrorMessage(string message, string typeCible, int objetCibleId, string section = null, string code = null)
     {
@@ -29,6 +32,23 @@ public sealed class ErrorMessage
         Code = code;
         TypeCible = typeCible;
         ObjetCibleId = objetCibleId;
+        SectionCode = section;
+    }
+
+    /// <summary>
+    /// Crée une nouvelle entrée.
+    /// </summary>
+    /// <param name="message">Message d'erreur.</param>
+    /// <param name="typeCible">Type cible.</param>
+    /// <param name="objetCibleGuid">Guid de l'objet cible.</param>
+    /// <param name="section">Section cible.</param>
+    /// <param name="code">Le code d'erreur.</param>
+    public ErrorMessage(string message, string typeCible, Guid objetCibleGuid, string section = null, string code = null)
+    {
+        Message = message;
+        Code = code;
+        TypeCible = typeCible;
+        ObjetCibleGuid = objetCibleGuid;
         SectionCode = section;
     }
 
@@ -67,6 +87,15 @@ public sealed class ErrorMessage
     /// L'id cible
     /// </summary>
     public int? ObjetCibleId
+    {
+        get;
+        private set;
+    }
+
+    /// <summary>
+    /// Le guid cible
+    /// </summary>
+    public Guid? ObjetCibleGuid
     {
         get;
         private set;
