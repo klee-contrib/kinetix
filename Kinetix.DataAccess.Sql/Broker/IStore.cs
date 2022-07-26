@@ -57,9 +57,10 @@ public interface IStore<T>
     /// Dépose un bean dans le store.
     /// </summary>
     /// <param name="bean">Bean à enregistrer.</param>
+    /// <param name="forceInsert">Force un insert (au lieu de déterminer automatiquement en fonction de la PK).</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Clef primaire de l'objet.</returns>
-    object Put(T bean, ColumnSelector columnSelector = null);
+    object Put(T bean, bool forceInsert, ColumnSelector columnSelector = null);
 
     /// <summary>
     /// Dépose les beans dans le store.

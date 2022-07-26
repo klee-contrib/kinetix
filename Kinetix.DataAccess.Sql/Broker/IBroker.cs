@@ -93,6 +93,14 @@ public interface IBroker<T> : IBroker
     T GetByCriteria(T criteria);
 
     /// <summary>
+    /// Insère un élément.
+    /// </summary>
+    /// <param name="bean">Bean à enregistrer.</param>
+    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
+    /// <returns>Clef primaire de l'objet.</returns>
+    object Insert(T bean, ColumnSelector columnSelector = null);
+
+    /// <summary>
     /// Insére l'ensemble des éléments.
     /// </summary>
     /// <param name="values">Valeurs à insérer.</param>
@@ -108,7 +116,7 @@ public interface IBroker<T> : IBroker
     bool IsUsed(object primaryKey, ICollection<string> tablesToIgnore = null);
 
     /// <summary>
-    /// Sauvegarde un bean.
+    /// Sauvegarde un bean (update si PK renseignée, insert sinon).
     /// </summary>
     /// <param name="bean">Bean à enregistrer.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>

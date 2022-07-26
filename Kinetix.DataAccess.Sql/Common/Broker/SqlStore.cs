@@ -64,7 +64,7 @@ public abstract class SqlStore<T> : IStore<T>
                 throw new NotSupportedException(typeof(T) + " has no primary key defined.");
             }
 
-            DataSourceName = dataSourceName ?? throw new ArgumentNullException("dataSourceName");
+            DataSourceName = dataSourceName ?? throw new ArgumentNullException(nameof(dataSourceName));
         }
         catch (Exception e)
         {
@@ -111,7 +111,7 @@ public abstract class SqlStore<T> : IStore<T>
     }
 
     /// <summary>
-    /// Charactere de conacténation.
+    /// Caractère de conacténation.
     /// </summary>
     protected abstract string ConcatCharacter
     {
@@ -129,12 +129,12 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (parameters == null)
         {
-            throw new ArgumentNullException("parameters");
+            throw new ArgumentNullException(nameof(parameters));
         }
 
         if (property == null)
         {
-            throw new ArgumentNullException("property");
+            throw new ArgumentNullException(nameof(property));
         }
 
         return parameters.AddWithValue(property.MemberName, value);
@@ -213,7 +213,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (primaryKey == null)
         {
-            throw new ArgumentNullException("primaryKey");
+            throw new ArgumentNullException(nameof(primaryKey));
         }
 
         Definition.PrimaryKey.CheckValueType(primaryKey);
@@ -250,7 +250,7 @@ public abstract class SqlStore<T> : IStore<T>
         // Les critères ne doivent pas être vides
         if (criteria == null)
         {
-            throw new ArgumentNullException("criteria");
+            throw new ArgumentNullException(nameof(criteria));
         }
 
         var commandName = ServiceSelect + "_ALL_LIKE_" + Definition.ContractName;
@@ -267,7 +267,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (criteria == null)
         {
-            throw new ArgumentNullException("criteria");
+            throw new ArgumentNullException(nameof(criteria));
         }
 
         var commandName = ServiceSelect + "_LIKE_" + Definition.ContractName;
@@ -279,14 +279,15 @@ public abstract class SqlStore<T> : IStore<T>
     /// Dépose un bean dans le store.
     /// </summary>
     /// <param name="bean">Bean à enregistrer.</param>
+    /// <param name="forceInsert">Force un insert (au lieu de déterminer automatiquement en fonction de la PK).</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Clef primaire.</returns>
     /// <exception cref="BrokerException">Retourne une erreur en cas de mise à jour erronée.</exception>
-    public object Put(T bean, ColumnSelector columnSelector = null)
+    public object Put(T bean, bool forceInsert, ColumnSelector columnSelector = null)
     {
         if (bean == null)
         {
-            throw new ArgumentNullException("bean");
+            throw new ArgumentNullException(nameof(bean));
         }
 
         BeanDescriptor.Check(
@@ -299,12 +300,7 @@ public abstract class SqlStore<T> : IStore<T>
 
         var value = Definition.PrimaryKey.GetValue(bean);
 
-        if (value == null && Definition.PrimaryKey.PropertyType == typeof(Guid?))
-        {
-            value = Guid.NewGuid();
-        }
-
-        using var reader = ExecutePutReader(bean, Definition, Definition.PrimaryKey, value, columnSelector);
+        using var reader = ExecutePutReader(bean, value, forceInsert, columnSelector);
 
         if (reader.RecordsAffected == 0)
         {
@@ -337,7 +333,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (collection == null)
         {
-            throw new ArgumentNullException("collection");
+            throw new ArgumentNullException(nameof(collection));
         }
 
         if (collection.Count == 0)
@@ -357,7 +353,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (primaryKey == null)
         {
-            throw new ArgumentNullException("primaryKey");
+            throw new ArgumentNullException(nameof(primaryKey));
         }
 
         Definition.PrimaryKey.CheckValueType(primaryKey);
@@ -387,7 +383,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (criteria == null)
         {
-            throw new ArgumentNullException("criteria");
+            throw new ArgumentNullException(nameof(criteria));
         }
 
         var commandName = ServiceDelete + "_ALL_LIKE_" + Definition.ContractName;
@@ -400,20 +396,19 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="bean">Bean à insérér.</param>
     /// <param name="beanDefinition">Définition du bean.</param>
     /// <param name="parameters">Paramètres de la commande SQL.</param>
+    /// <param name="dbGeneratedPK">True si la clef est générée par la base.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
-    protected void AddInsertParameters(T bean, BeanDefinition beanDefinition, SqlParameterCollection parameters, ColumnSelector columnSelector)
+    protected void AddInsertParameters(T bean, BeanDefinition beanDefinition, SqlParameterCollection parameters, bool dbGeneratedPK, ColumnSelector columnSelector)
     {
         if (beanDefinition == null)
         {
-            throw new ArgumentNullException("beanDefinition");
+            throw new ArgumentNullException(nameof(beanDefinition));
         }
 
-        BeanPropertyDescriptor primaryKey = null;
         foreach (var property in beanDefinition.Properties)
         {
-            if (property.IsPrimaryKey && primaryKey == null)
+            if (property.IsPrimaryKey && dbGeneratedPK)
             {
-                primaryKey = property;
                 continue;
             }
 
@@ -444,12 +439,12 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (beanDefinition == null)
         {
-            throw new ArgumentNullException("beanDefinition");
+            throw new ArgumentNullException(nameof(beanDefinition));
         }
 
         if (parameters == null)
         {
-            throw new ArgumentNullException("parameters");
+            throw new ArgumentNullException(nameof(parameters));
         }
 
         foreach (var property in beanDefinition.Properties)
@@ -487,7 +482,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (commandText == null)
         {
-            throw new ArgumentNullException("commandText");
+            throw new ArgumentNullException(nameof(commandText));
         }
 
         var properties = BeanDescriptor.GetDefinition(typeof(T)).Properties;
@@ -526,22 +521,24 @@ public abstract class SqlStore<T> : IStore<T>
     }
 
     /// <summary>
+    /// Crée la requête SQL d'insertion d'un bean d'un bean.
+    /// </summary>
+    /// <param name="beanDefinition">Définition du bean.</param>
+    /// <param name="isGeneratedPK">PK autogénérée ou non.</param>
+    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
+    protected abstract string BuildInsertQuery(BeanDefinition beanDefinition, bool isGeneratedPK, ColumnSelector columnSelector);
+
+    /// <summary>
     /// Crée la requête SQL de mise à jour d'un bean.
     /// </summary>
     /// <param name="beanDefinition">Définition du bean.</param>
-    /// <param name="primaryKey">Définition de la clef primaire.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Requête SQL.</returns>
-    protected string BuildUpdateQuery(BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, ColumnSelector columnSelector)
+    protected string BuildUpdateQuery(BeanDefinition beanDefinition, ColumnSelector columnSelector)
     {
         if (beanDefinition == null)
         {
-            throw new ArgumentNullException("beanDefinition");
-        }
-
-        if (primaryKey == null)
-        {
-            throw new ArgumentNullException("primaryKey");
+            throw new ArgumentNullException(nameof(beanDefinition));
         }
 
         var sbUpdate = new StringBuilder(CurrentUserStatementLog);
@@ -551,7 +548,7 @@ public abstract class SqlStore<T> : IStore<T>
         sbUpdateSet.Append(" set");
 
         var sbUpdateWhere = new StringBuilder(" where ");
-        sbUpdateWhere.Append(primaryKey.MemberName).Append(" = ").Append(VariablePrefix).Append(primaryKey.MemberName);
+        sbUpdateWhere.Append(beanDefinition.PrimaryKey.MemberName).Append(" = ").Append(VariablePrefix).Append(beanDefinition.PrimaryKey.MemberName);
 
         // Construction des champs de l'update SET et du WHERE
         var count = 0;
@@ -583,20 +580,20 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (sbUpdateSet == null)
         {
-            throw new ArgumentNullException("sbUpdateSet");
+            throw new ArgumentNullException(nameof(sbUpdateSet));
         }
 
         if (property == null)
         {
-            throw new ArgumentNullException("property");
+            throw new ArgumentNullException(nameof(property));
         }
 
         if (count > 0)
         {
-            sbUpdateSet.Append(",");
+            sbUpdateSet.Append(',');
         }
 
-        sbUpdateSet.Append(" ").Append(property.MemberName).Append(" = ");
+        sbUpdateSet.Append(' ').Append(property.MemberName).Append(" = ");
 
         // Insertion de la valeur à mettre à jour
         sbUpdateSet.Append(VariablePrefix).Append(property.MemberName);
@@ -613,7 +610,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (criteria == null)
         {
-            throw new ArgumentNullException("criteria");
+            throw new ArgumentNullException(nameof(criteria));
         }
 
         var command = CreateSqlCommand(commandName, CommandType.Text);
@@ -646,22 +643,17 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="bean">Bean à insérer.</param>
     /// <param name="beanDefinition">Définition du bean.</param>
-    /// <param name="primaryKey">Définition de la clef primaire.</param>
-    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
-    /// <returns>Bean inséré.</returns>
-    protected abstract IDataReader Insert(string commandName, T bean, BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, ColumnSelector columnSelector);
-
-    /// <summary>
-    /// Insère un nouvel enregistrement.
-    /// </summary>
-    /// <param name="commandName">Nom de la commande.</param>
-    /// <param name="bean">Bean à insérer.</param>
-    /// <param name="beanDefinition">Définition du bean.</param>
-    /// <param name="primaryKey">Définition de la clef primaire.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <param name="primaryKeyValue">Valeur de la clef primaire.</param>
     /// <returns>Bean inséré.</returns>
-    protected abstract IDataReader Insert(string commandName, T bean, BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, ColumnSelector columnSelector, object primaryKeyValue);
+    protected IDataReader Insert(string commandName, T bean, BeanDefinition beanDefinition, ColumnSelector columnSelector, object primaryKeyValue = null)
+    {
+        var sql = BuildInsertQuery(beanDefinition, primaryKeyValue == null, columnSelector);
+        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
+        command.CommandTimeout = 0;
+        AddInsertParameters(bean, beanDefinition, command.Parameters, primaryKeyValue == null, columnSelector);
+        return command.ExecuteReader();
+    }
 
     /// <summary>
     /// Dépose les beans dans le store.
@@ -682,17 +674,17 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (filter == null)
         {
-            throw new ArgumentNullException("filter");
+            throw new ArgumentNullException(nameof(filter));
         }
 
         if (command == null)
         {
-            throw new ArgumentNullException("command");
+            throw new ArgumentNullException(nameof(command));
         }
 
         if (commandText == null)
         {
-            throw new ArgumentNullException("commandText");
+            throw new ArgumentNullException(nameof(commandText));
         }
 
         var pos = 0;
@@ -736,11 +728,17 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="bean">Bean à mettre à jour.</param>
     /// <param name="beanDefinition">Définition du bean.</param>
-    /// <param name="primaryKey">Définition de la clef primaire.</param>
-    /// <param name="primaryKeyValue">Valeur de la clef primaire.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
+    /// <param name="primaryKeyValue">Valeur de la clef primaire.</param>
     /// <returns>Bean mise à jour.</returns>
-    protected abstract IDataReader Update(string commandName, T bean, BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, object primaryKeyValue, ColumnSelector columnSelector);
+    protected IDataReader Update(string commandName, T bean, BeanDefinition beanDefinition, ColumnSelector columnSelector, object primaryKeyValue)
+    {
+        var sql = BuildUpdateQuery(beanDefinition, columnSelector);
+        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
+        command.CommandTimeout = 0;
+        AddUpdateParameters(bean, beanDefinition, command.Parameters, columnSelector);
+        return command.ExecuteReader();
+    }
 
     /// <summary>
     /// Ajout du paramètre en entrée de la commande envoyée à SQL Server.
@@ -753,7 +751,7 @@ public abstract class SqlStore<T> : IStore<T>
     {
         if (parameters == null)
         {
-            throw new ArgumentNullException("parameters");
+            throw new ArgumentNullException(nameof(parameters));
         }
 
         parameters.AddWithValue("PK_" + primaryKeyName, primaryKeyValue);
@@ -763,28 +761,21 @@ public abstract class SqlStore<T> : IStore<T>
     /// Obtient un reader du résultat d'enregistrement.
     /// </summary>
     /// <param name="bean">Bean à saugevarder.</param>
-    /// <param name="beanDefinition">Definition.</param>
-    /// <param name="primaryKey">Clef primaire.</param>
     /// <param name="primaryKeyValue">Valeur de la clef primaire.</param>
+    /// <param name="forceInsert">Force un insert (au lieu de déterminer automatiquement en fonction de la PK).</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>DataReader contenant le bean sauvegardé.</returns>
-    private IDataReader ExecutePutReader(T bean, BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, object primaryKeyValue, ColumnSelector columnSelector)
+    private IDataReader ExecutePutReader(T bean, object primaryKeyValue, bool forceInsert, ColumnSelector columnSelector)
     {
-        if (primaryKey.GetValue(bean) != null)
+        if (!forceInsert && primaryKeyValue != null)
         {
-            var commandName = ServiceUpdate + "_" + beanDefinition.ContractName;
-            return Update(commandName, bean, beanDefinition, primaryKey, primaryKeyValue, columnSelector);
-        }
-
-        if (primaryKeyValue == null)
-        {
-            var commandName = ServiceInsert + "_" + beanDefinition.ContractName;
-            return Insert(commandName, bean, beanDefinition, primaryKey, columnSelector);
+            var commandName = ServiceUpdate + "_" + Definition.ContractName;
+            return Update(commandName, bean, Definition, columnSelector, primaryKeyValue);
         }
         else
         {
-            var commandName = ServiceInsert + "_" + beanDefinition.ContractName;
-            return Insert(commandName, bean, beanDefinition, primaryKey, columnSelector, primaryKeyValue);
+            var commandName = ServiceInsert + "_" + Definition.ContractName;
+            return Insert(commandName, bean, Definition, columnSelector, primaryKeyValue);
         }
     }
 

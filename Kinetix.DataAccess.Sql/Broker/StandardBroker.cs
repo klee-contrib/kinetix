@@ -43,7 +43,7 @@ public class StandardBroker<T> : IBroker<T>
     {
         if (primaryKey == null)
         {
-            throw new ArgumentNullException("primaryKey");
+            throw new ArgumentNullException(nameof(primaryKey));
         }
 
         using var tx = _transactionScopeManager.EnsureTransaction();
@@ -68,7 +68,7 @@ public class StandardBroker<T> : IBroker<T>
     {
         if (criteria == null)
         {
-            throw new ArgumentNullException("criteria");
+            throw new ArgumentNullException(nameof(criteria));
         }
 
         using var tx = _transactionScopeManager.EnsureTransaction();
@@ -84,7 +84,7 @@ public class StandardBroker<T> : IBroker<T>
     {
         if (primaryKeys == null)
         {
-            throw new ArgumentNullException("primaryKeys");
+            throw new ArgumentNullException(nameof(primaryKeys));
         }
 
         foreach (object primaryKey in primaryKeys)
@@ -102,7 +102,7 @@ public class StandardBroker<T> : IBroker<T>
     {
         if (primaryKey == null)
         {
-            throw new ArgumentNullException("primaryKey");
+            throw new ArgumentNullException(nameof(primaryKey));
         }
 
         using var tx = _transactionScopeManager.EnsureTransaction();
@@ -173,6 +173,14 @@ public class StandardBroker<T> : IBroker<T>
         return value;
     }
 
+    public object Insert(T bean, ColumnSelector columnSelector = null)
+    {
+        using var tx = _transactionScopeManager.EnsureTransaction();
+        var result = _store.Put(bean, forceInsert: true, columnSelector);
+        tx.Complete();
+        return result;
+    }
+
     /// <summary>
     /// Insére l'ensemble des éléments.
     /// </summary>
@@ -182,7 +190,7 @@ public class StandardBroker<T> : IBroker<T>
     {
         if (values == null)
         {
-            throw new ArgumentNullException("values");
+            throw new ArgumentNullException(nameof(values));
         }
 
         using var tx = _transactionScopeManager.EnsureTransaction();
@@ -212,11 +220,11 @@ public class StandardBroker<T> : IBroker<T>
     {
         if (bean == null)
         {
-            throw new ArgumentNullException("bean");
+            throw new ArgumentNullException(nameof(bean));
         }
 
         using var tx = _transactionScopeManager.EnsureTransaction();
-        var primaryKey = _store.Put(bean, columnSelector);
+        var primaryKey = _store.Put(bean, forceInsert: false, columnSelector);
         tx.Complete();
         return primaryKey;
     }
@@ -231,13 +239,13 @@ public class StandardBroker<T> : IBroker<T>
     {
         if (values == null)
         {
-            throw new ArgumentNullException("values");
+            throw new ArgumentNullException(nameof(values));
         }
 
         using var tx = _transactionScopeManager.EnsureTransaction();
         foreach (var value in values)
         {
-            _store.Put(value, columnSelector);
+            _store.Put(value, forceInsert: false, columnSelector);
         }
 
         tx.Complete();

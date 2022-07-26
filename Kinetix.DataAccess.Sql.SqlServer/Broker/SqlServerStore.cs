@@ -1,7 +1,6 @@
-﻿using System.Data;
-using System.Text;
-using Kinetix.Modeling;
+﻿using System.Text;
 using Kinetix.DataAccess.Sql.Broker;
+using Kinetix.Modeling;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.DataAccess.Sql.SqlServer.Broker;
@@ -31,84 +30,21 @@ internal class SqlServerStore<T> : SqlStore<T>
     protected override string ConcatCharacter => " + ";
 
     /// <inheritdoc />
-    protected override IDataReader Insert(string commandName, T bean, BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, ColumnSelector columnSelector)
-    {
-        var sql = BuildInsertQuery(beanDefinition, true, columnSelector);
-        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
-        command.CommandTimeout = 0;
-        AddInsertParameters(bean, beanDefinition, command.Parameters, columnSelector);
-        return command.ExecuteReader();
-    }
-
-    /// <inheritdoc />
-    protected override IDataReader Insert(string commandName, T bean, BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, ColumnSelector columnSelector, object primaryKeyValue)
-    {
-        if (primaryKey == null)
-        {
-            throw new ArgumentNullException("primaryKey");
-        }
-
-        var sql = BuildInsertQuery(beanDefinition, true, columnSelector);
-        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
-        command.CommandTimeout = 0;
-        command.AddParameter(primaryKey.MemberName, primaryKeyValue);
-        AddInsertParameters(bean, beanDefinition, command.Parameters, columnSelector);
-        return command.ExecuteReader();
-    }
-
-    /// <inheritdoc />
-    protected override ICollection<T> InsertAll(string commandName, ICollection<T> collection, BeanDefinition beanDefinition)
-    {
-        if (collection == null)
-        {
-            throw new ArgumentNullException("collection");
-        }
-
-        if (beanDefinition == null)
-        {
-            throw new ArgumentNullException("beanDefinition");
-        }
-
-        var collectionStore = new SqlServerParameterBeanCollection<T>(ConnectionPool, collection, true);
-        return collectionStore.ExecuteInsert(commandName, DataSourceName);
-    }
-
-    /// <inheritdoc />
-    protected override IDataReader Update(string commandName, T bean, BeanDefinition beanDefinition, BeanPropertyDescriptor primaryKey, object primaryKeyValue, ColumnSelector columnSelector)
-    {
-        var sql = BuildUpdateQuery(beanDefinition, primaryKey, columnSelector);
-        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
-        command.CommandTimeout = 0;
-        AddUpdateParameters(bean, beanDefinition, command.Parameters, columnSelector);
-        return command.ExecuteReader();
-    }
-
-    /// <summary>
-    /// Crée la requête SQL d'insertion.
-    /// </summary>
-    /// <param name="beanDefinition">Définition du bean.</param>
-    /// <param name="dbGeneratedPK">True si la clef est générée par la base.</param>
-    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
-    /// <returns>Requête SQL.</returns>
-    private string BuildInsertQuery(BeanDefinition beanDefinition, bool dbGeneratedPK, ColumnSelector columnSelector)
+    protected override string BuildInsertQuery(BeanDefinition beanDefinition, bool dbGeneratedPK, ColumnSelector columnSelector)
     {
         var sbInsert = new StringBuilder(CurrentUserStatementLog);
         sbInsert.Append("insert into ");
-        sbInsert.Append(beanDefinition.ContractName).Append("(");
+        sbInsert.Append(beanDefinition.ContractName).Append('(');
         var sbValues = new StringBuilder(") values (");
         var count = 0;
-        BeanPropertyDescriptor primaryKey = null;
         foreach (var property in beanDefinition.Properties)
         {
-            if (property.IsPrimaryKey && primaryKey == null)
+            if (property.IsPrimaryKey && dbGeneratedPK)
             {
-                primaryKey = property;
                 continue;
             }
 
-            if (dbGeneratedPK && (
-                property.MemberName == null
-                || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName)))
+            if (property.MemberName == null || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName))
             {
                 continue;
             }
@@ -126,12 +62,29 @@ internal class SqlServerStore<T> : SqlStore<T>
             count++;
         }
 
-        sbInsert.Append(sbValues.ToString()).Append(")\n");
+        sbInsert.Append(sbValues).Append(")\n");
         if (dbGeneratedPK)
         {
             sbInsert.Append("select cast(SCOPE_IDENTITY() as int)");
         }
 
         return sbInsert.ToString();
+    }
+
+    /// <inheritdoc />
+    protected override ICollection<T> InsertAll(string commandName, ICollection<T> collection, BeanDefinition beanDefinition)
+    {
+        if (collection == null)
+        {
+            throw new ArgumentNullException(nameof(collection));
+        }
+
+        if (beanDefinition == null)
+        {
+            throw new ArgumentNullException(nameof(beanDefinition));
+        }
+
+        var collectionStore = new SqlServerParameterBeanCollection<T>(ConnectionPool, collection, true);
+        return collectionStore.ExecuteInsert(commandName, DataSourceName);
     }
 }
