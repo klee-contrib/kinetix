@@ -407,7 +407,7 @@ public abstract class SqlStore<T> : IStore<T>
 
         foreach (var property in beanDefinition.Properties)
         {
-            if (property.IsPrimaryKey && dbGeneratedPK)
+            if (property == beanDefinition.PrimaryKey && dbGeneratedPK)
             {
                 continue;
             }

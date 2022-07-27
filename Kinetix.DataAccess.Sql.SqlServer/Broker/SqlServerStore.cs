@@ -37,9 +37,10 @@ internal class SqlServerStore<T> : SqlStore<T>
         sbInsert.Append(beanDefinition.ContractName).Append('(');
         var sbValues = new StringBuilder(") values (");
         var count = 0;
+
         foreach (var property in beanDefinition.Properties)
         {
-            if (property.IsPrimaryKey && dbGeneratedPK)
+            if (property == beanDefinition.PrimaryKey && dbGeneratedPK)
             {
                 continue;
             }

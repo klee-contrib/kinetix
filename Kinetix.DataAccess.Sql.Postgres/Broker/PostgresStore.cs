@@ -37,13 +37,11 @@ internal class PostgresStore<T> : SqlStore<T>
         sbInsert.Append(beanDefinition.ContractName).Append('(');
         var sbValues = new StringBuilder(") values (");
         var count = 0;
-        BeanPropertyDescriptor primaryKey = null;
 
         foreach (var property in beanDefinition.Properties)
         {
-            if (property.IsPrimaryKey && dbGeneratedPK)
+            if (property == beanDefinition.PrimaryKey && dbGeneratedPK)
             {
-                primaryKey = property;
                 continue;
             }
 
@@ -68,7 +66,7 @@ internal class PostgresStore<T> : SqlStore<T>
         sbInsert.Append(sbValues).Append(")\n");
         if (dbGeneratedPK)
         {
-            sbInsert.Append($"returning {primaryKey.MemberName}");
+            sbInsert.Append($"returning {beanDefinition.PrimaryKey.MemberName}");
         }
 
         return sbInsert.ToString();
