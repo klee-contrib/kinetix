@@ -4,21 +4,16 @@
 /// Contrat pour les loaders de documents pour indexation.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public interface IDocumentLoader<TDocument>
+/// <typeparam name="TKey">Type de clé primaire</typeparam>
+public interface IDocumentLoader<TDocument, TKey>
+    where TDocument : class
 {
     /// <summary>
-    /// Charge un document pour indexation par id.
+    /// Charge un document pour indexation.
     /// </summary>
     /// <param name="id">Id du document.</param>
     /// <returns>Le document.</returns>
-    TDocument Get(int id);
-
-    /// <summary>
-    /// Charge un document pour indexation par clé composite.
-    /// </summary>
-    /// <param name="bean">Clé composite.</param>
-    /// <returns>Le document.</returns>
-    TDocument Get(TDocument bean);
+    TDocument Get(TKey id);
 
     /// <summary>
     /// Charge tous les documents pour indexation.
@@ -28,16 +23,9 @@ public interface IDocumentLoader<TDocument>
     IEnumerable<TDocument> GetAll(bool partialRebuild);
 
     /// <summary>
-    /// Charge plusieurs documents par id pour indexation.
+    /// Charge plusieurs documents pour indexation.
     /// </summary>
     /// <param name="ids">Ids des documents.</param>
     /// <returns>Les documents.</returns>
-    IEnumerable<TDocument> GetMany(IEnumerable<int> ids);
-
-    /// <summary>
-    /// Charge plusieurs documents par clé composite pour indexation.
-    /// </summary>
-    /// <param name="beans">Clés composites.</param>
-    /// <returns>Les documents.</returns>
-    IEnumerable<TDocument> GetMany(IEnumerable<TDocument> beans);
+    IEnumerable<TDocument> GetMany(IEnumerable<TKey> ids);
 }

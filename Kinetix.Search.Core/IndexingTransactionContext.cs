@@ -7,7 +7,7 @@ namespace Kinetix.Search.Core;
 
 internal class IndexingTransactionContext : ITransactionContext
 {
-    private readonly Dictionary<Type, IIndexingDocumentState> _indexors = new();
+    private readonly Dictionary<(Type TDocument, Type TKey), IIndexingDocumentState> _indexors = new();
     private readonly IServiceProvider _provider;
 
     public IndexingTransactionContext(IServiceProvider provider)
@@ -45,9 +45,9 @@ internal class IndexingTransactionContext : ITransactionContext
             {
                 foreach (var indexor in _indexors)
                 {
-                    logger.LogInformation($"Prepare {indexor.Key.Name}");
+                    logger.LogInformation($"Prepare {indexor.Key.TDocument.Name}");
                     typeof(IndexingTransactionContext).GetMethod(nameof(PrepareBulkDescriptor), BindingFlags.Static | BindingFlags.NonPublic)
-                        .MakeGenericMethod(indexor.Key)
+                        .MakeGenericMethod(indexor.Key.TDocument, indexor.Key.TKey)
                         .Invoke(null, new object[] { _provider, bulk, indexor.Value });
                 }
 
@@ -69,42 +69,30 @@ internal class IndexingTransactionContext : ITransactionContext
     {
     }
 
-    internal void IndexAll<TDocument>()
+    internal void IndexAll<TDocument, TKey>()
         where TDocument : class
     {
-        GetState<TDocument>().Reindex = true;
+        GetState<TDocument, TKey>().Reindex = true;
     }
 
-    internal bool RegisterDelete<TDocument>(int id)
+    internal bool RegisterDelete<TDocument, TKey>(TKey id)
         where TDocument : class
     {
-        return GetState<TDocument>().RegisterDelete(id);
+        return GetState<TDocument, TKey>().RegisterDelete(id);
     }
 
-    internal bool RegisterDelete<TDocument>(TDocument bean)
+    internal bool RegisterIndex<TDocument, TKey>(TKey id)
         where TDocument : class
     {
-        return GetState<TDocument>().RegisterDelete(bean);
+        return GetState<TDocument, TKey>().RegisterIndex(id);
     }
 
-    internal bool RegisterIndex<TDocument>(int id)
+    private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument, TKey>(IServiceProvider provider, ISearchBulkDescriptor bulk, IIndexingDocumentState _state)
         where TDocument : class
     {
-        return GetState<TDocument>().RegisterIndex(id);
-    }
+        var state = (IndexingDocumentState<TDocument, TKey>)_state;
 
-    internal bool RegisterIndex<TDocument>(TDocument bean)
-        where TDocument : class
-    {
-        return GetState<TDocument>().RegisterIndex(bean);
-    }
-
-    private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument>(IServiceProvider provider, ISearchBulkDescriptor bulk, IIndexingDocumentState _state)
-        where TDocument : class
-    {
-        var state = (IndexingDocumentState<TDocument>)_state;
-
-        var loader = provider.GetService<IDocumentLoader<TDocument>>();
+        var loader = provider.GetRequiredService<IDocumentLoader<TDocument, TKey>>();
         if (state.Reindex)
         {
             var docs = loader.GetAll(false).ToList();
@@ -121,15 +109,6 @@ internal class IndexingTransactionContext : ITransactionContext
             else if (state.IdsToDelete.Count > 1)
             {
                 bulk.DeleteMany<TDocument>(state.IdsToDelete.Select(id => id.ToString()));
-            }
-
-            if (state.BeansToDelete.Count == 1)
-            {
-                bulk.Delete(state.BeansToDelete.Single());
-            }
-            else if (state.BeansToDelete.Count > 1)
-            {
-                bulk.DeleteMany(state.BeansToDelete);
             }
 
             if (state.IdsToIndex.Count == 1)
@@ -149,35 +128,18 @@ internal class IndexingTransactionContext : ITransactionContext
                 }
             }
 
-            if (state.BeansToIndex.Count == 1)
-            {
-                var doc = loader.Get(state.BeansToIndex.Single());
-                if (doc != null)
-                {
-                    bulk.Index(doc);
-                }
-            }
-            else if (state.BeansToIndex.Count > 1)
-            {
-                var docs = loader.GetMany(state.BeansToIndex).ToList();
-                if (docs.Any())
-                {
-                    bulk.IndexMany(docs);
-                }
-            }
-
             return bulk;
         }
     }
 
-    private IndexingDocumentState<TDocument> GetState<TDocument>()
+    private IndexingDocumentState<TDocument, TKey> GetState<TDocument, TKey>()
         where TDocument : class
     {
-        if (!_indexors.ContainsKey(typeof(TDocument)))
+        if (!_indexors.ContainsKey((typeof(TDocument), typeof(TKey))))
         {
-            _indexors.Add(typeof(TDocument), new IndexingDocumentState<TDocument>());
+            _indexors.Add((typeof(TDocument), typeof(TKey)), new IndexingDocumentState<TDocument, TKey>());
         }
 
-        return (IndexingDocumentState<TDocument>)_indexors[typeof(TDocument)];
+        return (IndexingDocumentState<TDocument, TKey>)_indexors[(typeof(TDocument), typeof(TKey))];
     }
 }

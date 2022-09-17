@@ -8,12 +8,12 @@ internal interface IIndexingDocumentState
 /// Contient l'état de réindexation en cours d'un document.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-internal class IndexingDocumentState<TDocument> : IIndexingDocumentState
+/// <typeparam name="TKey">Type de clé primaire.</typeparam>
+internal class IndexingDocumentState<TDocument, TKey> : IIndexingDocumentState
+    where TDocument : class
 {
-    public HashSet<TDocument> BeansToDelete { get; } = new();
-    public HashSet<TDocument> BeansToIndex { get; } = new();
-    public HashSet<int> IdsToDelete { get; } = new();
-    public HashSet<int> IdsToIndex { get; } = new();
+    public HashSet<TKey> IdsToDelete { get; } = new();
+    public HashSet<TKey> IdsToIndex { get; } = new();
     public bool Reindex { get; set; } = false;
 
     /// <summary>
@@ -21,21 +21,10 @@ internal class IndexingDocumentState<TDocument> : IIndexingDocumentState
     /// </summary>
     /// <param name="id">ID du document.</param>
     /// <returns>Succès.</returns>
-    public bool RegisterDelete(int id)
+    public bool RegisterDelete(TKey id)
     {
         IdsToIndex.Remove(id);
         return IdsToDelete.Add(id);
-    }
-
-    /// <summary>
-    /// Marque un document pour suppression dans son index.
-    /// </summary>
-    /// <param name="bean">La clé composite.</param>
-    /// <returns>Succès.</returns>
-    public bool RegisterDelete(TDocument bean)
-    {
-        BeansToIndex.Remove(bean);
-        return BeansToDelete.Add(bean);
     }
 
     /// <summary>
@@ -43,18 +32,8 @@ internal class IndexingDocumentState<TDocument> : IIndexingDocumentState
     /// </summary>
     /// <param name="id">ID du document.</param>
     /// <returns>Succès.</returns>
-    public bool RegisterIndex(int id)
+    public bool RegisterIndex(TKey id)
     {
         return !IdsToDelete.Contains(id) && IdsToIndex.Add(id);
-    }
-
-    /// <summary>
-    /// Marque un document pour (ré)indexation.
-    /// </summary>
-    /// <param name="bean">La clé composite.</param>
-    /// <returns>Succès.</returns>
-    public bool RegisterIndex(TDocument bean)
-    {
-        return !BeansToDelete.Contains(bean) && BeansToIndex.Add(bean);
     }
 }

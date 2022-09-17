@@ -43,13 +43,15 @@ public class ElasticConfigBuilder
     /// Enregistre un index en lecture et en écriture pour un document.
     /// </summary>
     /// <typeparam name="TDocument">Type du document.</typeparam>
+    /// <typeparam name="TKey">Type de clé primaire.</typeparam>
     /// <typeparam name="TLoader">DocumentLoader pour le document.</typeparam>
     /// <returns>Builder.</returns>
-    public ElasticConfigBuilder AddDocumentType<TDocument, TLoader>()
-        where TLoader : class, IDocumentLoader<TDocument>
+    public ElasticConfigBuilder AddDocumentType<TDocument, TKey, TLoader>()
+        where TDocument : class
+        where TLoader : class, IDocumentLoader<TDocument, TKey>
     {
         DocumentTypes.Add(typeof(TDocument));
-        _services.AddScoped<IDocumentLoader<TDocument>, TLoader>();
+        _services.AddScoped<IDocumentLoader<TDocument, TKey>, TLoader>();
         return this;
     }
 
