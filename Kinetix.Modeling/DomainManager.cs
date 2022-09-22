@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using Kinetix.Modeling.Annotations;
@@ -13,7 +14,7 @@ public static class DomainManager
     /// <summary>
     /// Dictionnaire des domaines.
     /// </summary>
-    private readonly static Dictionary<Enum, IDomain> _domainDictionary = new();
+    private readonly static ConcurrentDictionary<Enum, IDomain> _domainDictionary = new();
 
     /// <summary>
     /// Récupère le domaine d'une propriété.
@@ -54,16 +55,12 @@ public static class DomainManager
 
     private static IDomain GetDomain(Enum domainName)
     {
-        if (!_domainDictionary.TryGetValue(domainName, out var domain))
+        return _domainDictionary.GetOrAdd(domainName, _ =>
         {
             var property = domainName.GetType().GetMember(domainName.ToString())[0];
             var domainType = property.GetCustomAttribute<DomainTypeAttribute>().Type;
 
-            var validationAttributes = new List<ValidationAttribute>();
-            foreach (ValidationAttribute validationAttribute in property.GetCustomAttributes(typeof(ValidationAttribute), false))
-            {
-                validationAttributes.Add(validationAttribute);
-            }
+            var validationAttributes = property.GetCustomAttributes<ValidationAttribute>();
 
             var extraAttributes = new List<Attribute>();
             foreach (var attribute in property.GetCustomAttributes(false))
@@ -73,19 +70,14 @@ public static class DomainManager
                     continue;
                 }
 
-                var extraAttribute = attribute as Attribute;
-                extraAttributes.Add(extraAttribute);
+                extraAttributes.Add(attribute as Attribute);
             }
 
-            domain = (IDomain)Activator.CreateInstance(
+            return (IDomain)Activator.CreateInstance(
                 typeof(Domain<>).MakeGenericType(domainType),
                 domainName,
                 validationAttributes,
                 extraAttributes);
-
-            _domainDictionary.Add(domainName, domain);
-        }
-
-        return domain;
+        });
     }
 }
