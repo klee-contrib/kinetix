@@ -23,7 +23,7 @@ internal class ExcelBuilder : IExcelBuilder
     /// <inheritdoc />
     public string FileName { get; set; }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.AddWorksheet" />
+    /// <inheritdoc cref="IExcelBuilder.AddWorksheet{T}" />
     public IWorksheetBuilder<T> AddWorksheet<T>(string name)
     {
         return new WorksheetBuilder<T>(this, _referenceManager, _workbook.AddWorksheet(name));

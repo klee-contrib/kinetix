@@ -160,7 +160,7 @@ internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
         return _excelBuilder;
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(Func{T, object})" />
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(Expression{Func{T, object}})" />
     public IWorksheetBuilder<T> Column(Expression<Func<T, object>> selector)
     {
         return Column(string.Empty, selector);
@@ -172,21 +172,21 @@ internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
         return Column(label, _ => null);
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string, Func{T, object})" />
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string, Expression{Func{T, object}})" />
     public IWorksheetBuilder<T> Column(string label, Expression<Func<T, object>> selector)
     {
         _columns.Add((label, selector));
         return this;
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Data" />
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Data(IEnumerable{T})" />
     public IWorksheetBuilder<T> Data(IEnumerable<T> data)
     {
         _data = data;
         return this;
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Data" />
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Data(IAsyncEnumerable{T})" />
     public IWorksheetBuilder<T> Data(IAsyncEnumerable<T> dataAsync)
     {
         _dataAsync = dataAsync;
