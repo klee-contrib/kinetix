@@ -281,7 +281,7 @@ public sealed class BeanPropertyDescriptor
     /// </summary>
     private void CheckPropertyTypeForReference()
     {
-        if (MemberName != null && ReferenceType != null && PrimitiveType != typeof(int) && PrimitiveType != typeof(string) && PrimitiveType != typeof(Guid))
+        if (MemberName != null && ReferenceType != null && PrimitiveType != null && PrimitiveType != typeof(int) && PrimitiveType != typeof(string) && PrimitiveType != typeof(Guid) && !PrimitiveType.IsEnum)
         {
             throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, SR.ExceptionTypeInt32Required, PropertyType, PropertyName));
         }
