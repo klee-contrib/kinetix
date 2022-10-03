@@ -8,27 +8,20 @@ public class QueryOutput
     /// <summary>
     /// Groupe de liste de résultats.
     /// </summary>
-    public IList<GroupResult> Groups
-    {
-        get;
-        set;
-    }
+    public IList<GroupResult> Groups { get; set; }
 
     /// <summary>
     /// Facettes sélectionnées.
     /// </summary>
-    public IList<FacetOutput> Facets
-    {
-        get;
-        set;
-    }
+    public IList<FacetOutput> Facets { get; set; }
 
     /// <summary>
     /// Nombre total d'éléments.
     /// </summary>
-    public long? TotalCount
-    {
-        get;
-        set;
-    }
+    public long? TotalCount { get; set; }
+
+    /// <summary>
+    /// Token retourné pour la pagination.
+    /// </summary>
+    public string SkipToken { get; set; }
 }

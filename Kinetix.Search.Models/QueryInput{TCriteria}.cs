@@ -10,63 +10,40 @@ public class QueryInput<TCriteria>
     /// <summary>
     /// Liste des facettes.
     /// </summary>
-    public Dictionary<string, FacetInput> Facets
-    {
-        get;
-        set;
-    } = new();
+    public Dictionary<string, FacetInput> Facets { get; set; } = new();
 
     /// <summary>
     /// Critères de recherche.
     /// </summary>
-    public TCriteria Criteria
-    {
-        get;
-        set;
-    } = new();
+    public TCriteria Criteria { get; set; } = new();
 
     /// <summary>
     /// Nom du champ pour grouper (parmi les noms de facettes).
     /// </summary>
-    public string Group
-    {
-        get;
-        set;
-    }
+    public string Group { get; set; }
 
     /// <summary>
     /// Champ de tri.
     /// </summary>
-    public string SortFieldName
-    {
-        get;
-        set;
-    }
+    public string SortFieldName { get; set; }
 
     /// <summary>
     /// Indique si le tri est descendant.
     /// </summary>
-    public bool SortDesc
-    {
-        get;
-        set;
-    }
+    public bool SortDesc { get; set; }
 
     /// <summary>
     /// Nombre d'éléments à sauter pour la pagination.
     /// </summary>
-    public int Skip
-    {
-        get;
-        set;
-    }
+    public int Skip { get; set; }
+
+    /// <summary>
+    /// Token à utiliser pour la pagination (à la place de "skip").
+    /// </summary>
+    public string SkipToken { get; set; }
 
     /// <summary>
     /// Taille d'une page d'éléments.
     /// </summary>
-    public int? Top
-    {
-        get;
-        set;
-    }
+    public int? Top { get; set; }
 }
