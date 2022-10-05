@@ -60,9 +60,10 @@ public class TermFacet<TDocument> : IFacetDefinition<TDocument>
     {
         var name = ToCamelCase(me.Member.Name);
 
-        if (me.Expression is MethodCallExpression mce)
+        while (me.Expression is MethodCallExpression or MemberExpression)
         {
-            name = $"{ToCamelCase(((MemberExpression)mce.Arguments[0]).Member.Name)}.{name}";
+            me = me.Expression is MethodCallExpression mce ? (MemberExpression)mce.Arguments[0] : (MemberExpression)me.Expression;
+            name = $"{ToCamelCase(me.Member.Name)}.{name}";
         }
 
         return name;
