@@ -19,8 +19,14 @@ public interface IReferenceManager
     /// <summary>
     /// Vide le cache de référence.
     /// </summary>
+    /// <typeparam name="T">Le type de la liste de référence à vider.</typeparam>
+    void FlushCache<T>();
+
+    /// <summary>
+    /// Vide le cache de référence.
+    /// </summary>
     /// <param name="referenceName">Le nom de la liste de référence à vider.</param>
-    void FlushCache(string referenceName = null);
+    void FlushCache(string referenceName);
 
     /// <summary>
     /// Récupère une liste de référence.

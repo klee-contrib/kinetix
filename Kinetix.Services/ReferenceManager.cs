@@ -4,7 +4,7 @@ using Kinetix.Modeling;
 using Kinetix.Modeling.Annotations;
 using Kinetix.Modeling.Exceptions;
 using Kinetix.Services.Annotations;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Services;
@@ -14,15 +14,11 @@ namespace Kinetix.Services;
 /// </summary>
 public class ReferenceManager : IReferenceManager
 {
-    private const string ReferenceListsCache = "ReferenceLists";
-    private const string StaticListsCache = "StaticLists";
-
-    private readonly IMemoryCache _cache;
+    private readonly IDistributedCache _cache;
     private readonly IServiceProvider _provider;
 
     private readonly TimeSpan _referenceListCacheDuration;
     private readonly TimeSpan _staticListCacheDuration;
-    private static readonly object lockObj = new();
 
     private readonly IDictionary<string, Accessor> _referenceAccessors = new Dictionary<string, Accessor>();
 
@@ -34,7 +30,7 @@ public class ReferenceManager : IReferenceManager
     /// <param name="staticListCacheDuration">Durée du cache des listes statiques.</param>
     public ReferenceManager(IServiceProvider provider, TimeSpan staticListCacheDuration, TimeSpan referenceListCacheDuration)
     {
-        _cache = provider.GetService<IMemoryCache>();
+        _cache = provider.GetService<IDistributedCache>();
         _referenceListCacheDuration = referenceListCacheDuration;
         _staticListCacheDuration = staticListCacheDuration;
         _provider = provider;
@@ -53,38 +49,37 @@ public class ReferenceManager : IReferenceManager
         }
     }
 
-    /// <inheritdoc cref="IReferenceManager.FlushCache" />
-    public void FlushCache(string referenceName = null)
+    /// <inheritdoc cref="IReferenceManager.FlushCache{T}" />
+    public void FlushCache<T>()
     {
-        if (referenceName == null)
-        {
-            _cache.Remove(StaticListsCache);
-            _cache.Remove(ReferenceListsCache);
-        }
-        else
-        {
-            GetCacheByType(GetTypeFromName(referenceName)).Remove(referenceName);
-        }
+        FlushCache(typeof(T).Name);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.FlushCache(string)" />
+    public void FlushCache(string referenceName)
+    {
+        _cache.Remove($"ReferenceManager_{referenceName}");
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList(Type)" />
     public ICollection<object> GetReferenceList(Type type)
     {
-        return GetReferenceEntry(type.Name).List;
+        return GetReferenceList(type.Name);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList(string)" />
     public ICollection<object> GetReferenceList(string referenceName)
     {
-        return GetReferenceEntry(referenceName).List;
+        var type = GetTypeFromName(referenceName);
+        var getReferenceList = typeof(ReferenceManager).GetMethod(nameof(ReferenceManager.GetReferenceList), 1, new[] { typeof(string) });
+        var list = getReferenceList.MakeGenericMethod(type).Invoke(this, new[] { referenceName });
+        return ((IEnumerable)list).Cast<object>().ToList();
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
     public ICollection<T> GetReferenceList<T>(string referenceName = null)
     {
-        return referenceName == null
-            ? GetReferenceList(typeof(T)).Cast<T>().ToList()
-            : GetReferenceList(referenceName).Cast<T>().ToList();
+        return GetReferenceEntry<T>(referenceName ?? typeof(T).Name).Map.Values;
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(Func{T, bool}, string)" />
@@ -119,13 +114,13 @@ public class ReferenceManager : IReferenceManager
     /// <inheritdoc cref="IReferenceManager.GetReferenceObject(object)" />
     public T GetReferenceObject<T>(object primaryKey)
     {
-        return GetReferenceEntry(typeof(T).Name).GetReferenceObject<T>(primaryKey);
+        return GetReferenceEntry<T>(typeof(T).Name).GetReferenceObject(primaryKey);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(Func{T, bool})" />
     public T GetReferenceObject<T>(Func<T, bool> predicate)
     {
-        return GetReferenceEntry(typeof(T).Name).GetReferenceObject(predicate);
+        return GetReferenceEntry<T>(typeof(T).Name).GetReferenceObject(predicate);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object)" />
@@ -152,9 +147,9 @@ public class ReferenceManager : IReferenceManager
     /// <inheritdoc cref="IReferenceManager.GetReferenceValue(Type, object)" />
     public string GetReferenceValue(Type type, object primaryKey)
     {
-        return primaryKey == null
-            ? null
-            : GetReferenceValue(GetReferenceEntry(type.Name).GetReferenceObject(primaryKey));
+        var getReferenceValue = typeof(ReferenceManager).GetMethod(nameof(ReferenceManager.GetReferenceValue), 1, new[] { typeof(object) });
+        var value = getReferenceValue.MakeGenericMethod(type).Invoke(this, new[] { primaryKey });
+        return value.ToString();
     }
 
     /// <summary>
@@ -256,45 +251,6 @@ public class ReferenceManager : IReferenceManager
         return errors;
     }
 
-    /// <summary>
-    /// Récupère le cache associé au type de référence demandé.
-    /// </summary>
-    /// <param name="type">Le type de référence.</param>
-    /// <returns>Le cache.</returns>
-    private ReferenceCache GetCacheByType(Type type)
-    {
-        var attr = type.GetCustomAttribute<ReferenceAttribute>();
-        return attr == null
-            ? throw new NotSupportedException($"Le type {type} n'est pas une liste de référence.")
-            : _cache.GetOrCreate(attr.IsStatic ? StaticListsCache : ReferenceListsCache, cacheEntry =>
-            {
-                cacheEntry.AbsoluteExpirationRelativeToNow = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
-                return new ReferenceCache();
-            });
-    }
-
-
-    /// <summary>
-    /// Récupère l'entrée du cache associé à la référence demandée.
-    /// </summary>
-    /// <param name="referenceName">Nom de la liste.</param>
-    /// <returns>L'entrée de cache.</returns>
-    private ReferenceEntry GetReferenceEntry(string referenceName)
-    {
-        var type = GetTypeFromName(referenceName);
-        var cache = GetCacheByType(type);
-
-        lock (lockObj)
-        {
-            if (!cache.TryGetValue(referenceName, out var entry))
-            {
-                entry = BuildReferenceEntry(referenceName);
-                cache.Add(referenceName, entry);
-            }
-            return entry;
-        }
-    }
-
     private Type GetTypeFromName(string referenceName)
     {
         return _referenceAccessors.Values.Single(r => r.Name == referenceName).ReferenceType;
@@ -305,10 +261,24 @@ public class ReferenceManager : IReferenceManager
     /// </summary>
     /// <param name="referenceName">Nom de la liste.</param>
     /// <returns>L'entrée de cache.</returns>
-    private ReferenceEntry BuildReferenceEntry(string referenceName)
+    private ReferenceEntry<T> GetReferenceEntry<T>(string referenceName)
     {
-        var referenceList = InvokeReferenceAccessor(referenceName);
-        return new ReferenceEntry(referenceList, BeanDescriptor.GetDefinition(GetTypeFromName(referenceName)));
+        var def = BeanDescriptor.GetDefinition(GetTypeFromName(referenceName));
+        var attr = GetTypeFromName(referenceName).GetCustomAttribute<ReferenceAttribute>();
+
+        if (attr == null)
+        {
+            throw new NotSupportedException($"la liste de référence '{referenceName}' n'existe pas.");
+        }
+
+        return new ReferenceEntry<T>(def.BeanType.Name)
+        {
+            Map = _cache.GetOrSet($"ReferenceManager_{referenceName}", options =>
+            {
+                options.AbsoluteExpirationRelativeToNow = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
+                return InvokeReferenceAccessor<T>(referenceName).ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
+            })
+        };
     }
 
     /// <summary>
@@ -316,7 +286,7 @@ public class ReferenceManager : IReferenceManager
     /// </summary>
     /// <param name="referenceName">Nom de la liste.</param>
     /// <returns>La liste de référence.</returns>
-    private ICollection<object> InvokeReferenceAccessor(string referenceName)
+    private ICollection<T> InvokeReferenceAccessor<T>(string referenceName)
     {
         if (!_referenceAccessors.ContainsKey(referenceName))
         {
@@ -331,6 +301,6 @@ public class ReferenceManager : IReferenceManager
         var coll = (ICollection)list;
         return coll == null
             ? throw new ArgumentException(list.GetType().Name)
-            : coll.Cast<object>().ToList();
+            : coll.Cast<T>().ToList();
     }
 }
