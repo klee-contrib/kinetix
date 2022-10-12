@@ -5,6 +5,7 @@ using Kinetix.Modeling.Annotations;
 using Kinetix.Modeling.Exceptions;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Services;
@@ -14,7 +15,8 @@ namespace Kinetix.Services;
 /// </summary>
 public class ReferenceManager : IReferenceManager
 {
-    private readonly IDistributedCache _cache;
+    private readonly IDistributedCache _distributedCache;
+    private readonly IMemoryCache _memoryCache;
     private readonly IServiceProvider _provider;
 
     private readonly TimeSpan _referenceListCacheDuration;
@@ -30,7 +32,14 @@ public class ReferenceManager : IReferenceManager
     /// <param name="staticListCacheDuration">Durée du cache des listes statiques.</param>
     public ReferenceManager(IServiceProvider provider, TimeSpan staticListCacheDuration, TimeSpan referenceListCacheDuration)
     {
-        _cache = provider.GetService<IDistributedCache>();
+        // Le double cache n'a de sens que si le cache distribué n'est pas lui aussi en mémoire.
+        var distributedCache = provider.GetService<IDistributedCache>();
+        if (distributedCache is not MemoryDistributedCache)
+        {
+            _distributedCache = distributedCache;
+        }
+
+        _memoryCache = provider.GetService<IMemoryCache>();
         _referenceListCacheDuration = referenceListCacheDuration;
         _staticListCacheDuration = staticListCacheDuration;
         _provider = provider;
@@ -58,7 +67,8 @@ public class ReferenceManager : IReferenceManager
     /// <inheritdoc cref="IReferenceManager.FlushCache(string)" />
     public void FlushCache(string referenceName)
     {
-        _cache.Remove($"ReferenceManager_{referenceName}");
+        _memoryCache.Remove(GetCacheKey(referenceName));
+        _distributedCache?.Remove(GetCacheKey(referenceName));
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList(Type)" />
@@ -251,6 +261,11 @@ public class ReferenceManager : IReferenceManager
         return errors;
     }
 
+    private string GetCacheKey(string referenceName)
+    {
+        return $"ReferenceManager_{referenceName}";
+    }
+
     private Type GetTypeFromName(string referenceName)
     {
         return _referenceAccessors.Values.Single(r => r.Name == referenceName).ReferenceType;
@@ -271,12 +286,26 @@ public class ReferenceManager : IReferenceManager
             throw new NotSupportedException($"la liste de référence '{referenceName}' n'existe pas.");
         }
 
+        var cacheDuration = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
+
         return new ReferenceEntry<T>(def.BeanType.Name)
         {
-            Map = _cache.GetOrSet($"ReferenceManager_{referenceName}", options =>
+            Map = _memoryCache.GetOrCreate(GetCacheKey(referenceName), memOpt =>
             {
-                options.AbsoluteExpirationRelativeToNow = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
-                return InvokeReferenceAccessor<T>(referenceName).ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
+                memOpt.AbsoluteExpirationRelativeToNow = _distributedCache != null ? TimeSpan.FromMinutes(1) : cacheDuration;
+
+                if (_distributedCache != null)
+                {
+                    return _distributedCache.GetOrSet(GetCacheKey(referenceName), distOpt =>
+                    {
+                        distOpt.AbsoluteExpirationRelativeToNow = cacheDuration;
+                        return InvokeReferenceAccessor<T>(referenceName).ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
+                    });
+                }
+                else
+                {
+                    return InvokeReferenceAccessor<T>(referenceName).ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
+                }
             })
         };
     }

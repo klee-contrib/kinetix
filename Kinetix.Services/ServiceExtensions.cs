@@ -2,9 +2,7 @@
 using Kinetix.Services.Annotations;
 using Kinetix.Services.DependencyInjection;
 using Kinetix.Services.DependencyInjection.Interceptors;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Kinetix.Services;
 
@@ -117,8 +115,8 @@ public static class ServiceExtensions
             }
         }
 
-        services.TryAddSingleton<IDistributedCache, MemoryDistributedCache>();
         services
+            .AddMemoryCache()
             .AddScoped<TransactionScopeManager>()
             .AddScoped<IReferenceManager>(provider =>
             {
