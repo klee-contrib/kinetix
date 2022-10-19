@@ -128,14 +128,24 @@ public class ElasticStore : ISearchStore
 
         /* Indexation en cluster */
         var count = 0;
-        foreach (var cluster in documents.SelectCluster(_config.ClusterSize))
-        {
-            Bulk().IndexMany(cluster).Run(false);
-            count += cluster.Count;
-            rebuildLogger?.LogInformation($"{count} documents indexed.");
-        }
 
-        rebuildLogger?.LogInformation($"Indexation of index {indexName} is complete.");
+        try
+        {
+            _elasticManager.OptimizeIndexForReindex<TDocument>();
+
+            foreach (var cluster in documents.SelectCluster(_config.ClusterSize))
+            {
+                Bulk().IndexMany(cluster).Run(false);
+                count += cluster.Count;
+                rebuildLogger?.LogInformation($"{count} documents indexed.");
+            }
+
+            rebuildLogger?.LogInformation($"Indexation of index {indexName} is complete.");
+        }
+        finally
+        {
+            _elasticManager.RevertOptimizeIndexForReindex<TDocument>();
+        }
 
         return count;
     }

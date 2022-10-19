@@ -39,7 +39,7 @@ public sealed class ElasticManager
         where TIndexConfigurator : IIndexConfigurator, new()
     {
         var indexName = _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T));
-        var indexExists = ExistIndex(_client, indexName);
+        var indexExists = ExistIndex(indexName);
         var def = _documentDescriptor.GetDefinition(typeof(T));
         var shouldCreate = !indexExists || def.IgnoreOnPartialRebuild == null;
 
@@ -76,7 +76,7 @@ public sealed class ElasticManager
                 DeleteIndex<T>();
             }
 
-            _logger.LogQuery(_analytics, "CreateIndex", () => _client.Indices.Create(
+            _logger.LogQuery(_analytics, nameof(InitIndex), () => _client.Indices.Create(
                 _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
                 new TIndexConfigurator().ConfigureIndex));
         }
@@ -93,7 +93,7 @@ public sealed class ElasticManager
     /// </summary>
     public void DeleteIndex<T>()
     {
-        _logger.LogQuery(_analytics, "DeleteIndex", () =>
+        _logger.LogQuery(_analytics, nameof(DeleteIndex), () =>
             _client.Indices.Delete(_config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T))));
     }
 
@@ -103,7 +103,7 @@ public sealed class ElasticManager
     /// <returns>Ok.</returns>
     public bool DeleteIndexes()
     {
-        var response = _logger.LogQuery(_analytics, "DeleteIndexes", () =>
+        var response = _logger.LogQuery(_analytics, nameof(DeleteIndexes), () =>
             _client.Indices.Delete($"{_config.Servers[ElasticConfigBuilder.ServerName].IndexName}*"));
         return response.Acknowledged;
     }
@@ -111,12 +111,21 @@ public sealed class ElasticManager
     /// <summary>
     /// Indique si un index existe.
     /// </summary>
-    /// <param name="client">Client ES pour la datasource voulue.</param>
     /// <param name="indexName">Nom de l'index.</param>
     /// <returns><code>True</code> si l'index existe.</returns>
-    public bool ExistIndex(ElasticClient client, string indexName)
+    public bool ExistIndex(string indexName)
     {
-        return _logger.LogQuery(_analytics, "IndexExists", () => client.Indices.Exists(indexName)).Exists;
+        return _logger.LogQuery(_analytics, nameof(ExistIndex), () => _client.Indices.Exists(indexName)).Exists;
+    }
+
+    /// <summary>
+    /// Optimise l'index pour une réindexation totale.
+    /// </summary>
+    public void OptimizeIndexForReindex<T>()
+    {
+        _logger.LogQuery(_analytics, nameof(OptimizeIndexForReindex), () => _client.Indices.UpdateSettings(
+            _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
+            d => d.IndexSettings(i => i.RefreshInterval(30_000).NumberOfReplicas(0))));
     }
 
     /// <summary>
@@ -124,6 +133,16 @@ public sealed class ElasticManager
     /// </summary>
     public void PingNode()
     {
-        _logger.LogQuery(_analytics, "Ping", () => _client.Ping());
+        _logger.LogQuery(_analytics, nameof(PingNode), () => _client.Ping());
+    }
+
+    /// <summary>
+    /// Rétabli les paramètres par défaut de l'index après une réindexation totale.
+    /// </summary>
+    public void RevertOptimizeIndexForReindex<T>()
+    {
+        _logger.LogQuery(_analytics, nameof(RevertOptimizeIndexForReindex), () => _client.Indices.UpdateSettings(
+            _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
+            d => d.IndexSettings(i => i.RefreshInterval(1_000).NumberOfReplicas(1))));
     }
 }
