@@ -38,7 +38,8 @@ public static class ServiceExtensions
                         }
                         return js;
                     }))
-                    .DisableDirectStreaming();
+                    .DisableDirectStreaming()
+                    .EnableApiVersioningHeader();
 
                 foreach (var documentType in config.DocumentTypes)
                 {
