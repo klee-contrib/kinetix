@@ -42,8 +42,6 @@ public class DefaultIndexConfigurator : IIndexConfigurator
                 .Normalizers(n => n
                     .Custom("keyword", c => c
                         .CharFilters("unsignificant", "start", "end", "spaces")
-                        .Filters("asciifolding", "lowercase"))))
-            .Setting("index.translog.retention.age", "30m")
-            .Setting("index.translog.retention.size", "64mb"));
+                        .Filters("asciifolding", "lowercase")))));
     }
 }

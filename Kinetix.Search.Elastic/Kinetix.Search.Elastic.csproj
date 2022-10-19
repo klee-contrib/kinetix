@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>1.1.3</Version>
+    <Version>1.1.4</Version>
     <Authors>JabX</Authors>
     <Description>Implémentation ElasticSearch du module de recherche avancée Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
