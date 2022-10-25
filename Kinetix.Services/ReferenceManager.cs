@@ -124,6 +124,11 @@ public class ReferenceManager : IReferenceManager
     /// <inheritdoc cref="IReferenceManager.GetReferenceObject(object)" />
     public T GetReferenceObject<T>(object primaryKey)
     {
+        if (primaryKey == null)
+        {
+            return default;
+        }
+
         return GetReferenceEntry<T>(typeof(T).Name).GetReferenceObject(primaryKey);
     }
 
@@ -150,6 +155,11 @@ public class ReferenceManager : IReferenceManager
     /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(T)" />
     public string GetReferenceValue<T>(T reference)
     {
+        if (reference == null)
+        {
+            return null;
+        }
+
         var definition = BeanDescriptor.GetDefinition(reference);
         return definition.DefaultProperty.GetValue(reference).ToString();
     }
@@ -158,8 +168,7 @@ public class ReferenceManager : IReferenceManager
     public string GetReferenceValue(Type type, object primaryKey)
     {
         var getReferenceValue = typeof(ReferenceManager).GetMethod(nameof(ReferenceManager.GetReferenceValue), 1, new[] { typeof(object) });
-        var value = getReferenceValue.MakeGenericMethod(type).Invoke(this, new[] { primaryKey });
-        return value.ToString();
+        return (string)getReferenceValue.MakeGenericMethod(type).Invoke(this, new[] { primaryKey });
     }
 
     /// <summary>
@@ -288,7 +297,7 @@ public class ReferenceManager : IReferenceManager
 
         var cacheDuration = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
 
-        return new ReferenceEntry<T>(def.BeanType.Name)
+        return new ReferenceEntry<T>
         {
             Map = _memoryCache.GetOrCreate(GetCacheKey(referenceName), memOpt =>
             {
