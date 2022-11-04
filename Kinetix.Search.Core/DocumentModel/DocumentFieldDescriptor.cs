@@ -82,6 +82,11 @@ public sealed class DocumentFieldDescriptor
     }
 
     /// <summary>
+    /// Autres attributs sur le champ.
+    /// </summary>
+    public List<object> OtherAttributes { get; set; }
+
+    /// <summary>
     /// Retourne la valeur de la propriété pour un objet.
     /// </summary>
     /// <param name="bean">Objet.</param>

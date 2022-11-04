@@ -63,7 +63,8 @@ public class DocumentDescriptor
                     Indexing = searchAttr?.Indexing ?? SearchFieldIndexing.None,
                     PkOrder = searchAttr?.PkOrder ?? 0,
                     IsPartialRebuildDate = dateAttr != null,
-                    IsMultiValued = isArray || isMultiValued
+                    IsMultiValued = isArray || isMultiValued,
+                    OtherAttributes = property.GetCustomAttributes(true).Where(a => a is not SearchFieldAttribute and not PartialRebuildDatePropertyAttribute).ToList()
                 };
 
                 yield return description.IsPartialRebuildDate && description.PropertyType != typeof(DateTime)

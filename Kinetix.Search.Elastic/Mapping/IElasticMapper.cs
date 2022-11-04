@@ -7,14 +7,14 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// Définit un mapping pour un type de champ, selon sa catégorie.
 /// </summary>
 /// <typeparam name="T">Type du champ pour le mapping.</typeparam>
-public interface IElasticMapping<T> : IElasticMapping
+public interface IElasticMapper<T> : IElasticMapper
 {
 }
 
 /// <summary>
 /// Définit un mapping pour un type de champ, selon sa catégorie.
 /// </summary>
-public interface IElasticMapping
+public interface IElasticMapper
 {
     /// <summary>
     /// Définit le mapping pour le type..

@@ -7,9 +7,9 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// <summary>
 /// Mapping pour les champs Date.
 /// </summary>
-public class DateTimeMapping : IElasticMapping<DateTime>
+public class DateTimeMapper : IElasticMapper<DateTime>
 {
-    /// <inheritdoc cref="IElasticMapping.Map" />
+    /// <inheritdoc cref="IElasticMapper.Map" />
     public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
         where TDocument : class
     {

@@ -17,11 +17,11 @@ public class ElasticConfigBuilder
     internal ElasticConfigBuilder(IServiceCollection services)
     {
         _services = services;
-        AddMapping<DateTimeMapping>();
-        AddMapping<DecimalMapping>();
-        AddMapping<IntMapping>();
-        AddMapping<StringMapping>();
-        AddMapping<DictionaryMapping>();
+        AddMapper<DateTimeMapper>();
+        AddMapper<DecimalMapper>();
+        AddMapper<IntMapper>();
+        AddMapper<StringMapper>();
+        AddMapper<DictionaryMapper>();
     }
 
     internal ICollection<Type> DocumentTypes { get; } = new List<Type>();
@@ -58,12 +58,12 @@ public class ElasticConfigBuilder
     /// <summary>
     /// Ajoute un mapping pour un type de champ.
     /// </summary>
-    /// <typeparam name="TMappping">Type de champ.</typeparam>
+    /// <typeparam name="TMapper">Type de champ.</typeparam>
     /// <returns>Builder.</returns>
-    public ElasticConfigBuilder AddMapping<TMappping>()
-        where TMappping : class, IElasticMapping
+    public ElasticConfigBuilder AddMapper<TMapper>()
+        where TMapper : class, IElasticMapper
     {
-        _services.AddSingleton(typeof(TMappping).GetInterfaces().First(), typeof(TMappping));
+        _services.AddSingleton(typeof(TMapper).GetInterfaces().First(), typeof(TMapper));
         return this;
     }
 

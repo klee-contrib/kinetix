@@ -49,9 +49,16 @@ public sealed class ElasticMappingFactory
     public PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
         where T : class
     {
-        if (!(_provider.GetService(typeof(IElasticMapping<>).MakeGenericType(field.PropertyType)) is IElasticMapping mapper))
+        var mapperType = field.OtherAttributes.OfType<ElasticMapperAttribute>().FirstOrDefault()?.MapperType;
+
+        if (mapperType != null)
         {
-            mapper = _provider.GetService<IElasticMapping<string>>();
+            return ((IElasticMapper)Activator.CreateInstance(mapperType)).Map(selector, field);
+        }
+
+        if (_provider.GetService(typeof(IElasticMapper<>).MakeGenericType(field.PropertyType)) is not IElasticMapper mapper)
+        {
+            mapper = _provider.GetService<IElasticMapper<string>>();
         }
 
         return mapper.Map(selector, field);

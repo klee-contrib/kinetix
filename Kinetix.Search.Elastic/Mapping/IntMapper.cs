@@ -7,9 +7,9 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// <summary>
 /// Mapping pour les champs Int.
 /// </summary>
-public class IntMapping : IElasticMapping<int>
+public class IntMapper : IElasticMapper<int>
 {
-    /// <inheritdoc cref="IElasticMapping.Map" />
+    /// <inheritdoc cref="IElasticMapper.Map" />
     public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
         where TDocument : class
     {
