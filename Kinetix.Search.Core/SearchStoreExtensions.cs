@@ -1,5 +1,5 @@
-﻿using Kinetix.Search.Models;
-using Kinetix.Search.Core.Querying;
+﻿using Kinetix.Search.Core.Querying;
+using Kinetix.Search.Models;
 
 namespace Kinetix.Search.Core;
 
@@ -30,6 +30,19 @@ public static class SearchStoreExtensions
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, Func<TDocument, TOutput> documentMapper)
         where TDocument : class
     {
+        return store.Query(queryInput, (d, _) => documentMapper(d));
+    }
+
+    /// <summary>
+    /// Effectue une requête sur le champ texte.
+    /// </summary>
+    /// <param name="store">Store de recherche.</param>
+    /// <param name="queryInput">Query input.</param>
+    /// <param name="documentMapper">Mapper de document.</param>
+    /// <returns>Résultat.</returns>
+    public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+        where TDocument : class
+    {
         return store.Query(queryInput, new Criteria { Query = queryInput.Query }, documentMapper);
     }
 
@@ -51,6 +64,20 @@ public static class SearchStoreExtensions
     /// Effectue une requête sur le champ texte.
     /// </summary>
     /// <param name="store">Store de recherche.</param>
+    /// <param name="criteria">Critère de recherche.</param>
+    /// <param name="documentMapper">Mapper de document.</param>
+    /// <returns>Résultat.</returns>
+    public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, TCriteria criteria, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : Criteria, new()
+    {
+        return store.Query(null, criteria, documentMapper);
+    }
+
+    /// <summary>
+    /// Effectue une requête sur le champ texte.
+    /// </summary>
+    /// <param name="store">Store de recherche.</param>
     /// <param name="queryInput">Query input.</param>
     /// <param name="criteria">Critère de recherche.</param>
     /// <param name="documentMapper">Mapper de document.</param>
@@ -58,6 +85,21 @@ public static class SearchStoreExtensions
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, TCriteria criteria, Func<TDocument, TOutput> documentMapper)
         where TDocument : class
         where TCriteria : Criteria, new()
+    {
+        return store.Query(queryInput, criteria, (d, _) => documentMapper(d));
+    }
+
+    /// <summary>
+    /// Effectue une requête sur le champ texte.
+    /// </summary>
+    /// <param name="store">Store de recherche.</param>
+    /// <param name="queryInput">Query input.</param>
+    /// <param name="criteria">Critère de recherche.</param>
+    /// <param name="documentMapper">Mapper de document.</param>
+    /// <returns>Résultat.</returns>
+    public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, TCriteria criteria, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+    where TDocument : class
+    where TCriteria : Criteria, new()
     {
         if (string.IsNullOrEmpty(criteria.Query))
         {
@@ -68,13 +110,13 @@ public static class SearchStoreExtensions
         {
             SearchCriteria = new[]
             {
-                    new QueryInput<TCriteria>
-                    {
-                        Criteria = criteria,
-                        Skip = 0,
-                        Top = queryInput?.Top ?? 10
-                    }
-                },
+                new QueryInput<TCriteria>
+                {
+                    Criteria = criteria,
+                    Skip = 0,
+                    Top = queryInput?.Top ?? 10
+                }
+            },
             Security = queryInput?.Security,
             AdditionalCriteria = queryInput?.Criteria
         };

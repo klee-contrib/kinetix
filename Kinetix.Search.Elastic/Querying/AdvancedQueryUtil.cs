@@ -90,6 +90,9 @@ public static class AdvancedQueryUtil
                 s.Sort(x => x.Field(sortDef.FieldName, sortDef.Order));
             }
 
+            IHighlight highlightSelector(HighlightDescriptor<TDocument> h) =>
+                h.Fields(def.SearchFields.Select(f => (Func<HighlightFieldDescriptor<TDocument>, IHighlightField>)(h => h.Field(f.FieldName))).ToArray());
+
             /* Aggrégations. */
             if (hasFacet || hasGroup)
             {
@@ -112,11 +115,30 @@ public static class AdvancedQueryUtil
                                 .Terms(groupFieldName, st => st
                                     .Field(groupFieldName)
                                     .Size(50)
-                                    .Aggregations(g => g.TopHits(TopHitName, x => x.Size(input.GroupSize))))
+                                    .Aggregations(g => g.TopHits(TopHitName, x =>
+                                    {
+                                        x.Size(input.GroupSize);
+
+                                        if (input.Highlights)
+                                        {
+                                            x.Highlight(highlightSelector);
+                                        }
+                                        return x;
+                                    })))
                                 /* Groupement pour les valeurs nulles */
                                 .Missing(groupFieldName + MissingGroupPrefix, st => st
                                     .Field(groupFieldName)
-                                    .Aggregations(g => g.TopHits(TopHitName, x => x.Size(input.GroupSize))));
+                                    .Aggregations(g => g.TopHits(TopHitName, x =>
+                                    {
+                                        x.Size(input.GroupSize);
+
+                                        if (input.Highlights)
+                                        {
+                                            x.Highlight(highlightSelector);
+                                        }
+
+                                        return x;
+                                    })));
                         }
 
                         if (hasPostFilter)
@@ -134,6 +156,11 @@ public static class AdvancedQueryUtil
 
                     return a;
                 });
+            }
+
+            if (input.Highlights)
+            {
+                s.Highlight(highlightSelector);
             }
 
             return s;
@@ -225,10 +252,7 @@ public static class AdvancedQueryUtil
                     ? field.GetValue(input.AdditionalCriteria)
                     : null;
 
-                if (propValue == null)
-                {
-                    propValue = criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(sc.Criteria);
-                }
+                propValue ??= criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(sc.Criteria);
 
                 if (propValue != null)
                 {

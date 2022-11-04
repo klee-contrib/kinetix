@@ -48,8 +48,8 @@ public interface IWorksheetBuilder<T>
     /// <summary>
     /// Configure le nombre de résultats maximum dans l'export.
     /// </summary>
-    /// <param name="max"></param>
-    /// <returns></returns>
+    /// <param name="maxResults"></param>
+    /// <returns>Builder.</returns>
     IWorksheetBuilder<T> MaxResults(int maxResults);
 
     /// <summary>

@@ -48,4 +48,9 @@ public class AdvancedQueryInput<TDocument, TCriteria>
     /// Nombre d'éléments à récupérer dans un groupe.
     /// </summary>
     public int GroupSize { get; set; } = 10;
+
+    /// <summary>
+    /// Retourne les highlights sur la recherche texte.
+    /// </summary>
+    public bool Highlights { get; set; }
 }

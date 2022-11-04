@@ -155,6 +155,14 @@ public class ElasticStore : ISearchStore
         where TDocument : class
         where TCriteria : Criteria, new()
     {
+        return AdvancedQuery(input, (d, _) => documentMapper(d), Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
+    }
+
+    /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
+    public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : Criteria, new()
+    {
         return AdvancedQuery(input, documentMapper, Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
     }
 
@@ -183,7 +191,7 @@ public class ElasticStore : ISearchStore
             .Count;
     }
 
-    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
        where TDocument : class
        where TCriteria : Criteria, new()
     {
@@ -209,9 +217,9 @@ public class ElasticStore : ISearchStore
                 var res = _logger.LogQuery(_analytics, $"AdvancedQueryWithPit", () => _client.Search(
                     GetAdvancedQueryDescriptor(def, input, _facetHandler, filters, pitId: pitId, searchAfter: searchAfter)));
 
-                foreach (var doc in res.Documents)
+                foreach (var doc in res.Hits)
                 {
-                    yield return documentMapper(doc);
+                    yield return documentMapper(doc.Source, doc.Highlight);
                 }
 
                 if (res.Documents.Count == 10000)
@@ -230,7 +238,7 @@ public class ElasticStore : ISearchStore
         }
     }
 
-    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
        where TDocument : class
        where TCriteria : Criteria, new()
     {
@@ -308,7 +316,7 @@ public class ElasticStore : ISearchStore
 
             foreach (var group in bucket.Buckets)
             {
-                var list = group.TopHits(TopHitName).Documents<TDocument>().Select(documentMapper).ToList();
+                var list = group.TopHits(TopHitName).Hits<TDocument>().Select(d => documentMapper(d.Source, d.Highlight)).ToList();
                 groupResultList.Add(new GroupResult<TOutput>
                 {
                     Code = group.Key.ToString(),
@@ -325,7 +333,7 @@ public class ElasticStore : ISearchStore
                 missingBucket = res.Aggregations.Filter(groupFieldName).Missing(groupFieldName + MissingGroupPrefix);
             }
 
-            var nullDocs = missingBucket.TopHits(TopHitName).Documents<TDocument>().Select(documentMapper).ToList();
+            var nullDocs = missingBucket.TopHits(TopHitName).Hits<TDocument>().Select(d => documentMapper(d.Source, d.Highlight)).ToList();
             if (nullDocs.Any())
             {
                 groupResultList.Add(new GroupResult<TOutput>
@@ -342,7 +350,7 @@ public class ElasticStore : ISearchStore
         else
         {
             /* Liste unique. */
-            resultList = res.Documents.Select(documentMapper).ToList();
+            resultList = res.Hits.Select(h => documentMapper(h.Source, h.Highlight)).ToList();
             groupResultList = null;
         }
 

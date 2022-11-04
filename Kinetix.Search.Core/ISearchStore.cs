@@ -1,5 +1,5 @@
-﻿using Kinetix.Search.Models;
-using Kinetix.Search.Core.Querying;
+﻿using Kinetix.Search.Core.Querying;
+using Kinetix.Search.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search.Core;
@@ -79,6 +79,16 @@ public interface ISearchStore
     /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
     /// <returns>Sortie de la recherche.</returns>
     QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : Criteria, new();
+
+    /// <summary>
+    /// Effectue une recherche avancée.
+    /// </summary>
+    /// <param name="input">Entrée de la recherche.</param>
+    /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
+    /// <returns>Sortie de la recherche.</returns>
+    QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
         where TDocument : class
         where TCriteria : Criteria, new();
 

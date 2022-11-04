@@ -1,7 +1,6 @@
-﻿using System.Collections;
-using Kinetix.Search.Core.DocumentModel;
-using Kinetix.Search.Models;
+﻿using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
+using Kinetix.Search.Models;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Querying;
@@ -24,8 +23,16 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
         _facetHandler = facetHandler;
     }
 
-    /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery" />
+    /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery{TDocument, TOutput, TCriteria}(string, string, AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
     public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : Criteria, new()
+    {
+        return AddQuery(code, label, input, (d, _) => documentMapper(d));
+    }
+
+    /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery{TDocument, TOutput, TCriteria}(string, string, AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
+    public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
         where TDocument : class
         where TCriteria : Criteria, new()
     {
@@ -58,7 +65,7 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
              {
                  Code = _searchLabels[i].code,
                  Label = _searchLabels[i].label,
-                 List = ((ICollection)res.Documents).Cast<object>().Select(_documentMappers[_searchLabels[i].code].Map).ToList(),
+                 List = ((IEnumerable<dynamic>)res.Hits).Select(h => _documentMappers[_searchLabels[i].code].Map(h.Source, h.Highlight)).ToList(),
                  TotalCount = (int)res.Total
              }).ToList();
 
@@ -88,19 +95,19 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
 
 internal interface IDocumentMapper
 {
-    object Map(object input);
+    object Map(object input, IReadOnlyDictionary<string, IReadOnlyCollection<string>> highlights);
 }
 
 internal class DocumentMapper<TDocument, TOutput> : IDocumentMapper
 {
-    private readonly Func<TDocument, TOutput> _mapper;
+    private readonly Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> _mapper;
 
-    public DocumentMapper(Func<TDocument, TOutput> mapper)
+    public DocumentMapper(Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> mapper)
     {
         _mapper = mapper;
     }
-    public object Map(object input)
+    public object Map(object input, IReadOnlyDictionary<string, IReadOnlyCollection<string>> highlights)
     {
-        return _mapper((TDocument)input);
+        return _mapper((TDocument)input, highlights);
     }
 }

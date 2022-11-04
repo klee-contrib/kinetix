@@ -74,4 +74,14 @@ public class AdvancedQueryInputBuilder<TDocument, TCriteria>
         Input.Security = security;
         return this;
     }
+
+    /// <summary>
+    /// Ajoute les highlights sur la recherche texte en retour.
+    /// </summary>
+    /// <returns>AdvancedQueryInputBuilder.</returns>
+    public AdvancedQueryInputBuilder<TDocument, TCriteria> WithHighlights()
+    {
+        Input.Highlights = true;
+        return this;
+    }
 }
