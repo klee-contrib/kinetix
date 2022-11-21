@@ -18,6 +18,7 @@ public class ReferenceManager : IReferenceManager
     private readonly IDistributedCache _distributedCache;
     private readonly IMemoryCache _memoryCache;
     private readonly IServiceProvider _provider;
+    private readonly IReferenceNotifier _referenceNotifier;
 
     private readonly TimeSpan _referenceListCacheDuration;
     private readonly TimeSpan _staticListCacheDuration;
@@ -41,6 +42,7 @@ public class ReferenceManager : IReferenceManager
 
         _memoryCache = provider.GetService<IMemoryCache>();
         _referenceListCacheDuration = referenceListCacheDuration;
+        _referenceNotifier = provider.GetService<IReferenceNotifier>();
         _staticListCacheDuration = staticListCacheDuration;
         _provider = provider;
     }
@@ -67,8 +69,15 @@ public class ReferenceManager : IReferenceManager
     /// <inheritdoc cref="IReferenceManager.FlushCache(string)" />
     public void FlushCache(string referenceName)
     {
-        _memoryCache.Remove(GetCacheKey(referenceName));
-        _distributedCache?.Remove(GetCacheKey(referenceName));
+        var key = GetCacheKey(referenceName);
+
+        _memoryCache.Remove(key);
+        _distributedCache?.Remove(key);
+
+        if (_referenceNotifier != null && _distributedCache != null && !IsStatic(referenceName))
+        {
+            _referenceNotifier.NotifyFlush(referenceName);
+        }
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList(Type)" />
@@ -288,24 +297,25 @@ public class ReferenceManager : IReferenceManager
     private ReferenceEntry<T> GetReferenceEntry<T>(string referenceName)
     {
         var def = BeanDescriptor.GetDefinition(GetTypeFromName(referenceName));
-        var attr = GetTypeFromName(referenceName).GetCustomAttribute<ReferenceAttribute>();
+        var isStatic = IsStatic(referenceName);
+        var cacheDuration = isStatic ? _staticListCacheDuration : _referenceListCacheDuration;
 
-        if (attr == null)
+        var key = GetCacheKey(referenceName);
+
+        if (_referenceNotifier != null && _distributedCache != null && !isStatic)
         {
-            throw new NotSupportedException($"la liste de référence '{referenceName}' n'existe pas.");
+            _referenceNotifier.RegisterFlush(referenceName, () => _memoryCache.Remove(key));
         }
-
-        var cacheDuration = attr.IsStatic ? _staticListCacheDuration : _referenceListCacheDuration;
 
         return new ReferenceEntry<T>
         {
-            Map = _memoryCache.GetOrCreate(GetCacheKey(referenceName), memOpt =>
+            Map = _memoryCache.GetOrCreate(key, memOpt =>
             {
                 memOpt.AbsoluteExpirationRelativeToNow = _distributedCache != null ? TimeSpan.FromMinutes(1) : cacheDuration;
 
                 if (_distributedCache != null)
                 {
-                    return _distributedCache.GetOrSet(GetCacheKey(referenceName), distOpt =>
+                    return _distributedCache.GetOrSet(key, distOpt =>
                     {
                         distOpt.AbsoluteExpirationRelativeToNow = cacheDuration;
                         return InvokeReferenceAccessor<T>(referenceName).ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
@@ -340,5 +350,16 @@ public class ReferenceManager : IReferenceManager
         return coll == null
             ? throw new ArgumentException(list.GetType().Name)
             : coll.Cast<T>().ToList();
+    }
+
+    private bool IsStatic(string referenceName)
+    {
+        var attr = GetTypeFromName(referenceName).GetCustomAttribute<ReferenceAttribute>();
+        if (attr == null)
+        {
+            throw new NotSupportedException($"la liste de référence '{referenceName}' n'existe pas.");
+        }
+
+        return attr.IsStatic;
     }
 }

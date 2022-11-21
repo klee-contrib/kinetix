@@ -141,6 +141,11 @@ public static class ServiceExtensions
                 return fileManager;
             });
 
+        if (config.ReferenceNotifier != null)
+        {
+            services.AddSingleton(typeof(IReferenceNotifier), config.ReferenceNotifier);
+        }
+
         return services;
     }
 }

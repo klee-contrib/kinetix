@@ -13,6 +13,7 @@ public class ServicesConfig
 
     internal TimeSpan ReferenceListCacheDuration { get; private set; } = TimeSpan.FromMinutes(10);
     internal TimeSpan StaticListCacheDuration { get; private set; } = TimeSpan.FromHours(1);
+    internal Type ReferenceNotifier { get; private set; }
 
     /// <summary>
     /// Permet de remplacer les intercepteurs posés par défaut.
@@ -49,6 +50,17 @@ public class ServicesConfig
     public ServicesConfig WithReferenceListCacheDuration(TimeSpan duration)
     {
         ReferenceListCacheDuration = duration;
+        return this;
+    }
+
+    /// <summary>
+    /// Spécifie une implémentation de notifier de flush de liste de référence.
+    /// </summary>
+    /// <returns>Config.</returns>
+    public ServicesConfig WithReferenceNotifier<T>()
+        where T : IReferenceNotifier
+    {
+        ReferenceNotifier = typeof(T);
         return this;
     }
 
