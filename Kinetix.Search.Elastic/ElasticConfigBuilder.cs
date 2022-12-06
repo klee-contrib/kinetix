@@ -47,7 +47,7 @@ public class ElasticConfigBuilder
     /// <typeparam name="TLoader">DocumentLoader pour le document.</typeparam>
     /// <returns>Builder.</returns>
     public ElasticConfigBuilder AddDocumentType<TDocument, TKey, TLoader>()
-        where TDocument : class
+        where TDocument : class, new()
         where TLoader : class, IDocumentLoader<TDocument, TKey>
     {
         DocumentTypes.Add(typeof(TDocument));

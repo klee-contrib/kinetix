@@ -27,16 +27,6 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         _logger = logger;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.Delete{TDocument}(string)" />
-    public ISearchBulkDescriptor Delete<TDocument>(string id)
-        where TDocument : class
-    {
-        _bulkDescriptor.Delete<TDocument>(d => d.Id(id));
-        _operationCount++;
-
-        return this;
-    }
-
     /// <inheritdoc cref="ISearchBulkDescriptor.Delete{TDocument}(TDocument)" />
     public ISearchBulkDescriptor Delete<TDocument>(TDocument bean)
        where TDocument : class

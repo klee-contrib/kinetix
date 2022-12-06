@@ -10,7 +10,7 @@ namespace Kinetix.Search.Core;
 /// </summary>
 /// <typeparam name="TDocument"></typeparam>
 public class IndexManager<TDocument>
-    where TDocument : class
+    where TDocument : class, new()
 {
     private readonly ILogger<IndexManager> _logger;
     private readonly IServiceProvider _provider;

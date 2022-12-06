@@ -41,14 +41,6 @@ public interface ISearchStore
     /// <summary>
     /// Supprime un document de l'index.
     /// </summary>
-    /// <param name="id">ID du document.</param>
-    /// <param name="refresh">Attends ou non la réindexation.</param>
-    void Delete<TDocument>(string id, bool refresh = true)
-        where TDocument : class;
-
-    /// <summary>
-    /// Supprime un document de l'index.
-    /// </summary>
     /// <param name="bean">La clé composite.</param>
     /// <param name="refresh">Attends ou non la réindexation.</param>
     void Delete<TDocument>(TDocument bean, bool refresh = true)

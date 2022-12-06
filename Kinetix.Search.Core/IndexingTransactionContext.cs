@@ -88,11 +88,12 @@ internal class IndexingTransactionContext : ITransactionContext
     }
 
     private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument, TKey>(IServiceProvider provider, ISearchBulkDescriptor bulk, IIndexingDocumentState _state)
-        where TDocument : class
+        where TDocument : class, new()
     {
         var state = (IndexingDocumentState<TDocument, TKey>)_state;
 
         var loader = provider.GetRequiredService<IDocumentLoader<TDocument, TKey>>();
+
         if (state.Reindex)
         {
             var docs = loader.GetAll(false).ToList();
@@ -104,11 +105,11 @@ internal class IndexingTransactionContext : ITransactionContext
         {
             if (state.IdsToDelete.Count == 1)
             {
-                bulk.Delete<TDocument>(state.IdsToDelete.Single().ToString());
+                bulk.Delete(loader.FillDocumentWithKey(state.IdsToDelete.Single()));
             }
             else if (state.IdsToDelete.Count > 1)
             {
-                bulk.DeleteMany<TDocument>(state.IdsToDelete.Select(id => id.ToString()));
+                bulk.DeleteMany(state.IdsToDelete.Select(loader.FillDocumentWithKey));
             }
 
             if (state.IdsToIndex.Count == 1)

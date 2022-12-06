@@ -78,13 +78,6 @@ public class ElasticStore : ISearchStore
         return new ElasticBulkDescriptor(_documentDescriptor, _client, _logger, _analytics);
     }
 
-    /// <inheritdoc cref="ISearchStore.Delete(string, bool)" />
-    public void Delete<TDocument>(string id, bool refresh = true)
-        where TDocument : class
-    {
-        Bulk().Delete<TDocument>(id).Run(refresh);
-    }
-
     /// <inheritdoc cref="ISearchStore.Delete{TDocument}(TDocument, bool)" />
     public void Delete<TDocument>(TDocument bean, bool refresh = true)
         where TDocument : class
