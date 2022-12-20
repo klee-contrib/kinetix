@@ -37,30 +37,4 @@ internal static class ElasticExtensions
 
         return response;
     }
-
-    /// <summary>
-    /// Enumère des objets en clusters.
-    /// </summary>
-    /// <typeparam name="T">Type.</typeparam>
-    /// <param name="source">Source.</param>
-    /// <param name="size">Taille du cluster.</param>
-    /// <returns>Enumération de clusters.</returns>
-    public static IEnumerable<IList<T>> SelectCluster<T>(this IEnumerable<T> source, int size)
-    {
-        var list = new List<T>();
-        foreach (var item in source)
-        {
-            list.Add(item);
-            if (list.Count == size)
-            {
-                yield return list;
-                list = new List<T>();
-            }
-        }
-
-        if (list.Count > 0)
-        {
-            yield return list;
-        }
-    }
 }

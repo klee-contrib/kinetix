@@ -126,10 +126,10 @@ public class ElasticStore : ISearchStore
         {
             _elasticManager.OptimizeIndexForReindex<TDocument>();
 
-            foreach (var cluster in documents.SelectCluster(_config.ClusterSize))
+            foreach (var cluster in documents.Chunk(_config.ClusterSize))
             {
                 Bulk().IndexMany(cluster).Run(false);
-                count += cluster.Count;
+                count += cluster.Length;
                 rebuildLogger?.LogInformation($"{count} documents indexed.");
             }
 
