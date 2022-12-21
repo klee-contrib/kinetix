@@ -1,4 +1,4 @@
-﻿using Nest;
+﻿using Elastic.Clients.Elasticsearch.IndexManagement;
 
 namespace Kinetix.Search.Elastic;
 
@@ -8,11 +8,11 @@ namespace Kinetix.Search.Elastic;
 public class DefaultIndexConfigurator : IIndexConfigurator
 {
     /// <inheritdoc cref="IIndexConfigurator.ConfigureIndex" />
-    public ICreateIndexRequest ConfigureIndex(CreateIndexDescriptor descriptor)
+    public CreateIndexRequest ConfigureIndex(CreateIndexRequestDescriptor descriptor)
     {
         return descriptor.Settings(s => s
             .Analysis(a => a
-                .CharFilters(c => c
+                .CharFilter(c => c
                     .PatternReplace("unsignificant", p => p
                         .Pattern("[\\.()]")
                         .Replacement(string.Empty))

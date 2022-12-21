@@ -1,8 +1,9 @@
-﻿using Kinetix.Monitoring.Core;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Monitoring.Core;
 using Kinetix.Search.Core.Config;
 using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -12,7 +13,7 @@ namespace Kinetix.Search.Elastic;
 public sealed class ElasticManager
 {
     private readonly AnalyticsManager _analytics;
-    private readonly ElasticClient _client;
+    private readonly ElasticsearchClient _client;
     private readonly SearchConfig _config;
     private readonly DocumentDescriptor _documentDescriptor;
     private readonly ILogger<ElasticManager> _logger;
@@ -20,7 +21,7 @@ public sealed class ElasticManager
     /// <summary>
     /// Enregistre la configuration d'une connexion base de données.
     /// </summary>
-    public ElasticManager(ILogger<ElasticManager> logger, SearchConfig config, ElasticClient client, AnalyticsManager analytics, DocumentDescriptor documentDescriptor)
+    public ElasticManager(ILogger<ElasticManager> logger, SearchConfig config, ElasticsearchClient client, AnalyticsManager analytics, DocumentDescriptor documentDescriptor)
     {
         _analytics = analytics;
         _client = client;
@@ -34,7 +35,7 @@ public sealed class ElasticManager
     /// </summary>
     /// <param name="typeMapping">Mapping à comparer avec l'existant, pour ne pas recréer si identique.</param>
     /// <returns>True si l'index a bien été (re)créé.</returns>
-    public bool InitIndex<T, TIndexConfigurator>(ITypeMapping typeMapping)
+    public bool InitIndex<T, TIndexConfigurator>(TypeMapping typeMapping)
         where T : class
         where TIndexConfigurator : IIndexConfigurator, new()
     {
@@ -46,22 +47,24 @@ public sealed class ElasticManager
         if (!shouldCreate)
         {
             var properties = typeMapping.Properties;
-            var oldProperties = _client.Indices.GetMapping<T>().Indices.FirstOrDefault().Value?.Mappings.Properties;
+            var oldProperties = _client.Indices.GetMapping<T>(x => x.AllowNoIndices(false)).Indices.FirstOrDefault().Value?.Mappings.Properties;
 
             var mappingExists = oldProperties != null
-                && properties.Count == oldProperties.Count
+                && properties.Count() == oldProperties.Count()
                 && oldProperties.Zip(properties, (o, n) =>
                 {
                     return o.Key == n.Key && (o.Value, n.Value) switch
                     {
-                        (IKeywordProperty okp, IKeywordProperty nkp)
-                            => okp.Name == nkp.Name && okp.Index == okp.Index,
-                        (ITextProperty otp, ITextProperty ntp)
-                            => otp.Name == ntp.Name && otp.Analyzer == ntp.Analyzer && otp.SearchAnalyzer == ntp.SearchAnalyzer,
-                        (INumberProperty onp, INumberProperty nnp)
-                            => onp.Name == nnp.Name && onp.Type == nnp.Type && onp.Index == nnp.Index,
-                        (IDateProperty odp, IDateProperty ndp)
-                            => odp.Name == ndp.Name && odp.Index == ndp.Index && odp.Format == ndp.Format,
+                        (KeywordProperty okp, KeywordProperty nkp)
+                            => okp.Index == okp.Index,
+                        (TextProperty otp, TextProperty ntp)
+                            => otp.Analyzer == ntp.Analyzer && otp.SearchAnalyzer == ntp.SearchAnalyzer,
+                        (IntegerNumberProperty onp, IntegerNumberProperty nnp)
+                            => onp.Type == nnp.Type && onp.Index == nnp.Index,
+                        (FloatNumberProperty onp, FloatNumberProperty nnp)
+                             => onp.Type == nnp.Type && onp.Index == nnp.Index,
+                        (DateProperty odp, DateProperty ndp)
+                            => odp.Index == ndp.Index && odp.Format == ndp.Format,
                         _ => false
                     };
                 }).All(res => res);

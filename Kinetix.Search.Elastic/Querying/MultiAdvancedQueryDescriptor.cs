@@ -1,7 +1,8 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.QueryDsl;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
-using Nest;
 
 namespace Kinetix.Search.Elastic.Querying;
 
@@ -9,14 +10,14 @@ using static AdvancedQueryUtil;
 
 public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
 {
-    private readonly ElasticClient _client;
+    private readonly ElasticsearchClient _client;
     private readonly DocumentDescriptor _documentDescriptor;
     private readonly FacetHandler _facetHandler;
     private readonly IDictionary<string, IDocumentMapper> _documentMappers = new Dictionary<string, IDocumentMapper>();
-    private readonly IDictionary<string, ISearchRequest> _searchDescriptors = new Dictionary<string, ISearchRequest>();
+    private readonly IDictionary<string, SearchRequest> _searchDescriptors = new Dictionary<string, SearchRequest>();
     private readonly IList<(string code, string label)> _searchLabels = new List<(string, string)>();
 
-    public MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescriptor documentDescriptor, FacetHandler facetHandler)
+    public MultiAdvancedQueryDescriptor(ElasticsearchClient client, DocumentDescriptor documentDescriptor, FacetHandler facetHandler)
     {
         _client = client;
         _documentDescriptor = documentDescriptor;
@@ -46,9 +47,9 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
             def,
             input,
             _facetHandler,
-            Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>(),
+            Array.Empty<Func<QueryDescriptor<TDocument>, Query>>(),
             input.FacetQueryDefinition.Facets,
-            GetGroupFieldName(input))(new SearchDescriptor<TDocument>()));
+            GetGroupFieldName(input))(new SearchRequest<TDocument>()));
         _documentMappers.Add(code, new DocumentMapper<TDocument, TOutput>(documentMapper));
         _searchLabels.Add((code, label));
         return this;

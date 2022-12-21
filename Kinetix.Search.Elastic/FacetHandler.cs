@@ -1,7 +1,8 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch.Aggregations;
+using Elastic.Clients.Elasticsearch.QueryDsl;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -32,7 +33,7 @@ public class FacetHandler
     /// <param name="facetDef">Définition de facette.</param>
     /// <param name="isMultiValued">Si multi valué.</param>
     /// <returns></returns>
-    public Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiSelectableFilter<TDocument>(FacetInput input, IFacetDefinition<TDocument> facetDef, bool isMultiValued)
+    public Func<QueryDescriptor<TDocument>, Query> BuildMultiSelectableFilter<TDocument>(FacetInput input, IFacetDefinition<TDocument> facetDef, bool isMultiValued)
          where TDocument : class
     {
         if (!isMultiValued && input.Selected.Any() && input.Excluded.Any())
@@ -58,7 +59,7 @@ public class FacetHandler
     /// <param name="facet">Sélection de facette.</param>
     /// <param name="exclude">Exclut les valeurs pour lesquelles la facette correspond au lieu de les inclure.</param>
     /// <param name="facetDef">Définition de la facette.</param>
-    public Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery<TDocument>(string facet, bool exclude, IFacetDefinition<TDocument> facetDef)
+    public Func<QueryDescriptor<TDocument>, Query> CreateFacetSubQuery<TDocument>(string facet, bool exclude, IFacetDefinition<TDocument> facetDef)
         where TDocument : class
     {
         /* Traite la valeur de sélection NULL */
@@ -78,12 +79,12 @@ public class FacetHandler
     /// <param name="facet">Définition de la facet.</param>
     /// <param name="facetList">Définitions de toutes les facettes.</param>
     /// <param name="inputFacetsList">Facettes sélectionnées, pour filtrer (si plusieurs, combinées en "ou").</param>
-    public void DefineAggregation<TDocument>(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition<TDocument> facet, ICollection<IFacetDefinition<TDocument>> facetList, IEnumerable<IDictionary<string, FacetInput>> inputFacetsList)
+    public void DefineAggregation<TDocument>(AggregationDescriptor<TDocument> agg, IFacetDefinition<TDocument> facet, ICollection<IFacetDefinition<TDocument>> facetList, IEnumerable<IDictionary<string, FacetInput>> inputFacetsList)
         where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
 
-        AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
+        AggregationDescriptor<TDocument> AggDescriptor(AggregationDescriptor<TDocument> aa)
         {
             /* Crée une agrégation sur les valeurs discrètes du champ. */
             if (facet is ExistsFacet<TDocument>)

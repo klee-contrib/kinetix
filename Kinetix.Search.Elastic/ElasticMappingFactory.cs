@@ -1,7 +1,7 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Elastic.Mapping;
 using Microsoft.Extensions.DependencyInjection;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 

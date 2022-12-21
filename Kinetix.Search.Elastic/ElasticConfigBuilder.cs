@@ -1,7 +1,7 @@
-﻿using Kinetix.Search.Core;
+﻿using System.Text.Json.Serialization;
+using Kinetix.Search.Core;
 using Kinetix.Search.Elastic.Mapping;
 using Microsoft.Extensions.DependencyInjection;
-using Newtonsoft.Json;
 
 namespace Kinetix.Search.Elastic;
 

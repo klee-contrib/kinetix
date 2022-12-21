@@ -1,12 +1,35 @@
-﻿using Elasticsearch.Net;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Serialization;
+using Elastic.Transport;
 using Kinetix.Search.Core;
 using Kinetix.Search.Core.Config;
 using Microsoft.Extensions.DependencyInjection;
-using Nest;
-using Nest.JsonNetSerializer;
-using Newtonsoft.Json;
 
 namespace Kinetix.Search.Elastic;
+
+
+public class KinetixSourceSerializer : SystemTextJsonSerializer
+{
+    public KinetixSourceSerializer(IElasticsearchClientSettings settings, JsonSerializerOptions options = null) =>
+        Options = options ?? new JsonSerializerOptions
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters =
+            {
+                    new JsonStringEnumConverter(),
+                    new UnionConverter(),
+                    new IdConverter(settings),
+                    new RelationNameConverter(settings),
+                    new RoutingConverter(settings),
+                    new JoinFieldConverter(settings),
+                    new LazyJsonConverter(settings),
+                    new IdsConverter(settings)
+            },
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+}
 
 /// <summary>
 /// Enregistre Kinetix.Search dans ASP.NET Core.
@@ -24,9 +47,9 @@ public static class ServiceExtensions
             {
                 var server = searchConfig.GetServer(ElasticConfigBuilder.ServerName);
                 var node = new Uri(server.NodeUri);
-                var settings = new ConnectionSettings(
-                    new SingleNodeConnectionPool(node),
-                    (b, s) => new JsonNetSerializer(b, s, () =>
+                var settings = new ElasticsearchClientSettings(
+                    node,
+                    (b, s) => new DefaultSourceSerializer(b, s, () =>
                     {
                         var js = new JsonSerializerSettings { DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'" };
                         if (config.JsonConverters != null)
@@ -38,8 +61,8 @@ public static class ServiceExtensions
                         }
                         return js;
                     }))
-                    .DisableDirectStreaming()
-                    .EnableApiVersioningHeader();
+                    .DisableDirectStreaming();
+
 
                 foreach (var documentType in config.DocumentTypes)
                 {
@@ -48,10 +71,10 @@ public static class ServiceExtensions
 
                 if (!string.IsNullOrEmpty(server.Login))
                 {
-                    settings.BasicAuthentication(server.Login, server.Password);
+                    settings.Authentication(new BasicAuthentication(server.Login, server.Password));
                 }
 
-                return new ElasticClient(settings);
+                return new ElasticsearchClient(settings);
             })
             .AddSingleton(searchConfig)
             .AddSingleton<ElasticMappingFactory>()

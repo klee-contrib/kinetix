@@ -1,6 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Models.Annotations;
-using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping;
 

@@ -1,9 +1,8 @@
-﻿using Elasticsearch.Net;
+﻿using Elastic.Clients.Elasticsearch;
 using Kinetix.Monitoring.Core;
 using Kinetix.Search.Core;
 using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -12,14 +11,14 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
     private int _operationCount = 0;
 
     private readonly AnalyticsManager _analytics;
-    private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor()
+    private readonly BulkRequestDescriptor _bulkDescriptor = new BulkRequestDescriptor()
         .Timeout(TimeSpan.FromMinutes(1))
         .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(1)));
-    private readonly ElasticClient _client;
+    private readonly ElasticsearchClient _client;
     private readonly DocumentDescriptor _documentDescriptor;
     private readonly ILogger<ElasticStore> _logger;
 
-    internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger, AnalyticsManager analytics)
+    internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticsearchClient client, ILogger<ElasticStore> logger, AnalyticsManager analytics)
     {
         _analytics = analytics;
         _documentDescriptor = documentDescriptor;

@@ -1,4 +1,7 @@
-﻿using Kinetix.Monitoring.Core;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.IndexManagement;
+using Elastic.Clients.Elasticsearch.QueryDsl;
+using Kinetix.Monitoring.Core;
 using Kinetix.Search.Core;
 using Kinetix.Search.Core.Config;
 using Kinetix.Search.Core.DocumentModel;
@@ -6,7 +9,6 @@ using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Elastic.Querying;
 using Kinetix.Search.Models;
 using Microsoft.Extensions.Logging;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -18,7 +20,7 @@ using static AdvancedQueryUtil;
 public class ElasticStore : ISearchStore
 {
     private readonly AnalyticsManager _analytics;
-    private readonly ElasticClient _client;
+    private readonly ElasticsearchClient _client;
     private readonly SearchConfig _config;
     private readonly DocumentDescriptor _documentDescriptor;
     private readonly ElasticManager _elasticManager;
@@ -26,7 +28,7 @@ public class ElasticStore : ISearchStore
     private readonly ElasticMappingFactory _factory;
     private readonly ILogger<ElasticStore> _logger;
 
-    public ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, AnalyticsManager analytics, SearchConfig config)
+    public ElasticStore(DocumentDescriptor documentDescriptor, ElasticsearchClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, AnalyticsManager analytics, SearchConfig config)
     {
         _analytics = analytics;
         _client = client;
@@ -43,7 +45,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-        var mapping = new PutMappingDescriptor<TDocument>()
+        var mapping = new PutMappingRequestDescriptor<TDocument>("")
             .Properties(selector => _factory.AddFields(selector, def.Fields));
 
         var indexCreated = _elasticManager.InitIndex<TDocument, DefaultIndexConfigurator>(mapping);
@@ -61,7 +63,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-        return _logger.LogQuery(_analytics, "Get", () => _client.Get(new DocumentPath<TDocument>(id))).Source;
+        return _logger.LogQuery(_analytics, "Get", () => _client.Get<TDocument>(id)).Source;
     }
 
     /// <inheritdoc cref="ISearchStore.Get{TDocument}(TDocument)" />
@@ -69,7 +71,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-        return _logger.LogQuery(_analytics, "Get", () => _client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValue(bean).ToString()))).Source;
+        return _logger.LogQuery(_analytics, "Get", () => _client.Get<TDocument>(def.PrimaryKey.GetValue(bean).ToString())).Source;
     }
 
     /// <inheritdoc cref="ISearchStore.Bulk" />
@@ -148,7 +150,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
         where TCriteria : Criteria, new()
     {
-        return AdvancedQuery(input, (d, _) => documentMapper(d), Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
+        return AdvancedQuery(input, (d, _) => documentMapper(d), Array.Empty<Func<QueryDescriptor<TDocument>, Query>>());
     }
 
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
@@ -156,7 +158,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
         where TCriteria : Criteria, new()
     {
-        return AdvancedQuery(input, documentMapper, Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
+        return AdvancedQuery(input, documentMapper, Array.Empty<Func<QueryDescriptor<TDocument>, Query>>());
     }
 
     /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />

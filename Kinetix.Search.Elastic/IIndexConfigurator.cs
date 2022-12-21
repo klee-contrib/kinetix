@@ -1,4 +1,4 @@
-﻿using Nest;
+﻿using Elastic.Clients.Elasticsearch.IndexManagement;
 
 namespace Kinetix.Search.Elastic;
 
@@ -12,5 +12,5 @@ public interface IIndexConfigurator
     /// </summary>
     /// <param name="descriptor">Descripteur.</param>
     /// <returns>ICreateIndexRequest.</returns>
-    ICreateIndexRequest ConfigureIndex(CreateIndexDescriptor descriptor);
+    void ConfigureIndex(CreateIndexRequestDescriptor descriptor);
 }

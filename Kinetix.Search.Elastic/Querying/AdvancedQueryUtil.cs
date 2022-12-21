@@ -1,8 +1,9 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.QueryDsl;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
 using Kinetix.Search.Models.Annotations;
-using Nest;
 
 namespace Kinetix.Search.Elastic.Querying;
 
@@ -25,11 +26,11 @@ public static class AdvancedQueryUtil
     /// <param name="pitId">Id du PIT, si recheche paginée.</param>
     /// <param name="searchAfter">Id du dernier élément retourné, si paginé.</param>
     /// <returns>Le descripteur.</returns>
-    public static Func<SearchDescriptor<TDocument>, ISearchRequest> GetAdvancedQueryDescriptor<TDocument, TCriteria>(
+    public static Func<SearchDescriptor<TDocument>, SearchRequest> GetAdvancedQueryDescriptor<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters,
+        Func<QueryDescriptor<TDocument>, Query>[] filters,
         ICollection<IFacetDefinition<TDocument>> facetDefList = null,
         string groupFieldName = null,
         string pitId = null,
@@ -174,7 +175,7 @@ public static class AdvancedQueryUtil
     /// <param name="input">Input de la recherche.</param>
     /// <param name="facetHandler">Handler de facette.</param>
     /// <returns></returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterAndPostFilterQuery<TDocument, TCriteria>(
+    public static Func<QueryDescriptor<TDocument>, Query> GetFilterAndPostFilterQuery<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler)
@@ -193,11 +194,11 @@ public static class AdvancedQueryUtil
     /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="filters">Filtres NEST additionnels.</param>
     /// <returns>Requête de filtrage.</returns>
-    private static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TDocument, TCriteria>(
+    private static Func<QueryDescriptor<TDocument>, Query> GetFilterQuery<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
-        params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+        params Func<QueryDescriptor<TDocument>, Query>[] filters)
         where TDocument : class
         where TCriteria : Criteria, new()
     {
@@ -243,7 +244,7 @@ public static class AdvancedQueryUtil
             /* Gestion des filtres additionnels. */
             var criteriaProperties = typeof(TCriteria).GetProperties();
 
-            var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
+            var filterList = new List<Func<QueryDescriptor<TDocument>, Query>>();
 
             foreach (var field in def.Fields)
             {
@@ -321,7 +322,7 @@ public static class AdvancedQueryUtil
     /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="docDef">Document.</param>
     /// <returns>Sous-requête.</returns>
-    private static (bool hasPostFilter, Func<QueryContainerDescriptor<TDocument>, QueryContainer> query) GetPostFilterSubQuery<TDocument, TCriteria>(
+    private static (bool hasPostFilter, Func<QueryDescriptor<TDocument>, Query> query) GetPostFilterSubQuery<TDocument, TCriteria>(
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
         DocumentDefinition docDef)
@@ -416,7 +417,7 @@ public static class AdvancedQueryUtil
                 FieldName = def.Fields[fieldName].FieldName,
 
                 // Seul le premier ordre est utilisé.
-                Order = input.SearchCriteria.First().SortDesc ? SortOrder.Descending : SortOrder.Ascending
+                Order = input.SearchCriteria.First().SortDesc ? SortOrder.Desc : SortOrder.Asc
             };
     }
 

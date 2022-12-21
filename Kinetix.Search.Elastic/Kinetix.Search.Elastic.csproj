@@ -30,7 +30,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-    <PackageReference Include="NEST.JsonNetSerializer" Version="7.17.0" />
+    <PackageReference Include="Elastic.Clients.Elasticsearch" Version="8.0.3" />
   </ItemGroup>
 
   <ItemGroup>
