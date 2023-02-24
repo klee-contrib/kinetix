@@ -71,7 +71,7 @@ public class AdvancedQueryInputBuilder<TDocument, TCriteria>
     /// <returns>AdvancedQueryInputBuilder.</returns>
     public AdvancedQueryInputBuilder<TDocument, TCriteria> WithSecurity(params string[] security)
     {
-        Input.Security = security.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+        Input.Security = security?.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
         return this;
     }
 
