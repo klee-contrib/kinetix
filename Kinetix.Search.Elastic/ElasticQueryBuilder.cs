@@ -24,24 +24,6 @@ public static class ElasticQueryBuilder
     }
 
     /// <summary>
-    /// Construit une requête pour inclure une valeur parmi plusieurs.
-    /// </summary>
-    /// <param name="field">Champ.</param>
-    /// <param name="codes">Liste de valeurs à inclure.</param>
-    /// <returns>Requête.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildInclusiveInclude<TDocument>(string field, string codes)
-        where TDocument : class
-    {
-        var clauses = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-        foreach (var word in codes.Split(' '))
-        {
-            clauses.Add(f => f.Term(t => t.Field(field).Value(word)));
-        }
-
-        return q => q.Bool(b => b.Should(clauses).MinimumShouldMatch(1));
-    }
-
-    /// <summary>
     /// Construit une requête pour le filtrage exacte (sélection de facette, ...).
     /// </summary>
     /// <param name="field">Champ.</param>

@@ -201,7 +201,7 @@ public static class AdvancedQueryUtil
         where TDocument : class
         where TCriteria : Criteria, new()
     {
-        if (string.IsNullOrWhiteSpace(input.Security))
+        if (input.Security?.Length == 0)
         {
             input.Security = null;
         }
@@ -213,7 +213,7 @@ public static class AdvancedQueryUtil
 
         /* Constuit la sous requête de sécurité. */
         var securitySubQuery = input.Security != null
-            ? BuildInclusiveInclude<TDocument>(def.SecurityField.FieldName, input.Security)
+            ? BuildOrQuery(input.Security.Select(s => BuildFilter<TDocument>(def.SecurityField.FieldName, s)).ToArray())
             : q => q;
 
         var isMultiCriteria = input.SearchCriteria.Count() > 1;

@@ -18,7 +18,7 @@ public class BasicQueryInput<TDocument>
     /// <summary>
     /// Filtrage de sécurité.
     /// </summary>
-    public string Security { get; set; }
+    public string[] Security { get; set; }
 
     /// <summary>
     /// Filtres.

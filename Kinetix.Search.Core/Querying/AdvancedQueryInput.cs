@@ -29,7 +29,7 @@ public class AdvancedQueryInput<TDocument, TCriteria>
     /// <summary>
     /// Filtrage de sécurité.
     /// </summary>
-    public string Security
+    public string[] Security
     {
         get;
         set;
