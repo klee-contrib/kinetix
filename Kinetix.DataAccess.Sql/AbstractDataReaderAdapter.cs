@@ -13,11 +13,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Boolean.</returns>
-    protected static bool? ReadBoolean(IDataRecord record, int idx)
+    public static bool? ReadBoolean(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -34,11 +34,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Byte.</returns>
-    protected static byte? ReadByte(IDataRecord record, int idx)
+    public static byte? ReadByte(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -50,37 +50,16 @@ public abstract class AbstractDataReaderAdapter
     }
 
     /// <summary>
-    /// Retourne un byte[].
-    /// </summary>
-    /// <param name="record">Record.</param>
-    /// <param name="idx">Index.</param>
-    /// <returns>Byte[].</returns>
-    protected static byte[] ReadByteArray(IDataRecord record, int idx)
-    {
-        if (record == null)
-        {
-            throw new ArgumentNullException("record");
-        }
-
-        if (record.IsDBNull(idx))
-        {
-            return null;
-        }
-
-        return (byte[])record.GetValue(idx);
-    }
-
-    /// <summary>
     /// Retourne un char.
     /// </summary>
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Char.</returns>
-    protected static char? ReadChar(IDataRecord record, int idx)
+    public static char? ReadChar(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -92,37 +71,16 @@ public abstract class AbstractDataReaderAdapter
     }
 
     /// <summary>
-    /// Retourne un char.
-    /// </summary>
-    /// <param name="record">Record.</param>
-    /// <param name="idx">Index.</param>
-    /// <returns>Tableau de char..</returns>
-    protected static char[] ReadCharArray(IDataRecord record, int idx)
-    {
-        if (record == null)
-        {
-            throw new ArgumentNullException("record");
-        }
-
-        if (record.IsDBNull(idx))
-        {
-            return null;
-        }
-
-        return (char[])record.GetValue(idx);
-    }
-
-    /// <summary>
     /// Retourne un DateTime.
     /// </summary>
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>DateTime.</returns>
-    protected static DateTime? ReadDateTime(IDataRecord record, int idx)
+    public static DateTime? ReadDateTime(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -139,11 +97,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Decimal.</returns>
-    protected static decimal? ReadDecimal(IDataRecord record, int idx)
+    public static decimal? ReadDecimal(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -160,11 +118,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Double.</returns>
-    protected static double? ReadDouble(IDataRecord record, int idx)
+    public static double? ReadDouble(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -181,11 +139,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Float.</returns>
-    protected static float? ReadFloat(IDataRecord record, int idx)
+    public static float? ReadFloat(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -202,11 +160,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Guid.</returns>
-    protected static Guid? ReadGuid(IDataRecord record, int idx)
+    public static Guid? ReadGuid(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -223,11 +181,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Entier.</returns>
-    protected static int? ReadInt(IDataRecord record, int idx)
+    public static int? ReadInt(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -244,11 +202,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Long.</returns>
-    protected static long? ReadLong(IDataRecord record, int idx)
+    public static long? ReadLong(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -265,19 +223,40 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Boolean.</returns>
-    protected static bool ReadNonNullableBoolean(IDataRecord record, int idx)
+    public static bool ReadNonNullableBoolean(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         return record.GetBoolean(idx);
+    }
+
+    /// <summary>
+    /// Retourne un objet.
+    /// </summary>
+    /// <param name="record">Record.</param>
+    /// <param name="idx">Index.</param>
+    /// <returns>Tableau de char..</returns>
+    public static T ReadObject<T>(IDataRecord record, int idx)
+    {
+        if (record == null)
+        {
+            throw new ArgumentNullException(nameof(record));
+        }
+
+        if (record.IsDBNull(idx))
+        {
+            return default;
+        }
+
+        return (T)record.GetValue(idx);
     }
 
     /// <summary>
@@ -286,11 +265,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>Short.</returns>
-    protected static short? ReadShort(IDataRecord record, int idx)
+    public static short? ReadShort(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -307,11 +286,11 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>String.</returns>
-    protected static string ReadString(IDataRecord record, int idx)
+    public static string ReadString(IDataRecord record, int idx)
     {
         if (record == null)
         {
-            throw new ArgumentNullException("record");
+            throw new ArgumentNullException(nameof(record));
         }
 
         if (record.IsDBNull(idx))
@@ -320,26 +299,5 @@ public abstract class AbstractDataReaderAdapter
         }
 
         return record.GetString(idx);
-    }
-
-    /// <summary>
-    /// Retourne un DateTime.
-    /// </summary>
-    /// <param name="record">Record.</param>
-    /// <param name="idx">Index.</param>
-    /// <returns>DateTime.</returns>
-    protected static TimeSpan? ReadTimeSpan(IDataRecord record, int idx)
-    {
-        if (record == null)
-        {
-            throw new ArgumentNullException("record");
-        }
-
-        if (record.IsDBNull(idx))
-        {
-            return null;
-        }
-
-        return (TimeSpan?)record.GetValue(idx);
     }
 }
