@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>JabX</Authors>
     <Description>Utilitaires Kinetix pour ASP.NET Core.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.20.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights" Version="2.21.0" />
   </ItemGroup>
 
   <ItemGroup>

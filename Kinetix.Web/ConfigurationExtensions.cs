@@ -39,6 +39,7 @@ public static class ConfigurationExtensions
             .AddScoped<ExceptionFilter>()
             .AddSingleton<IExceptionHandler, BusinessExceptionHandler>()
             .AddSingleton<IExceptionHandler, MissingEntityExceptionHandler>()
+            .AddSingleton<IExceptionHandler, SecurityExceptionHandler>()
             .AddScoped<TransactionFilter>()
             .AddScoped<ReferenceCheckerFilter>()
             .AddScoped<UtcDateFilter>();
