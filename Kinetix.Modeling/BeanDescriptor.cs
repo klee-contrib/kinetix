@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,8 +19,8 @@ public static class BeanDescriptor
     /// </summary>
     private const string DefaultPropertyDefaultName = "Libelle";
 
-    private static readonly Dictionary<Type, BeanDefinition> _beanDefinitionDictionnary = new();
-    private static readonly Dictionary<Type, Dictionary<string, PropertyInfo>> _resourceTypeMap = new();
+    private static readonly ConcurrentDictionary<Type, BeanDefinition> _beanDefinitionDictionnary = new();
+    private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> _resourceTypeMap = new();
 
     /// <summary>
     /// Vérifie les contraintes sur un bean.
@@ -126,15 +127,6 @@ public static class BeanDescriptor
     }
 
     /// <summary>
-    /// Efface la définition d'un bean du singleton.
-    /// </summary>
-    /// <param name="descriptionType">Type portant la description.</param>
-    public static void ClearDefinition(Type descriptionType)
-    {
-        _beanDefinitionDictionnary.Remove(descriptionType);
-    }
-
-    /// <summary>
     /// Crée la collection des descripteurs de propriétés.
     /// </summary>
     /// <param name="properties">PropertyDescriptors.</param>
@@ -163,7 +155,7 @@ public static class BeanDescriptor
                     if (!_resourceTypeMap.TryGetValue(displayAttr.ResourceType, out var resourceProperties))
                     {
                         resourceProperties = new Dictionary<string, PropertyInfo>();
-                        _resourceTypeMap[displayAttr.ResourceType] = resourceProperties;
+                        _resourceTypeMap.TryAdd(displayAttr.ResourceType, resourceProperties);
 
                         foreach (var p in displayAttr.ResourceType.GetProperties(BindingFlags.Public | BindingFlags.Static))
                         {
@@ -257,7 +249,7 @@ public static class BeanDescriptor
                 definition = new BeanDefinition(beanType, properties, contractName, isReference, isStatic);
                 if (bean == null && !typeof(ICustomTypeDescriptor).IsAssignableFrom(beanType))
                 {
-                    _beanDefinitionDictionnary[descriptionType] = definition;
+                    _beanDefinitionDictionnary.TryAdd(descriptionType, definition);
                 }
             }
         }

@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>JabX</Authors>
     <Description>Module de modélisation Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
