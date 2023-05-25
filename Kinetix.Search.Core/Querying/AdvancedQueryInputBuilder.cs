@@ -7,9 +7,26 @@ namespace Kinetix.Search.Core.Querying;
 /// Builder de requête pour la recherche avancée.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
+public class AdvancedQueryInputBuilder<TDocument> : AdvancedQueryInputBuilder<TDocument, DefaultCriteria>
+{
+    /// <summary>
+    /// Constructeur.
+    /// </summary>
+    /// <param name="referenceManager">ReferenceManager.</param>
+    /// <param name="searchCriteria">Requêtes.</param>
+    public AdvancedQueryInputBuilder(IReferenceManager referenceManager, params QueryInput<DefaultCriteria>[] searchCriteria)
+        : base(referenceManager, searchCriteria)
+    {
+    }
+}
+
+/// <summary>
+/// Builder de requête pour la recherche avancée.
+/// </summary>
+/// <typeparam name="TDocument">Type de document.</typeparam>
 /// <typeparam name="TCriteria">Type du critère.</typeparam>
 public class AdvancedQueryInputBuilder<TDocument, TCriteria>
-     where TCriteria : ICriteria, new()
+ where TCriteria : ICriteria, new()
 {
     private readonly IReferenceManager _referenceManager;
 
