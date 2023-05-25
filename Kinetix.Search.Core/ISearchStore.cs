@@ -72,7 +72,7 @@ public interface ISearchStore
     /// <returns>Sortie de la recherche.</returns>
     QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new();
+        where TCriteria : ICriteria, new();
 
     /// <summary>
     /// Effectue une recherche avancée.
@@ -82,7 +82,7 @@ public interface ISearchStore
     /// <returns>Sortie de la recherche.</returns>
     QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new();
+        where TCriteria : ICriteria, new();
 
     /// <summary>
     /// Effectue une recherche avancée mutiple.
@@ -97,5 +97,5 @@ public interface ISearchStore
     /// <returns>Nombre de documents.</returns>
     long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
         where TDocument : class
-        where TCriteria : Criteria, new();
+        where TCriteria : ICriteria, new();
 }

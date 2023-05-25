@@ -6,7 +6,7 @@ namespace Kinetix.Search.Core.Querying;
 /// Entrée complète d'une recherche avancée.
 /// </summary>
 public class AdvancedQueryInput<TDocument, TCriteria>
-     where TCriteria : Criteria, new()
+     where TCriteria : ICriteria, new()
 {
     /// <summary>
     /// Critères de recherche, combinés en "ou".

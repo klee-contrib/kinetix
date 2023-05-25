@@ -20,7 +20,7 @@ public static class ElasticStoreExtensions
     /// <returns>Sortie de la recherche.</returns>
     public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return ((ElasticStore)store).AdvancedQuery(input, (d, _) => documentMapper(d), filters);
     }
@@ -35,7 +35,7 @@ public static class ElasticStoreExtensions
     /// <returns>Sortie de la recherche.</returns>
     public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
     where TDocument : class
-    where TCriteria : Criteria, new()
+    where TCriteria : ICriteria, new()
     {
         return ((ElasticStore)store).AdvancedQuery(input, documentMapper, filters);
     }
@@ -50,7 +50,7 @@ public static class ElasticStoreExtensions
     /// <returns>Résultats.</returns>
     public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return ((ElasticStore)store).AdvancedQueryAll(input, (d, _) => documentMapper(d), filters);
     }
@@ -65,7 +65,7 @@ public static class ElasticStoreExtensions
     /// <returns>Résultats.</returns>
     public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
     where TDocument : class
-    where TCriteria : Criteria, new()
+    where TCriteria : ICriteria, new()
     {
         return ((ElasticStore)store).AdvancedQueryAll(input, documentMapper, filters);
     }

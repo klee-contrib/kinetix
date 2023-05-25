@@ -43,7 +43,7 @@ public static class SearchStoreExtensions
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
         where TDocument : class
     {
-        return store.Query(queryInput, new Criteria { Query = queryInput.Query }, documentMapper);
+        return store.Query(queryInput, new DefaultCriteria { Query = queryInput.Query }, documentMapper);
     }
 
     /// <summary>
@@ -55,7 +55,7 @@ public static class SearchStoreExtensions
     /// <returns>Résultat.</returns>
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, TCriteria criteria, Func<TDocument, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return store.Query(null, criteria, documentMapper);
     }
@@ -69,7 +69,7 @@ public static class SearchStoreExtensions
     /// <returns>Résultat.</returns>
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, TCriteria criteria, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return store.Query(null, criteria, documentMapper);
     }
@@ -84,7 +84,7 @@ public static class SearchStoreExtensions
     /// <returns>Résultat.</returns>
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, TCriteria criteria, Func<TDocument, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return store.Query(queryInput, criteria, (d, _) => documentMapper(d));
     }
@@ -99,7 +99,7 @@ public static class SearchStoreExtensions
     /// <returns>Résultat.</returns>
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, TCriteria criteria, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
     where TDocument : class
-    where TCriteria : Criteria, new()
+    where TCriteria : ICriteria, new()
     {
         if (string.IsNullOrEmpty(criteria.Query))
         {

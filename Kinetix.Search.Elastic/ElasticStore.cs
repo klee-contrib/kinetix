@@ -146,7 +146,7 @@ public class ElasticStore : ISearchStore
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
     public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return AdvancedQuery(input, (d, _) => documentMapper(d), Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
     }
@@ -154,7 +154,7 @@ public class ElasticStore : ISearchStore
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
     public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return AdvancedQuery(input, documentMapper, Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
     }
@@ -168,7 +168,7 @@ public class ElasticStore : ISearchStore
     /// <inheritdoc cref="ISearchStore.AdvancedCount" />
     public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         if (input == null)
         {
@@ -186,7 +186,7 @@ public class ElasticStore : ISearchStore
 
     internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
        where TDocument : class
-       where TCriteria : Criteria, new()
+       where TCriteria : ICriteria, new()
     {
         if (input == null)
         {
@@ -233,7 +233,7 @@ public class ElasticStore : ISearchStore
 
     internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
        where TDocument : class
-       where TCriteria : Criteria, new()
+       where TCriteria : ICriteria, new()
     {
         if (input == null)
         {

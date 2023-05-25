@@ -9,7 +9,7 @@ namespace Kinetix.Search.Core.Querying;
 /// <typeparam name="TDocument">Type de document.</typeparam>
 /// <typeparam name="TCriteria">Type du critère.</typeparam>
 public class AdvancedQueryInputBuilder<TDocument, TCriteria>
-     where TCriteria : Criteria, new()
+     where TCriteria : ICriteria, new()
 {
     private readonly IReferenceManager _referenceManager;
 

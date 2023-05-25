@@ -35,7 +35,7 @@ public static class AdvancedQueryUtil
         string pitId = null,
         object[] searchAfter = null)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         /* Tri */
         var sortDef = GetSortDefinition(def, input);
@@ -179,7 +179,7 @@ public static class AdvancedQueryUtil
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         var (_, postFilterQuery) = GetPostFilterSubQuery(input, facetHandler, def);
         return BuildAndQuery(GetFilterQuery(def, input, facetHandler), postFilterQuery);
@@ -199,7 +199,7 @@ public static class AdvancedQueryUtil
         FacetHandler facetHandler,
         params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         if (input.Security?.Length == 0)
         {
@@ -326,7 +326,7 @@ public static class AdvancedQueryUtil
         FacetHandler facetHandler,
         DocumentDefinition docDef)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         if (input.SearchCriteria.Count() > 1)
         {
@@ -362,7 +362,7 @@ public static class AdvancedQueryUtil
     /// <returns>Nom du champ.</returns>
     public static string GetGroupFieldName<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         // On groupe par le premier groupe renseigné.
         var groupFacetName = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.Group))?.Group;
@@ -390,7 +390,7 @@ public static class AdvancedQueryUtil
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         // On trie par le premier tri renseigné.
         var fieldName = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.SortFieldName))?.SortFieldName;

@@ -1,9 +1,9 @@
 ﻿namespace Kinetix.Search.Models;
 
 /// <summary>
-/// Critère de recherche.
+/// Implémentation par défaut du critère de recherche.
 /// </summary>
-public class Criteria
+public class DefaultCriteria : ICriteria
 {
     /// <summary>
     /// Critère de recherche.

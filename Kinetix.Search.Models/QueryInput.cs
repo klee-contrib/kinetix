@@ -3,6 +3,6 @@
 /// <summary>
 /// Entrée d'une recherche avancée.
 /// </summary>
-public class QueryInput : QueryInput<Criteria>
+public class QueryInput : QueryInput<DefaultCriteria>
 {
 }

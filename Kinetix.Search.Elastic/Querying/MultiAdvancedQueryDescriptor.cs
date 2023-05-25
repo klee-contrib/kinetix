@@ -26,7 +26,7 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
     /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery{TDocument, TOutput, TCriteria}(string, string, AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
     public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         return AddQuery(code, label, input, (d, _) => documentMapper(d));
     }
@@ -34,7 +34,7 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
     /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery{TDocument, TOutput, TCriteria}(string, string, AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
     public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
         where TDocument : class
-        where TCriteria : Criteria, new()
+        where TCriteria : ICriteria, new()
     {
         foreach (var sc in input.SearchCriteria)
         {
