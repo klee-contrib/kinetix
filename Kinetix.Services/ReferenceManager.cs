@@ -296,33 +296,34 @@ public class ReferenceManager : IReferenceManager
     /// <returns>L'entrée de cache.</returns>
     private ReferenceEntry<T> GetReferenceEntry<T>(string referenceName)
     {
-        var def = BeanDescriptor.GetDefinition(GetTypeFromName(referenceName));
-        var isStatic = IsStatic(referenceName);
-        var cacheDuration = isStatic ? _staticListCacheDuration : _referenceListCacheDuration;
-
         var key = GetCacheKey(referenceName);
-
-        if (_referenceNotifier != null && _distributedCache != null && !isStatic)
-        {
-            _referenceNotifier.RegisterFlush(referenceName, () => _memoryCache.Remove(key));
-        }
-
         return new ReferenceEntry<T>
         {
             Map = _memoryCache.GetOrCreate(key, memOpt =>
             {
+                var isStatic = IsStatic(referenceName);
+                var cacheDuration = isStatic ? _staticListCacheDuration : _referenceListCacheDuration;
+
                 memOpt.AbsoluteExpirationRelativeToNow = _distributedCache != null ? TimeSpan.FromMinutes(1) : cacheDuration;
 
                 if (_distributedCache != null)
                 {
                     return _distributedCache.GetOrSet(key, distOpt =>
                     {
+                        if (_referenceNotifier != null && !isStatic)
+                        {
+                            _referenceNotifier.RegisterFlush(referenceName, () => _memoryCache.Remove(key));
+                        }
+
                         distOpt.AbsoluteExpirationRelativeToNow = cacheDuration;
+
+                        var def = BeanDescriptor.GetDefinition(GetTypeFromName(referenceName));
                         return InvokeReferenceAccessor<T>(referenceName).ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
                     });
                 }
                 else
                 {
+                    var def = BeanDescriptor.GetDefinition(GetTypeFromName(referenceName));
                     return InvokeReferenceAccessor<T>(referenceName).ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
                 }
             })
