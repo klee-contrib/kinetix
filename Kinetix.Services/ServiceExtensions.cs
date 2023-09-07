@@ -1,17 +1,13 @@
 ﻿using System.Reflection;
 using Kinetix.Services.Annotations;
 using Kinetix.Services.DependencyInjection;
-using Kinetix.Services.DependencyInjection.Interceptors;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Kinetix.Services;
 
 public static class ServiceExtensions
 {
-    private static readonly Action<InterceptionOptions> defaultIOptions = i => i
-        .With<AnalyticsInterceptor>()
-        .With<TransactionInterceptor>();
-
     /// <summary>
     /// Enregistre les services Kinetix.
     /// </summary>
@@ -36,8 +32,6 @@ public static class ServiceExtensions
                 : assemblies.Concat(GetReferencedAssemblies(referencedAssemblies)).Distinct();
         }
 
-        var contractTypes = new List<Type>();
-
         var assemblies = GetReferencedAssemblies(
             config.ServiceAssemblies
                 .Concat(new[] { Assembly.GetEntryAssembly() })
@@ -54,43 +48,20 @@ public static class ServiceExtensions
                 {
                     if (interfaceType.GetCustomAttribute<RegisterContractAttribute>() != null)
                     {
-                        contractTypes.Add(interfaceType);
-                        var iOptions = config.InterceptionOptions != null ? config.InterceptionOptions(interfaceType) : defaultIOptions;
-                        switch (registerImplAttribute.Lifetime)
+                        var iOptions = config.InterceptionOptions != null ? config.InterceptionOptions(interfaceType) : null;
+
+                        if (iOptions != null)
                         {
-                            case ServiceLifetime.Scoped:
-                                if (iOptions != null)
-                                {
-                                    services.AddInterceptedScoped(interfaceType, type, iOptions);
-                                }
-                                else
-                                {
-                                    services.AddScoped(interfaceType, type);
-                                }
-
-                                break;
-                            case ServiceLifetime.Singleton:
-                                if (iOptions != null)
-                                {
-                                    services.AddInterceptedSingleton(interfaceType, type, iOptions);
-                                }
-                                else
-                                {
-                                    services.AddSingleton(interfaceType, type);
-                                }
-
-                                break;
-                            case ServiceLifetime.Transient:
-                                if (iOptions != null)
-                                {
-                                    services.AddInterceptedTransient(interfaceType, type, iOptions);
-                                }
-                                else
-                                {
-                                    services.AddTransient(interfaceType, type);
-                                }
-
-                                break;
+                            services.TryAddIntercepted(
+                                interfaceType,
+                                type,
+                                lifetime => ServiceDescriptor.Describe(type, type, lifetime),
+                                iOptions,
+                                registerImplAttribute.Lifetime);
+                        }
+                        else
+                        {
+                            services.TryAdd(new ServiceDescriptor(interfaceType, type, registerImplAttribute.Lifetime));
                         }
 
                         hasContract = true;
@@ -99,47 +70,35 @@ public static class ServiceExtensions
 
                 if (!hasContract)
                 {
-                    switch (registerImplAttribute.Lifetime)
-                    {
-                        case ServiceLifetime.Scoped:
-                            services.AddScoped(type);
-                            break;
-                        case ServiceLifetime.Singleton:
-                            services.AddSingleton(type);
-                            break;
-                        case ServiceLifetime.Transient:
-                            services.AddTransient(type);
-                            break;
-                    }
+                    services.TryAdd(new ServiceDescriptor(type, type, registerImplAttribute.Lifetime));
                 }
             }
         }
 
-        services
-            .AddMemoryCache()
-            .AddScoped<TransactionScopeManager>()
-            .AddScoped<IReferenceManager>(provider =>
+        services.AddMemoryCache();
+        services.TryAddScoped<TransactionScopeManager>();
+        services.TryAddScoped<IReferenceManager>(provider =>
+        {
+            var referenceManager = new ReferenceManager(provider, config.StaticListCacheDuration, config.ReferenceListCacheDuration);
+
+            foreach (var interfaceType in services.Select(s => s.ServiceType).Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null))
             {
-                var referenceManager = new ReferenceManager(provider, config.StaticListCacheDuration, config.ReferenceListCacheDuration);
+                referenceManager.RegisterAccessors(interfaceType);
+            }
 
-                foreach (var interfaceType in contractTypes)
-                {
-                    referenceManager.RegisterAccessors(interfaceType);
-                }
+            return referenceManager;
+        });
+        services.TryAddScoped<IFileManager>(provider =>
+        {
+            var fileManager = new FileManager(provider);
 
-                return referenceManager;
-            })
-            .AddScoped<IFileManager>(provider =>
+            foreach (var interfaceType in services.Select(s => s.ServiceType).Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null))
             {
-                var fileManager = new FileManager(provider);
+                fileManager.RegisterAccessors(interfaceType);
+            }
 
-                foreach (var interfaceType in contractTypes)
-                {
-                    fileManager.RegisterAccessors(interfaceType);
-                }
-
-                return fileManager;
-            });
+            return fileManager;
+        });
 
         if (config.ReferenceNotifier != null)
         {
