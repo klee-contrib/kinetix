@@ -16,13 +16,14 @@ public static class ElasticStoreExtensions
     /// <param name="store">Store.</param>
     /// <param name="input">Entrée de la recherche.</param>
     /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
-    /// <param name="filters">Filtres NEST additionnels.</param>
+    /// <param name="filter">Filtre NEST additionnel.</param>
+    /// <param name="aggs">Agrégations NEST additionnelles.</param>
     /// <returns>Sortie de la recherche.</returns>
-    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter = null, Action<AggregationContainerDescriptor<TDocument>> aggs = null)
         where TDocument : class
         where TCriteria : ICriteria, new()
     {
-        return ((ElasticStore)store).AdvancedQuery(input, (d, _) => documentMapper(d), filters);
+        return ((ElasticStore)store).AdvancedQuery(input, (d, _) => documentMapper(d), filter, aggs);
     }
 
     /// <summary>
@@ -31,28 +32,14 @@ public static class ElasticStoreExtensions
     /// <param name="store">Store.</param>
     /// <param name="input">Entrée de la recherche.</param>
     /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
-    /// <param name="filters">Filtres NEST additionnels.</param>
+    /// <param name="filter">Filtres NEST additionnel.</param>
+    /// <param name="aggs">Agrégations NEST additionnelles.</param>
     /// <returns>Sortie de la recherche.</returns>
-    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
-    where TDocument : class
-    where TCriteria : ICriteria, new()
-    {
-        return ((ElasticStore)store).AdvancedQuery(input, documentMapper, filters);
-    }
-
-    /// <summary>
-    /// Effectue une recherche avancée et récupère tous les résultats (et uniquement les résultats).
-    /// </summary>
-    /// <param name="store">Store.</param>
-    /// <param name="input">Entrée de la recherche.</param>
-    /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
-    /// <param name="filters">Filtres NEST additionnels.</param>
-    /// <returns>Résultats.</returns>
-    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter = null, Action<AggregationContainerDescriptor<TDocument>> aggs = null)
         where TDocument : class
         where TCriteria : ICriteria, new()
     {
-        return ((ElasticStore)store).AdvancedQueryAll(input, (d, _) => documentMapper(d), filters);
+        return ((ElasticStore)store).AdvancedQuery(input, documentMapper, filter, aggs);
     }
 
     /// <summary>
@@ -61,12 +48,27 @@ public static class ElasticStoreExtensions
     /// <param name="store">Store.</param>
     /// <param name="input">Entrée de la recherche.</param>
     /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
-    /// <param name="filters">Filtres NEST additionnels.</param>
+    /// <param name="filter">Filtre NEST additionnel.</param>
     /// <returns>Résultats.</returns>
-    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter = null)
+        where TDocument : class
+        where TCriteria : ICriteria, new()
+    {
+        return ((ElasticStore)store).AdvancedQueryAll(input, (d, _) => documentMapper(d), filter);
+    }
+
+    /// <summary>
+    /// Effectue une recherche avancée et récupère tous les résultats (et uniquement les résultats).
+    /// </summary>
+    /// <param name="store">Store.</param>
+    /// <param name="input">Entrée de la recherche.</param>
+    /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
+    /// <param name="filter">Filtre NEST additionnel.</param>
+    /// <returns>Résultats.</returns>
+    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter = null)
     where TDocument : class
     where TCriteria : ICriteria, new()
     {
-        return ((ElasticStore)store).AdvancedQueryAll(input, documentMapper, filters);
+        return ((ElasticStore)store).AdvancedQueryAll(input, documentMapper, filter);
     }
 }

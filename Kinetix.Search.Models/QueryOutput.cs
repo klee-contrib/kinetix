@@ -1,4 +1,6 @@
-﻿namespace Kinetix.Search.Models;
+﻿using System.Text.Json.Serialization;
+
+namespace Kinetix.Search.Models;
 
 /// <summary>
 /// Sortie d'une recherche avancée.
@@ -24,4 +26,10 @@ public class QueryOutput
     /// Token retourné pour la pagination.
     /// </summary>
     public string SkipToken { get; set; }
+
+    /// <summary>
+    /// Conteneur d'agrégations.
+    /// </summary>
+    [JsonIgnore]
+    public object Aggregations { get; set; }
 }

@@ -19,7 +19,8 @@ public static class AdvancedQueryUtil
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
     /// <param name="facetHandler">Handler de facette.</param>
-    /// <param name="filters">Filtres NEST additionnels.</param>
+    /// <param name="filter">Filtre NEST additionnel.</param>
+    /// <param name="aggs">Agrégations NEST additionnelles.</param>
     /// <param name="facetDefList">Liste des facettes.</param>
     /// <param name="groupFieldName">Nom du champ sur lequel grouper.</param>
     /// <param name="pitId">Id du PIT, si recheche paginée.</param>
@@ -29,7 +30,8 @@ public static class AdvancedQueryUtil
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter = null,
+        Action<AggregationContainerDescriptor<TDocument>> aggs = null,
         ICollection<IFacetDefinition<TDocument>> facetDefList = null,
         string groupFieldName = null,
         string pitId = null,
@@ -41,7 +43,7 @@ public static class AdvancedQueryUtil
         var sortDef = GetSortDefinition(def, input);
 
         /* Requêtes de filtrage. */
-        var filterQuery = GetFilterQuery(def, input, facetHandler, filters);
+        var filterQuery = GetFilterQuery(def, input, facetHandler, filter);
         var (hasPostFilter, postFilterQuery) = GetPostFilterSubQuery(input, facetHandler, def);
 
         /* Booléens */
@@ -154,6 +156,8 @@ public static class AdvancedQueryUtil
                         }
                     }
 
+                    aggs?.Invoke(a);
+
                     return a;
                 });
             }
@@ -191,13 +195,13 @@ public static class AdvancedQueryUtil
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
     /// <param name="facetHandler">Handler de facette.</param>
-    /// <param name="filters">Filtres NEST additionnels.</param>
+    /// <param name="filter">Filtre NEST additionnel.</param>
     /// <returns>Requête de filtrage.</returns>
     private static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
-        params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter = null)
         where TDocument : class
         where TCriteria : ICriteria, new()
     {
@@ -311,7 +315,7 @@ public static class AdvancedQueryUtil
         })
         .ToArray());
 
-        return BuildAndQuery(new[] { securitySubQuery, criteriaSubQuery }.Concat(filters).ToArray());
+        return BuildAndQuery(new[] { securitySubQuery, criteriaSubQuery, filter }.Where(f => f != null).ToArray());
     }
 
     /// <summary>

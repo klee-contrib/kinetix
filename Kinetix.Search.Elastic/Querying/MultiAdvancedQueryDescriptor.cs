@@ -46,7 +46,8 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
             def,
             input,
             _facetHandler,
-            Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>(),
+            filter: null,
+            aggs: null,
             input.FacetQueryDefinition.Facets,
             GetGroupFieldName(input))(new SearchDescriptor<TDocument>()));
         _documentMappers.Add(code, new DocumentMapper<TDocument, TOutput>(documentMapper));

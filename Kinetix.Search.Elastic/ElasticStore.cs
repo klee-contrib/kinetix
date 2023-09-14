@@ -148,7 +148,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
         where TCriteria : ICriteria, new()
     {
-        return AdvancedQuery(input, (d, _) => documentMapper(d), Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
+        return AdvancedQuery(input, (d, _) => documentMapper(d), filter: null, aggs: null);
     }
 
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
@@ -156,7 +156,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
         where TCriteria : ICriteria, new()
     {
-        return AdvancedQuery(input, documentMapper, Array.Empty<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>());
+        return AdvancedQuery(input, documentMapper, filter: null, aggs: null);
     }
 
     /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />
@@ -184,7 +184,7 @@ public class ElasticStore : ISearchStore
             .Count;
     }
 
-    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter)
        where TDocument : class
        where TCriteria : ICriteria, new()
     {
@@ -208,7 +208,7 @@ public class ElasticStore : ISearchStore
             do
             {
                 var res = _logger.LogQuery(_analytics, $"AdvancedQueryWithPit", () => _client.Search(
-                    GetAdvancedQueryDescriptor(def, input, _facetHandler, filters, pitId: pitId, searchAfter: searchAfter)));
+                    GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, pitId: pitId, searchAfter: searchAfter)));
 
                 foreach (var doc in res.Hits)
                 {
@@ -231,7 +231,7 @@ public class ElasticStore : ISearchStore
         }
     }
 
-    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] filters)
+    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer> filter, Action<AggregationContainerDescriptor<TDocument>> aggs)
        where TDocument : class
        where TCriteria : ICriteria, new()
     {
@@ -251,13 +251,12 @@ public class ElasticStore : ISearchStore
         var hasGroup = groupFieldName != null;
 
         var res = _logger.LogQuery(_analytics, "AdvancedQuery", () => _client.Search(
-            GetAdvancedQueryDescriptor(def, input, _facetHandler, filters, facetDefList, groupFieldName)));
+            GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, aggs, facetDefList, groupFieldName)));
 
         /* Extraction des facettes. */
         var facetListOutput = new List<FacetOutput>();
         if (hasFacet)
         {
-            var aggs = res.Aggregations;
             foreach (var facetDef in facetDefList)
             {
                 facetListOutput.Add(new FacetOutput
@@ -267,7 +266,7 @@ public class ElasticStore : ISearchStore
                     IsMultiSelectable = facetDef.IsMultiSelectable,
                     IsMultiValued = def.Fields[facetDef.FieldName].IsMultiValued,
                     CanExclude = facetDef.CanExclude,
-                    Values = _facetHandler.ExtractFacetItemList(aggs, facetDef)
+                    Values = _facetHandler.ExtractFacetItemList(res.Aggregations, facetDef)
                 });
             }
         }
@@ -354,7 +353,8 @@ public class ElasticStore : ISearchStore
             Facets = facetListOutput,
             Groups = groupResultList,
             SearchFields = def.SearchFields.Select(tf => tf.FieldName).ToList(),
-            TotalCount = (int)res.Total
+            TotalCount = (int)res.Total,
+            Aggregations = res.Aggregations
         };
     }
 }

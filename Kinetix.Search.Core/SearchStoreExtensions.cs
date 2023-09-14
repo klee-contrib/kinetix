@@ -98,8 +98,8 @@ public static class SearchStoreExtensions
     /// <param name="documentMapper">Mapper de document.</param>
     /// <returns>Résultat.</returns>
     public static (IEnumerable<TOutput> data, int totalCount) Query<TDocument, TCriteria, TOutput>(this ISearchStore store, BasicQueryInput<TDocument> queryInput, TCriteria criteria, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
-    where TDocument : class
-    where TCriteria : ICriteria, new()
+        where TDocument : class
+        where TCriteria : ICriteria, new()
     {
         if (string.IsNullOrEmpty(criteria.Query))
         {
