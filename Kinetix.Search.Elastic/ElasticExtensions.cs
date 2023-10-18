@@ -1,6 +1,7 @@
 ﻿using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 using Nest;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Kinetix.Search.Elastic;
 
@@ -21,6 +22,11 @@ internal static class ElasticExtensions
     {
         analytics.StartProcess($"ElasticSearch.{context}", "Search");
         var response = esCall();
+
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            logger.LogDebug(response.DebugInformation);
+        }
 
         if (!response.ApiCall.Success)
         {
