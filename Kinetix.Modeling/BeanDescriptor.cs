@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Globalization;
 using System.Reflection;
 using Kinetix.Modeling.Annotations;
+using Kinetix.Modeling.Exceptions;
 
 namespace Kinetix.Modeling;
 
@@ -32,6 +33,24 @@ public static class BeanDescriptor
         if (bean != null)
         {
             GetDefinition(bean).Check(bean, propertiesToCheck);
+        }
+    }
+
+    /// <summary>
+    /// Vérifie les contraintes sur un bean.
+    /// </summary>
+    /// <param name="bean">Bean à vérifier.</param>
+    /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
+    /// <returns>Les erreurs.</returns>
+    public static ErrorMessageCollection GetErrors(object bean, IEnumerable<string> propertiesToCheck = null)
+    {
+        if (bean != null)
+        {
+            return GetDefinition(bean).GetErrors(bean, propertiesToCheck);
+        }
+        else
+        {
+            return new ErrorMessageCollection();
         }
     }
 
