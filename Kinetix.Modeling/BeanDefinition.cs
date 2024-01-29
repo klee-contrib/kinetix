@@ -119,7 +119,7 @@ public class BeanDefinition
             Validator.TryValidateProperty(property.GetValue(bean), new ValidationContext(bean) { MemberName = property.PropertyName }, validationResults);
             foreach (var valRes in validationResults)
             {
-                errors.AddEntry(new ErrorMessage(property.PropertyName, valRes.ErrorMessage)
+                errors.AddEntry(new ErrorMessage(property.PropertyName, valRes.ErrorMessage, null)
                 {
                     ModelName = BeanType.Name
                 });
