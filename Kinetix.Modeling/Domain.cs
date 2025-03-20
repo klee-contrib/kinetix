@@ -18,8 +18,7 @@ namespace Kinetix.Modeling;
 /// lui est associé.
 /// Un domaine ne définit pas si la données est obligatoire ou facultative.
 /// </summary>
-/// <typeparam name="T">Type du domaine.</typeparam>
-public sealed class Domain<T> : IDomain
+public sealed class Domain
 {
     /// <summary>
     /// Crée un nouveau domaine.
@@ -30,13 +29,6 @@ public sealed class Domain<T> : IDomain
     /// <param name="extraAttributes">Autres attributs.</param>
     public Domain(Enum name, ICollection<ValidationAttribute> validationAttributes, ICollection<Attribute> extraAttributes)
     {
-        var dataType = typeof(T);
-        if (dataType.IsGenericType && dataType.GetGenericTypeDefinition() == typeof(Nullable<>))
-        {
-            dataType = dataType.GetGenericArguments()[0];
-        }
-
-        DataType = dataType;
         Name = name;
         ValidationAttributes = validationAttributes;
         ExtraAttributes = extraAttributes;
@@ -55,15 +47,6 @@ public sealed class Domain<T> : IDomain
     /// Liste des autres attributs.
     /// </summary>
     public ICollection<Attribute> ExtraAttributes
-    {
-        get;
-        private set;
-    }
-
-    /// <summary>
-    /// Obtient le type de données du domaine.
-    /// </summary>
-    public Type DataType
     {
         get;
         private set;
@@ -148,28 +131,6 @@ public sealed class Domain<T> : IDomain
         }
 
         return default;
-    }
-
-    /// <summary>
-    /// Vérifie la cohérence de la propriété
-    /// avec le domaine.
-    /// </summary>
-    /// <param name="propertyDescriptor">Propriété.</param>
-    public void CheckPropertyType(BeanPropertyDescriptor propertyDescriptor)
-    {
-        if (propertyDescriptor == null)
-        {
-            throw new ArgumentNullException("propertyDescriptor");
-        }
-
-        if (!DataType.Equals(propertyDescriptor.PrimitiveType))
-        {
-            if (propertyDescriptor.PrimitiveType != null)
-            {
-                throw new NotSupportedException("Invalid property type " + propertyDescriptor.PropertyType +
-                        " for domain " + Name + " " + DataType + " expected." + propertyDescriptor.PrimitiveType);
-            }
-        }
     }
 
     /// <summary>

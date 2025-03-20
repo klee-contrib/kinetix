@@ -9,7 +9,7 @@ namespace Kinetix.Modeling;
 /// </summary>
 public sealed class BeanPropertyDescriptor
 {
-    private IDomain _domainChecker;
+    private Domain _domainChecker;
 
     /// <summary>
     /// Crée une nouvelle instance.
@@ -179,15 +179,11 @@ public sealed class BeanPropertyDescriptor
     /// <summary>
     /// Retourne le domaine associé à la propriété.
     /// </summary>
-    public IDomain Domain
+    public Domain Domain
     {
         get
         {
-            if (_domainChecker == null)
-            {
-                _domainChecker = DomainManager.GetDomain(this);
-            }
-
+            _domainChecker ??= DomainManager.GetDomain(this);
             return _domainChecker;
         }
     }

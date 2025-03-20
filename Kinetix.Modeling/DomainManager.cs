@@ -9,25 +9,22 @@ namespace Kinetix.Modeling;
 /// <summary>
 /// Classe pour la gestion des domaines.
 /// </summary>
-public static class DomainManager
+internal static class DomainManager
 {
     /// <summary>
     /// Dictionnaire des domaines.
     /// </summary>
-    private readonly static ConcurrentDictionary<Enum, IDomain> _domainDictionary = new();
+    private readonly static ConcurrentDictionary<Enum, Domain> _domainDictionary = new();
 
     /// <summary>
     /// Récupère le domaine d'une propriété.
     /// </summary>
     /// <param name="property">Propriété.</param>
     /// <returns>Domaine.</returns>
-    public static IDomain GetDomain(BeanPropertyDescriptor property)
+    internal static Domain GetDomain(BeanPropertyDescriptor property)
     {
-        IDomain domain = null;
-        if (property == null)
-        {
-            throw new ArgumentNullException(nameof(property));
-        }
+        Domain domain = null;
+        ArgumentNullException.ThrowIfNull(property);
 
         if (property.DomainName == null)
         {
@@ -45,15 +42,10 @@ public static class DomainManager
             domain = GetDomain(property.DomainName);
         }
 
-        if (domain != null)
-        {
-            domain.CheckPropertyType(property);
-        }
-
         return domain;
     }
 
-    private static IDomain GetDomain(Enum domainName)
+    private static Domain GetDomain(Enum domainName)
     {
         return _domainDictionary.GetOrAdd(domainName, _ =>
         {
@@ -73,11 +65,7 @@ public static class DomainManager
                 extraAttributes.Add(attribute as Attribute);
             }
 
-            return (IDomain)Activator.CreateInstance(
-                typeof(Domain<>).MakeGenericType(domainType),
-                domainName,
-                validationAttributes,
-                extraAttributes);
+            return new Domain(domainName, validationAttributes.ToList(), extraAttributes);
         });
     }
 }
