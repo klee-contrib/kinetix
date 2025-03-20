@@ -50,11 +50,9 @@ internal static class DomainManager
         return _domainDictionary.GetOrAdd(domainName, _ =>
         {
             var property = domainName.GetType().GetMember(domainName.ToString())[0];
-            var domainType = property.GetCustomAttribute<DomainTypeAttribute>().Type;
-
             var validationAttributes = property.GetCustomAttributes<ValidationAttribute>();
-
             var extraAttributes = new List<Attribute>();
+
             foreach (var attribute in property.GetCustomAttributes(false))
             {
                 if (attribute is DomainAttribute || attribute is TypeConverterAttribute || attribute is ValidationAttribute)
