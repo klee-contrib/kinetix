@@ -259,7 +259,10 @@ public static class AdvancedQueryUtil
                     ? field.GetValue(input.AdditionalCriteria)
                     : null;
 
-                propValue ??= criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(sc.Criteria);
+                if (sc.Criteria != null)
+                {
+                    propValue ??= criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(sc.Criteria);
+                }
 
                 if (propValue != null)
                 {
