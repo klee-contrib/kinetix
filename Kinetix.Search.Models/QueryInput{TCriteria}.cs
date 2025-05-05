@@ -33,6 +33,11 @@ public class QueryInput<TCriteria>
     public bool SortDesc { get; set; }
 
     /// <summary>
+    /// Définitions de tri, par ordre d'application. Remplace `SortFieldName` et `SortDesc` si renseigné.
+    /// </summary>
+    public IList<SortInput> Sort { get; set; } = [];
+
+    /// <summary>
     /// Nombre d'éléments à sauter pour la pagination.
     /// </summary>
     public int Skip { get; set; }

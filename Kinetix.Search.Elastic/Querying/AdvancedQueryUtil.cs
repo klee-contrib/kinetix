@@ -40,7 +40,7 @@ public static class AdvancedQueryUtil
         where TCriteria : ICriteria
     {
         /* Tri */
-        var sortDef = GetSortDefinition(def, input);
+        var sortDefs = GetSortDefinitions(def, input);
 
         /* Requêtes de filtrage. */
         var filterQuery = GetFilterQuery(def, input, facetHandler, filter);
@@ -87,14 +87,22 @@ public static class AdvancedQueryUtil
             }
 
             /* Tri */
-            if (sortDef.HasSort)
+            s.Sort(x =>
             {
-                s.Sort(x => x.Field(sortDef.FieldName, sortDef.Order));
-            }
-            else
-            {
-                s.Sort(x => x.Field("_score", SortOrder.Descending));
-            }
+                if (sortDefs.Any())
+                {
+                    foreach (var sortDef in sortDefs)
+                    {
+                        x.Field(sortDef.FieldName, sortDef.Order);
+                    }
+                }
+                else
+                {
+                    x.Field("_score", SortOrder.Descending);
+                }
+
+                return x;
+            });
 
             IHighlight highlightSelector(HighlightDescriptor<TDocument> h) =>
                 h.Fields(def.SearchFields.Select(f => (Func<HighlightFieldDescriptor<TDocument>, IHighlightField>)(h => h.Field(f.FieldName))).ToArray());
@@ -396,31 +404,34 @@ public static class AdvancedQueryUtil
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
     /// <returns>Définition du tri.</returns>
-    private static SortDefinition GetSortDefinition<TDocument, TCriteria>(
+    private static IEnumerable<SortDefinition> GetSortDefinitions<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input)
         where TDocument : class
         where TCriteria : ICriteria
     {
         // On trie par le premier tri renseigné.
-        var fieldName = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.SortFieldName))?.SortFieldName;
-
-        /* Cas de l'absence de tri. */
-        if (string.IsNullOrEmpty(fieldName))
+        var criteria = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.SortFieldName) || sc.Sort.Count > 0);
+        if (criteria == null)
         {
-            return new SortDefinition();
+            yield break;
         }
 
-        /* Vérifie la présence du champ. */
-        return !def.Fields.HasProperty(fieldName)
-            ? throw new ElasticException($@"The Document ""{typeof(TDocument)}"" is missing a ""{fieldName}"" property to sort on.")
-            : new SortDefinition
-            {
-                FieldName = def.Fields[fieldName].FieldName,
+        var sorts = criteria.Sort.Count > 0 ? criteria.Sort : [new() { FieldName = criteria.SortFieldName!, SortDesc = criteria.SortDesc }];
 
-                // Seul le premier ordre est utilisé.
-                Order = input.SearchCriteria.First().SortDesc ? SortOrder.Descending : SortOrder.Ascending
+        foreach (var sort in sorts)
+        {
+            if (!def.Fields.HasProperty(sort.FieldName))
+            {
+                throw new ElasticException($@"The Document ""{typeof(TDocument)}"" is missing a ""{sort.FieldName}"" property to sort on.");
+            }
+
+            yield return new SortDefinition
+            {
+                FieldName = def.Fields[sort.FieldName].FieldName,
+                Order = sort.SortDesc ? SortOrder.Descending : SortOrder.Ascending
             };
+        }
     }
 
     /// <summary>
@@ -445,10 +456,5 @@ public static class AdvancedQueryUtil
             get;
             set;
         }
-
-        /// <summary>
-        /// Indique si le tri est défini.
-        /// </summary>
-        public bool HasSort => !string.IsNullOrEmpty(FieldName);
     }
 }
