@@ -141,7 +141,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return AdvancedQuery(input, (d, _) => documentMapper(d), filter: null, aggs: null);
+        return AdvancedQuery(input, (d, _) => documentMapper(d), filter: null, sorts: null, sortsAfter: false, aggs: null);
     }
 
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
@@ -149,7 +149,7 @@ public class ElasticStore : ISearchStore
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return AdvancedQuery(input, documentMapper, filter: null, aggs: null);
+        return AdvancedQuery(input, documentMapper, filter: null, sorts: null, sortsAfter: false, aggs: null);
     }
 
     /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />
@@ -174,7 +174,7 @@ public class ElasticStore : ISearchStore
             .Count;
     }
 
-    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter)
+    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts, bool sortsAfter)
        where TDocument : class
        where TCriteria : ICriteria
     {
@@ -195,7 +195,7 @@ public class ElasticStore : ISearchStore
             do
             {
                 var res = _logger.LogQuery(_analytics, $"AdvancedQueryWithPit", () => _client.Search(
-                    GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, pitId: pitId, searchAfter: searchAfter)));
+                    GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, sorts, sortsAfter, pitId: pitId, searchAfter: searchAfter)));
 
                 foreach (var doc in res.Hits)
                 {
@@ -218,7 +218,7 @@ public class ElasticStore : ISearchStore
         }
     }
 
-    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, Action<AggregationContainerDescriptor<TDocument>>? aggs)
+    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts, bool sortsAfter, Action<AggregationContainerDescriptor<TDocument>>? aggs)
        where TDocument : class
        where TCriteria : ICriteria
     {
@@ -235,7 +235,7 @@ public class ElasticStore : ISearchStore
         var hasGroup = groupFieldName != null;
 
         var res = _logger.LogQuery(_analytics, "AdvancedQuery", () => _client.Search(
-            GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, aggs, facetDefList, groupFieldName)));
+            GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, sorts, sortsAfter, aggs, facetDefList, groupFieldName)));
 
         /* Extraction des facettes. */
         var facetListOutput = new List<FacetOutput>();

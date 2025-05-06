@@ -20,6 +20,8 @@ public static class AdvancedQueryUtil
     /// <param name="input">Input de la recherche.</param>
     /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="filter">Filtre NEST additionnel.</param>
+    /// <param name="sorts">Tris NEST additionnels.</param>
+    /// <param name="sortsAfter">Si les tris NEST additionnels doivent être après les tris de l'input.</param>
     /// <param name="aggs">Agrégations NEST additionnelles.</param>
     /// <param name="facetDefList">Liste des facettes.</param>
     /// <param name="groupFieldName">Nom du champ sur lequel grouper.</param>
@@ -31,6 +33,8 @@ public static class AdvancedQueryUtil
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
         Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
+        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        bool sortsAfter = false,
         Action<AggregationContainerDescriptor<TDocument>>? aggs = null,
         ICollection<IFacetDefinition<TDocument>>? facetDefList = null,
         string? groupFieldName = null,
@@ -41,6 +45,10 @@ public static class AdvancedQueryUtil
     {
         /* Tri */
         var sortDefs = GetSortDefinitions(def, input);
+        if (sorts != null)
+        {
+            sortDefs = sortsAfter ? sortDefs.Concat(sorts) : sorts.Concat(sortDefs);
+        }
 
         /* Requêtes de filtrage. */
         var filterQuery = GetFilterQuery(def, input, facetHandler, filter);
@@ -93,7 +101,7 @@ public static class AdvancedQueryUtil
                 {
                     foreach (var sortDef in sortDefs)
                     {
-                        x.Field(sortDef.FieldName, sortDef.Order);
+                        sortDef(x);
                     }
                 }
                 else
@@ -325,7 +333,7 @@ public static class AdvancedQueryUtil
             /* Concatène en "ET" toutes les sous-requêtes de facettes. */
             var monoValuedFacetsSubQuery = BuildAndQuery(facetSubQueryList);
 
-            return BuildMustQuery(new[] { textSubQuery, filterSubQuery, monoValuedFacetsSubQuery });
+            return BuildMustQuery([textSubQuery, filterSubQuery, monoValuedFacetsSubQuery]);
         })
         .ToArray());
 
@@ -404,7 +412,7 @@ public static class AdvancedQueryUtil
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
     /// <returns>Définition du tri.</returns>
-    private static IEnumerable<SortDefinition> GetSortDefinitions<TDocument, TCriteria>(
+    private static IEnumerable<Action<SortDescriptor<TDocument>>> GetSortDefinitions<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input)
         where TDocument : class
@@ -426,35 +434,9 @@ public static class AdvancedQueryUtil
                 throw new ElasticException($@"The Document ""{typeof(TDocument)}"" is missing a ""{sort.FieldName}"" property to sort on.");
             }
 
-            yield return new SortDefinition
-            {
-                FieldName = def.Fields[sort.FieldName].FieldName,
-                Order = sort.SortDesc ? SortOrder.Descending : SortOrder.Ascending
-            };
-        }
-    }
-
-    /// <summary>
-    /// Définition de tri.
-    /// </summary>
-    public class SortDefinition
-    {
-        /// <summary>
-        /// Ordre de tri.
-        /// </summary>
-        public SortOrder Order
-        {
-            get;
-            set;
-        }
-
-        /// <summary>
-        /// Champ du tri (camelCase).
-        /// </summary>
-        public string? FieldName
-        {
-            get;
-            set;
+            yield return x => x.Field(
+                def.Fields[sort.FieldName].FieldName,
+                sort.SortDesc ? SortOrder.Descending : SortOrder.Ascending);
         }
     }
 }

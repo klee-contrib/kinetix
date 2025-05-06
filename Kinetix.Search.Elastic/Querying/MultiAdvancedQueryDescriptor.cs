@@ -47,6 +47,8 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
             input,
             _facetHandler,
             filter: null,
+            sorts: null,
+            sortsAfter: false,
             aggs: null,
             input.FacetQueryDefinition.Facets,
             GetGroupFieldName(input))(new SearchDescriptor<TDocument>()));
