@@ -1,8 +1,8 @@
 ﻿using System.Data;
-using System.Data.SqlClient;
 using System.Reflection;
 using Kinetix.Monitoring.Core;
 using Kinetix.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.DataAccess.Sql.SqlServer;

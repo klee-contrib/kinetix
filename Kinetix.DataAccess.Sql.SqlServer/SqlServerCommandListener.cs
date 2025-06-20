@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
-using System.Data.SqlClient;
 using Kinetix.Modeling.Exceptions;
 using Kinetix.Monitoring.Core;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.DataAccess.Sql.SqlServer;

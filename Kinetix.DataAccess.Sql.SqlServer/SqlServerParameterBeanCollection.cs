@@ -1,8 +1,8 @@
 ﻿using System.Data;
-using System.Data.SqlClient;
 using System.Text;
 using Kinetix.Modeling;
-using Microsoft.SqlServer.Server;
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Server;
 
 namespace Kinetix.DataAccess.Sql.SqlServer;
 
