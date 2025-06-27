@@ -112,4 +112,20 @@ internal class SqlServerParameterCollection : SqlParameterCollection
 
         return parameter;
     }
+
+    protected override bool SetDbType(IDbDataParameter param, Type t)
+    {
+        if (base.SetDbType(param, t))
+        {
+            return true;
+        }
+
+        if (t == typeof(TimeSpan))
+        {
+            ((SqlParameter)param).SqlDbType = SqlDbType.Time;
+            return true;
+        }
+
+        return false;
+    }
 }

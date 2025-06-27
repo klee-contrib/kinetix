@@ -10,7 +10,7 @@
 
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>8.0.2</Version>
+    <Version>8.1.0</Version>
     <Authors>JabX</Authors>
     <Description>Module SQL Server pour l'ORM Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -29,6 +29,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.2" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <ProjectReference Include="..\Kinetix.DataAccess.Sql\Kinetix.DataAccess.Sql.csproj" />
   </ItemGroup>
 

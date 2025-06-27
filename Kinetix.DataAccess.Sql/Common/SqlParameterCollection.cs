@@ -181,68 +181,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
         else
         {
             var t = value.GetType();
-
-            if (t == typeof(string))
-            {
-                param.DbType = DbType.String;
-            }
-            else if (t == typeof(byte))
-            {
-                param.DbType = DbType.Byte;
-            }
-            else if (t == typeof(short))
-            {
-                param.DbType = DbType.Int16;
-            }
-            else if (t == typeof(int))
-            {
-                param.DbType = DbType.Int32;
-            }
-            else if (t == typeof(long))
-            {
-                param.DbType = DbType.Int64;
-            }
-            else if (t == typeof(decimal))
-            {
-                param.DbType = DbType.Decimal;
-            }
-            else if (t == typeof(float))
-            {
-                param.DbType = DbType.Single;
-            }
-            else if (t == typeof(double))
-            {
-                param.DbType = DbType.Double;
-            }
-            else if (t == typeof(Guid))
-            {
-                param.DbType = DbType.Guid;
-            }
-            else if (t == typeof(bool))
-            {
-                param.DbType = DbType.Boolean;
-            }
-            else if (t == typeof(byte[]))
-            {
-                param.DbType = DbType.Binary;
-            }
-            else if (t == typeof(DateTime))
-            {
-                param.DbType = DbType.DateTime;
-            }
-            else if (t == typeof(System.Data.SqlTypes.SqlDateTime))
-            {
-                param.DbType = DbType.DateTime2;
-            }
-            else if (t == typeof(ChangeAction))
-            {
-                param.DbType = DbType.String;
-            }
-            else if (t == typeof(char))
-            {
-                param.DbType = DbType.String;
-            }
-            else
+            if (!SetDbType(param, t))
             {
                 throw new NotImplementedException("La gestion du type " + t.Name + " doit être implémentée.");
             }
@@ -490,4 +429,85 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// <returns>Parameter.</returns>
     public abstract SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
         where T : class, new();
+
+    protected virtual bool SetDbType(IDbDataParameter param, Type t)
+    {
+        if (t == typeof(string))
+        {
+            param.DbType = DbType.String;
+            return true;
+        }
+        else if (t == typeof(byte))
+        {
+            param.DbType = DbType.Byte;
+            return true;
+        }
+        else if (t == typeof(short))
+        {
+            param.DbType = DbType.Int16;
+            return true;
+        }
+        else if (t == typeof(int))
+        {
+            param.DbType = DbType.Int32;
+            return true;
+        }
+        else if (t == typeof(long))
+        {
+            param.DbType = DbType.Int64;
+            return true;
+        }
+        else if (t == typeof(decimal))
+        {
+            param.DbType = DbType.Decimal;
+            return true;
+        }
+        else if (t == typeof(float))
+        {
+            param.DbType = DbType.Single;
+            return true;
+        }
+        else if (t == typeof(double))
+        {
+            param.DbType = DbType.Double;
+            return true;
+        }
+        else if (t == typeof(Guid))
+        {
+            param.DbType = DbType.Guid;
+            return true;
+        }
+        else if (t == typeof(bool))
+        {
+            param.DbType = DbType.Boolean;
+            return true;
+        }
+        else if (t == typeof(byte[]))
+        {
+            param.DbType = DbType.Binary;
+            return true;
+        }
+        else if (t == typeof(DateTime))
+        {
+            param.DbType = DbType.DateTime;
+            return true;
+        }
+        else if (t == typeof(System.Data.SqlTypes.SqlDateTime))
+        {
+            param.DbType = DbType.DateTime2;
+            return true;
+        }
+        else if (t == typeof(ChangeAction))
+        {
+            param.DbType = DbType.String;
+            return true;
+        }
+        else if (t == typeof(char))
+        {
+            param.DbType = DbType.String;
+            return true;
+        }
+
+        return false;
+    }
 }
