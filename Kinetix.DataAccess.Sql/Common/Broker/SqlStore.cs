@@ -14,6 +14,8 @@ namespace Kinetix.DataAccess.Sql.Broker;
 public abstract class SqlStore<T> : IStore<T>
     where T : class, new()
 {
+    private readonly ILogger<BrokerManager> _logger;
+
     /// <summary>
     /// Préfixe générique d'un service de suppression.
     /// </summary>
@@ -42,6 +44,8 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="logger">Logger.</param>
     protected SqlStore(string dataSourceName, ConnectionPool connectionPool, ILogger<BrokerManager> logger)
     {
+        _logger = logger;
+
         try
         {
             // Charge la définition de l'objet donné T.
@@ -189,6 +193,11 @@ public abstract class SqlStore<T> : IStore<T>
 
         // Set de la requête
         command.CommandText = commandText.ToString();
+
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug($"Exécution de la requête '{commandName}' : {command.CommandText}");
+        }
 
         return command;
     }
