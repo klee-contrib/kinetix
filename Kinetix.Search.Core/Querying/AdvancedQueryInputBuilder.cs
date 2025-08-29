@@ -1,4 +1,6 @@
-﻿using Kinetix.Search.Models;
+﻿#pragma warning disable SA1402
+
+using Kinetix.Search.Models;
 using Kinetix.Services;
 
 namespace Kinetix.Search.Core.Querying;
@@ -7,17 +9,13 @@ namespace Kinetix.Search.Core.Querying;
 /// Builder de requête pour la recherche avancée.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public class AdvancedQueryInputBuilder<TDocument> : AdvancedQueryInputBuilder<TDocument, DefaultCriteria>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="referenceManager">ReferenceManager.</param>
+/// <param name="searchCriteria">Requêtes.</param>
+public class AdvancedQueryInputBuilder<TDocument>(IReferenceManager referenceManager, params QueryInput<DefaultCriteria>[] searchCriteria) : AdvancedQueryInputBuilder<TDocument, DefaultCriteria>(referenceManager, searchCriteria)
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="referenceManager">ReferenceManager.</param>
-    /// <param name="searchCriteria">Requêtes.</param>
-    public AdvancedQueryInputBuilder(IReferenceManager referenceManager, params QueryInput<DefaultCriteria>[] searchCriteria)
-        : base(referenceManager, searchCriteria)
-    {
-    }
 }
 
 /// <summary>
@@ -26,7 +24,7 @@ public class AdvancedQueryInputBuilder<TDocument> : AdvancedQueryInputBuilder<TD
 /// <typeparam name="TDocument">Type de document.</typeparam>
 /// <typeparam name="TCriteria">Type du critère.</typeparam>
 public class AdvancedQueryInputBuilder<TDocument, TCriteria>
- where TCriteria : ICriteria
+    where TCriteria : ICriteria
 {
     private readonly IReferenceManager _referenceManager;
 
@@ -82,6 +80,16 @@ public class AdvancedQueryInputBuilder<TDocument, TCriteria>
     }
 
     /// <summary>
+    /// Ajoute les highlights sur la recherche texte en retour.
+    /// </summary>
+    /// <returns>AdvancedQueryInputBuilder.</returns>
+    public AdvancedQueryInputBuilder<TDocument, TCriteria> WithHighlights()
+    {
+        Input.Highlights = true;
+        return this;
+    }
+
+    /// <summary>
     /// Renseigne le filtre de sécurité.
     /// </summary>
     /// <param name="security">Filtre de sécurité.</param>
@@ -89,16 +97,6 @@ public class AdvancedQueryInputBuilder<TDocument, TCriteria>
     public AdvancedQueryInputBuilder<TDocument, TCriteria> WithSecurity(params string[] security)
     {
         Input.Security = security?.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
-        return this;
-    }
-
-    /// <summary>
-    /// Ajoute les highlights sur la recherche texte en retour.
-    /// </summary>
-    /// <returns>AdvancedQueryInputBuilder.</returns>
-    public AdvancedQueryInputBuilder<TDocument, TCriteria> WithHighlights()
-    {
-        Input.Highlights = true;
         return this;
     }
 }

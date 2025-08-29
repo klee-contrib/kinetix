@@ -8,7 +8,7 @@ namespace Kinetix.Search.Core;
 /// <summary>
 /// IndexManager pour un document.
 /// </summary>
-/// <typeparam name="TDocument"></typeparam>
+/// <typeparam name="TDocument">Type du document.</typeparam>
 public class IndexManager<TDocument>
     where TDocument : class
 {
@@ -79,6 +79,17 @@ public class IndexManager<TDocument>
     }
 
     /// <summary>
+    /// Réinitialise un index.
+    /// </summary>
+    /// <returns>this.</returns>
+    public IndexManager<TDocument> IndexAll()
+    {
+        _logger.LogInformation($"Reindex {typeof(TDocument).Name}");
+        GetContext().IndexAll<TDocument>();
+        return this;
+    }
+
+    /// <summary>
     /// Marque plusieurs documents pour ré(indexation).
     /// </summary>
     /// <param name="ids">IDs des documents.</param>
@@ -92,16 +103,6 @@ public class IndexManager<TDocument>
             GetContext().RegisterIndex<TDocument>(id);
         }
 
-        return this;
-    }
-
-    /// <summary>
-    /// Réinitialise un index.
-    /// </summary>
-    public IndexManager<TDocument> IndexAll()
-    {
-        _logger.LogInformation($"Reindex {typeof(TDocument).Name}");
-        GetContext().IndexAll<TDocument>();
         return this;
     }
 

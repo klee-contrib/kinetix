@@ -12,7 +12,7 @@ public class MissingEntityExceptionHandler(KinetixExceptionConfig config, Proble
     public int Priority => 1;
 
     /// <inheritdoc cref="IKinetixExceptionHandler.Handle" />
-    public ValueTask<IResult?> Handle(Exception exception, HttpContext context)
+    public ValueTask<IResult?> Handle(Exception exception, HttpContext context, CancellationToken ct = default)
     {
         IResult? result = null;
 

@@ -13,6 +13,7 @@ namespace Kinetix.Web.Exceptions;
 /// </summary>
 internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory, TelemetryClient? telemetryClient = null) : IExceptionHandler
 {
+    /// <inheritdoc cref="IExceptionHandler.TryHandleAsync" />
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         while (exception is TargetInvocationException || exception is InterceptedException)
@@ -31,7 +32,7 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
 
         foreach (var exceptionHandler in httpContext.RequestServices.GetRequiredService<IEnumerable<IKinetixExceptionHandler>>().OrderByDescending(eh => eh.Priority))
         {
-            result = await exceptionHandler.Handle(exception, httpContext);
+            result = await exceptionHandler.Handle(exception, httpContext, cancellationToken);
             if (result != null)
             {
                 break;
@@ -43,7 +44,6 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
         await result.ExecuteAsync(httpContext);
 
         return true;
-
     }
 
     private IResult DefaultExceptionHandler(Exception ex, HttpContext httpContext)

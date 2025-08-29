@@ -28,10 +28,11 @@ public static class DistributedCacheExtensions
     /// <typeparam name="T">Type de l'objet à récupérer.</typeparam>
     /// <param name="cache">Cache distribué.</param>
     /// <param name="key">Clé.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet si trouvé, default sinon.</returns>
-    public static async Task<T> GetAsync<T>(this IDistributedCache cache, string key)
+    public static async Task<T> GetAsync<T>(this IDistributedCache cache, string key, CancellationToken ct = default)
     {
-        var item = await cache.GetStringAsync(key);
+        var item = await cache.GetStringAsync(key, ct);
         if (item == null)
         {
             return default;
@@ -69,10 +70,11 @@ public static class DistributedCacheExtensions
     /// <param name="cache">Cache distribué.</param>
     /// <param name="key">Clé.</param>
     /// <param name="factory">Factory pour construire et configurer l'entrée de cache.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet du cache/inséré dans le cache.</returns>
-    public static async Task<T> GetOrSetAsync<T>(this IDistributedCache cache, string key, Func<DistributedCacheEntryOptions, T> factory)
+    public static async Task<T> GetOrSetAsync<T>(this IDistributedCache cache, string key, Func<DistributedCacheEntryOptions, T> factory, CancellationToken ct = default)
     {
-        var item = await cache.GetAsync<T>(key);
+        var item = await cache.GetAsync<T>(key, ct);
         if (!Equals(item, default(T)))
         {
             return item;
@@ -80,7 +82,7 @@ public static class DistributedCacheExtensions
 
         var options = new DistributedCacheEntryOptions();
         var entry = factory(options);
-        await cache.SetAsync(key, entry, options);
+        await cache.SetAsync(key, entry, options, ct);
         return entry;
     }
 
@@ -105,8 +107,10 @@ public static class DistributedCacheExtensions
     /// <param name="key">Clé.</param>
     /// <param name="item">Entrée de cache.</param>
     /// <param name="options">Option de cache.</param>
-    public static Task SetAsync<T>(this IDistributedCache cache, string key, T item, DistributedCacheEntryOptions options = null)
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public static Task SetAsync<T>(this IDistributedCache cache, string key, T item, DistributedCacheEntryOptions options = null, CancellationToken ct = default)
     {
-        return cache.SetStringAsync(key, JsonSerializer.Serialize(item), options ?? new());
+        return cache.SetStringAsync(key, JsonSerializer.Serialize(item), options ?? new(), ct);
     }
 }

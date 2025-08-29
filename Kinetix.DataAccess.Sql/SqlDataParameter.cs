@@ -5,17 +5,12 @@ namespace Kinetix.DataAccess.Sql;
 /// <summary>
 /// Paramètre d'appel d'une commande Sql Server.
 /// </summary>
-public sealed class SqlDataParameter : IDbDataParameter
+/// <remarks>
+/// Crée un nouveau paramétre.
+/// </remarks>
+/// <param name="parameter">Paramétre interne.</param>
+public sealed class SqlDataParameter(IDbDataParameter parameter) : IDbDataParameter
 {
-    /// <summary>
-    /// Crée un nouveau paramétre.
-    /// </summary>
-    /// <param name="parameter">Paramétre interne.</param>
-    public SqlDataParameter(IDbDataParameter parameter)
-    {
-        InnerParameter = parameter;
-    }
-
     /// <summary>
     /// Obtient ou définit le type de données.
     /// </summary>
@@ -88,7 +83,7 @@ public sealed class SqlDataParameter : IDbDataParameter
     /// <summary>
     /// Retourne le paramètre interne.
     /// </summary>
-    public IDbDataParameter InnerParameter { get; }
+    public IDbDataParameter InnerParameter { get; } = parameter;
 
     /// <summary>
     /// Obtient ou définit la colonne source.

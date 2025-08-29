@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Text;
 using System.Text.Json.Nodes;
+using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Modeling;
 using Npgsql;
 using NpgsqlTypes;
@@ -11,22 +12,17 @@ namespace Kinetix.DataAccess.Sql.Postgres;
 /// Contient les informations nécéssaires à l'insertion et la mise à jour ensembliste des données.
 /// </summary>
 /// <typeparam name="T">Type du store.</typeparam>
-internal class PostgresParameterBeanCollection<T> : SqlParameterBeanCollection<T>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="connectionPool">Pool de connexion.</param>
+/// <param name="collection">Collection d'objet.</param>
+/// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
+internal class PostgresParameterBeanCollection<T>(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert) : SqlParameterBeanCollection<T>(connectionPool, collection, isInsert)
     where T : class, new()
 {
-    private BeanPropertyDescriptor _insertKeyProp;
     private JsonArray _dataRecordList;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="connectionPool">Pool de connexion.</param>
-    /// <param name="collection">Collection d'objet.</param>
-    /// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
-    public PostgresParameterBeanCollection(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert)
-        : base(connectionPool, collection, isInsert)
-    {
-    }
+    private BeanPropertyDescriptor _insertKeyProp;
 
     /// <inheritdoc />
     protected override void Init()

@@ -8,7 +8,7 @@ namespace Kinetix.Modeling.Exceptions;
 /// </summary>
 public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
 {
-    private readonly List<ErrorMessage> _entryList = new List<ErrorMessage>();
+    private readonly List<ErrorMessage> _entryList = [];
 
     /// <summary>
     /// Constructeur.
@@ -54,15 +54,21 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     bool ICollection<ErrorMessage>.IsReadOnly => true;
 
     /// <summary>
+    /// Ajoute un élément. Non supporté.
+    /// </summary>
+    /// <param name="item">Message.</param>
+    void ICollection<ErrorMessage>.Add(ErrorMessage item)
+    {
+        throw new NotSupportedException();
+    }
+
+    /// <summary>
     /// Ajoute une exception à la liste des erreurs.
     /// </summary>
     /// <param name="ce">Exception.</param>
     public void AddConstraintException(BusinessException ce)
     {
-        if (ce == null)
-        {
-            throw new ArgumentNullException("ce");
-        }
+        ArgumentNullException.ThrowIfNull(ce);
 
         if (ce.Errors != null)
         {
@@ -85,6 +91,18 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     public void AddConstraintException(string message)
     {
         AddConstraintException(new BusinessException(message));
+    }
+
+    /// <summary>
+    /// Ajoute des entrées à la pile d'erreur.
+    /// </summary>
+    /// <param name="errorMessages">Message d'erreur.</param>
+    public void AddEntries(ErrorMessageCollection errorMessages)
+    {
+        foreach (var message in errorMessages)
+        {
+            _entryList.Add(message);
+        }
     }
 
     /// <summary>
@@ -118,53 +136,18 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     }
 
     /// <summary>
-    /// Ajoute des entrées à la pile d'erreur.
-    /// </summary>
-    /// <param name="errorMessages">Message d'erreur.</param>
-    public void AddEntries(ErrorMessageCollection errorMessages)
-    {
-        foreach (var message in errorMessages)
-        {
-            _entryList.Add(message);
-        }
-    }
-
-    /// <summary>
     /// Ajoute une pile d'erreur à la pile courante.
     /// </summary>
     /// <param name="fieldPrefix">Préfixe à utiliser.</param>
     /// <param name="errorCollection">Liste des erreurs.</param>
     public void AddErrorStack(string fieldPrefix, ErrorMessageCollection errorCollection)
     {
-        if (errorCollection == null)
-        {
-            throw new ArgumentNullException("errorCollection");
-        }
+        ArgumentNullException.ThrowIfNull(errorCollection);
 
         foreach (var entry in errorCollection)
         {
             AddEntry(fieldPrefix + entry.FieldName, entry.Message);
         }
-    }
-
-    /// <summary>
-    /// Léve une erreur si des erreurs ont été détectées.
-    /// </summary>
-    public void Throw()
-    {
-        if (HasError)
-        {
-            throw new BusinessException(this);
-        }
-    }
-
-    /// <summary>
-    /// Ajoute un élément. Non supporté.
-    /// </summary>
-    /// <param name="item">Message.</param>
-    void ICollection<ErrorMessage>.Add(ErrorMessage item)
-    {
-        throw new NotSupportedException();
     }
 
     /// <summary>
@@ -221,5 +204,16 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     bool ICollection<ErrorMessage>.Remove(ErrorMessage item)
     {
         throw new NotSupportedException();
+    }
+
+    /// <summary>
+    /// Léve une erreur si des erreurs ont été détectées.
+    /// </summary>
+    public void Throw()
+    {
+        if (HasError)
+        {
+            throw new BusinessException(this);
+        }
     }
 }

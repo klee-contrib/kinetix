@@ -55,18 +55,6 @@ public class ElasticConfigBuilder
     }
 
     /// <summary>
-    /// Ajoute un mapping pour un type de champ.
-    /// </summary>
-    /// <typeparam name="TMapper">Type de champ.</typeparam>
-    /// <returns>Builder.</returns>
-    public ElasticConfigBuilder AddMapper<TMapper>()
-        where TMapper : class, IElasticMapper
-    {
-        _services.AddSingleton(typeof(TMapper).GetInterfaces().First(), typeof(TMapper));
-        return this;
-    }
-
-    /// <summary>
     /// Ajoute un converter Json pour un type de champ.
     /// </summary>
     /// <typeparam name="TJsonConverter">JsonConverter</typeparam>
@@ -75,6 +63,18 @@ public class ElasticConfigBuilder
         where TJsonConverter : JsonConverter, new()
     {
         JsonConverters.Add(new TJsonConverter());
+        return this;
+    }
+
+    /// <summary>
+    /// Ajoute un mapping pour un type de champ.
+    /// </summary>
+    /// <typeparam name="TMapper">Type de champ.</typeparam>
+    /// <returns>Builder.</returns>
+    public ElasticConfigBuilder AddMapper<TMapper>()
+        where TMapper : class, IElasticMapper
+    {
+        _services.AddSingleton(typeof(TMapper).GetInterfaces().First(), typeof(TMapper));
         return this;
     }
 }

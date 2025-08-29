@@ -7,19 +7,12 @@ namespace Kinetix.Search.Core.Querying;
 /// Builder de définitions de facettes.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public class FacetQueryDefinitionBuilder<TDocument>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="referenceManager">ReferenceManager.</param>
+public class FacetQueryDefinitionBuilder<TDocument>(IReferenceManager referenceManager)
 {
-    private readonly IReferenceManager _referenceManager;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="referenceManager">ReferenceManager.</param>
-    public FacetQueryDefinitionBuilder(IReferenceManager referenceManager)
-    {
-        _referenceManager = referenceManager;
-    }
-
     /// <summary>
     /// Définition des facettes.
     /// </summary>
@@ -94,7 +87,7 @@ public class FacetQueryDefinitionBuilder<TDocument>
     public FacetQueryDefinitionBuilder<TDocument> AddReference<T>(string code, string label, Expression<Func<TDocument, object>> field, Action<ReferenceFacet<TDocument>>? configurator = null)
         where T : class
     {
-        var facet = new ReferenceFacet<TDocument, T>(_referenceManager, code, label, field);
+        var facet = new ReferenceFacet<TDocument, T>(referenceManager, code, label, field);
         configurator?.Invoke(facet);
         Add(facet);
         return this;

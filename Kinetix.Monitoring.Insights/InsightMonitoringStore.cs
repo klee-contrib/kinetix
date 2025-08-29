@@ -9,19 +9,12 @@ namespace Kinetix.Monitoring.Insights;
 /// <summary>
 /// Store de monitoring qui pousse dans AppInsights.
 /// </summary>
-public class InsightMonitoringStore : IMonitoringStore
+public class InsightMonitoringStore(TelemetryClient telemetryClient) : IMonitoringStore
 {
-    private readonly TelemetryClient _telemetryClient;
-
     /// <summary>
     /// Liste des Operations en court d'execution
     /// </summary>
-    readonly ConcurrentDictionary<Guid, IOperationHolder<DependencyTelemetry>> _holders = new();
-
-    public InsightMonitoringStore(TelemetryClient telemetryClient)
-    {
-        _telemetryClient = telemetryClient;
-    }
+    private readonly ConcurrentDictionary<Guid, IOperationHolder<DependencyTelemetry>> _holders = new();
 
     /// <inheritdoc cref="IMonitoringStore.StartProcess" />
     public void StartProcess(Guid id, string name, string category, string target = null)
@@ -38,7 +31,7 @@ public class InsightMonitoringStore : IMonitoringStore
             return;
         }
 
-        var holder = _telemetryClient.StartOperation<DependencyTelemetry>(processName);
+        var holder = telemetryClient.StartOperation<DependencyTelemetry>(processName);
         holder.Telemetry.Type = category;
 
         if (target != null)
@@ -65,7 +58,7 @@ public class InsightMonitoringStore : IMonitoringStore
                 holder.Telemetry.ResultCode = "Failed";
             }
 
-            _telemetryClient.StopOperation(holder);
+            telemetryClient.StopOperation(holder);
         }
     }
 }

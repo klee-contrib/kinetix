@@ -1,4 +1,4 @@
-using Kinetix.Search.Core.DocumentModel;
+﻿using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Services;
 using Microsoft.Extensions.DependencyInjection;
 

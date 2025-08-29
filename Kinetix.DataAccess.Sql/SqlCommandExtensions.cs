@@ -1,4 +1,6 @@
-﻿namespace Kinetix.DataAccess.Sql;
+﻿using Kinetix.DataAccess.Sql.Common;
+
+namespace Kinetix.DataAccess.Sql;
 
 /// <summary>
 /// Méthodes d'extensions pour les commandes SQL.

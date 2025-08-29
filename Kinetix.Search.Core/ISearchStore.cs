@@ -10,6 +10,35 @@ namespace Kinetix.Search.Core;
 public interface ISearchStore
 {
     /// <summary>
+    /// Effectue un count avancé.
+    /// </summary>
+    /// <param name="input">Entrée de la recherche.</param>
+    /// <returns>Nombre de documents.</returns>
+    long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        where TDocument : class
+        where TCriteria : ICriteria;
+
+    /// <summary>
+    /// Effectue une recherche avancée.
+    /// </summary>
+    /// <param name="input">Entrée de la recherche.</param>
+    /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
+    /// <returns>Sortie de la recherche.</returns>
+    QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : ICriteria;
+
+    /// <summary>
+    /// Effectue une recherche avancée.
+    /// </summary>
+    /// <param name="input">Entrée de la recherche.</param>
+    /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
+    /// <returns>Sortie de la recherche.</returns>
+    QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+        where TDocument : class
+        where TCriteria : ICriteria;
+
+    /// <summary>
     /// Permet d'effectuer des indexations et de suppressions en masse.
     /// </summary>
     /// <returns>ISearchBulkDescriptor.</returns>
@@ -47,6 +76,12 @@ public interface ISearchStore
         where TDocument : class;
 
     /// <summary>
+    /// Effectue une recherche avancée mutiple.
+    /// </summary>
+    /// <returns>Descripteur.</returns>
+    IMultiAdvancedQueryDescriptor MultiAdvancedQuery();
+
+    /// <summary>
     /// Réinitialise l'index avec les documents fournis.
     /// </summary>
     /// <param name="documents">Documents.</param>
@@ -55,39 +90,4 @@ public interface ISearchStore
     /// <returns>Le nombre de documents.</returns>
     int ResetIndex<TDocument>(IEnumerable<TDocument> documents, bool partialRebuild, ILogger? rebuildLogger = null)
         where TDocument : class;
-
-    /// <summary>
-    /// Effectue une recherche avancée.
-    /// </summary>
-    /// <param name="input">Entrée de la recherche.</param>
-    /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
-    /// <returns>Sortie de la recherche.</returns>
-    QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
-        where TDocument : class
-        where TCriteria : ICriteria;
-
-    /// <summary>
-    /// Effectue une recherche avancée.
-    /// </summary>
-    /// <param name="input">Entrée de la recherche.</param>
-    /// <param name="documentMapper">Mapper pour convertir le document dans le bon type de sortie.</param>
-    /// <returns>Sortie de la recherche.</returns>
-    QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
-        where TDocument : class
-        where TCriteria : ICriteria;
-
-    /// <summary>
-    /// Effectue une recherche avancée mutiple.
-    /// </summary>
-    /// <returns>Descripteur.</returns>
-    IMultiAdvancedQueryDescriptor MultiAdvancedQuery();
-
-    /// <summary>
-    /// Effectue un count avancé.
-    /// </summary>
-    /// <param name="input">Entrée de la recherche.</param>
-    /// <returns>Nombre de documents.</returns>
-    long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-        where TDocument : class
-        where TCriteria : ICriteria;
 }

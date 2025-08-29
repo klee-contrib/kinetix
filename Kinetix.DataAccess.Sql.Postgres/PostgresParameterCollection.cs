@@ -1,21 +1,17 @@
 ﻿using System.Data;
+using Kinetix.DataAccess.Sql.Common;
 
 namespace Kinetix.DataAccess.Sql.Postgres;
 
 /// <summary>
 /// Collection de paramètres pour les commandes Sql Server.
 /// </summary>
-internal class PostgresParameterCollection : SqlParameterCollection
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="command">Commande SQL.</param>
+internal class PostgresParameterCollection(IDbCommand command) : SqlParameterCollection(command)
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="command">Commande SQL.</param>
-    public PostgresParameterCollection(IDbCommand command)
-        : base(command)
-    {
-    }
-
     /// <inheritdoc />
     public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<int> list)
     {

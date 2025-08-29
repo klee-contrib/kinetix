@@ -4,22 +4,15 @@ using Kinetix.Services;
 
 namespace Kinetix.Reporting.Core.Internal;
 
-internal class ReportBuilder : IReportBuilder
+/// <summary>
+/// Constructeur.
+/// </summary>
+/// <param name="referenceManager">ReferenceManager injecté.</param>
+internal class ReportBuilder(IReferenceManager referenceManager) : IReportBuilder
 {
-    private readonly IReferenceManager _referenceManager;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="referenceManager">ReferenceManager injecté.</param>
-    public ReportBuilder(IReferenceManager referenceManager)
-    {
-        _referenceManager = referenceManager;
-    }
-
     /// <inheritdoc cref="IReportBuilder.CreateExcelReport" />
     public IExcelBuilder CreateExcelReport(string fileName)
     {
-        return new ExcelBuilder(fileName, _referenceManager);
+        return new ExcelBuilder(fileName, referenceManager);
     }
 }

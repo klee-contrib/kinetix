@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace Kinetix.DataAccess.Sql;
+namespace Kinetix.DataAccess.Sql.Common;
 
 /// <summary>
 /// Analyseur de requête SQL Dynamique.
@@ -29,7 +29,11 @@ namespace Kinetix.DataAccess.Sql;
 /// - [if notequals="PARAM1:{Type.Constante}"]...[/if]  : insère le contenu de la balise si PARAM1 est différent de la valeur de la constante "Constante" portée par le type "Type".
 /// - [if notequals="{IsInRole}:RW"]...[/if]            : insère le contenu de la balise si l'utilisateur courant n'a pas pour droit une des valeurs.
 /// </summary>
-public abstract class CommandParser
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="sqlManager">Composant injecté.</param>
+public abstract class CommandParser(SqlManager sqlManager)
 {
     private const string AttributeEquals = "equals";
     private const string AttributeNotEquals = "notequals";
@@ -45,17 +49,6 @@ public abstract class CommandParser
 
     private readonly Dictionary<string, bool> _keyTable = new();
     private readonly object _keyTableLock = new();
-
-    private readonly SqlManager _sqlManager;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="sqlManager">Composant injecté.</param>
-    public CommandParser(SqlManager sqlManager)
-    {
-        _sqlManager = sqlManager;
-    }
 
     /// <summary>
     /// Type de jeton.
@@ -86,7 +79,7 @@ public abstract class CommandParser
     /// <returns>Le message.</returns>
     internal string GetConstraintMessage(string index, SqlConstraintViolation violation)
     {
-        return _sqlManager.GetConstraintMessage(index, violation);
+        return sqlManager.GetConstraintMessage(index, violation);
     }
 
     /// <summary>
@@ -97,10 +90,7 @@ public abstract class CommandParser
     /// <param name="queryParameter">Paramètres de la requête (limit, offset, tri).</param>
     internal void ParseCommand(IDbCommand command, string parserKey, QueryParameter queryParameter = null)
     {
-        if (command == null)
-        {
-            throw new ArgumentNullException("command");
-        }
+        ArgumentNullException.ThrowIfNull(command);
 
         if (parserKey == null)
         {
@@ -119,13 +109,10 @@ public abstract class CommandParser
             hasKey = _keyTable.TryGetValue(parserKey, out isParsingNeeded);
         }
 
-        if (hasKey)
+        if (hasKey && !isParsingNeeded)
         {
-            if (!isParsingNeeded)
-            {
-                RemoveUnusedParameters(command);
-                return;
-            }
+            RemoveUnusedParameters(command);
+            return;
         }
 
         var commandText = command.CommandText;
@@ -258,7 +245,7 @@ public abstract class CommandParser
         if (value.StartsWith(TagStaticParStart, StringComparison.Ordinal) && value.EndsWith(TagStaticParEnd, StringComparison.Ordinal))
         {
             var constant = value[1..^1];
-            var constantValue = _sqlManager.GetConstValueByShortName(constant);
+            var constantValue = sqlManager.GetConstValueByShortName(constant);
             if (constantValue == null)
             {
                 throw new NotSupportedException();
@@ -314,7 +301,7 @@ public abstract class CommandParser
 
                 if (constant.Split('.').Length == 2)
                 {
-                    var constantValue = _sqlManager.GetConstValueByShortName(constant);
+                    var constantValue = sqlManager.GetConstValueByShortName(constant);
                     if (constantValue != null)
                     {
                         var stringValue = constantValue.ToString();

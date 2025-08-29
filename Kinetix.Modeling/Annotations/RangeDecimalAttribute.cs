@@ -6,8 +6,15 @@ namespace Kinetix.Modeling.Annotations;
 /// <summary>
 /// Class attribute for range of decimal objects.
 /// </summary>
+/// <remarks>
+/// Constructor.
+/// </remarks>
+/// <param name="minimum">Minium value.</param>
+/// <param name="maximum">Maximum value.</param>
+/// <param name="isMinimumIncluded">Defines whether minimum is included.</param>
+/// <param name="isMaximumIncluded">Defines whether maximum is included.</param>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-public sealed class RangeDecimalAttribute : RangeAttribute
+public sealed class RangeDecimalAttribute(double minimum, double maximum, bool isMinimumIncluded, bool isMaximumIncluded) : RangeAttribute(minimum, maximum)
 {
     /// <summary>
     /// Constructor.
@@ -20,36 +27,14 @@ public sealed class RangeDecimalAttribute : RangeAttribute
     }
 
     /// <summary>
-    /// Constructor.
-    /// </summary>
-    /// <param name="minimum">Minium value.</param>
-    /// <param name="maximum">Maximum value.</param>
-    /// <param name="isMinimumIncluded">Defines whether minimum is included.</param>
-    /// <param name="isMaximumIncluded">Defines whether maximum is included.</param>
-    public RangeDecimalAttribute(double minimum, double maximum, bool isMinimumIncluded, bool isMaximumIncluded)
-        : base(minimum, maximum)
-    {
-        IsMinimumIncluded = isMinimumIncluded;
-        IsMaximumIncluded = isMaximumIncluded;
-    }
-
-    /// <summary>
     /// Defines whether is the minimum is included in the range.
     /// </summary>
-    public bool IsMinimumIncluded
-    {
-        get;
-        private set;
-    }
+    public bool IsMinimumIncluded { get; private set; } = isMinimumIncluded;
 
     /// <summary>
     /// Defines whether is the maximum is included in the range.
     /// </summary>
-    public bool IsMaximumIncluded
-    {
-        get;
-        private set;
-    }
+    public bool IsMaximumIncluded { get; private set; } = isMaximumIncluded;
 
     /// <summary>
     /// Format error message.

@@ -2,12 +2,16 @@
 using System.Data;
 using Kinetix.Modeling;
 
-namespace Kinetix.DataAccess.Sql;
+namespace Kinetix.DataAccess.Sql.Common;
 
 /// <summary>
 /// Collection de paramètres pour les commandes Sql Server.
 /// </summary>
-public abstract class SqlParameterCollection : IDataParameterCollection, IList<SqlDataParameter>
+/// <remarks>
+/// Crée une nouvelle instance.
+/// </remarks>
+/// <param name="command">Commande.</param>
+public abstract class SqlParameterCollection(IDbCommand command) : IDataParameterCollection, IList<SqlDataParameter>
 {
     /// <summary>
     /// Mot-clés de définition des paramètres dans les
@@ -15,17 +19,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// </summary>
     public const string ParamValue = "@";
 
-    private readonly IDataParameterCollection _innerCollection;
-
-    /// <summary>
-    /// Crée une nouvelle instance.
-    /// </summary>
-    /// <param name="command">Commande.</param>
-    public SqlParameterCollection(IDbCommand command)
-    {
-        InnerCommand = command;
-        _innerCollection = command.Parameters;
-    }
+    private readonly IDataParameterCollection _innerCollection = command.Parameters;
 
     /// <summary>
     /// Retourne le nombre d'éléments de la collection.
@@ -35,37 +29,32 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// <summary>
     /// Indique si la collection a une taille fixe.
     /// </summary>
-    bool IList.IsFixedSize => _innerCollection.IsFixedSize;
+    public bool IsFixedSize => _innerCollection.IsFixedSize;
 
     /// <summary>
     /// Indique si la collection est en lecture seule.
     /// </summary>
-    bool IList.IsReadOnly => _innerCollection.IsReadOnly;
-
-    /// <summary>
-    /// Indique si la collection est en lecture seule.
-    /// </summary>
-    bool ICollection<SqlDataParameter>.IsReadOnly => _innerCollection.IsReadOnly;
+    public bool IsReadOnly => _innerCollection.IsReadOnly;
 
     /// <summary>
     /// Indique si la collection est synchronisée.
     /// </summary>
-    bool ICollection.IsSynchronized => _innerCollection.IsSynchronized;
+    public bool IsSynchronized => _innerCollection.IsSynchronized;
 
     /// <summary>
     /// Retourne le point de synchronisation pour la collection.
     /// </summary>
-    object ICollection.SyncRoot => _innerCollection.SyncRoot;
+    public object SyncRoot => _innerCollection.SyncRoot;
 
     /// <summary>
     /// Commande SQL.
     /// </summary>
-    protected IDbCommand InnerCommand { get; }
+    protected IDbCommand InnerCommand { get; } = command;
 
     /// <summary>
     /// Liste des paramètres.
     /// </summary>
-    protected List<SqlDataParameter> List { get; } = new();
+    protected List<SqlDataParameter> List { get; } = [];
 
     /// <summary>
     /// Obtient ou définit un paramètre de la collection.
@@ -77,7 +66,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
         get => List[index];
         set
         {
-            List[index] = value ?? throw new ArgumentNullException("value");
+            List[index] = value ?? throw new ArgumentNullException(nameof(value));
             _innerCollection[index] = value.InnerParameter;
         }
     }
@@ -98,7 +87,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
         set
         {
             var index = IndexOf(parameterName);
-            List[index] = value ?? throw new ArgumentNullException("value");
+            List[index] = value ?? throw new ArgumentNullException(nameof(value));
             _innerCollection[index] = value.InnerParameter;
         }
     }
@@ -132,10 +121,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// <returns>Paramètre ajouté.</returns>
     public SqlDataParameter Add(SqlDataParameter parameter)
     {
-        if (parameter == null)
-        {
-            throw new ArgumentNullException("parameter");
-        }
+        ArgumentNullException.ThrowIfNull(parameter);
 
         List.Add(parameter);
         _innerCollection.Add(parameter.InnerParameter);
@@ -161,6 +147,42 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     {
         Add(parameter);
     }
+
+    /// <summary>
+    /// Ajoute les paramètres pour une clause IN portant sur des entiers.
+    /// </summary>
+    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
+    /// <param name="list">Collection des entiers à insérer dans le IN.</param>
+    /// <returns>Le paramètre créé.</returns>
+    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
+    public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<int> list);
+
+    /// <summary>
+    /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
+    /// </summary>
+    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
+    /// <param name="list">Collection des strings à insérer dans le IN.</param>
+    /// <returns>Le paramètre créé.</returns>
+    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
+    public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<string> list);
+
+    /// <summary>
+    /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
+    /// </summary>
+    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
+    /// <param name="list">Collection des guids à insérer dans le IN.</param>
+    /// <returns>Le paramètre créé.</returns>
+    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
+    public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<Guid> list);
+
+    /// <summary>
+    /// Ajoute une liste de bean en paramètre (La colonne InsertKey est obligatoire).
+    /// </summary>
+    /// <typeparam name="T">Type du bean.</typeparam>
+    /// <param name="collection">Collection à passer en paramètre.</param>
+    /// <returns>Parameter.</returns>
+    public abstract SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
+        where T : class, new();
 
     /// <summary>
     /// Ajout un nouveau paramètre à partir de son nom et de sa valeur.
@@ -205,10 +227,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// <returns>Paramètre.</returns>
     public SqlDataParameter AddWithValue(Enum colName, object value)
     {
-        if (colName == null)
-        {
-            throw new ArgumentNullException("colName");
-        }
+        ArgumentNullException.ThrowIfNull(colName);
 
         return AddWithValue(colName.ToString(), value);
     }
@@ -329,10 +348,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// <param name="item">Paramètre.</param>
     public void Insert(int index, SqlDataParameter item)
     {
-        if (item == null)
-        {
-            throw new ArgumentNullException("item");
-        }
+        ArgumentNullException.ThrowIfNull(item);
 
         List.Insert(index, item);
         _innerCollection.Insert(index, item.InnerParameter);
@@ -355,10 +371,7 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
     /// <returns>True si le paramètre a été supprimé.</returns>
     public bool Remove(SqlDataParameter item)
     {
-        if (item == null)
-        {
-            throw new ArgumentNullException("item");
-        }
+        ArgumentNullException.ThrowIfNull(item);
 
         var isRemoved = List.Remove(item);
         _innerCollection.Remove(item.InnerParameter);
@@ -393,42 +406,6 @@ public abstract class SqlParameterCollection : IDataParameterCollection, IList<S
         _innerCollection.RemoveAt(index);
         List.RemoveAt(index);
     }
-
-    /// <summary>
-    /// Ajoute les paramètres pour une clause IN portant sur des entiers.
-    /// </summary>
-    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
-    /// <param name="list">Collection des entiers à insérer dans le IN.</param>
-    /// <returns>Le paramètre créé.</returns>
-    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
-    public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<int> list);
-
-    /// <summary>
-    /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
-    /// </summary>
-    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
-    /// <param name="list">Collection des strings à insérer dans le IN.</param>
-    /// <returns>Le paramètre créé.</returns>
-    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
-    public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<string> list);
-
-    /// <summary>
-    /// Ajoute les paramètres pour une clause IN portant sur des chaines de caractères.
-    /// </summary>
-    /// <param name="parameterName">Nom du paramètre SQL Server.</param>
-    /// <param name="list">Collection des guids à insérer dans le IN.</param>
-    /// <returns>Le paramètre créé.</returns>
-    /// <remarks>Dans la requête, le corps du IN doit s'écrire de la manière suivante : n in (select * from @parameterName).</remarks>
-    public abstract SqlDataParameter AddInParameter(string parameterName, IEnumerable<Guid> list);
-
-    /// <summary>
-    /// Ajoute une liste de bean en paramètre (La colonne InsertKey est obligatoire).
-    /// </summary>
-    /// <typeparam name="T">Type du bean.</typeparam>
-    /// <param name="collection">Collection à passer en paramètre.</param>
-    /// <returns>Parameter.</returns>
-    public abstract SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
-        where T : class, new();
 
     protected virtual bool SetDbType(IDbDataParameter param, Type t)
     {

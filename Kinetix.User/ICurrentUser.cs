@@ -50,27 +50,6 @@ public interface ICurrentUser
     bool IsRegularUser => !IsSuperUser;
 
     /// <summary>
-    /// Returns the data corresponding to the claim type.
-    /// </summary>
-    /// <param name="claimType">Claim Type.</param>
-    /// <returns>Data.</returns>
-    string GetString(string claimType);
-
-    /// <summary>
-    /// Returns the datas corresponding to the claim type.
-    /// </summary>
-    /// <param name="claimType">Claim Type.</param>
-    /// <returns>Liste des valeurs.</returns>
-    IEnumerable<string> GetStrings(string claimType);
-
-    /// <summary>
-    /// Indique si l'utilisateur possède un rôle donné.
-    /// </summary>
-    /// <param name="role">Code du rôle.</param>
-    /// <returns><code>True</code> si l'utilisateur possède le rôle.</returns>
-    bool IsInRole(string role);
-
-    /// <summary>
     /// Vérifie que l'utilisateur courant possède un rôle donné.
     /// </summary>
     /// <param name="roles">Les roles d'accès au service.</param>
@@ -106,9 +85,31 @@ public interface ICurrentUser
     }
 
     /// <summary>
+    /// Returns the data corresponding to the claim type.
+    /// </summary>
+    /// <param name="claimType">Claim Type.</param>
+    /// <returns>Data.</returns>
+    string GetString(string claimType);
+
+    /// <summary>
+    /// Returns the datas corresponding to the claim type.
+    /// </summary>
+    /// <param name="claimType">Claim Type.</param>
+    /// <returns>Liste des valeurs.</returns>
+    IEnumerable<string> GetStrings(string claimType);
+
+    /// <summary>
+    /// Indique si l'utilisateur possède un rôle donné.
+    /// </summary>
+    /// <param name="role">Code du rôle.</param>
+    /// <returns><code>True</code> si l'utilisateur possède le rôle.</returns>
+    bool IsInRole(string role);
+
+    /// <summary>
     /// Vérifie que l'utilisateur courant possède un rôle donné.
     /// </summary>
     /// <param name="roles">Les roles d'accès au service.</param>
+    /// <returns><code>True</code> si l'utilisateur possède un rôle.</returns>
     bool IsInRoles(params string[] roles)
     {
         return roles.Any(role => IsInRole(role));

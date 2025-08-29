@@ -17,6 +17,8 @@ public static class ConfigurationExtensions
     /// Ajoute un convertisseur JSON dans les options.
     /// </summary>
     /// <param name="options">JSONOptions.</param>
+    /// <typeparam name="T">Type du converter.</typeparam>
+    /// <returns>this.</returns>
     public static JsonSerializerOptions AddConverter<T>(this JsonSerializerOptions options)
         where T : JsonConverter, new()
     {
@@ -28,6 +30,8 @@ public static class ConfigurationExtensions
     /// Enregistre un filtre de type <typeparamref name="TFilter" /> sur tous les contrôleurs.
     /// </summary>
     /// <param name="builder">Builder d'endpoint de contrôleurs.</param>
+    /// <typeparam name="TFilter">Type du filter.</typeparam>
+    /// <returns>this.</returns>
     public static ControllerActionEndpointConventionBuilder AddEndpointFilter<TFilter>(this ControllerActionEndpointConventionBuilder builder)
         where TFilter : IEndpointFilter
     {
@@ -59,6 +63,19 @@ public static class ConfigurationExtensions
     }
 
     /// <summary>
+    /// Configuration par défaut pour la sérialisation JSON.
+    /// </summary>
+    /// <param name="options">JSONOptions.</param>
+    /// <returns>This.</returns>
+    public static JsonSerializerOptions ConfigureSerializerDefaults(this JsonSerializerOptions options)
+    {
+        options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.AddConverter<DateTimeConverter>();
+        options.AddConverter<TimeSpanConverter>();
+        return options;
+    }
+
+    /// <summary>
     /// Sérialise les erreurs de validation MVC comme des KinetixErrorResponse.<br /><br />
     /// A utiliser avec un KinetixExceptionHandler configuré avec (la sérialisation par défaut utilise des ProblemDetails).
     /// </summary>
@@ -75,17 +92,5 @@ public static class ConfigurationExtensions
                  })
                  { StatusCode = 400 };
         });
-    }
-
-    /// <summary>
-    /// Configuration par défaut pour la sérialisation JSON.
-    /// </summary>
-    /// <param name="options">JSONOptions.</param>
-    public static JsonSerializerOptions ConfigureSerializerDefaults(this JsonSerializerOptions options)
-    {
-        options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-        options.AddConverter<DateTimeConverter>();
-        options.AddConverter<TimeSpanConverter>();
-        return options;
     }
 }

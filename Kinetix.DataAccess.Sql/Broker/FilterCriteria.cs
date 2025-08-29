@@ -12,7 +12,7 @@ public class FilterCriteria
     /// <summary>
     /// Liste des critères de recherche.
     /// </summary>
-    private readonly IList<FilterCriteriaParam> _listFilter = new List<FilterCriteriaParam>();
+    private readonly List<FilterCriteriaParam> _listFilter = [];
 
     /// <summary>
     /// Constructeur par défaut.
@@ -27,10 +27,7 @@ public class FilterCriteria
     /// <param name="criteria">Critère.</param>
     public FilterCriteria(object criteria)
     {
-        if (criteria == null)
-        {
-            throw new ArgumentNullException("criteria");
-        }
+        ArgumentNullException.ThrowIfNull(criteria);
 
         AddAllCriteria(criteria, null);
     }
@@ -60,10 +57,7 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria Between(Enum enumCol, DateTime min, DateTime max)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
         AddCriteria(enumCol.ToString(), Expression.Between, new DateTime[] { min, max });
         return this;
@@ -77,14 +71,11 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria Contains(Enum enumCol, string value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
         if (string.IsNullOrEmpty(value))
         {
-            throw new ArgumentNullException("value");
+            throw new ArgumentNullException(nameof(value));
         }
 
         AddCriteria(enumCol.ToString(), Expression.Contains, value);
@@ -99,14 +90,11 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria EndsWith(Enum enumCol, string value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
         if (string.IsNullOrEmpty(value))
         {
-            throw new ArgumentNullException("value");
+            throw new ArgumentNullException(nameof(value));
         }
 
         AddCriteria(enumCol.ToString(), Expression.EndsWith, value);
@@ -121,14 +109,11 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria Equals(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
         if (value == null)
         {
-            throw new ArgumentNullException("value", "Utiliser la méthode IsNull si vous souhaitez tester la nullité.");
+            throw new ArgumentNullException(nameof(value), "Utiliser la méthode IsNull si vous souhaitez tester la nullité.");
         }
 
         AddCriteria(enumCol.ToString(), Expression.Equals, value);
@@ -143,15 +128,9 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria Greater(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
-        if (value == null)
-        {
-            throw new ArgumentNullException("value");
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         AddCriteria(enumCol.ToString(), Expression.Greater, value);
         return this;
@@ -165,15 +144,9 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria GreaterOrEquals(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
-        if (value == null)
-        {
-            throw new ArgumentNullException("value");
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         AddCriteria(enumCol.ToString(), Expression.GreaterOrEquals, value);
         return this;
@@ -186,10 +159,7 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria IsNotNull(Enum enumCol)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
         AddCriteria(enumCol.ToString(), Expression.IsNotNull, null);
         return this;
@@ -202,10 +172,7 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria IsNull(Enum enumCol)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
         AddCriteria(enumCol.ToString(), Expression.IsNull, null);
         return this;
@@ -219,15 +186,9 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria Lower(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
-        if (value == null)
-        {
-            throw new ArgumentNullException("value");
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         AddCriteria(enumCol.ToString(), Expression.Lower, value);
         return this;
@@ -241,15 +202,9 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria LowerOrEquals(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
-        if (value == null)
-        {
-            throw new ArgumentNullException("value");
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         AddCriteria(enumCol.ToString(), Expression.LowerOrEquals, value);
         return this;
@@ -263,15 +218,9 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria NotEquals(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
-        if (value == null)
-        {
-            throw new ArgumentNullException("value");
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         AddCriteria(enumCol.ToString(), Expression.NotEquals, value);
         return this;
@@ -285,15 +234,9 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria NotStartsWith(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
-        if (value == null)
-        {
-            throw new ArgumentNullException("value");
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         AddCriteria(enumCol.ToString(), Expression.NotStartsWith, value);
         return this;
@@ -307,15 +250,9 @@ public class FilterCriteria
     /// <returns>Le critère.</returns>
     public FilterCriteria StartsWith(Enum enumCol, object value)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
-        if (value == null)
-        {
-            throw new ArgumentNullException("value");
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         AddCriteria(enumCol.ToString(), Expression.StartsWith, value);
         return this;
@@ -331,20 +268,17 @@ public class FilterCriteria
     {
         if (string.IsNullOrEmpty(param))
         {
-            throw new ArgumentNullException("param");
+            throw new ArgumentNullException(nameof(param));
         }
 
         if (value == null && exprType != Expression.IsNotNull && exprType != Expression.IsNull)
         {
-            throw new ArgumentNullException("value");
+            throw new ArgumentNullException(nameof(value));
         }
 
-        if (exprType == Expression.Between)
+        if (exprType == Expression.Between && (value is not DateTime[] dateValues || dateValues.Length != 2))
         {
-            if (value is not DateTime[] dateValues || dateValues.Length != 2)
-            {
-                throw new NotSupportedException("Expression.Between only supports DateTime[2] values.");
-            }
+            throw new NotSupportedException("Expression.Between only supports DateTime[2] values.");
         }
 
         _listFilter.Add(new FilterCriteriaParam(param, exprType, value));
@@ -377,9 +311,9 @@ public class FilterCriteria
             }
 
             var expr = Expression.Equals;
-            if (expressionIndex != null && expressionIndex.ContainsKey(property.MemberName))
+            if (expressionIndex != null && expressionIndex.TryGetValue(property.MemberName, out var v))
             {
-                expr = expressionIndex[property.MemberName];
+                expr = v;
             }
 
             AddCriteria(property.MemberName, expr, value);

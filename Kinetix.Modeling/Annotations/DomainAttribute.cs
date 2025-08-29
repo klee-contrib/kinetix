@@ -3,35 +3,22 @@
 /// <summary>
 /// Attribut définissant le domaine d'une propriété.
 /// </summary>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="name">Nom du domaine.</param>
 [AttributeUsage(AttributeTargets.Property)]
-public sealed class DomainAttribute : Attribute
+public sealed class DomainAttribute(object name) : Attribute
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="name">Nom du domaine.</param>
-    public DomainAttribute(object name)
-    {
-        Name = (Enum)name;
-    }
-
     /// <summary>
     /// Obtient le nom du domaine.
     /// </summary>
-    public Enum Name
-    {
-        get;
-        private set;
-    }
+    public Enum Name { get; private set; } = (Enum)name;
 
     /// <summary>
     /// Obtient ou définit le type contenant les messages d'erreurs.
     /// </summary>
-    public Type ErrorMessageResourceType
-    {
-        get;
-        set;
-    }
+    public Type ErrorMessageResourceType { get; set; }
 
     /// <summary>
     /// Obtient ou définit le nom de la clef de ressource.

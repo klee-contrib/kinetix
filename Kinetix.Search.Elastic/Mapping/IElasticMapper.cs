@@ -1,4 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿#pragma warning disable S2326
+
+using Kinetix.Search.Core.DocumentModel;
 using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping;

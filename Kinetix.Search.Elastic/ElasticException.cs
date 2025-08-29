@@ -7,11 +7,6 @@
 public class ElasticException : Exception
 {
     /// <summary>
-    /// Détails de l'appel ElasticSearch.
-    /// </summary>
-    public string? DebugInformation { get; set; }
-
-    /// <summary>
     /// Crée un nouvelle exception.
     /// </summary>
     public ElasticException()
@@ -38,4 +33,9 @@ public class ElasticException : Exception
     {
         DebugInformation = debugInformation;
     }
+
+    /// <summary>
+    /// Détails de l'appel ElasticSearch.
+    /// </summary>
+    public string? DebugInformation { get; set; }
 }

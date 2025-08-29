@@ -8,43 +8,47 @@ public static class ServiceCollectionExtensions
 {
     private static readonly ProxyGenerator _proxyGenerator = new();
 
-    public static IServiceCollection AddInterceptedTransient<T, TImplementation>(
+    public static IServiceCollection AddIntercepted(
+        this IServiceCollection services,
+        Type contractType,
+        Type implType,
+        Func<ServiceLifetime, ServiceDescriptor> descriptorFactory,
+        Action<InterceptionOptions> configurator,
+        ServiceLifetime lifetime)
+    {
+        var interceptionOptions = new InterceptionOptions();
+        configurator(interceptionOptions);
+
+        interceptionOptions.Interceptors.ForEach(services.TryAddScoped);
+        services.TryAdd(descriptorFactory(lifetime));
+
+        services.Add(ServiceDescriptor.Describe(
+            contractType,
+            sp =>
+            {
+                var interceptorInstances = interceptionOptions.Interceptors
+                    .Select(sp.GetRequiredService)
+                    .Cast<IInterceptor>()
+                    .ToArray();
+
+                return _proxyGenerator
+                    .CreateInterfaceProxyWithTarget(
+                        contractType,
+                        sp.GetRequiredService(implType),
+                        ProxyGenerationOptions.Default,
+                        interceptorInstances);
+            },
+            lifetime));
+
+        return services;
+    }
+
+    public static IServiceCollection AddInterceptedScoped<T, TImplementation>(
         this IServiceCollection services,
         Func<IServiceProvider, TImplementation> serviceFactory,
         Action<InterceptionOptions> configurator)
         where T : class
         where TImplementation : class, T
-    {
-        return services.AddIntercepted(
-            typeof(T),
-            typeof(TImplementation),
-            lifetime => new ServiceDescriptor(typeof(TImplementation), serviceFactory, lifetime),
-            configurator,
-            ServiceLifetime.Transient);
-    }
-
-    public static IServiceCollection AddInterceptedTransient<T, TImplementation>(
-        this IServiceCollection services, Action<InterceptionOptions> configurator)
-        where T : class
-        where TImplementation : class, T
-    {
-        return AddInterceptedTransient(services, typeof(T), typeof(TImplementation), configurator);
-    }
-
-    public static IServiceCollection AddInterceptedTransient(this IServiceCollection services, Type contractType, Type implType, Action<InterceptionOptions> configurator)
-    {
-        return services.AddIntercepted(
-            contractType,
-            implType,
-            lifetime => ServiceDescriptor.Describe(implType, implType, lifetime),
-            configurator,
-            ServiceLifetime.Transient);
-    }
-
-    public static IServiceCollection AddInterceptedScoped<T, TImplementation>(this IServiceCollection services,
-        Func<IServiceProvider, TImplementation> serviceFactory,
-        Action<InterceptionOptions> configurator)
-        where T : class where TImplementation : class, T
     {
         return services.AddIntercepted(
             typeof(T),
@@ -94,7 +98,8 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         Func<IServiceProvider, TImplementation> serviceFactory,
         Action<InterceptionOptions> configurator)
-        where T : class where TImplementation : class, T
+        where T : class
+        where TImplementation : class, T
     {
         return services.AddIntercepted(
             typeof(T),
@@ -104,38 +109,37 @@ public static class ServiceCollectionExtensions
             ServiceLifetime.Singleton);
     }
 
-    public static IServiceCollection AddIntercepted(
+    public static IServiceCollection AddInterceptedTransient<T, TImplementation>(
         this IServiceCollection services,
-        Type contractType,
-        Type implType,
-        Func<ServiceLifetime, ServiceDescriptor> descriptorFactory,
-        Action<InterceptionOptions> configurator,
-        ServiceLifetime lifetime)
+        Func<IServiceProvider, TImplementation> serviceFactory,
+        Action<InterceptionOptions> configurator)
+        where T : class
+        where TImplementation : class, T
     {
-        var interceptionOptions = new InterceptionOptions();
-        configurator(interceptionOptions);
+        return services.AddIntercepted(
+            typeof(T),
+            typeof(TImplementation),
+            lifetime => new ServiceDescriptor(typeof(TImplementation), serviceFactory, lifetime),
+            configurator,
+            ServiceLifetime.Transient);
+    }
 
-        interceptionOptions.Interceptors.ForEach(services.TryAddScoped);
-        services.TryAdd(descriptorFactory(lifetime));
+    public static IServiceCollection AddInterceptedTransient<T, TImplementation>(
+        this IServiceCollection services, Action<InterceptionOptions> configurator)
+        where T : class
+        where TImplementation : class, T
+    {
+        return AddInterceptedTransient(services, typeof(T), typeof(TImplementation), configurator);
+    }
 
-        services.Add(ServiceDescriptor.Describe(contractType,
-            sp =>
-            {
-                var interceptorInstances = interceptionOptions.Interceptors
-                    .Select(sp.GetRequiredService)
-                    .Cast<IInterceptor>()
-                    .ToArray();
-
-                return _proxyGenerator
-                    .CreateInterfaceProxyWithTarget(
-                        contractType,
-                        sp.GetRequiredService(implType),
-                        ProxyGenerationOptions.Default,
-                        interceptorInstances);
-            },
-            lifetime));
-
-        return services;
+    public static IServiceCollection AddInterceptedTransient(this IServiceCollection services, Type contractType, Type implType, Action<InterceptionOptions> configurator)
+    {
+        return services.AddIntercepted(
+            contractType,
+            implType,
+            lifetime => ServiceDescriptor.Describe(implType, implType, lifetime),
+            configurator,
+            ServiceLifetime.Transient);
     }
 
     public static IServiceCollection TryAddIntercepted(
@@ -152,7 +156,8 @@ public static class ServiceCollectionExtensions
         interceptionOptions.Interceptors.ForEach(services.TryAddScoped);
         services.TryAdd(descriptorFactory(lifetime));
 
-        services.TryAdd(ServiceDescriptor.Describe(contractType,
+        services.TryAdd(ServiceDescriptor.Describe(
+            contractType,
             sp =>
             {
                 var interceptorInstances = interceptionOptions.Interceptors

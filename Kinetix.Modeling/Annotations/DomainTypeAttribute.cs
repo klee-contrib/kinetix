@@ -3,20 +3,15 @@
 /// <summary>
 /// Type C# associé au domaine.
 /// </summary>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="type">Type.</param>
 [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
-public class DomainTypeAttribute : Attribute
+public class DomainTypeAttribute(Type type) : Attribute
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="type">Type.</param>
-    public DomainTypeAttribute(Type type)
-    {
-        Type = type;
-    }
-
     /// <summary>
     /// Type.
     /// </summary>
-    public Type Type { get; }
+    public Type Type { get; } = type;
 }

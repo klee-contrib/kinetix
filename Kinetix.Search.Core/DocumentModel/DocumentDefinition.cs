@@ -60,20 +60,12 @@ public class DocumentDefinition
     /// <summary>
     /// Retourne la clef primaire si elle existe.
     /// </summary>
-    public DocumentPrimaryKeyDescriptor PrimaryKey
-    {
-        get;
-        private set;
-    } = new();
+    public DocumentPrimaryKeyDescriptor PrimaryKey { get; private set; } = new();
 
     /// <summary>
     /// Retourne les propriétés de recherche textuelle.
     /// </summary>
-    public ICollection<DocumentFieldDescriptor> SearchFields
-    {
-        get;
-        private set;
-    } = [];
+    public ICollection<DocumentFieldDescriptor> SearchFields { get; private set; } = [];
 
     /// <summary>
     /// Retourne la propriété de filtrage de sécurité.

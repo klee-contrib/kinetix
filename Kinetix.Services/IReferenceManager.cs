@@ -56,6 +56,7 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <param name="referenceName">Le nom de la liste de référence</param>
+    /// <returns>Liste de référence.</returns>
     ICollection<T> GetReferenceList<T>(Func<T, bool> predicate, string referenceName = null);
 
     /// <summary>
@@ -63,6 +64,7 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="primaryKeys">Un array de clés primaires.</param>
+    /// <returns>Liste de référence.</returns>
     ICollection<T> GetReferenceList<T>(object[] primaryKeys);
 
     /// <summary>
@@ -70,6 +72,7 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="criteria">Un objet de critère.</param>
+    /// <returns>Liste de référence.</returns>
     ICollection<T> GetReferenceList<T>(T criteria);
 
     /// <summary>
@@ -77,6 +80,7 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
+    /// <returns>Objet.</returns>
     T GetReferenceObject<T>(Func<T, bool> predicate);
 
     /// <summary>
@@ -84,6 +88,7 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="primaryKey">Une clé primaire.</param>
+    /// <returns>Objet.</returns>
     T GetReferenceObject<T>(object primaryKey);
 
     /// <summary>
@@ -91,6 +96,7 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
+    /// <returns>Valeur.</returns>
     string GetReferenceValue<T>(Func<T, bool> predicate);
 
     /// <summary>
@@ -98,6 +104,7 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="primaryKey">Une clé primaire.</param>
+    /// <returns>Valeur.</returns>
     string GetReferenceValue<T>(object primaryKey);
 
     /// <summary>
@@ -105,6 +112,7 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="reference">L'object dont on veut la valeur.</param>
+    /// <returns>Valeur.</returns>
     string GetReferenceValue<T>(T reference);
 
     /// <summary>
@@ -112,5 +120,6 @@ public interface IReferenceManager
     /// </summary>
     /// <param name="type">Le type de la liste de référence.</param>
     /// <param name="primaryKey">Une clé primaire.</param>
+    /// <returns>Valeur.</returns>
     string GetReferenceValue(Type type, object primaryKey);
 }

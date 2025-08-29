@@ -17,6 +17,7 @@ internal static class ElasticExtensions
     /// <param name="analytics">Analytics.</param>
     /// <param name="context">Contexte pour le message.</param>
     /// <param name="esCall">Appel ES.</param>
+    /// <returns>Ce que la requête retourne.</returns>
     public static T LogQuery<T>(this ILogger logger, AnalyticsManager analytics, string context, Func<T> esCall)
         where T : IResponse
     {

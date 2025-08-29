@@ -8,7 +8,11 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// <summary>
 /// Collection de paramètres pour les commandes Sql Server.
 /// </summary>
-internal class SqlServerParameterCollection : SqlParameterCollection
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="command">Commande SQL.</param>
+internal class SqlServerParameterCollection(IDbCommand command) : Common.SqlParameterCollection(command)
 {
     /// <summary>
     /// Nom de la colonne dans le type table.
@@ -21,28 +25,19 @@ internal class SqlServerParameterCollection : SqlParameterCollection
     private const string IntDataType = "type_int_list";
 
     /// <summary>
-    /// Nom du type SQL Server dédié aux varchar.
-    /// </summary>
-    private const string VarCharDataType = "type_varchar_list";
-
-    /// <summary>
     /// Nom du type SQL Server dédié aux uniqueidentifier.
     /// </summary>
     private const string UniqueIdentifierDataType = "type_uniqueidentifier_list";
 
     /// <summary>
+    /// Nom du type SQL Server dédié aux varchar.
+    /// </summary>
+    private const string VarCharDataType = "type_varchar_list";
+
+    /// <summary>
     /// Taille du champ du type SQL Server dédié aux varchar.
     /// </summary>
     private const int VarCharLength = 255;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="command">Commande SQL.</param>
-    public SqlServerParameterCollection(IDbCommand command)
-        : base(command)
-    {
-    }
 
     /// <inheritdoc />
     public override SqlDataParameter AddInParameter(string parameterName, IEnumerable<int> list)
@@ -70,17 +65,30 @@ internal class SqlServerParameterCollection : SqlParameterCollection
         return parameter;
     }
 
+    protected override bool SetDbType(IDbDataParameter param, Type t)
+    {
+        if (base.SetDbType(param, t))
+        {
+            return true;
+        }
+
+        if (t == typeof(TimeSpan))
+        {
+            ((SqlParameter)param).SqlDbType = SqlDbType.Time;
+            return true;
+        }
+
+        return false;
+    }
+
     private SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
     {
         if (string.IsNullOrEmpty(parameterName))
         {
-            throw new ArgumentNullException("parameterName");
+            throw new ArgumentNullException(nameof(parameterName));
         }
 
-        if (list == null)
-        {
-            throw new ArgumentNullException("list");
-        }
+        ArgumentNullException.ThrowIfNull(list);
 
         var metaData = sqlDbType == SqlDbType.VarChar ? new SqlMetaData(ColDataTypeName, sqlDbType, VarCharLength) : new SqlMetaData(ColDataTypeName, sqlDbType);
         var dataRecordList = new List<SqlDataRecord>();
@@ -111,21 +119,5 @@ internal class SqlServerParameterCollection : SqlParameterCollection
         Add(parameter);
 
         return parameter;
-    }
-
-    protected override bool SetDbType(IDbDataParameter param, Type t)
-    {
-        if (base.SetDbType(param, t))
-        {
-            return true;
-        }
-
-        if (t == typeof(TimeSpan))
-        {
-            ((SqlParameter)param).SqlDbType = SqlDbType.Time;
-            return true;
-        }
-
-        return false;
     }
 }

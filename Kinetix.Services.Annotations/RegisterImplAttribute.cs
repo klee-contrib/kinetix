@@ -6,12 +6,7 @@ namespace Kinetix.Services.Annotations;
 /// Enregistre l'implémentation dans le container d'injection de dépendances.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class)]
-public sealed class RegisterImplAttribute : Attribute
+public sealed class RegisterImplAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped) : Attribute
 {
-    public ServiceLifetime Lifetime { get; private set; }
-
-    public RegisterImplAttribute(ServiceLifetime lifetime = ServiceLifetime.Scoped)
-    {
-        Lifetime = lifetime;
-    }
+    public ServiceLifetime Lifetime { get; private set; } = lifetime;
 }

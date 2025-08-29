@@ -1,4 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿#pragma warning disable SA1402, SA1201
+
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
 using Nest;
@@ -7,21 +9,11 @@ namespace Kinetix.Search.Elastic.Querying;
 
 using static AdvancedQueryUtil;
 
-public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
+public class MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescriptor documentDescriptor, FacetHandler facetHandler) : IMultiAdvancedQueryDescriptor
 {
-    private readonly ElasticClient _client;
-    private readonly DocumentDescriptor _documentDescriptor;
-    private readonly FacetHandler _facetHandler;
     private readonly Dictionary<string, IDocumentMapper> _documentMappers = [];
     private readonly Dictionary<string, ISearchRequest> _searchDescriptors = [];
-    private readonly List<(string code, string label)> _searchLabels = [];
-
-    public MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescriptor documentDescriptor, FacetHandler facetHandler)
-    {
-        _client = client;
-        _documentDescriptor = documentDescriptor;
-        _facetHandler = facetHandler;
-    }
+    private readonly List<(string Code, string Label)> _searchLabels = [];
 
     /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery{TDocument, TOutput, TCriteria}(string, string, AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
     public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
@@ -41,11 +33,11 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
             sc.Group = null;
         }
 
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
         _searchDescriptors.Add(code, GetAdvancedQueryDescriptor(
             def,
             input,
-            _facetHandler,
+            facetHandler,
             filter: null,
             sorts: null,
             sortsAfter: false,
@@ -60,15 +52,15 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
     /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.Search" />
     public QueryOutput Search()
     {
-        var response = _client.MultiSearch(new MultiSearchRequest { Operations = _searchDescriptors });
+        var response = client.MultiSearch(new MultiSearchRequest { Operations = _searchDescriptors });
 
         /* Extraction des résultats. */
         var groups = response.AllResponses.Select((dynamic res, int i) =>
              new GroupResult
              {
-                 Code = _searchLabels[i].code,
-                 Label = _searchLabels[i].label,
-                 List = ((IEnumerable<dynamic>)res.Hits).Select(h => _documentMappers[_searchLabels[i].code].Map(h.Source, h.Highlight)).ToList(),
+                 Code = _searchLabels[i].Code,
+                 Label = _searchLabels[i].Label,
+                 List = ((IEnumerable<dynamic>)res.Hits).Select(h => _documentMappers[_searchLabels[i].Code].Map(h.Source, h.Highlight)).ToList(),
                  TotalCount = (int)res.Total
              }).ToList();
 
@@ -80,8 +72,8 @@ public class MultiAdvancedQueryDescriptor : IMultiAdvancedQueryDescriptor
             Values = response.AllResponses.Select((dynamic res, int i) =>
                 new FacetItem
                 {
-                    Code = _searchLabels[i].code,
-                    Label = _searchLabels[i].label,
+                    Code = _searchLabels[i].Code,
+                    Label = _searchLabels[i].Label,
                     Count = (int)res.Total
                 }).ToList()
         };
@@ -101,17 +93,11 @@ internal interface IDocumentMapper
     object Map(object input, IReadOnlyDictionary<string, IReadOnlyCollection<string>> highlights);
 }
 
-internal class DocumentMapper<TDocument, TOutput> : IDocumentMapper
+internal class DocumentMapper<TDocument, TOutput>(Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> mapper) : IDocumentMapper
 {
-    private readonly Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> _mapper;
-
-    public DocumentMapper(Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> mapper)
-    {
-        _mapper = mapper;
-    }
-
+    /// <inheritdoc cref="IDocumentMapper.Map" />
     public object Map(object input, IReadOnlyDictionary<string, IReadOnlyCollection<string>> highlights)
     {
-        return _mapper((TDocument)input, highlights)!;
+        return mapper((TDocument)input, highlights)!;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using Kinetix.DataAccess.Sql.Common;
 
 namespace Kinetix.DataAccess.Sql;
 
@@ -17,31 +18,16 @@ public static class CollectionBuilder<T>
     /// <returns>Les éléments.</returns>
     public static IEnumerable<T> ParseCommand(BaseSqlCommand cmd)
     {
-        if (cmd == null)
-        {
-            throw new ArgumentNullException("cmd");
-        }
+        ArgumentNullException.ThrowIfNull(cmd);
 
-        if (cmd.QueryParameters != null)
-        {
-            cmd.QueryParameters.RemapSortColumn(typeof(T));
-        }
+        cmd.QueryParameters?.RemapSortColumn(typeof(T));
 
-        using var reader = cmd.ExecuteReader();
-        if (reader == null)
-        {
-            throw new ArgumentNullException("reader");
-        }
-
+        using var reader = cmd.ExecuteReader() ?? throw new ArgumentNullException(nameof(cmd));
         IDataRecordAdapter<T> adapter = null;
 
         while (reader.Read())
         {
-            if (adapter == null)
-            {
-                adapter = DataRecordAdapterManager<T>.CreateAdapter(reader);
-            }
-
+            adapter ??= DataRecordAdapterManager<T>.CreateAdapter(reader);
             yield return adapter.Read(null, reader);
         }
     }
@@ -54,10 +40,7 @@ public static class CollectionBuilder<T>
     /// <returns>Objet.</returns>
     public static T ParseCommandForSingleObject(BaseSqlCommand cmd, bool returnNullIfZeroRow = false)
     {
-        if (cmd == null)
-        {
-            throw new ArgumentNullException("cmd");
-        }
+        ArgumentNullException.ThrowIfNull(cmd);
 
         try
         {

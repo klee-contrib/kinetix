@@ -10,6 +10,13 @@ namespace Kinetix.Reporting.Core.Excel;
 public interface IWorksheetBuilder<T>
 {
     /// <summary>
+    /// Crée la Worksheet à partir de ce qui a été configuré.
+    /// </summary>
+    /// <param name="postBuildAction">Actions manuelles à effectuer sur la worksheet après construction.</param>
+    /// <returns>ExcelBuilder.</returns>
+    Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction = null);
+
+    /// <summary>
     /// Configure une nouvelle colonne dans la Worksheet.
     /// </summary>
     /// <param name="selector">Le champ à afficher dans la colonne.</param>
@@ -48,7 +55,7 @@ public interface IWorksheetBuilder<T>
     /// <summary>
     /// Configure le nombre de résultats maximum dans l'export.
     /// </summary>
-    /// <param name="maxResults"></param>
+    /// <param name="maxResults">Nombre max de résultats.</param>
     /// <returns>Builder.</returns>
     IWorksheetBuilder<T> MaxResults(int maxResults);
 
@@ -57,11 +64,4 @@ public interface IWorksheetBuilder<T>
     /// </summary>
     /// <returns>Builder.</returns>
     IWorksheetBuilder<T> Transpose();
-
-    /// <summary>
-    /// Crée la Worksheet à partir de ce qui a été configuré.
-    /// </summary>
-    /// <param name="postBuildAction">Actions manuelles à effectuer sur la worksheet après construction.</param>
-    /// <returns>ExcelBuilder.</returns>
-    Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction = null);
 }

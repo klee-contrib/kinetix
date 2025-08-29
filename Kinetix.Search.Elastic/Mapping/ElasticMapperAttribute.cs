@@ -3,17 +3,12 @@
 /// <summary>
 /// Permet de préciser un mapping personnalisé pour un champ.
 /// </summary>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="mapperType">Mapper.</param>
 [AttributeUsage(AttributeTargets.Property)]
-public class ElasticMapperAttribute : Attribute
+public class ElasticMapperAttribute(Type mapperType) : Attribute
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="mapperType">Mapper.</param>
-    public ElasticMapperAttribute(Type mapperType)
-    {
-        MapperType = mapperType;
-    }
-
-    public Type MapperType { get; }
+    public Type MapperType { get; } = mapperType;
 }

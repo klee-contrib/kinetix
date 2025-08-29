@@ -8,17 +8,31 @@ namespace Kinetix.Search.Elastic;
 /// <summary>
 /// Usine à mapping ElasticSearch.
 /// </summary>
-public sealed class ElasticMappingFactory
+public sealed class ElasticMappingFactory(IServiceProvider provider)
 {
-    private readonly IServiceProvider _provider;
-
     /// <summary>
-    /// Constructeur.
+    /// Effectue le mapping pour un champ d'un document.
     /// </summary>
-    /// <param name="provider"></param>
-    public ElasticMappingFactory(IServiceProvider provider)
+    /// <param name="selector">Descripteur des propriétés.</param>
+    /// <param name="field">Le champ.</param>
+    /// <returns>Mapping de champ.</returns>
+    /// <typeparam name="T">Type du document.</typeparam>
+    public PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
+        where T : class
     {
-        _provider = provider;
+        var mapperType = field.OtherAttributes.OfType<ElasticMapperAttribute>().FirstOrDefault()?.MapperType;
+
+        if (mapperType != null)
+        {
+            return ((IElasticMapper)Activator.CreateInstance(mapperType)!).Map(selector, field);
+        }
+
+        if (provider.GetService(typeof(IElasticMapper<>).MakeGenericType(field.PropertyType)) is not IElasticMapper mapper)
+        {
+            mapper = provider.GetRequiredService<IElasticMapper<string>>();
+        }
+
+        return mapper.Map(selector, field);
     }
 
     /// <summary>
@@ -37,30 +51,5 @@ public sealed class ElasticMappingFactory
         }
 
         return selector;
-    }
-
-    /// <summary>
-    /// Effectue le mapping pour un champ d'un document.
-    /// </summary>
-    /// <param name="selector">Descripteur des propriétés.</param>
-    /// <param name="field">Le champ.</param>
-    /// <returns>Mapping de champ.</returns>
-    /// <typeparam name="T">Type du document.</typeparam>
-    public PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
-        where T : class
-    {
-        var mapperType = field.OtherAttributes.OfType<ElasticMapperAttribute>().FirstOrDefault()?.MapperType;
-
-        if (mapperType != null)
-        {
-            return ((IElasticMapper)Activator.CreateInstance(mapperType)!).Map(selector, field);
-        }
-
-        if (_provider.GetService(typeof(IElasticMapper<>).MakeGenericType(field.PropertyType)) is not IElasticMapper mapper)
-        {
-            mapper = _provider.GetRequiredService<IElasticMapper<string>>();
-        }
-
-        return mapper.Map(selector, field);
     }
 }

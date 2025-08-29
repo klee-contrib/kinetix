@@ -1,5 +1,7 @@
 ﻿using System.Text;
 using Kinetix.DataAccess.Sql.Broker;
+using Kinetix.DataAccess.Sql.Common;
+using Kinetix.DataAccess.Sql.Common.Broker;
 using Kinetix.Modeling;
 using Microsoft.Extensions.Logging;
 
@@ -9,20 +11,15 @@ namespace Kinetix.DataAccess.Sql.Postgres.Broker;
 /// Store de base pour le stockage en base de données.
 /// </summary>
 /// <typeparam name="T">Type du store.</typeparam>
-internal class PostgresStore<T> : SqlStore<T>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="dataSourceName">Nom de la chaine de base de données.</param>
+/// <param name="connectionPool">Pool de connexions.</param>
+/// <param name="logger">Logger.</param>
+internal class PostgresStore<T>(string dataSourceName, ConnectionPool connectionPool, ILogger<BrokerManager> logger) : SqlStore<T>(dataSourceName, connectionPool, logger)
     where T : class, new()
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="dataSourceName">Nom de la chaine de base de données.</param>
-    /// <param name="connectionPool">Pool de connexions.</param>
-    /// <param name="logger">Logger.</param>
-    public PostgresStore(string dataSourceName, ConnectionPool connectionPool, ILogger<BrokerManager> logger)
-        : base(dataSourceName, connectionPool, logger)
-    {
-    }
-
     /// <inheritdoc />
     protected override string VariablePrefix => "@";
 
@@ -30,7 +27,7 @@ internal class PostgresStore<T> : SqlStore<T>
     protected override string ConcatCharacter => " + ";
 
     /// <inheritdoc />
-    protected override string BuildInsertQuery(BeanDefinition beanDefinition, bool dbGeneratedPK, ColumnSelector columnSelector)
+    protected override string BuildInsertQuery(BeanDefinition beanDefinition, bool isGeneratedPK, ColumnSelector columnSelector)
     {
         var sbInsert = new StringBuilder(CurrentUserStatementLog);
         sbInsert.Append("insert into ");
@@ -40,7 +37,7 @@ internal class PostgresStore<T> : SqlStore<T>
 
         foreach (var property in beanDefinition.Properties)
         {
-            if (property == beanDefinition.PrimaryKey && dbGeneratedPK)
+            if (property == beanDefinition.PrimaryKey && isGeneratedPK)
             {
                 continue;
             }
@@ -64,7 +61,7 @@ internal class PostgresStore<T> : SqlStore<T>
         }
 
         sbInsert.Append(sbValues).Append(")\n");
-        if (dbGeneratedPK)
+        if (isGeneratedPK)
         {
             sbInsert.Append($"returning {beanDefinition.PrimaryKey.MemberName}");
         }
@@ -75,15 +72,9 @@ internal class PostgresStore<T> : SqlStore<T>
     /// <inheritdoc />
     protected override ICollection<T> InsertAll(string commandName, ICollection<T> collection, BeanDefinition beanDefinition)
     {
-        if (collection == null)
-        {
-            throw new ArgumentNullException(nameof(collection));
-        }
+        ArgumentNullException.ThrowIfNull(collection);
 
-        if (beanDefinition == null)
-        {
-            throw new ArgumentNullException(nameof(beanDefinition));
-        }
+        ArgumentNullException.ThrowIfNull(beanDefinition);
 
         var collectionStore = new PostgresParameterBeanCollection<T>(ConnectionPool, collection, true);
         return collectionStore.ExecuteInsert(commandName, DataSourceName);

@@ -6,20 +6,15 @@ namespace Kinetix.Search.Core.Querying;
 /// Facette de date.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public class DateFacet<TDocument> : TermFacet<TDocument>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="code">Code de la facette.</param>
+/// <param name="label">Libellé de la facette.</param>
+/// <param name="field">Champ sur lequel agit la facette.</param>
+public class DateFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : TermFacet<TDocument>(code, label, field)
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="code">Code de la facette.</param>
-    /// <param name="label">Libellé de la facette.</param>
-    /// <param name="field">Champ sur lequel agit la facette.</param>
-    public DateFacet(string code, string label, Expression<Func<TDocument, object>> field)
-        : base(code, label, field)
-    {
-    }
-
-    /// <inheritdoc />
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
     public override string ResolveLabel(string primaryKey)
     {
         return DateTime.Parse(primaryKey).ToString("dd/MM/yyyy");

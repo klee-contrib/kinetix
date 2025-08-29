@@ -5,15 +5,8 @@ namespace Kinetix.Services.DependencyInjection.Interceptors;
 /// <summary>
 /// Intercepteur posant un contexte transactionnel.
 /// </summary>
-public class TransactionInterceptor : IInterceptor
+public class TransactionInterceptor(TransactionScopeManager transactionScopeManager) : IInterceptor
 {
-    private readonly TransactionScopeManager _transactionScopeManager;
-
-    public TransactionInterceptor(TransactionScopeManager transactionScopeManager)
-    {
-        _transactionScopeManager = transactionScopeManager;
-    }
-
     /// <summary>
     /// Execution de l'intercepteur.
     /// </summary>
@@ -27,7 +20,7 @@ public class TransactionInterceptor : IInterceptor
             return;
         }
 
-        using var tx = _transactionScopeManager.EnsureTransaction();
+        using var tx = transactionScopeManager.EnsureTransaction();
         invocation.Proceed();
         tx.Complete();
     }

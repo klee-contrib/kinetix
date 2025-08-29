@@ -560,17 +560,14 @@ public sealed class SqlDataReader : IDataReader
             }
 
             // Gestion de la limite.
-            if (_readLimit > 0)
+            if (_readLimit > 0 && _readIndex >= _readOffset + _readLimit)
             {
-                if (_readIndex >= _readOffset + _readLimit)
+                while (_innerDataReader.Read())
                 {
-                    while (_innerDataReader.Read())
-                    {
-                        ++_readIndex;
-                    }
-
-                    return false;
+                    ++_readIndex;
                 }
+
+                return false;
             }
 
             // Lecture de la données.

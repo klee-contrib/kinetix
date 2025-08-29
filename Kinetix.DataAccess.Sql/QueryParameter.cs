@@ -168,10 +168,7 @@ public class QueryParameter
     /// <param name="param">Param.</param>
     public void AddSortParam(string param)
     {
-        if (param == null)
-        {
-            throw new ArgumentNullException("param");
-        }
+        ArgumentNullException.ThrowIfNull(param);
 
         var orderClause = param.Split(',');
         foreach (var orderby in orderClause)
@@ -197,10 +194,7 @@ public class QueryParameter
     /// <param name="order">Ordre de tri.</param>
     public void AddSortParam(Enum enumCol, SortOrder order)
     {
-        if (enumCol == null)
-        {
-            throw new ArgumentNullException("enumCol");
-        }
+        ArgumentNullException.ThrowIfNull(enumCol);
 
         var column = enumCol.ToString();
         _sortList.Add(column);
@@ -215,10 +209,7 @@ public class QueryParameter
     /// <returns>Liste triée.</returns>
     public ICollection<TSource> Apply<TSource>(ICollection<TSource> list)
     {
-        if (list == null)
-        {
-            throw new ArgumentNullException("list");
-        }
+        ArgumentNullException.ThrowIfNull(list);
 
         if (_sortList.Count != 1)
         {
@@ -244,7 +235,6 @@ public class QueryParameter
     /// </summary>
     public void DisablePagination()
     {
-        // TODO : Optimisation possible avec un paramètre client-side.
         Limit = 0;
         Offset = 0;
     }
@@ -256,10 +246,7 @@ public class QueryParameter
     /// <returns>Paramètres.</returns>
     public QueryParameter ExcludeColumns(params string[] columns)
     {
-        if (columns == null)
-        {
-            throw new ArgumentNullException("columns");
-        }
+        ArgumentNullException.ThrowIfNull(columns);
 
         foreach (var col in columns)
         {
@@ -300,10 +287,7 @@ public class QueryParameter
     /// <param name="beanType">Bean.</param>
     public void RemapSortColumn(Type beanType)
     {
-        if (beanType == null)
-        {
-            throw new ArgumentNullException("beanType");
-        }
+        ArgumentNullException.ThrowIfNull(beanType);
 
         var beanDef = BeanDescriptor.GetDefinition(beanType);
         foreach (var sort in _sortList.ToArray())

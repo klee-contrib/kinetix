@@ -5,17 +5,9 @@ namespace Kinetix.Services;
 /// <summary>
 /// Manager de transactions.
 /// </summary>
-public class TransactionScopeManager : IDisposable
+public class TransactionScopeManager(IEnumerable<ITransactionContextProvider> contextProviders, ILogger<ServiceScope> logger) : IDisposable
 {
-    private readonly IEnumerable<ITransactionContextProvider> _contextProviders;
-    private readonly ILogger<ServiceScope> _logger;
     private readonly Stack<ServiceScope> _scopes = new();
-
-    public TransactionScopeManager(IEnumerable<ITransactionContextProvider> contextProviders, ILogger<ServiceScope> logger)
-    {
-        _contextProviders = contextProviders;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Scope de transaction actif, avec ses contextes transactionnels.
@@ -30,20 +22,9 @@ public class TransactionScopeManager : IDisposable
     /// <returns>Scope de la transaction.</returns>
     public ServiceScope BeginNewTransaction()
     {
-        var scope = new ServiceScope(_contextProviders.Select(ctx => ctx.Create()).ToArray(), _logger, this);
+        var scope = new ServiceScope(contextProviders.Select(ctx => ctx.Create()).ToArray(), logger, this);
         _scopes.Push(scope);
         return scope;
-    }
-
-    /// <summary>
-    /// Vérifie la présence d'une transaction pré-existante, et la crée le cas échéant.
-    /// </summary>
-    /// <returns>Scope de la transaction (actif si la transaction a été créee).</returns>
-    public ServiceScope EnsureTransaction()
-    {
-        return ActiveScope != null
-            ? new ServiceScope()
-            : BeginNewTransaction();
     }
 
     /// <summary>
@@ -55,6 +36,17 @@ public class TransactionScopeManager : IDisposable
         {
             scope.Dispose();
         }
+    }
+
+    /// <summary>
+    /// Vérifie la présence d'une transaction pré-existante, et la crée le cas échéant.
+    /// </summary>
+    /// <returns>Scope de la transaction (actif si la transaction a été créee).</returns>
+    public ServiceScope EnsureTransaction()
+    {
+        return ActiveScope != null
+            ? new ServiceScope()
+            : BeginNewTransaction();
     }
 
     /// <summary>

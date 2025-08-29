@@ -2,10 +2,11 @@
 using System.Data;
 using System.Globalization;
 using System.Text;
+using Kinetix.DataAccess.Sql.Broker;
 using Kinetix.Modeling;
 using Microsoft.Extensions.Logging;
 
-namespace Kinetix.DataAccess.Sql.Broker;
+namespace Kinetix.DataAccess.Sql.Common.Broker;
 
 /// <summary>
 /// Store de base pour le stockage en base de données.
@@ -14,8 +15,6 @@ namespace Kinetix.DataAccess.Sql.Broker;
 public abstract class SqlStore<T> : IStore<T>
     where T : class, new()
 {
-    private readonly ILogger<BrokerManager> _logger;
-
     /// <summary>
     /// Préfixe générique d'un service de suppression.
     /// </summary>
@@ -35,6 +34,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// Préfixe générique d'un service de mise à jour.
     /// </summary>
     private const string ServiceUpdate = "SV_UPDATE";
+    private readonly ILogger<BrokerManager> _logger;
 
     /// <summary>
     /// Constructeur.
@@ -131,15 +131,9 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>Paramètre ajouté.</returns>
     public SqlDataParameter AddParameter(SqlParameterCollection parameters, BeanPropertyDescriptor property, object value)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
+        ArgumentNullException.ThrowIfNull(parameters);
 
-        if (property == null)
-        {
-            throw new ArgumentNullException(nameof(property));
-        }
+        ArgumentNullException.ThrowIfNull(property);
 
         return parameters.AddWithValue(property.MemberName, value);
     }
@@ -161,7 +155,6 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="commandType">Type de la commande.</param>
     /// <returns>Une nouvelle instance d'une classe héritant de AbstractSqlCommand.</returns>
-    /// <inheritdoc />
     public BaseSqlCommand CreateSqlCommand(string commandName, CommandType commandType)
     {
         return ConnectionPool.GetSqlCommand(DataSourceName, commandName, commandType);
@@ -188,7 +181,6 @@ public abstract class SqlStore<T> : IStore<T>
             order = queryParameter.SortCondition;
         }
 
-        // Todo : brancher le tri.
         AppendSelectParameters(commandText, tableName, criteria, order, command);
 
         // Set de la requête
@@ -220,10 +212,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>Bean.</returns>
     public T Load(object primaryKey)
     {
-        if (primaryKey == null)
-        {
-            throw new ArgumentNullException(nameof(primaryKey));
-        }
+        ArgumentNullException.ThrowIfNull(primaryKey);
 
         Definition.PrimaryKey.CheckValueType(primaryKey);
 
@@ -257,10 +246,7 @@ public abstract class SqlStore<T> : IStore<T>
     public IList<T> LoadAllByCriteria(FilterCriteria criteria, QueryParameter queryParameter)
     {
         // Les critères ne doivent pas être vides
-        if (criteria == null)
-        {
-            throw new ArgumentNullException(nameof(criteria));
-        }
+        ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceSelect + "_ALL_LIKE_" + Definition.ContractName;
 
@@ -274,10 +260,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>Objet.</returns>
     public T LoadByCriteria(FilterCriteria criteria)
     {
-        if (criteria == null)
-        {
-            throw new ArgumentNullException(nameof(criteria));
-        }
+        ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceSelect + "_LIKE_" + Definition.ContractName;
         var cmd = GetCommand(commandName, Definition.ContractName, criteria, null);
@@ -294,10 +277,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <exception cref="BrokerException">Retourne une erreur en cas de mise à jour erronée.</exception>
     public object Put(T bean, bool forceInsert, ColumnSelector columnSelector = null)
     {
-        if (bean == null)
-        {
-            throw new ArgumentNullException(nameof(bean));
-        }
+        ArgumentNullException.ThrowIfNull(bean);
 
         BeanDescriptor.Check(
             bean,
@@ -340,10 +320,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>Beans enregistrés.</returns>
     public ICollection<T> PutAll(ICollection<T> collection)
     {
-        if (collection == null)
-        {
-            throw new ArgumentNullException(nameof(collection));
-        }
+        ArgumentNullException.ThrowIfNull(collection);
 
         if (collection.Count == 0)
         {
@@ -360,10 +337,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="primaryKey">Clef primaire du bean à supprimer.</param>
     public void Remove(object primaryKey)
     {
-        if (primaryKey == null)
-        {
-            throw new ArgumentNullException(nameof(primaryKey));
-        }
+        ArgumentNullException.ThrowIfNull(primaryKey);
 
         Definition.PrimaryKey.CheckValueType(primaryKey);
         var commandName = ServiceDelete + "_" + Definition.ContractName;
@@ -390,10 +364,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="criteria">Critères de suppression.</param>
     public void RemoveAllByCriteria(FilterCriteria criteria)
     {
-        if (criteria == null)
-        {
-            throw new ArgumentNullException(nameof(criteria));
-        }
+        ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceDelete + "_ALL_LIKE_" + Definition.ContractName;
         DeleteAllByCriteria(commandName, Definition.ContractName, criteria);
@@ -409,10 +380,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     protected void AddInsertParameters(T bean, BeanDefinition beanDefinition, SqlParameterCollection parameters, bool dbGeneratedPK, ColumnSelector columnSelector)
     {
-        if (beanDefinition == null)
-        {
-            throw new ArgumentNullException(nameof(beanDefinition));
-        }
+        ArgumentNullException.ThrowIfNull(beanDefinition);
 
         foreach (var property in beanDefinition.Properties)
         {
@@ -446,15 +414,9 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     protected void AddUpdateParameters(T bean, BeanDefinition beanDefinition, SqlParameterCollection parameters, ColumnSelector columnSelector)
     {
-        if (beanDefinition == null)
-        {
-            throw new ArgumentNullException(nameof(beanDefinition));
-        }
+        ArgumentNullException.ThrowIfNull(beanDefinition);
 
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
+        ArgumentNullException.ThrowIfNull(parameters);
 
         foreach (var property in beanDefinition.Properties)
         {
@@ -489,10 +451,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="command">Commande d'appel à la base de données.</param>
     protected void AppendSelectParameters(StringBuilder commandText, string tableName, FilterCriteria criteria, string sortOrder, BaseSqlCommand command)
     {
-        if (commandText == null)
-        {
-            throw new ArgumentNullException(nameof(commandText));
-        }
+        ArgumentNullException.ThrowIfNull(commandText);
 
         var properties = BeanDescriptor.GetDefinition(typeof(T)).Properties;
         var hasColumn = false;
@@ -535,6 +494,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="beanDefinition">Définition du bean.</param>
     /// <param name="isGeneratedPK">PK autogénérée ou non.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
+    /// <returns>Query.</returns>
     protected abstract string BuildInsertQuery(BeanDefinition beanDefinition, bool isGeneratedPK, ColumnSelector columnSelector);
 
     /// <summary>
@@ -545,10 +505,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>Requête SQL.</returns>
     protected string BuildUpdateQuery(BeanDefinition beanDefinition, ColumnSelector columnSelector)
     {
-        if (beanDefinition == null)
-        {
-            throw new ArgumentNullException(nameof(beanDefinition));
-        }
+        ArgumentNullException.ThrowIfNull(beanDefinition);
 
         var sbUpdate = new StringBuilder(CurrentUserStatementLog);
         sbUpdate.Append("update ");
@@ -587,15 +544,9 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="property">Propriété courante.</param>
     protected void BuildUpdateSet(StringBuilder sbUpdateSet, int count, BeanPropertyDescriptor property)
     {
-        if (sbUpdateSet == null)
-        {
-            throw new ArgumentNullException(nameof(sbUpdateSet));
-        }
+        ArgumentNullException.ThrowIfNull(sbUpdateSet);
 
-        if (property == null)
-        {
-            throw new ArgumentNullException(nameof(property));
-        }
+        ArgumentNullException.ThrowIfNull(property);
 
         if (count > 0)
         {
@@ -617,10 +568,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>Retourne le nombre de lignes supprimées.</returns>
     protected virtual int DeleteAllByCriteria(string commandName, string tableName, FilterCriteria criteria)
     {
-        if (criteria == null)
-        {
-            throw new ArgumentNullException(nameof(criteria));
-        }
+        ArgumentNullException.ThrowIfNull(criteria);
 
         var command = CreateSqlCommand(commandName, CommandType.Text);
         command.CommandTimeout = 0;
@@ -681,20 +629,11 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="commandText">Texte de la commande.</param>
     protected void PrepareFilterCriteria(FilterCriteria filter, BaseSqlCommand command, StringBuilder commandText)
     {
-        if (filter == null)
-        {
-            throw new ArgumentNullException(nameof(filter));
-        }
+        ArgumentNullException.ThrowIfNull(filter);
 
-        if (command == null)
-        {
-            throw new ArgumentNullException(nameof(command));
-        }
+        ArgumentNullException.ThrowIfNull(command);
 
-        if (commandText == null)
-        {
-            throw new ArgumentNullException(nameof(commandText));
-        }
+        ArgumentNullException.ThrowIfNull(commandText);
 
         var pos = 0;
         var mapParameters = new Dictionary<string, int>();
@@ -704,14 +643,14 @@ public abstract class SqlStore<T> : IStore<T>
             commandText.Append(GetColumnCriteriaByColumnName(criteriaParam.ColumnName));
 
             string parameterName = null;
-            if (!mapParameters.ContainsKey(criteriaParam.ColumnName))
+            if (!mapParameters.TryGetValue(criteriaParam.ColumnName, out var value))
             {
                 parameterName = criteriaParam.ColumnName;
                 mapParameters.Add(criteriaParam.ColumnName, 1);
             }
             else
             {
-                mapParameters[criteriaParam.ColumnName] = mapParameters[criteriaParam.ColumnName] + 1;
+                mapParameters[criteriaParam.ColumnName] = value + 1;
                 parameterName = criteriaParam.ColumnName + mapParameters[criteriaParam.ColumnName].ToString(CultureInfo.InvariantCulture);
             }
 
@@ -738,9 +677,8 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="bean">Bean à mettre à jour.</param>
     /// <param name="beanDefinition">Définition du bean.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
-    /// <param name="primaryKeyValue">Valeur de la clef primaire.</param>
     /// <returns>Bean mise à jour.</returns>
-    protected IDataReader Update(string commandName, T bean, BeanDefinition beanDefinition, ColumnSelector columnSelector, object primaryKeyValue)
+    protected IDataReader Update(string commandName, T bean, BeanDefinition beanDefinition, ColumnSelector columnSelector)
     {
         var sql = BuildUpdateQuery(beanDefinition, columnSelector);
         var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
@@ -755,13 +693,9 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="parameters">Collection des paramètres dans laquelle ajouter le nouveau paramètre.</param>
     /// <param name="primaryKeyName">Nom de la clé primaire.</param>
     /// <param name="primaryKeyValue">Valeur de la clé primaire.</param>
-    /// <inheritdoc />
     private void AddPrimaryKeyParameter(SqlParameterCollection parameters, string primaryKeyName, object primaryKeyValue)
     {
-        if (parameters == null)
-        {
-            throw new ArgumentNullException(nameof(parameters));
-        }
+        ArgumentNullException.ThrowIfNull(parameters);
 
         parameters.AddWithValue("PK_" + primaryKeyName, primaryKeyValue);
     }
@@ -779,7 +713,7 @@ public abstract class SqlStore<T> : IStore<T>
         if (!forceInsert && primaryKeyValue != null)
         {
             var commandName = ServiceUpdate + "_" + Definition.ContractName;
-            return Update(commandName, bean, Definition, columnSelector, primaryKeyValue);
+            return Update(commandName, bean, Definition, columnSelector);
         }
         else
         {
@@ -822,13 +756,10 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <param name="criteria">Map de critères auquelle la recherche doit correpondre.</param>
     /// <returns>Collection.</returns>
-    private IList<T> InternalLoadAll(string commandName, QueryParameter queryParameter, FilterCriteria criteria)
+    private List<T> InternalLoadAll(string commandName, QueryParameter queryParameter, FilterCriteria criteria)
     {
-        if (queryParameter != null)
-        {
-            // Définition du tri à partir de la requete.
-            queryParameter.RemapSortColumn(typeof(T));
-        }
+        // Définition du tri à partir de la requete.
+        queryParameter?.RemapSortColumn(typeof(T));
 
         var cmd = GetCommand(commandName, Definition.ContractName, criteria, queryParameter);
         return CollectionBuilder<T>.ParseCommand(cmd).ToList();

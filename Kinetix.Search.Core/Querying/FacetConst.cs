@@ -5,10 +5,7 @@
 /// </summary>
 public static class FacetConst
 {
-    /// <summary>
-    /// Valeur représentant une valeur de facette null.
-    /// </summary>
-    public const string NullValue = "NULL_VALUE";
+    public const string NotNullLabel = "focus.search.results.exists";
 
     /// <summary>
     /// Valeur représentant une valeur de facette non null.
@@ -17,5 +14,8 @@ public static class FacetConst
 
     public const string NullLabel = "focus.search.results.missing";
 
-    public const string NotNullLabel = "focus.search.results.exists";
+    /// <summary>
+    /// Valeur représentant une valeur de facette null.
+    /// </summary>
+    public const string NullValue = "NULL_VALUE";
 }

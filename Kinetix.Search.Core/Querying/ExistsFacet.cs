@@ -6,19 +6,14 @@ namespace Kinetix.Search.Core.Querying;
 /// Facette de champ renseigné.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public class ExistsFacet<TDocument> : TermFacet<TDocument>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="code">Code de la facette.</param>
+/// <param name="label">Libellé de la facette.</param>
+/// <param name="field">Champ sur lequel agit la facette.</param>
+public class ExistsFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : TermFacet<TDocument>(code, label, field)
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="code">Code de la facette.</param>
-    /// <param name="label">Libellé de la facette.</param>
-    /// <param name="field">Champ sur lequel agit la facette.</param>
-    public ExistsFacet(string code, string label, Expression<Func<TDocument, object>> field)
-        : base(code, label, field)
-    {
-    }
-
     /// <inheritdoc />
     public override bool IsMultiSelectable => false;
 
@@ -28,7 +23,7 @@ public class ExistsFacet<TDocument> : TermFacet<TDocument>
     /// <inheritdoc />
     public override bool HasMissing => true;
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
     public override string ResolveLabel(string primaryKey)
     {
         return "focus.search.results.yes";

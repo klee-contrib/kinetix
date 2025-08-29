@@ -7,31 +7,21 @@ namespace Kinetix.Services;
 /// <summary>
 /// Gestionnaire des téléchargemente de fichiers.
 /// </summary>
-public class FileManager : IFileManager
+/// <param name="provider">Service provider.</param>
+public class FileManager(IServiceProvider provider) : IFileManager
 {
-    private readonly IServiceProvider _provider;
-    private readonly IDictionary<string, Accessor> _fileAccessors = new Dictionary<string, Accessor>();
+    private readonly Dictionary<string, Accessor> _fileAccessors = [];
 
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="provider">Service provider.</param>
-    public FileManager(IServiceProvider provider)
-    {
-        _provider = provider;
-    }
-
-    /// <inheritdoc />
+    /// <inheritdoc cref="IFileManager.GetFile" />
     public DownloadedFile GetFile(string accessorName, int id)
     {
-        if (!_fileAccessors.ContainsKey(accessorName))
+        if (!_fileAccessors.TryGetValue(accessorName, out var accessor))
         {
             throw new ArgumentException($"L'accesseur {accessorName} n'existe pas.");
         }
 
-        var accessor = _fileAccessors[accessorName];
-        var service = _provider.GetService(accessor.ContractType);
-        return (DownloadedFile)accessor.Method.Invoke(service, new object[] { id });
+        var service = provider.GetService(accessor.ContractType);
+        return (DownloadedFile)accessor.Method.Invoke(service, [id]);
     }
 
     /// <summary>

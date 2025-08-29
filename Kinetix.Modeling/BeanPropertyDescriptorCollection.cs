@@ -19,7 +19,7 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
     /// <exception cref="ArgumentNullException">Si bean type est null.</exception>
     internal BeanPropertyDescriptorCollection(Type beanType)
     {
-        _beanType = beanType ?? throw new ArgumentNullException("beanType");
+        _beanType = beanType ?? throw new ArgumentNullException(nameof(beanType));
         _properties = new Dictionary<string, BeanPropertyDescriptor>();
     }
 
@@ -29,14 +29,14 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
     public int Count => _properties.Count;
 
     /// <summary>
-    /// Indique sur le collection est en lecture seule.
-    /// </summary>
-    bool ICollection<BeanPropertyDescriptor>.IsReadOnly => true;
-
-    /// <summary>
     /// Le filtre (?).
     /// </summary>
     public object Filter { get; set; }
+
+    /// <summary>
+    /// Indique sur le collection est en lecture seule.
+    /// </summary>
+    bool ICollection<BeanPropertyDescriptor>.IsReadOnly => true;
 
     /// <summary>
     /// Retourne la description d'une propriété à partir de son nom.
@@ -108,17 +108,6 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
     }
 
     /// <summary>
-    /// Supprime une propriété de la collection.
-    /// </summary>
-    /// <param name="item">Propriété.</param>
-    /// <returns>True si la propriété a été supprimée.</returns>
-    /// <exception cref="NotSupportedException">La collection est en lecture seule.</exception>
-    bool ICollection<BeanPropertyDescriptor>.Remove(BeanPropertyDescriptor item)
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
     /// Retourne un énumerateur sur la collection.
     /// </summary>
     /// <returns>Enumerateur.</returns>
@@ -134,6 +123,17 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
     IEnumerator IEnumerable.GetEnumerator()
     {
         return _properties.GetEnumerator();
+    }
+
+    /// <summary>
+    /// Supprime une propriété de la collection.
+    /// </summary>
+    /// <param name="item">Propriété.</param>
+    /// <returns>True si la propriété a été supprimée.</returns>
+    /// <exception cref="NotSupportedException">La collection est en lecture seule.</exception>
+    bool ICollection<BeanPropertyDescriptor>.Remove(BeanPropertyDescriptor item)
+    {
+        throw new NotSupportedException();
     }
 
     /// <summary>

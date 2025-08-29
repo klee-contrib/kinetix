@@ -11,17 +11,17 @@ public enum SearchFieldCategory
     None,
 
     /// <summary>
-    /// Champ ID 
+    /// Champ ID
     /// </summary>
     Id,
 
     /// <summary>
-    /// Champ de recherche 
+    /// Champ de recherche
     /// </summary>
     Search,
 
     /// <summary>
-    /// Champ de filtrage de sécurité 
+    /// Champ de filtrage de sécurité
     /// </summary>
     Security
 }

@@ -4,33 +4,26 @@ using Kinetix.Services;
 
 namespace Kinetix.Reporting.Core.Internal.Excel;
 
-internal class ExcelBuilder : IExcelBuilder
+/// <summary>
+/// Constructeur.
+/// </summary>
+/// <param name="fileName">Nom du fichier.</param>
+/// <param name="referenceManager">ReferenceManager.</param>
+internal class ExcelBuilder(string fileName, IReferenceManager referenceManager) : IExcelBuilder
 {
-    private readonly IReferenceManager _referenceManager;
-    private readonly IXLWorkbook _workbook = new XLWorkbook();
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="fileName">Nom du fichier.</param>
-    /// <param name="referenceManager">ReferenceManager.</param>
-    public ExcelBuilder(string fileName, IReferenceManager referenceManager)
-    {
-        FileName = fileName;
-        _referenceManager = referenceManager;
-    }
+    private readonly XLWorkbook _workbook = new();
 
     /// <inheritdoc />
-    public string FileName { get; set; }
+    public string FileName { get; set; } = fileName;
 
     /// <inheritdoc cref="IExcelBuilder.AddWorksheet{T}" />
     public IWorksheetBuilder<T> AddWorksheet<T>(string name)
     {
-        return new WorksheetBuilder<T>(this, _referenceManager, _workbook.AddWorksheet(name));
+        return new WorksheetBuilder<T>(this, referenceManager, _workbook.AddWorksheet(name));
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
-    public byte[] Build(Action<IXLWorkbook> preBuildAction)
+    /// <inheritdoc cref="IExcelBuilder.Build" />
+    public byte[] Build(Action<IXLWorkbook> preBuildAction = null)
     {
         preBuildAction?.Invoke(_workbook);
 

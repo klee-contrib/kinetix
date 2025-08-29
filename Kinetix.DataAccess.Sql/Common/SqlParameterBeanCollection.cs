@@ -1,8 +1,10 @@
-﻿using System.Data;
+﻿#pragma warning disable S1699
+
+using System.Data;
 using System.Text;
 using Kinetix.Modeling;
 
-namespace Kinetix.DataAccess.Sql;
+namespace Kinetix.DataAccess.Sql.Common;
 
 /// <summary>
 /// Contient les informations nécéssaires à l'insertion et la mise à jour ensembliste des données.
@@ -12,7 +14,6 @@ public abstract class SqlParameterBeanCollection<T>
     where T : class, new()
 {
     private readonly ConnectionPool _connectionPool;
-    private readonly BeanPropertyDescriptor _insertKeyProp;
 
     /// <summary>
     /// Constructeur.
@@ -20,20 +21,16 @@ public abstract class SqlParameterBeanCollection<T>
     /// <param name="connectionPool">Pool de connexion.</param>
     /// <param name="collection">Collection d'objet.</param>
     /// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
-    public SqlParameterBeanCollection(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert)
+    protected SqlParameterBeanCollection(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert)
     {
-        Collection = collection;
         _connectionPool = connectionPool;
+        Collection = collection;
         BeanDefinition = BeanDescriptor.GetDefinition(typeof(T), true);
-        _insertKeyProp = BeanDefinition.Properties["InsertKey"];
-        if (_insertKeyProp == null)
-        {
-            throw new NotSupportedException("Le type " + BeanDefinition.BeanType + " doit définir une propriété de InsertKey.");
-        }
 
         Init();
         PopulateParamList(isInsert);
     }
+
     /// <summary>
     /// Définition du bean.
     /// </summary>

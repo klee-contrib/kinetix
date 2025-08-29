@@ -6,29 +6,16 @@ namespace Kinetix.Search.Core;
 /// <summary>
 /// Gère la réindexation des documents.
 /// </summary>
-public class IndexManager
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="logger">Logger.</param>
+/// <param name="provider">Composant injecté.</param>
+/// <param name="searchStore">Composant injecté.</param>
+/// <param name="transactionScopeManager">Composant injecté.</param>
+public class IndexManager(ILogger<IndexManager> logger, IServiceProvider provider, ISearchStore searchStore, TransactionScopeManager transactionScopeManager)
 {
-    private readonly ILogger<IndexManager> _logger;
-    private readonly IServiceProvider _provider;
-    private readonly ISearchStore _searchStore;
-    private readonly TransactionScopeManager _transactionScopeManager;
-
     private bool _waitForRefresh = true;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="logger">Logger.</param>
-    /// <param name="provider">Composant injecté.</param>
-    /// <param name="searchStore">Composant injecté.</param>
-    /// <param name="transactionScopeManager">Composant injecté.</param>
-    public IndexManager(ILogger<IndexManager> logger, IServiceProvider provider, ISearchStore searchStore, TransactionScopeManager transactionScopeManager)
-    {
-        _logger = logger;
-        _provider = provider;
-        _searchStore = searchStore;
-        _transactionScopeManager = transactionScopeManager;
-    }
 
     /// <summary>
     /// Attends le refresh de l'index lors du commit ou non. Par défaut: true.
@@ -39,7 +26,7 @@ public class IndexManager
         set
         {
             _waitForRefresh = value;
-            var context = _transactionScopeManager.ActiveScope?.GetContext<IndexingTransactionContext>();
+            var context = transactionScopeManager.ActiveScope?.GetContext<IndexingTransactionContext>();
             if (context != null)
             {
                 context.WaitForRefresh = value;
@@ -55,6 +42,6 @@ public class IndexManager
     public IndexManager<TDocument> For<TDocument>()
         where TDocument : class
     {
-        return new IndexManager<TDocument>(_logger, _provider, _searchStore, _transactionScopeManager, _waitForRefresh);
+        return new IndexManager<TDocument>(logger, provider, searchStore, transactionScopeManager, _waitForRefresh);
     }
 }

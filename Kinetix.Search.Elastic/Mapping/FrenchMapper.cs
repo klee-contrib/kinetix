@@ -9,9 +9,9 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// </summary>
 public class FrenchMapper : IElasticMapper<string>
 {
-    /// <inheritdoc cref="IElasticMapper.Map" />
+    /// <inheritdoc cref="IElasticMapper.Map{TDocument}" />
     public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-        where TDocument : class
+            where TDocument : class
     {
         if (field.Indexing == SearchFieldIndexing.FullText)
         {
@@ -20,6 +20,6 @@ public class FrenchMapper : IElasticMapper<string>
         else
         {
             throw new NotSupportedException();
-        };
+        }
     }
 }

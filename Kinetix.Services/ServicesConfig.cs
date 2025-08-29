@@ -8,17 +8,35 @@ namespace Kinetix.Services;
 /// </summary>
 public class ServicesConfig
 {
-    internal string ServiceAssemblyPrefix { get; set; }
-    internal List<Assembly> ServiceAssemblies { get; } = new List<Assembly>();
-
-    internal TimeSpan ReferenceListCacheDuration { get; private set; } = TimeSpan.FromMinutes(10);
-    internal TimeSpan StaticListCacheDuration { get; private set; } = TimeSpan.FromHours(1);
-    internal Type ReferenceNotifier { get; private set; }
-
     /// <summary>
     /// Permet de remplacer les intercepteurs posés par défaut.
     /// </summary>
     public Func<Type, Action<InterceptionOptions>> InterceptionOptions { get; set; }
+
+    /// <summary>
+    /// Préfixe d'assembly dans lequel chercher les services à enregistrer.
+    /// </summary>
+    internal string ServiceAssemblyPrefix { get; set; }
+
+    /// <summary>
+    /// Assemblies dans lesquels chercher les services.
+    /// </summary>
+    internal List<Assembly> ServiceAssemblies { get; } = [];
+
+    /// <summary>
+    /// Durée de cache des listes de référence.
+    /// </summary>
+    internal TimeSpan ReferenceListCacheDuration { get; private set; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Durée de cache des listes de référence statiques.
+    /// </summary>
+    internal TimeSpan StaticListCacheDuration { get; private set; } = TimeSpan.FromHours(1);
+
+    /// <summary>
+    /// Type a instancier pour notifier des flushs de liste de référence.
+    /// </summary>
+    internal Type ReferenceNotifier { get; private set; }
 
     /// <summary>
     /// Enregistre des assemblies à parcourir pour enregistrer des services.
@@ -56,6 +74,7 @@ public class ServicesConfig
     /// <summary>
     /// Spécifie une implémentation de notifier de flush de liste de référence.
     /// </summary>
+    /// <typeparam name="T">Type du notifier.</typeparam>
     /// <returns>Config.</returns>
     public ServicesConfig WithReferenceNotifier<T>()
         where T : IReferenceNotifier

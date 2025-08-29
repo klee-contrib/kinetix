@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 
-namespace Kinetix.DataAccess.Sql;
+namespace Kinetix.DataAccess.Sql.Common;
 
 /// <summary>
 /// Classe permettant le suivi de l'éxécution des commandes.
@@ -23,10 +23,10 @@ public abstract class SqlCommandListener : IDisposable
     /// <param name="command">Commande.</param>
     /// <param name="analytics">AnalyticsManager.</param>
     /// <param name="logger">Logger.</param>
-    public SqlCommandListener(BaseSqlCommand command, AnalyticsManager analytics, ILogger<BaseSqlCommand> logger)
+    protected SqlCommandListener(BaseSqlCommand command, AnalyticsManager analytics, ILogger<BaseSqlCommand> logger)
     {
-        Analytics = analytics;
         _command = command;
+        Analytics = analytics;
         Logger = logger;
 
         Analytics.StartProcess(_command.CommandName, "Database", _command.Connection.Database);

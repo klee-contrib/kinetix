@@ -3,7 +3,7 @@
 namespace Kinetix.Services;
 
 /// <summary>
-/// Scope définissant une transaction en cours, muni de divers contextes transactionnels 
+/// Scope définissant une transaction en cours, muni de divers contextes transactionnels
 /// (exemple : une transaction ouverte en BDD est un contexte transactionnel).
 /// </summary>
 public class ServiceScope : IDisposable
@@ -14,7 +14,7 @@ public class ServiceScope : IDisposable
 
     internal ServiceScope()
     {
-        _contexts = Array.Empty<ITransactionContext>();
+        _contexts = [];
     }
 
     internal ServiceScope(ITransactionContext[] contexts, ILogger<ServiceScope> logger, TransactionScopeManager manager)

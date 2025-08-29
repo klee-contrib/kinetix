@@ -2,17 +2,11 @@
 
 namespace Kinetix.Search.Core;
 
-internal class IndexingTransactionContextProvider : ITransactionContextProvider
+internal class IndexingTransactionContextProvider(IServiceProvider provider) : ITransactionContextProvider
 {
-    private readonly IServiceProvider _provider;
-
-    public IndexingTransactionContextProvider(IServiceProvider provider)
-    {
-        _provider = provider;
-    }
-
+    /// <inheritdoc cref="ITransactionContextProvider.Create" />
     public ITransactionContext Create()
     {
-        return new IndexingTransactionContext(_provider);
+        return new IndexingTransactionContext(provider);
     }
 }

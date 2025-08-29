@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Modeling.Exceptions;
 using Kinetix.Monitoring.Core;
 using Microsoft.Data.SqlClient;
@@ -9,22 +10,17 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// <summary>
 /// Classe permettant le suivi de l'éxécution des commandes.
 /// </summary>
-internal class SqlServerCommandListener : SqlCommandListener
+/// <remarks>
+/// Crée une nouvelle instance.
+/// </remarks>
+/// <param name="command">Commande.</param>
+/// <param name="analytics">AnalyticsManager.</param>
+/// <param name="logger">Logger.</param>
+internal class SqlServerCommandListener(BaseSqlCommand command, AnalyticsManager analytics, ILogger<BaseSqlCommand> logger) : SqlCommandListener(command, analytics, logger)
 {
     private const byte TimeOutErrorClass = 11;
     private const int TimeOutErrorCode1 = -2146232060;
     private const int TimeOutErrorCode2 = -2;
-
-    /// <summary>
-    /// Crée une nouvelle instance.
-    /// </summary>
-    /// <param name="command">Commande.</param>
-    /// <param name="analytics">AnalyticsManager.</param>
-    /// <param name="logger">Logger.</param>
-    public SqlServerCommandListener(BaseSqlCommand command, AnalyticsManager analytics, ILogger<BaseSqlCommand> logger)
-        : base(command, analytics, logger)
-    {
-    }
 
     /// <inheritdoc />
     public override Exception HandleException(DbException exception)

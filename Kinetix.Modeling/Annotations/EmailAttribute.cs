@@ -7,8 +7,12 @@ namespace Kinetix.Modeling.Annotations;
 /// <summary>
 /// Attribut de validation lié aux emails.
 /// </summary>
+/// <remarks>
+/// Crée une nouvelle instance.
+/// </remarks>
+/// <param name="maximumLength">Longueur maximum autorisée pour l'email.</param>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-public sealed class EmailAttribute : StringLengthAttribute
+public sealed class EmailAttribute(int maximumLength) : StringLengthAttribute(maximumLength)
 {
     /// <summary>
     /// Chaine d'expression régulière de validation des emails.
@@ -18,13 +22,17 @@ public sealed class EmailAttribute : StringLengthAttribute
     /// <summary>
     /// Expression régulière de validation des emails.
     /// </summary>
-    private readonly Regex _mailRegex = new Regex(_strRegex);
+    private readonly Regex _mailRegex = new(_strRegex);
 
     /// <summary>
-    /// Crée une nouvelle instance.
+    /// Retourne le message d'erreur.
     /// </summary>
-    /// <param name="maximumLength">Longueur maximum autorisée pour l'email.</param>
-    public EmailAttribute(int maximumLength) : base(maximumLength) { }
+    /// <param name="name">Nom du champ.</param>
+    /// <returns>Message d'erreur.</returns>
+    public override string FormatErrorMessage(string name)
+    {
+        return string.Format(CultureInfo.CurrentCulture, SR.ErrorConstraintEmail, MaximumLength);
+    }
 
     /// <summary>
     /// Retourne si l'objet valide la contrainte.
@@ -35,15 +43,5 @@ public sealed class EmailAttribute : StringLengthAttribute
     {
         var strValue = value as string;
         return base.IsValid(value) && (strValue == null || _mailRegex.IsMatch(strValue));
-    }
-
-    /// <summary>
-    /// Retourne le message d'erreur.
-    /// </summary>
-    /// <param name="name">Nom du champ.</param>
-    /// <returns>Message d'erreur.</returns>
-    public override string FormatErrorMessage(string name)
-    {
-        return string.Format(CultureInfo.CurrentCulture, SR.ErrorConstraintEmail, MaximumLength);
     }
 }

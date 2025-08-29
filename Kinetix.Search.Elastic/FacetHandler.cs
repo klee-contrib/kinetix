@@ -1,4 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿#pragma warning disable S3241
+
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
 using Nest;
@@ -10,19 +12,13 @@ using static ElasticQueryBuilder;
 /// <summary>
 /// Handler de facette.
 /// </summary>
-public class FacetHandler
+/// <remarks>
+/// Créé une nouvelle instance de StandardFacetHandler.
+/// </remarks>
+/// <param name="documentDescriptor">Descripteur de documents.</param>
+public class FacetHandler(DocumentDescriptor documentDescriptor)
 {
     private const string MissingFacetPrefix = "_Missing";
-    private readonly DocumentDescriptor _documentDescriptor;
-
-    /// <summary>
-    /// Créé une nouvelle instance de StandardFacetHandler.
-    /// </summary>
-    /// <param name="documentDescriptor">Descripteur de documents.</param>
-    public FacetHandler(DocumentDescriptor documentDescriptor)
-    {
-        _documentDescriptor = documentDescriptor;
-    }
 
     /// <summary>
     /// Construit le filtre pour une facette multi sélectionnable.
@@ -31,7 +27,7 @@ public class FacetHandler
     /// <param name="input">Entrée de facette.</param>
     /// <param name="facetDef">Définition de facette.</param>
     /// <param name="isMultiValued">Si multi valué.</param>
-    /// <returns></returns>
+    /// <returns>QueryDescriptor.</returns>
     public Func<QueryContainerDescriptor<TDocument>, QueryContainer>? BuildMultiSelectableFilter<TDocument>(FacetInput input, IFacetDefinition<TDocument> facetDef, bool isMultiValued)
          where TDocument : class
     {
@@ -58,6 +54,7 @@ public class FacetHandler
     /// <param name="facet">Sélection de facette.</param>
     /// <param name="exclude">Exclut les valeurs pour lesquelles la facette correspond au lieu de les inclure.</param>
     /// <param name="facetDef">Définition de la facette.</param>
+    /// <returns>QueryDescriptor.</returns>
     public Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery<TDocument>(string facet, bool exclude, IFacetDefinition<TDocument> facetDef)
         where TDocument : class
     {
@@ -81,7 +78,7 @@ public class FacetHandler
     public void DefineAggregation<TDocument>(AggregationContainerDescriptor<TDocument> agg, IFacetDefinition<TDocument> facet, ICollection<IFacetDefinition<TDocument>> facetList, IEnumerable<IDictionary<string, FacetInput>> inputFacetsList)
         where TDocument : class
     {
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
         AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
         {
@@ -115,7 +112,7 @@ public class FacetHandler
             }
 
             return aa;
-        };
+        }
 
         /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
         var filtersList = inputFacetsList
@@ -161,7 +158,7 @@ public class FacetHandler
     /// <returns>Sortie des facettes.</returns>
     public ICollection<FacetItem> ExtractFacetItemList<TDocument>(AggregateDictionary aggs, IFacetDefinition<TDocument> facetDef)
     {
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
         var propType = def.Fields[facetDef.FieldName].PropertyType;
         var isDate = propType == typeof(DateTime) || propType == typeof(DateTime?);
 
@@ -172,7 +169,7 @@ public class FacetHandler
         {
             var bucket = aggs.Filter(facetDef.Code);
 
-            // Si on a un filtre sur la facette, alors le premier bucket qu'on a récupère c'est celui là. 
+            // Si on a un filtre sur la facette, alors le premier bucket qu'on a récupère c'est celui là.
             // Celui qui nous intéresse (avec les vrais résultats) c'est donc le sous-bucket.
             // On distingue les cas en regardant s'il y a un sous-bucket ou non.
             var subBucket = bucket.Filter(facetDef.Code);
@@ -195,7 +192,7 @@ public class FacetHandler
             {
                 // Pour une raison inconnue, ES renvoie un timestamp au lieu de la date dans son format original...
                 var code = isDate
-                    ? new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)
+                    ? DateTime.UnixEpoch
                         .AddMilliseconds(long.Parse(b.Key))
                         .ToString("yyyy-MM-ddTHH:mm:ssZ")
                     : b.Key;

@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using Kinetix.DataAccess.Sql.Common;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Server;
 
@@ -7,17 +8,12 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// <summary>
 /// Analyseur de requête SQL Dynamique.
 /// </summary>
-internal class SqlServerCommandParser : CommandParser
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="sqlManager">Composant injecté.</param>
+internal class SqlServerCommandParser(SqlManager sqlManager) : CommandParser(sqlManager)
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="sqlManager">Composant injecté.</param>
-    public SqlServerCommandParser(SqlManager sqlManager)
-        : base(sqlManager)
-    {
-    }
-
     /// <inheritdoc />
     protected override bool IsNull(object parameter)
     {

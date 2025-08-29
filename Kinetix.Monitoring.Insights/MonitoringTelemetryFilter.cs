@@ -8,20 +8,13 @@ namespace Kinetix.Monitoring.Insights;
 /// <summary>
 /// Vire la télémétrie AI des dépendances sans opération parente (ex : ping des batchs).
 /// </summary>
-public class MonitoringTelemetryFilter : ITelemetryProcessor
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="next">Processeur suivant.</param>
+public class MonitoringTelemetryFilter(ITelemetryProcessor next) : ITelemetryProcessor
 {
-    private readonly ITelemetryProcessor _next;
-
-    private Regex sqlServerRegex = new(".+ \\| .+");
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="next">Processeur suivant.</param>
-    public MonitoringTelemetryFilter(ITelemetryProcessor next)
-    {
-        _next = next;
-    }
+    private readonly Regex _sqlServerRegex = new(".+ \\| .+");
 
     /// <inheritdoc cref="ITelemetryProcessor.Process" />
     public void Process(ITelemetry item)
@@ -40,7 +33,7 @@ public class MonitoringTelemetryFilter : ITelemetryProcessor
                 return;
             }
 
-            if (dt.Type == "SQL" && sqlServerRegex.IsMatch(dt.Target))
+            if (dt.Type == "SQL" && _sqlServerRegex.IsMatch(dt.Target))
             {
                 return;
             }
@@ -66,14 +59,11 @@ public class MonitoringTelemetryFilter : ITelemetryProcessor
         }
 
         // Filtre les exceptions depuis le middleware Analytics (elles sont déjà remontées par ailleurs).
-        if (item is ExceptionTelemetry et && et.Properties.TryGetValue("CategoryName", out var category))
+        if (item is ExceptionTelemetry et && et.Properties.TryGetValue("CategoryName", out var category) && category == "Kinetix.Services.Service")
         {
-            if (category == "Kinetix.Services.Service")
-            {
-                return;
-            }
+            return;
         }
 
-        _next.Process(item);
+        next.Process(item);
     }
 }

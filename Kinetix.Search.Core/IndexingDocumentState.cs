@@ -1,4 +1,6 @@
-﻿namespace Kinetix.Search.Core;
+﻿#pragma warning disable SA1649, S2326
+
+namespace Kinetix.Search.Core;
 
 internal interface IIndexingDocumentState
 {
@@ -12,7 +14,9 @@ internal class IndexingDocumentState<TDocument> : IIndexingDocumentState
     where TDocument : class
 {
     public HashSet<object> IdsToDelete { get; } = [];
+
     public HashSet<object> IdsToIndex { get; } = [];
+
     public bool Reindex { get; set; } = false;
 
     /// <summary>

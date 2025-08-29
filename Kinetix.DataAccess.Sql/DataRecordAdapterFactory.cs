@@ -13,11 +13,10 @@ internal class DataRecordAdapterFactory
 {
     private const string _assemblyName = "Kinetix.Broker.DataRecordAdapters";
 
-    private static readonly Type[] _abstractReadMethodParams = new Type[] { typeof(IDataRecord), typeof(int) };
-    private static readonly Type[] _constructorParams = Array.Empty<Type>();
-    private static readonly Type[] _readMethodParams = new Type[] { typeof(object), typeof(IDataRecord) };
+    private static readonly Type[] _abstractReadMethodParams = [typeof(IDataRecord), typeof(int)];
+    private static readonly Type[] _constructorParams = [];
+    private static readonly Type[] _readMethodParams = [typeof(object), typeof(IDataRecord)];
 
-    private readonly AssemblyBuilder _assemblyBuilder;
     private readonly ModuleBuilder _dynamicModule;
     private readonly MethodInfo _readBooleanMethodInfo;
     private readonly MethodInfo _readByteMethodInfo;
@@ -43,8 +42,8 @@ internal class DataRecordAdapterFactory
     {
         // Création du module.
         var name = new AssemblyName { Name = _assemblyName };
-        _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
-        _dynamicModule = _assemblyBuilder.DefineDynamicModule(_assemblyName);
+        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
+        _dynamicModule = assemblyBuilder.DefineDynamicModule(_assemblyName);
         _readBooleanMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadBoolean), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
         _readNonNullableBooleanMethodIndo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadNonNullableBoolean), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
         _readByteMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadByte), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
@@ -79,7 +78,7 @@ internal class DataRecordAdapterFactory
             "Kinetix.Broker.DataRecordAdapters.Adapter" + ++_adapterNum,
             TypeAttributes.Public,
             typeof(AbstractDataReaderAdapter),
-            new Type[] { adapterContractType });
+            [adapterContractType]);
 
         CreateReadMethod(tb, record, t);
 
@@ -291,7 +290,7 @@ internal class DataRecordAdapterFactory
         }
         else
         {
-            return _readObjectMethodInfo.MakeGenericMethod(new[] { type });
+            return _readObjectMethodInfo.MakeGenericMethod(type);
         }
     }
 }

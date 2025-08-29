@@ -38,7 +38,6 @@ public class BeanDefinition
         }
 
         PrimaryKey ??= properties.First();
-
     }
 
     /// <summary>
@@ -109,6 +108,20 @@ public class BeanDefinition
     /// </summary>
     /// <param name="bean">Bean à vérifier.</param>
     /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
+    internal void Check(object bean, IEnumerable<string> propertiesToCheck = null)
+    {
+        var errors = GetErrors(bean, propertiesToCheck);
+        if (errors.Any())
+        {
+            throw new BusinessException(errors);
+        }
+    }
+
+    /// <summary>
+    /// Vérifie les contraintes sur un bean.
+    /// </summary>
+    /// <param name="bean">Bean à vérifier.</param>
+    /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
     /// <returns>Les erreurs.</returns>
     internal ErrorMessageCollection GetErrors(object bean, IEnumerable<string> propertiesToCheck = null)
     {
@@ -137,19 +150,5 @@ public class BeanDefinition
         }
 
         return errors;
-    }
-
-    /// <summary>
-    /// Vérifie les contraintes sur un bean.
-    /// </summary>
-    /// <param name="bean">Bean à vérifier.</param>
-    /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
-    internal void Check(object bean, IEnumerable<string> propertiesToCheck = null)
-    {
-        var errors = GetErrors(bean, propertiesToCheck);
-        if (errors.Any())
-        {
-            throw new BusinessException(errors);
-        }
     }
 }

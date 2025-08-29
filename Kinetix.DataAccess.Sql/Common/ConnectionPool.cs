@@ -2,24 +2,17 @@
 using System.Reflection;
 using Kinetix.Services;
 
-namespace Kinetix.DataAccess.Sql;
+namespace Kinetix.DataAccess.Sql.Common;
 
 /// <summary>
 /// Pool de connections SQL de base.
 /// </summary>
-public abstract class ConnectionPool
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="transactionScopeManager">Composant injecté.</param>
+public abstract class ConnectionPool(TransactionScopeManager transactionScopeManager)
 {
-    private readonly TransactionScopeManager _transactionScopeManager;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="transactionScopeManager">Composant injecté.</param>
-    public ConnectionPool(TransactionScopeManager transactionScopeManager)
-    {
-        _transactionScopeManager = transactionScopeManager;
-    }
-
     /// <summary>
     /// Crée une nouvelle commande SQL.
     /// </summary>
@@ -62,7 +55,7 @@ public abstract class ConnectionPool
     /// <returns>La connection.</returns>
     protected IDbConnection GetConnection(string datasourceName)
     {
-        var transactionContext = _transactionScopeManager.ActiveScope?.GetContext<SqlTransactionContext>();
+        var transactionContext = transactionScopeManager.ActiveScope?.GetContext<SqlTransactionContext>();
 
         if (transactionContext == null)
         {

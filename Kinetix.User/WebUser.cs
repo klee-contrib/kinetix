@@ -6,36 +6,28 @@ namespace Kinetix.User;
 /// <summary>
 /// Implémentation de ICurrentUser via HttpContext.
 /// </summary>
-public class WebUser : ICurrentUser
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="httpContext">HttpContext.</param>
+public class WebUser(HttpContext httpContext) : ICurrentUser
 {
-    private readonly HttpContext _httpContext;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="httpContext">HttpContext.</param>
-    public WebUser(HttpContext httpContext)
-    {
-        _httpContext = httpContext;
-    }
-
     /// <inheritdoc cref="ICurrentUser.Login" />
-    public string Login => _httpContext.User.Identity.Name;
+    public string Login => httpContext.User.Identity.Name;
 
     /// <inheritdoc cref="ICurrentUser.Roles" />
     public IEnumerable<string> Roles =>
-        _httpContext.User.Identity is not ClaimsIdentity identity
+        httpContext.User.Identity is not ClaimsIdentity identity
             ? null
             : identity
                 .FindAll(identity.RoleClaimType)
                 .Where(c => c.Issuer == ClaimsIdentity.DefaultIssuer)
                 .Select(c => c.Value);
 
-
     /// <inheritdoc cref="ICurrentUser.GetString" />
     public string GetString(string claimType)
     {
-        if (_httpContext.User.Identity is not ClaimsIdentity identity)
+        if (httpContext.User.Identity is not ClaimsIdentity identity)
         {
             return null;
         }
@@ -47,7 +39,7 @@ public class WebUser : ICurrentUser
     /// <inheritdoc cref="ICurrentUser.GetStrings" />
     public IEnumerable<string> GetStrings(string claimType)
     {
-        return _httpContext.User.Identity is not ClaimsIdentity identity
+        return httpContext.User.Identity is not ClaimsIdentity identity
             ? null
             : identity.FindAll(claimType).Select(x => x.Value);
     }
@@ -55,6 +47,6 @@ public class WebUser : ICurrentUser
     /// <inheritdoc cref="ICurrentUser.IsInRole" />
     public bool IsInRole(string role)
     {
-        return _httpContext.User.IsInRole(role);
+        return httpContext.User.IsInRole(role);
     }
 }

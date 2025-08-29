@@ -1,4 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿#pragma warning disable S3241
+
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
 using Kinetix.Search.Models.Annotations;
@@ -60,7 +62,7 @@ public static class AdvancedQueryUtil
 
         /* Pagination (si plusieurs critères non cohérents, on prend le max). */
         var skip = input.SearchCriteria.Max(sc => sc.Skip);
-        var size = hasGroup ? 0 : input.SearchCriteria.Max(sc => sc.Top) ?? 500; // TODO Paramétrable ?
+        var size = hasGroup ? 0 : input.SearchCriteria.Max(sc => sc.Top) ?? 500;
 
         /* Source filtering */
         var sourceFields = input.SearchCriteria.SelectMany(sc => sc.Criteria?.SourceFields ?? Array.Empty<string>()).Distinct().ToArray();
@@ -112,7 +114,7 @@ public static class AdvancedQueryUtil
                 return x;
             });
 
-            IHighlight highlightSelector(HighlightDescriptor<TDocument> h) =>
+            IHighlight HighlightSelector(HighlightDescriptor<TDocument> h) =>
                 h.Fields(def.SearchFields.Select(f => (Func<HighlightFieldDescriptor<TDocument>, IHighlightField>)(h => h.Field(f.FieldName))).ToArray());
 
             /* Aggrégations. */
@@ -128,6 +130,7 @@ public static class AdvancedQueryUtil
                             facetHandler.DefineAggregation(a, facetDef, facetDefList, input.SearchCriteria.Select(sc => sc.Facets));
                         }
                     }
+
                     if (hasGroup)
                     {
                         AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
@@ -143,8 +146,9 @@ public static class AdvancedQueryUtil
 
                                         if (input.Highlights)
                                         {
-                                            x.Highlight(highlightSelector);
+                                            x.Highlight(HighlightSelector);
                                         }
+
                                         return x;
                                     })))
                                 /* Groupement pour les valeurs nulles */
@@ -156,7 +160,7 @@ public static class AdvancedQueryUtil
 
                                         if (input.Highlights)
                                         {
-                                            x.Highlight(highlightSelector);
+                                            x.Highlight(HighlightSelector);
                                         }
 
                                         return x;
@@ -184,7 +188,7 @@ public static class AdvancedQueryUtil
 
             if (input.Highlights)
             {
-                s.Highlight(highlightSelector);
+                s.Highlight(HighlightSelector);
             }
 
             return s;
@@ -197,7 +201,7 @@ public static class AdvancedQueryUtil
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
     /// <param name="facetHandler">Handler de facette.</param>
-    /// <returns></returns>
+    /// <returns>QueryDescriptor.</returns>
     public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterAndPostFilterQuery<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
@@ -207,6 +211,31 @@ public static class AdvancedQueryUtil
     {
         var (_, postFilterQuery) = GetPostFilterSubQuery(input, facetHandler, def);
         return BuildMustQuery(GetFilterQuery(def, input, facetHandler), postFilterQuery);
+    }
+
+    /// <summary>
+    /// Obtient le nom du champ pour le groupement.
+    /// </summary>
+    /// <param name="input">Input de la recherche.</param>
+    /// <returns>Nom du champ.</returns>
+    public static string? GetGroupFieldName<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+        where TDocument : class
+        where TCriteria : ICriteria
+    {
+        // On groupe par le premier groupe renseigné.
+        var groupFacetName = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.Group))?.Group;
+
+        /* Pas de groupement. */
+        if (string.IsNullOrEmpty(groupFacetName))
+        {
+            return null;
+        }
+
+        /* Recherche de la facette de groupement. */
+        var facetDef = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.Code == groupFacetName);
+        return facetDef == null
+            ? throw new ElasticException($@"No facet ""{groupFacetName}"" to group on.")
+            : facetDef.FieldName;
     }
 
     /// <summary>
@@ -248,7 +277,7 @@ public static class AdvancedQueryUtil
             var criteria = sc.Criteria;
 
             /* Normalisation des paramètres. */
-            if (criteria != null && (criteria.Query == "*" || string.IsNullOrWhiteSpace(criteria.Query)))
+            if (criteria is not null && (criteria.Query == "*" || string.IsNullOrWhiteSpace(criteria.Query)))
             {
                 criteria.Query = null;
             }
@@ -275,7 +304,7 @@ public static class AdvancedQueryUtil
                     ? field.GetValue(input.AdditionalCriteria)
                     : null;
 
-                if (sc.Criteria != null)
+                if (sc.Criteria is not null)
                 {
                     propValue ??= criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(sc.Criteria);
                 }
@@ -333,7 +362,7 @@ public static class AdvancedQueryUtil
             /* Concatène en "ET" toutes les sous-requêtes de facettes. */
             var monoValuedFacetsSubQuery = BuildAndQuery(facetSubQueryList);
 
-            return BuildMustQuery([textSubQuery, filterSubQuery, monoValuedFacetsSubQuery]);
+            return BuildMustQuery(textSubQuery, filterSubQuery, monoValuedFacetsSubQuery);
         })
         .ToArray());
 
@@ -347,7 +376,7 @@ public static class AdvancedQueryUtil
     /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="docDef">Document.</param>
     /// <returns>Sous-requête.</returns>
-    private static (bool hasPostFilter, Func<QueryContainerDescriptor<TDocument>, QueryContainer> query) GetPostFilterSubQuery<TDocument, TCriteria>(
+    private static (bool HasPostFilter, Func<QueryContainerDescriptor<TDocument>, QueryContainer> Query) GetPostFilterSubQuery<TDocument, TCriteria>(
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
         DocumentDefinition docDef)
@@ -365,7 +394,7 @@ public static class AdvancedQueryUtil
                 sc.Facets.Select(f =>
                 {
                     /* Récupère la définition de la facette multi-sélectionnable. */
-                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable == true && x.Code == f.Key);
+                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable && x.Code == f.Key);
 
                     return def == null
                         ? null!
@@ -379,31 +408,6 @@ public static class AdvancedQueryUtil
         return (
             facetSubQueriesList.Any(),
             BuildOrQuery(facetSubQueriesList.Select(BuildAndQuery).ToArray()));
-    }
-
-    /// <summary>
-    /// Obtient le nom du champ pour le groupement.
-    /// </summary>
-    /// <param name="input">Input de la recherche.</param>
-    /// <returns>Nom du champ.</returns>
-    public static string? GetGroupFieldName<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-        where TDocument : class
-        where TCriteria : ICriteria
-    {
-        // On groupe par le premier groupe renseigné.
-        var groupFacetName = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.Group))?.Group;
-
-        /* Pas de groupement. */
-        if (string.IsNullOrEmpty(groupFacetName))
-        {
-            return null;
-        }
-
-        /* Recherche de la facette de groupement. */
-        var facetDef = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.Code == groupFacetName);
-        return facetDef == null
-            ? throw new ElasticException($@"No facet ""{groupFacetName}"" to group on.")
-            : facetDef.FieldName;
     }
 
     /// <summary>

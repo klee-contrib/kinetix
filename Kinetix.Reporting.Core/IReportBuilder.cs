@@ -11,6 +11,6 @@ public interface IReportBuilder
     /// Crée un rapport Excel.
     /// </summary>
     /// <param name="fileName">Nom du fichier.</param>
-    /// <returns></returns>
+    /// <returns>ExcelBuilder.</returns>
     IExcelBuilder CreateExcelReport(string fileName);
 }

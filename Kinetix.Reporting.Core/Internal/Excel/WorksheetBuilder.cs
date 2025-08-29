@@ -9,44 +9,35 @@ using Kinetix.Services;
 
 namespace Kinetix.Reporting.Core.Internal.Excel;
 
-internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
+/// <summary>
+/// Constructeur.
+/// </summary>
+/// <param name="referenceManager">ReferenceManager.</param>
+/// <param name="excelBuilder">ExcelBuilder.</param>
+/// <param name="worksheet">Worksheet.</param>
+/// <typeparam name="T">Type de la ligne du Excel.</typeparam>
+internal class WorksheetBuilder<T>(ExcelBuilder excelBuilder, IReferenceManager referenceManager, IXLWorksheet worksheet) : IWorksheetBuilder<T>
 {
-    private readonly IList<(string label, Expression<Func<T, object>> selector)> _columns = new List<(string label, Expression<Func<T, object>> selector)>();
-    private readonly IExcelBuilder _excelBuilder;
-    private readonly IReferenceManager _referenceManager;
-    private readonly IXLWorksheet _worksheet;
-
+    private readonly List<(string Label, Expression<Func<T, object>> Selector)> _columns = [];
+    private readonly IExcelBuilder _excelBuilder = excelBuilder;
     private IEnumerable<T> _data;
     private IAsyncEnumerable<T> _dataAsync;
     private int _maxResults;
     private bool _transpose = false;
 
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="referenceManager">ReferenceManager.</param>
-    /// <param name="excelBuilder">ExcelBuilder.</param>
-    /// <param name="worksheet">Worksheet.</param>
-    public WorksheetBuilder(ExcelBuilder excelBuilder, IReferenceManager referenceManager, IXLWorksheet worksheet)
-    {
-        _excelBuilder = excelBuilder;
-        _referenceManager = referenceManager;
-        _worksheet = worksheet;
-    }
-
     /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
-    public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction)
+    public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction = null)
     {
         for (var i = 0; i < _columns.Count; i++)
         {
             var (label, _) = _columns[i];
             if (_transpose)
             {
-                _worksheet.Cell(i + 1, 1).Value = label;
+                worksheet.Cell(i + 1, 1).Value = label;
             }
             else
             {
-                _worksheet.Cell(1, i + 1).Value = label;
+                worksheet.Cell(1, i + 1).Value = label;
             }
         }
 
@@ -83,17 +74,17 @@ internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
                 }
             }
 
-            return (Action<T, int>)((T item, int j) =>
+            return (Action<T, int>)((item, j) =>
             {
                 var cell = _transpose
-                    ? _worksheet.Cell(i + 1, j)
-                    : _worksheet.Cell(j, i + 1);
+                    ? worksheet.Cell(i + 1, j)
+                    : worksheet.Cell(j, i + 1);
 
                 var value = selector.Compile()(item);
 
                 if (referenceType != null)
                 {
-                    cell.SetValue(_referenceManager.GetReferenceValue(referenceType, value));
+                    cell.SetValue(referenceManager.GetReferenceValue(referenceType, value));
                 }
                 else if (booleanFormat != default && value is bool b)
                 {
@@ -151,12 +142,12 @@ internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
             }
         }
 
-        _worksheet.ColumnsUsed().AdjustToContents();
+        worksheet.ColumnsUsed().AdjustToContents();
         if (postBuildAction != null)
         {
-            await postBuildAction(_worksheet);
-
+            await postBuildAction(worksheet);
         }
+
         return _excelBuilder;
     }
 
@@ -187,9 +178,9 @@ internal class WorksheetBuilder<T> : IWorksheetBuilder<T>
     }
 
     /// <inheritdoc cref="IWorksheetBuilder{T}.Data(IAsyncEnumerable{T})" />
-    public IWorksheetBuilder<T> Data(IAsyncEnumerable<T> dataAsync)
+    public IWorksheetBuilder<T> Data(IAsyncEnumerable<T> data)
     {
-        _dataAsync = dataAsync;
+        _dataAsync = data;
         return this;
     }
 

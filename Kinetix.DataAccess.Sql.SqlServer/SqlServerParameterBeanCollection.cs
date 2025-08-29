@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Modeling;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Server;
@@ -10,7 +11,13 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// Contient les informations nécéssaires à l'insertion et la mise à jour ensembliste des données.
 /// </summary>
 /// <typeparam name="T">Type du store.</typeparam>
-internal class SqlServerParameterBeanCollection<T> : SqlParameterBeanCollection<T>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="connectionPool">Pool de connexion.</param>
+/// <param name="collection">Collection d'objet.</param>
+/// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
+internal class SqlServerParameterBeanCollection<T>(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert) : SqlParameterBeanCollection<T>(connectionPool, collection, isInsert)
     where T : class, new()
 {
     private readonly List<SqlMetaData> _metadataList = new();
@@ -18,17 +25,6 @@ internal class SqlServerParameterBeanCollection<T> : SqlParameterBeanCollection<
     private List<SqlDataRecord> _dataRecordList;
     private BeanPropertyDescriptor _insertKeyProp;
     private string _typeName;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="connectionPool">Pool de connexion.</param>
-    /// <param name="collection">Collection d'objet.</param>
-    /// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
-    public SqlServerParameterBeanCollection(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert)
-        : base(connectionPool, collection, isInsert)
-    {
-    }
 
     /// <inheritdoc />
     protected override void Init()

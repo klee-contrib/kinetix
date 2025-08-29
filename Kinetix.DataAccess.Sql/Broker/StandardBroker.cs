@@ -7,23 +7,14 @@ namespace Kinetix.DataAccess.Sql.Broker;
 /// La gestion des transactions est prise en charge par ce broker.
 /// </summary>
 /// <typeparam name="T">Type du bean.</typeparam>
-public class StandardBroker<T> : IBroker<T>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="transactionScopeManager">Manager de transactions.</param>
+/// <param name="store">Store.</param>
+public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, IStore<T> store) : IBroker<T>
     where T : class, new()
 {
-    private readonly IStore<T> _store;
-    private readonly TransactionScopeManager _transactionScopeManager;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="transactionScopeManager">Manager de transactions.</param>
-    /// <param name="store">Store.</param>
-    public StandardBroker(TransactionScopeManager transactionScopeManager, IStore<T> store)
-    {
-        _store = store;
-        _transactionScopeManager = transactionScopeManager;
-    }
-
     /// <summary>
     /// Vérifie si au moins un objet dans la collection est utilisé.
     /// </summary>
@@ -32,7 +23,7 @@ public class StandardBroker<T> : IBroker<T>
     /// <returns>True si au moins un objet est utilisé.</returns>
     public bool AreUsed(ICollection<int> primaryKeys, ICollection<string> tablesToIgnore = null)
     {
-        return _store.AreUsed(primaryKeys, tablesToIgnore);
+        return store.AreUsed(primaryKeys, tablesToIgnore);
     }
 
     /// <summary>
@@ -41,13 +32,10 @@ public class StandardBroker<T> : IBroker<T>
     /// <param name="primaryKey">Clef primaire de l'objet.</param>
     public virtual void Delete(object primaryKey)
     {
-        if (primaryKey == null)
-        {
-            throw new ArgumentNullException(nameof(primaryKey));
-        }
+        ArgumentNullException.ThrowIfNull(primaryKey);
 
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        _store.Remove(primaryKey);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        store.Remove(primaryKey);
         tx.Complete();
     }
 
@@ -66,13 +54,10 @@ public class StandardBroker<T> : IBroker<T>
     /// <param name="criteria">Critères de suppression.</param>
     public virtual void DeleteAllByCriteria(FilterCriteria criteria)
     {
-        if (criteria == null)
-        {
-            throw new ArgumentNullException(nameof(criteria));
-        }
+        ArgumentNullException.ThrowIfNull(criteria);
 
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        _store.RemoveAllByCriteria(criteria);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        store.RemoveAllByCriteria(criteria);
         tx.Complete();
     }
 
@@ -82,10 +67,7 @@ public class StandardBroker<T> : IBroker<T>
     /// <param name="primaryKeys">Clef primaires des objets.</param>
     public virtual void DeleteCollection(ICollection<int> primaryKeys)
     {
-        if (primaryKeys == null)
-        {
-            throw new ArgumentNullException(nameof(primaryKeys));
-        }
+        ArgumentNullException.ThrowIfNull(primaryKeys);
 
         foreach (object primaryKey in primaryKeys)
         {
@@ -100,13 +82,10 @@ public class StandardBroker<T> : IBroker<T>
     /// <returns>Bean.</returns>
     public virtual T Get(object primaryKey)
     {
-        if (primaryKey == null)
-        {
-            throw new ArgumentNullException(nameof(primaryKey));
-        }
+        ArgumentNullException.ThrowIfNull(primaryKey);
 
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var bean = _store.Load(primaryKey);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var bean = store.Load(primaryKey);
         tx.Complete();
         return bean;
     }
@@ -118,8 +97,8 @@ public class StandardBroker<T> : IBroker<T>
     /// <returns>Collection.</returns>
     public virtual IList<T> GetAll(QueryParameter queryParameter = null)
     {
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var coll = _store.LoadAll(queryParameter);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var coll = store.LoadAll(queryParameter);
         tx.Complete();
         return coll;
     }
@@ -133,8 +112,8 @@ public class StandardBroker<T> : IBroker<T>
     /// <returns>Collection.</returns>
     public virtual IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter queryParameter = null)
     {
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var coll = _store.LoadAllByCriteria(criteria, queryParameter);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var coll = store.LoadAllByCriteria(criteria, queryParameter);
         tx.Complete();
         return coll;
     }
@@ -153,8 +132,8 @@ public class StandardBroker<T> : IBroker<T>
     /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
     public virtual T GetByCriteria(FilterCriteria criteria)
     {
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var value = _store.LoadByCriteria(criteria);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var value = store.LoadByCriteria(criteria);
         tx.Complete();
         return value;
     }
@@ -167,16 +146,17 @@ public class StandardBroker<T> : IBroker<T>
     /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
     public virtual T GetByCriteria(T criteria)
     {
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var value = _store.LoadByCriteria(new FilterCriteria(criteria));
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var value = store.LoadByCriteria(new FilterCriteria(criteria));
         tx.Complete();
         return value;
     }
 
+    /// <inheritdoc cref="IBroker{T}.Insert" />
     public object Insert(T bean, ColumnSelector columnSelector = null)
     {
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var result = _store.Put(bean, forceInsert: true, columnSelector);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var result = store.Put(bean, forceInsert: true, columnSelector);
         tx.Complete();
         return result;
     }
@@ -188,13 +168,10 @@ public class StandardBroker<T> : IBroker<T>
     /// <returns>Valeurs insérées.</returns>
     public ICollection<T> InsertAll(ICollection<T> values)
     {
-        if (values == null)
-        {
-            throw new ArgumentNullException(nameof(values));
-        }
+        ArgumentNullException.ThrowIfNull(values);
 
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var result = _store.PutAll(values);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var result = store.PutAll(values);
         tx.Complete();
         return result;
     }
@@ -207,7 +184,7 @@ public class StandardBroker<T> : IBroker<T>
     /// <returns>True si l'objet est utilisé.</returns>
     public bool IsUsed(object primaryKey, ICollection<string> tablesToIgnore = null)
     {
-        return _store.IsUsed(primaryKey, tablesToIgnore);
+        return store.IsUsed(primaryKey, tablesToIgnore);
     }
 
     /// <summary>
@@ -216,15 +193,12 @@ public class StandardBroker<T> : IBroker<T>
     /// <param name="bean">Bean à enregistrer.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou ignorer.</param>
     /// <returns>Clef primaire.</returns>
-    public virtual object Save(T bean, ColumnSelector columnSelector)
+    public virtual object Save(T bean, ColumnSelector columnSelector = null)
     {
-        if (bean == null)
-        {
-            throw new ArgumentNullException(nameof(bean));
-        }
+        ArgumentNullException.ThrowIfNull(bean);
 
-        using var tx = _transactionScopeManager.EnsureTransaction();
-        var primaryKey = _store.Put(bean, forceInsert: false, columnSelector);
+        using var tx = transactionScopeManager.EnsureTransaction();
+        var primaryKey = store.Put(bean, forceInsert: false, columnSelector);
         tx.Complete();
         return primaryKey;
     }
@@ -237,15 +211,12 @@ public class StandardBroker<T> : IBroker<T>
     /// <exception cref="ArgumentException">Si la collection n'est pas composée d'objets implémentant l'interface IBeanState.</exception>
     public virtual void SaveAll(ICollection<T> values, ColumnSelector columnSelector = null)
     {
-        if (values == null)
-        {
-            throw new ArgumentNullException(nameof(values));
-        }
+        ArgumentNullException.ThrowIfNull(values);
 
-        using var tx = _transactionScopeManager.EnsureTransaction();
+        using var tx = transactionScopeManager.EnsureTransaction();
         foreach (var value in values)
         {
-            _store.Put(value, forceInsert: false, columnSelector);
+            store.Put(value, forceInsert: false, columnSelector);
         }
 
         tx.Complete();

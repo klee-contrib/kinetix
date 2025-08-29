@@ -6,7 +6,10 @@ public class InterceptionOptions
 {
     private readonly IDictionary<Type, Type> _interceptors = new Dictionary<Type, Type>();
 
-    public InterceptionOptions With<TInterceptor>() where TInterceptor : IInterceptor
+    public List<Type> Interceptors => _interceptors.Values.ToList();
+
+    public InterceptionOptions With<TInterceptor>()
+        where TInterceptor : IInterceptor
     {
         if (!_interceptors.ContainsKey(typeof(TInterceptor)))
         {
@@ -15,6 +18,4 @@ public class InterceptionOptions
 
         return this;
     }
-
-    public List<Type> Interceptors => _interceptors.Values.ToList();
 }

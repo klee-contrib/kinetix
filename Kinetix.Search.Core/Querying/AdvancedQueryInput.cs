@@ -11,20 +11,12 @@ public class AdvancedQueryInput<TDocument, TCriteria>
     /// <summary>
     /// Critères de recherche, combinés en "ou".
     /// </summary>
-    public IEnumerable<QueryInput<TCriteria>> SearchCriteria
-    {
-        get;
-        set;
-    } = [];
+    public IEnumerable<QueryInput<TCriteria>> SearchCriteria { get; set; } = [];
 
     /// <summary>
     /// Définition de la recherhe à facette.
     /// </summary>
-    public FacetQueryDefinition<TDocument> FacetQueryDefinition
-    {
-        get;
-        set;
-    } = new FacetQueryDefinition<TDocument>();
+    public FacetQueryDefinition<TDocument> FacetQueryDefinition { get; set; } = new FacetQueryDefinition<TDocument>();
 
     /// <summary>
     /// Filtrage de sécurité.

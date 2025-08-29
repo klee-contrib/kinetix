@@ -6,29 +6,22 @@ namespace Kinetix.Search.Core.Querying;
 /// Facette simple.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public class TermFacet<TDocument> : IFacetDefinition<TDocument>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="code">Code de la facette.</param>
+/// <param name="label">Libellé de la facette.</param>
+/// <param name="field">Champ sur lequel agit la facette.</param>
+public class TermFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : IFacetDefinition<TDocument>
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="code">Code de la facette.</param>
-    /// <param name="label">Libellé de la facette.</param>
-    /// <param name="field">Champ sur lequel agit la facette.</param>
-    public TermFacet(string code, string label, Expression<Func<TDocument, object>> field)
-    {
-        Code = code;
-        Label = label;
-        Field = field;
-    }
+    /// <inheritdoc />
+    public string Code { get; } = code;
 
     /// <inheritdoc />
-    public string Code { get; }
+    public string Label { get; } = label;
 
     /// <inheritdoc />
-    public string Label { get; }
-
-    /// <inheritdoc />
-    public Expression<Func<TDocument, object>> Field { get; }
+    public Expression<Func<TDocument, object>> Field { get; } = field;
 
     /// <inheritdoc />
     public string FieldName => Field.Body switch
@@ -50,7 +43,7 @@ public class TermFacet<TDocument> : IFacetDefinition<TDocument>
     /// <inheritdoc />
     public virtual FacetOrdering Ordering { get; set; } = FacetOrdering.CountDescending;
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
     public virtual string ResolveLabel(string primaryKey)
     {
         return primaryKey;

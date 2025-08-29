@@ -6,19 +6,14 @@ namespace Kinetix.Search.Core.Querying;
 /// Facette de booléen.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public class BooleanFacet<TDocument> : TermFacet<TDocument>
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="code">Code de la facette.</param>
+/// <param name="label">Libellé de la facette.</param>
+/// <param name="field">Champ sur lequel agit la facette.</param>
+public class BooleanFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : TermFacet<TDocument>(code, label, field)
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="code">Code de la facette.</param>
-    /// <param name="label">Libellé de la facette.</param>
-    /// <param name="field">Champ sur lequel agit la facette.</param>
-    public BooleanFacet(string code, string label, Expression<Func<TDocument, object>> field)
-        : base(code, label, field)
-    {
-    }
-
     /// <inheritdoc />
     public override bool IsMultiSelectable => false;
 
@@ -28,7 +23,7 @@ public class BooleanFacet<TDocument> : TermFacet<TDocument>
     /// <inheritdoc />
     public override FacetOrdering Ordering => FacetOrdering.KeyDescending;
 
-    /// <inheritdoc />
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
     public override string ResolveLabel(string primaryKey)
     {
         return primaryKey == "1" || primaryKey == "true"

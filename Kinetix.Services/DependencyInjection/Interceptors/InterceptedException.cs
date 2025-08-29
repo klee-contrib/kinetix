@@ -3,15 +3,11 @@
 /// <summary>
 /// Exception interceptée.
 /// </summary>
-public class InterceptedException : Exception
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="message">Message.</param>
+/// <param name="innerException">Exception interceptée.</param>
+public class InterceptedException(string message, Exception innerException) : Exception(message, innerException)
 {
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="message">Message.</param>
-    /// <param name="innerException">Exception interceptée.</param>
-    public InterceptedException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
 }

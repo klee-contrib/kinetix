@@ -21,6 +21,20 @@ public static class MethodBaseExtensions
     }
 
     /// <summary>
+    /// Call Action on each collection item.
+    /// </summary>
+    /// <typeparam name="T">Type.</typeparam>
+    /// <param name="enumerable">Collection.</param>
+    /// <param name="function">Action.</param>
+    private static void Apply<T>(this IEnumerable<T> enumerable, Action<T> function)
+    {
+        foreach (var item in enumerable)
+        {
+            function.Invoke(item);
+        }
+    }
+
+    /// <summary>
     /// Returns the list of custom attributes defined on current method or on any corresponding declaration in implemented interfaces.
     /// </summary>
     /// <param name="method">Methode.</param>
@@ -35,28 +49,11 @@ public static class MethodBaseExtensions
         foreach (var interfaceType in method.DeclaringType.GetInterfaces())
         {
             var interfaceMethod = interfaceType.GetMethod(method.Name);
-            if (interfaceMethod != null)
-            {
-                interfaceMethod.GetCustomAttributes(attributeType, inherit).Apply(attributeCollection.Add);
-            }
+            interfaceMethod?.GetCustomAttributes(attributeType, inherit).Apply(attributeCollection.Add);
         }
 
         var attributeArray = new object[attributeCollection.Count];
         attributeCollection.CopyTo(attributeArray, 0);
         return attributeArray;
-    }
-
-    /// <summary>
-    /// Call Action on each collection item.
-    /// </summary>
-    /// <typeparam name="T">Type.</typeparam>
-    /// <param name="enumerable">Collection.</param>
-    /// <param name="function">Action.</param>
-    private static void Apply<T>(this IEnumerable<T> enumerable, Action<T> function)
-    {
-        foreach (var item in enumerable)
-        {
-            function.Invoke(item);
-        }
     }
 }

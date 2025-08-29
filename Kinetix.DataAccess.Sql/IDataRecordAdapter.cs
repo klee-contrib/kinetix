@@ -6,7 +6,7 @@ namespace Kinetix.DataAccess.Sql;
 /// Contractualise la lecture d'un DataRecord et l'écriture des données dans un bean.
 /// </summary>
 /// <typeparam name="T">Type du bean.</typeparam>
-public interface IDataRecordAdapter<T>
+public interface IDataRecordAdapter<out T>
     where T : new()
 {
     /// <summary>

@@ -11,6 +11,16 @@ public class SearchConfig
 
     public int ClusterSize { get; set; } = 5000;
 
+    /// <summary>
+    /// Récupère le nom du document pour déterminer le nom de l'index.
+    /// </summary>
+    /// <param name="documentType">Type du document.</param>
+    /// <returns>Nom.</returns>
+    public static string GetTypeNameForIndex(Type documentType)
+    {
+        return Regex.Replace(Regex.Replace(documentType.Name, "Document$", string.Empty), @"\p{Lu}", m => "_" + m.Value)[1..].ToLowerInvariant();
+    }
+
     public string GetIndexNameForType(string dataSourceName, Type documentType)
     {
         var connSettings = GetServer(dataSourceName);
@@ -25,16 +35,5 @@ public class SearchConfig
         }
 
         return server;
-    }
-
-    /// <summary>
-    /// Récupère le nom du document pour déterminer le nom de l'index.
-    /// </summary>
-    /// <param name="documentType">Type du document.</param>
-    /// <returns>Nom.</returns>
-    public static string GetTypeNameForIndex(Type documentType)
-    {
-        return Regex.Replace(Regex.Replace(documentType.Name, "Document$", string.Empty), @"\p{Lu}", m => "_" + m.Value)
-            .Substring(1).ToLowerInvariant();
     }
 }

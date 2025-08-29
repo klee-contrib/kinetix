@@ -250,7 +250,6 @@ public sealed class BeanPropertyDescriptor
         }
 
         descriptor.SetValue(bean, value);
-        return;
     }
 
     /// <summary>
@@ -266,6 +265,7 @@ public sealed class BeanPropertyDescriptor
     /// Valide les contraintes de domaine pour une propriété.
     /// </summary>
     /// <param name="value">Valeur de la propriété.</param>
+    /// <returns>Erreurs.</returns>
     internal ErrorMessageCollection CheckDomain(object value)
     {
         return Domain.CheckValue(value, this);

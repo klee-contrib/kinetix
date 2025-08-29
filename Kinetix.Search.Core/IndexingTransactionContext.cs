@@ -5,15 +5,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search.Core;
 
-internal class IndexingTransactionContext : ITransactionContext
+internal class IndexingTransactionContext(IServiceProvider provider) : ITransactionContext
 {
     private readonly Dictionary<Type, IIndexingDocumentState> _indexors = [];
-    private readonly IServiceProvider _provider;
-
-    public IndexingTransactionContext(IServiceProvider provider)
-    {
-        _provider = provider;
-    }
 
     /// <inheritdoc />
     public bool Completed { get; set; }
@@ -33,9 +27,9 @@ internal class IndexingTransactionContext : ITransactionContext
     {
         if (Completed && _indexors.Count != 0)
         {
-            var searchStore = _provider.GetRequiredService<ISearchStore>();
-            var transactionScopeManager = _provider.GetRequiredService<TransactionScopeManager>();
-            var logger = _provider.GetRequiredService<ILogger<IndexingTransactionContext>>();
+            var searchStore = provider.GetRequiredService<ISearchStore>();
+            var transactionScopeManager = provider.GetRequiredService<TransactionScopeManager>();
+            var logger = provider.GetRequiredService<ILogger<IndexingTransactionContext>>();
 
             using var tx = transactionScopeManager.EnsureTransaction();
 
@@ -48,16 +42,18 @@ internal class IndexingTransactionContext : ITransactionContext
                     logger.LogInformation($"Prepare {indexor.Key.Name}");
                     typeof(IndexingTransactionContext).GetMethod(nameof(PrepareBulkDescriptor), BindingFlags.Static | BindingFlags.NonPublic)!
                         .MakeGenericMethod(indexor.Key)
-                        .Invoke(null, [_provider, bulk, indexor.Value]);
+                        .Invoke(null, [provider, bulk, indexor.Value]);
                 }
 
                 bulk.Run(WaitForRefresh);
             }
+#pragma warning disable S2139
             catch (Exception e)
             {
                 logger.LogError(e, "Error while indexing : ");
                 throw;
             }
+#pragma warning restore S2139
 
             _indexors.Clear();
             tx.Complete();
@@ -87,10 +83,10 @@ internal class IndexingTransactionContext : ITransactionContext
         return GetState<TDocument>().RegisterIndex(id);
     }
 
-    private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument>(IServiceProvider provider, ISearchBulkDescriptor bulk, IIndexingDocumentState _state)
+    private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument>(IServiceProvider provider, ISearchBulkDescriptor bulk, IIndexingDocumentState state1)
         where TDocument : class
     {
-        var state = (IndexingDocumentState<TDocument>)_state;
+        var state = (IndexingDocumentState<TDocument>)state1;
 
         var loader = provider.GetRequiredService<IDocumentLoader<TDocument>>();
 

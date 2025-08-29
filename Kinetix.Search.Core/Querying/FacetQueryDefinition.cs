@@ -4,17 +4,12 @@
 /// Définition d'une recherche à facettes.
 /// </summary>
 /// <typeparam name="TDocument">Type de document.</typeparam>
-public class FacetQueryDefinition<TDocument>
+/// <remarks>
+/// Créé une nouvelle instance de FacetQueryDefinition.
+/// </remarks>
+/// <param name="facets">Facettes.</param>
+public class FacetQueryDefinition<TDocument>(params IFacetDefinition<TDocument>[] facets)
 {
-    /// <summary>
-    /// Créé une nouvelle instance de FacetQueryDefinition.
-    /// </summary>
-    /// <param name="facets">Facettes.</param>
-    public FacetQueryDefinition(params IFacetDefinition<TDocument>[] facets)
-    {
-        Facets = facets.ToList();
-    }
-
     /// <summary>
     /// Libellé de la valeur de facette nulle.
     /// </summary>
@@ -32,4 +27,6 @@ public class FacetQueryDefinition<TDocument>
         get;
         private set;
     }
+
+= facets.ToList();
 }

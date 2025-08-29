@@ -15,125 +15,22 @@ using static AdvancedQueryUtil;
 /// <summary>
 /// Store ElasticSearch.
 /// </summary>
-public class ElasticStore : ISearchStore
+public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, AnalyticsManager analytics, SearchConfig config) : ISearchStore
 {
-    private readonly AnalyticsManager _analytics;
-    private readonly ElasticClient _client;
-    private readonly SearchConfig _config;
-    private readonly DocumentDescriptor _documentDescriptor;
-    private readonly ElasticManager _elasticManager;
-    private readonly FacetHandler _facetHandler;
-    private readonly ElasticMappingFactory _factory;
-    private readonly ILogger<ElasticStore> _logger;
-
-    public ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, AnalyticsManager analytics, SearchConfig config)
+    /// <inheritdoc cref="ISearchStore.AdvancedCount{TDocument, TCriteria}" />
+    public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
+            where TDocument : class
+            where TCriteria : ICriteria
     {
-        _analytics = analytics;
-        _client = client;
-        _config = config;
-        _documentDescriptor = documentDescriptor;
-        _elasticManager = elasticManager;
-        _facetHandler = facetHandler;
-        _factory = factory;
-        _logger = logger;
-    }
+        ArgumentNullException.ThrowIfNull(input);
 
-    /// <inheritdoc cref="ISearchStore.EnsureIndex" />
-    public bool EnsureIndex<TDocument>()
-        where TDocument : class
-    {
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-        var mapping = new PutMappingDescriptor<TDocument>()
-            .Properties(selector => _factory.AddFields(selector, def.Fields));
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
-        var indexCreated = _elasticManager.InitIndex<TDocument, DefaultIndexConfigurator>(mapping);
-
-        if (indexCreated)
-        {
-            _logger.LogQuery(_analytics, "Map", () => _client.Map<TDocument>(_ => mapping));
-        }
-
-        return indexCreated;
-    }
-
-
-    /// <inheritdoc cref="ISearchStore.Get" />
-    public TDocument Get<TDocument>(object key)
-        where TDocument : class
-    {
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-        return _logger.LogQuery(_analytics, "Get", () => _client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValueFromDocument(key)))).Source;
-    }
-
-    /// <inheritdoc cref="ISearchStore.Bulk" />
-    public ISearchBulkDescriptor Bulk()
-    {
-        return new ElasticBulkDescriptor(_documentDescriptor, _client, _logger, _analytics);
-    }
-
-    /// <inheritdoc cref="ISearchStore.Delete" />
-    public void Delete<TDocument>(object key, bool refresh = true)
-        where TDocument : class
-    {
-        Bulk().Delete<TDocument>(key).Run(refresh);
-    }
-
-    /// <inheritdoc cref="ISearchStore.Index" />
-    public void Index<TDocument>(TDocument document, bool refresh = true)
-        where TDocument : class
-    {
-        if (document != null)
-        {
-            Bulk().Index(document).Run(refresh);
-        }
-    }
-
-    /// <inheritdoc cref="ISearchStore.ResetIndex" />
-    public int ResetIndex<TDocument>(IEnumerable<TDocument> documents, bool partialRebuild, ILogger? rebuildLogger = null)
-        where TDocument : class
-    {
-        var indexName = SearchConfig.GetTypeNameForIndex(typeof(TDocument));
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-
-        /* On vide l'index des documents obsolètes. */
-        if (partialRebuild && def.IgnoreOnPartialRebuild?.OlderThanDays > 0 && def.PartialRebuildDate != null)
-        {
-            rebuildLogger?.LogInformation($"Partial rebuild. Deleting recent documents for {indexName}...");
-
-            var deleteRes = _logger.LogQuery(_analytics, "DeleteAllByQuery", () => _client.DeleteByQuery<TDocument>(d =>
-                d.Query(q => q.DateRange(d => d
-                    .Field(def.PartialRebuildDate.FieldName)
-                    .GreaterThan(DateTime.UtcNow.Date.AddDays(-def.IgnoreOnPartialRebuild.OlderThanDays))))
-                .Timeout(TimeSpan.FromMinutes(5))
-                .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(5)))));
-
-            rebuildLogger?.LogInformation($"{deleteRes.Deleted} documents deleted.");
-        }
-
-        rebuildLogger?.LogInformation($"Starting indexation for index {indexName}...");
-
-        /* Indexation en cluster */
-        var count = 0;
-
-        try
-        {
-            _elasticManager.OptimizeIndexForReindex<TDocument>();
-
-            foreach (var cluster in documents.Chunk(_config.ClusterSize))
-            {
-                Bulk().IndexMany(cluster).Run(false);
-                count += cluster.Length;
-                rebuildLogger?.LogInformation($"{count} documents indexed.");
-            }
-
-            rebuildLogger?.LogInformation($"Indexation of index {indexName} is complete.");
-        }
-        finally
-        {
-            _elasticManager.RevertOptimizeIndexForReindex<TDocument>();
-        }
-
-        return count;
+        /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
+        var filterQuery = GetFilterAndPostFilterQuery(def, input, facetHandler);
+        return logger.LogQuery(analytics, "AdvancedCount", () => client
+            .Count<TDocument>(s => s.Query(filterQuery)))
+            .Count;
     }
 
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
@@ -152,70 +49,107 @@ public class ElasticStore : ISearchStore
         return AdvancedQuery(input, documentMapper, filter: null, sorts: null, sortsAfter: false, aggs: null);
     }
 
+    /// <inheritdoc cref="ISearchStore.Bulk" />
+    public ISearchBulkDescriptor Bulk()
+    {
+        return new ElasticBulkDescriptor(documentDescriptor, client, logger, analytics);
+    }
+
+    /// <inheritdoc cref="ISearchStore.Delete{TDocument}" />
+    public void Delete<TDocument>(object id, bool refresh = true)
+        where TDocument : class
+    {
+        Bulk().Delete<TDocument>(id).Run(refresh);
+    }
+
+    /// <inheritdoc cref="ISearchStore.EnsureIndex{TDocument}" />
+    public bool EnsureIndex<TDocument>()
+            where TDocument : class
+    {
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
+        var mapping = new PutMappingDescriptor<TDocument>()
+            .Properties(selector => factory.AddFields(selector, def.Fields));
+
+        var indexCreated = elasticManager.InitIndex<TDocument, DefaultIndexConfigurator>(mapping);
+
+        if (indexCreated)
+        {
+            logger.LogQuery(analytics, "Map", () => client.Map<TDocument>(_ => mapping));
+        }
+
+        return indexCreated;
+    }
+
+    /// <inheritdoc cref="ISearchStore.Get{TDocument}" />
+    public TDocument Get<TDocument>(object id)
+        where TDocument : class
+    {
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
+        return logger.LogQuery(analytics, "Get", () => client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValueFromDocument(id)))).Source;
+    }
+
+    /// <inheritdoc cref="ISearchStore.Index{TDocument}" />
+    public void Index<TDocument>(TDocument document, bool refresh = true)
+            where TDocument : class
+    {
+        if (document != null)
+        {
+            Bulk().Index(document).Run(refresh);
+        }
+    }
+
     /// <inheritdoc cref="ISearchStore.MultiAdvancedQuery" />
     public IMultiAdvancedQueryDescriptor MultiAdvancedQuery()
     {
-        return new MultiAdvancedQueryDescriptor(_client, _documentDescriptor, _facetHandler);
+        return new MultiAdvancedQueryDescriptor(client, documentDescriptor, facetHandler);
     }
 
-    /// <inheritdoc cref="ISearchStore.AdvancedCount" />
-    public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-        where TDocument : class
-        where TCriteria : ICriteria
+    /// <inheritdoc cref="ISearchStore.ResetIndex{TDocument}" />
+    public int ResetIndex<TDocument>(IEnumerable<TDocument> documents, bool partialRebuild, ILogger? rebuildLogger = null)
+            where TDocument : class
     {
-        ArgumentNullException.ThrowIfNull(input);
+        var indexName = SearchConfig.GetTypeNameForIndex(typeof(TDocument));
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+        /* On vide l'index des documents obsolètes. */
+        if (partialRebuild && def.IgnoreOnPartialRebuild?.OlderThanDays > 0 && def.PartialRebuildDate != null)
+        {
+            rebuildLogger?.LogInformation($"Partial rebuild. Deleting recent documents for {indexName}...");
 
-        /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
-        var filterQuery = GetFilterAndPostFilterQuery(def, input, _facetHandler);
-        return _logger.LogQuery(_analytics, "AdvancedCount", () => _client
-            .Count<TDocument>(s => s.Query(filterQuery)))
-            .Count;
-    }
+            var deleteRes = logger.LogQuery(analytics, "DeleteAllByQuery", () => client.DeleteByQuery<TDocument>(d =>
+                d.Query(q => q.DateRange(d => d
+                    .Field(def.PartialRebuildDate.FieldName)
+                    .GreaterThan(DateTime.UtcNow.Date.AddDays(-def.IgnoreOnPartialRebuild.OlderThanDays))))
+                .Timeout(TimeSpan.FromMinutes(5))
+                .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(5)))));
 
-    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts, bool sortsAfter)
-       where TDocument : class
-       where TCriteria : ICriteria
-    {
-        ArgumentNullException.ThrowIfNull(input);
+            rebuildLogger?.LogInformation($"{deleteRes.Deleted} documents deleted.");
+        }
 
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+        rebuildLogger?.LogInformation($"Starting indexation for index {indexName}...");
 
-        var pit = _logger.LogQuery(_analytics, "CreatePit", () => _client.OpenPointInTime(
-               _config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(TDocument)),
-               p => p.KeepAlive("1m")));
+        /* Indexation en cluster */
+        var count = 0;
 
-        var pitId = pit.Id;
         try
         {
-            object[]? searchAfter = null;
+            elasticManager.OptimizeIndexForReindex<TDocument>();
 
-            var search = true;
-            do
+            foreach (var cluster in documents.Chunk(config.ClusterSize))
             {
-                var res = _logger.LogQuery(_analytics, $"AdvancedQueryWithPit", () => _client.Search(
-                    GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, sorts, sortsAfter, pitId: pitId, searchAfter: searchAfter)));
+                Bulk().IndexMany(cluster).Run(false);
+                count += cluster.Length;
+                rebuildLogger?.LogInformation($"{count} documents indexed.");
+            }
 
-                foreach (var doc in res.Hits)
-                {
-                    yield return documentMapper(doc.Source, doc.Highlight);
-                }
-
-                if (res.Documents.Count == 10000)
-                {
-                    searchAfter = res.Hits.Last().Sorts.ToArray();
-                }
-                else
-                {
-                    search = false;
-                }
-            } while (search);
+            rebuildLogger?.LogInformation($"Indexation of index {indexName} is complete.");
         }
         finally
         {
-            _logger.LogQuery(_analytics, "DeletePit", () => _client.ClosePointInTime(p => p.Id(pitId)));
+            elasticManager.RevertOptimizeIndexForReindex<TDocument>();
         }
+
+        return count;
     }
 
     internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts, bool sortsAfter, Action<AggregationContainerDescriptor<TDocument>>? aggs)
@@ -225,7 +159,7 @@ public class ElasticStore : ISearchStore
         ArgumentNullException.ThrowIfNull(input);
 
         /* Définition du document. */
-        var def = _documentDescriptor.GetDefinition(typeof(TDocument));
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
         /* Facettage. */
         var facetDefList = input.FacetQueryDefinition.Facets;
@@ -234,8 +168,8 @@ public class ElasticStore : ISearchStore
         var groupFieldName = GetGroupFieldName(input);
         var hasGroup = groupFieldName != null;
 
-        var res = _logger.LogQuery(_analytics, "AdvancedQuery", () => _client.Search(
-            GetAdvancedQueryDescriptor(def, input, _facetHandler, filter, sorts, sortsAfter, aggs, facetDefList, groupFieldName)));
+        var res = logger.LogQuery(analytics, "AdvancedQuery", () => client.Search(
+            GetAdvancedQueryDescriptor(def, input, facetHandler, filter, sorts, sortsAfter, aggs, facetDefList, groupFieldName)));
 
         /* Extraction des facettes. */
         var facetListOutput = new List<FacetOutput>();
@@ -250,7 +184,7 @@ public class ElasticStore : ISearchStore
                     IsMultiSelectable = facetDef.IsMultiSelectable,
                     IsMultiValued = def.Fields[facetDef.FieldName].IsMultiValued,
                     CanExclude = facetDef.CanExclude,
-                    Values = _facetHandler.ExtractFacetItemList(res.Aggregations, facetDef)
+                    Values = facetHandler.ExtractFacetItemList(res.Aggregations, facetDef)
                 });
             }
         }
@@ -281,7 +215,7 @@ public class ElasticStore : ISearchStore
         }
 
         /* Extraction des résultats. */
-        var resultList = new List<TOutput>();
+        List<TOutput>? resultList = null;
         var groupResultList = new List<GroupResult<TOutput>>();
         if (hasGroup)
         {
@@ -316,8 +250,6 @@ public class ElasticStore : ISearchStore
                     TotalCount = (int)missingBucket.DocCount
                 });
             }
-
-            resultList = null;
         }
         else
         {
@@ -336,5 +268,50 @@ public class ElasticStore : ISearchStore
             TotalCount = (int)res.Total,
             Aggregations = res.Aggregations
         };
+    }
+
+    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts, bool sortsAfter)
+       where TDocument : class
+       where TCriteria : ICriteria
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        var def = documentDescriptor.GetDefinition(typeof(TDocument));
+
+        var pit = logger.LogQuery(analytics, "CreatePit", () => client.OpenPointInTime(
+               config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(TDocument)),
+               p => p.KeepAlive("1m")));
+
+        var pitId = pit.Id;
+        try
+        {
+            object[]? searchAfter = null;
+
+            var search = true;
+            do
+            {
+                var res = logger.LogQuery(analytics, $"AdvancedQueryWithPit", () => client.Search(
+                    GetAdvancedQueryDescriptor(def, input, facetHandler, filter, sorts, sortsAfter, pitId: pitId, searchAfter: searchAfter)));
+
+                foreach (var doc in res.Hits)
+                {
+                    yield return documentMapper(doc.Source, doc.Highlight);
+                }
+
+                if (res.Documents.Count == 10000)
+                {
+                    searchAfter = res.Hits.Last().Sorts.ToArray();
+                }
+                else
+                {
+                    search = false;
+                }
+            }
+            while (search);
+        }
+        finally
+        {
+            logger.LogQuery(analytics, "DeletePit", () => client.ClosePointInTime(p => p.Id(pitId)));
+        }
     }
 }

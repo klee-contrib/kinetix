@@ -45,7 +45,7 @@ public sealed class SqlManager
     {
         if (string.IsNullOrEmpty(shortName))
         {
-            throw new ArgumentNullException("shortName");
+            throw new ArgumentNullException(nameof(shortName));
         }
 
         return _constValues[shortName];
@@ -77,7 +77,7 @@ public sealed class SqlManager
             }
             catch (MissingManifestResourceException)
             {
-                continue;
+                // continue
             }
         }
 
@@ -107,7 +107,7 @@ public sealed class SqlManager
             }
             catch (MissingManifestResourceException)
             {
-                continue;
+                // continue
             }
         }
 

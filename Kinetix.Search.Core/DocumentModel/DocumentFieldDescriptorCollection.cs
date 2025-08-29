@@ -19,8 +19,8 @@ public sealed class DocumentFieldDescriptorCollection : IEnumerable<DocumentFiel
     /// <exception cref="System.ArgumentNullException">Si bean type est null.</exception>
     internal DocumentFieldDescriptorCollection(Type beanType)
     {
-        _beanType = beanType ?? throw new ArgumentNullException("beanType");
-        _properties = new Dictionary<string, DocumentFieldDescriptor>();
+        _beanType = beanType ?? throw new ArgumentNullException(nameof(beanType));
+        _properties = [];
     }
 
     /// <summary>
@@ -46,16 +46,6 @@ public sealed class DocumentFieldDescriptorCollection : IEnumerable<DocumentFiel
     }
 
     /// <summary>
-    /// Indique si la collection contient une propriété.
-    /// </summary>
-    /// <param name="propertyName">Nom de la propriété.</param>
-    /// <returns><code>True</code> si la collection contient la propriété.</returns>
-    public bool HasProperty(string propertyName)
-    {
-        return _properties.ContainsKey(propertyName);
-    }
-
-    /// <summary>
     /// Obtient l'énumérateur.
     /// </summary>
     /// <returns>Enumérateur.</returns>
@@ -71,5 +61,15 @@ public sealed class DocumentFieldDescriptorCollection : IEnumerable<DocumentFiel
     IEnumerator IEnumerable.GetEnumerator()
     {
         return _properties.Values.GetEnumerator();
+    }
+
+    /// <summary>
+    /// Indique si la collection contient une propriété.
+    /// </summary>
+    /// <param name="propertyName">Nom de la propriété.</param>
+    /// <returns><code>True</code> si la collection contient la propriété.</returns>
+    public bool HasProperty(string propertyName)
+    {
+        return _properties.ContainsKey(propertyName);
     }
 }

@@ -3,6 +3,7 @@
 /// <summary>
 /// Entrée pour une liste de référence.
 /// </summary>
+/// <typeparam name="T">Type de la liste de référence.</typeparam>
 internal class ReferenceEntry<T>
 {
     /// <summary>

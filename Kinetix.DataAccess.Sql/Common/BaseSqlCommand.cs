@@ -3,12 +3,12 @@ using System.Data.Common;
 using System.Globalization;
 using System.Reflection;
 
-namespace Kinetix.DataAccess.Sql;
+namespace Kinetix.DataAccess.Sql.Common;
 
 /// <summary>
 /// Commande d'appel à SQL.
 /// </summary>
-public abstract class BaseSqlCommand
+public abstract class BaseSqlCommand : IDisposable
 {
     private readonly string _parserKey;
     private SqlParameterCollection _parameterColl;
@@ -22,7 +22,7 @@ public abstract class BaseSqlCommand
     protected BaseSqlCommand(IDbConnection connection, CommandParser commandParser, string procName)
     {
         CommandParser = commandParser;
-        CommandName = procName ?? throw new ArgumentNullException("procName");
+        CommandName = procName ?? throw new ArgumentNullException(nameof(procName));
         Connection = connection;
         InnerCommand = Connection.CreateCommand();
         InnerCommand.CommandText = procName;
@@ -38,17 +38,14 @@ public abstract class BaseSqlCommand
     /// <param name="resourcePath">Chemin vers le fichier SQL.</param>
     protected BaseSqlCommand(IDbConnection connection, CommandParser commandParser, Assembly assembly, string resourcePath)
     {
-        if (assembly == null)
-        {
-            throw new ArgumentNullException("assembly");
-        }
-
         if (string.IsNullOrEmpty(resourcePath))
         {
-            throw new ArgumentNullException("resourcePath");
+            throw new ArgumentNullException(nameof(resourcePath));
         }
 
         _parserKey = resourcePath;
+
+        ArgumentNullException.ThrowIfNull(assembly);
 
         CommandParser = commandParser;
         CommandName = resourcePath;
@@ -346,7 +343,7 @@ public abstract class BaseSqlCommand
         {
             CommandParser.ParseCommand(InnerCommand, _parserKey, null);
             var value = InnerCommand.ExecuteScalar();
-            return (value == DBNull.Value) ? null : value;
+            return value == DBNull.Value ? null : value;
         }
         catch (DbException sqle)
         {

@@ -9,27 +9,27 @@ namespace Kinetix.Search.Elastic;
 
 public class ElasticBulkDescriptor : ISearchBulkDescriptor
 {
-    private int _operationCount = 0;
-
     private readonly AnalyticsManager _analytics;
     private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor()
         .Timeout(TimeSpan.FromMinutes(1))
         .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(1)));
+
     private readonly ElasticClient _client;
     private readonly DocumentDescriptor _documentDescriptor;
     private readonly ILogger<ElasticStore> _logger;
+    private int _operationCount = 0;
 
     internal ElasticBulkDescriptor(DocumentDescriptor documentDescriptor, ElasticClient client, ILogger<ElasticStore> logger, AnalyticsManager analytics)
     {
         _analytics = analytics;
-        _documentDescriptor = documentDescriptor;
         _client = client;
+        _documentDescriptor = documentDescriptor;
         _logger = logger;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.Delete" />
+    /// <inheritdoc cref="ISearchBulkDescriptor.Delete{TDocument}" />
     public ISearchBulkDescriptor Delete<TDocument>(object key)
-       where TDocument : class
+           where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         _bulkDescriptor.Delete<TDocument>(o => o.Id(def.PrimaryKey.GetValueFromKeyObject(key)));
@@ -38,9 +38,9 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         return this;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.DeleteMany" />
+    /// <inheritdoc cref="ISearchBulkDescriptor.DeleteMany{TDocument}" />
     public ISearchBulkDescriptor DeleteMany<TDocument>(IEnumerable<object> keys)
-       where TDocument : class
+           where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         _bulkDescriptor.DeleteMany<TDocument>(keys.Select(def.PrimaryKey.GetValueFromKeyObject));
@@ -49,9 +49,9 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         return this;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.Index" />
+    /// <inheritdoc cref="ISearchBulkDescriptor.Index{TDocument}" />
     public ISearchBulkDescriptor Index<TDocument>(TDocument document)
-        where TDocument : class
+            where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         var id = def.PrimaryKey.GetValueFromDocument(document);
@@ -61,9 +61,9 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         return this;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.IndexMany" />
+    /// <inheritdoc cref="ISearchBulkDescriptor.IndexMany{TDocument}" />
     public ISearchBulkDescriptor IndexMany<TDocument>(IList<TDocument> documents)
-        where TDocument : class
+            where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         _bulkDescriptor.IndexMany(

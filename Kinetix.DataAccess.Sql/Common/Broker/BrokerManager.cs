@@ -1,30 +1,25 @@
-﻿using Kinetix.Services;
+﻿using Kinetix.DataAccess.Sql.Broker;
+using Kinetix.DataAccess.Sql.Common;
+using Kinetix.Services;
 
-namespace Kinetix.DataAccess.Sql.Broker;
+namespace Kinetix.DataAccess.Sql.Common.Broker;
 
 /// <summary>
 /// Manager pour les brokers.
 /// </summary>
-public abstract class BrokerManager
+/// <remarks>
+/// Constructeur.
+/// </remarks>
+/// <param name="connectionPool">Composant injecté.</param>
+/// <param name="transactionScopeManager">Composant injecté.</param>
+public abstract class BrokerManager(ConnectionPool connectionPool, TransactionScopeManager transactionScopeManager)
 {
     private readonly Dictionary<string, IBroker> _brokerMap = new();
-    private readonly TransactionScopeManager _transactionScopeManager;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="connectionPool">Composant injecté.</param>
-    /// <param name="transactionScopeManager">Composant injecté.</param>
-    public BrokerManager(ConnectionPool connectionPool, TransactionScopeManager transactionScopeManager)
-    {
-        _transactionScopeManager = transactionScopeManager;
-        ConnectionPool = connectionPool;
-    }
 
     /// <summary>
     /// Pool de connection.
     /// </summary>
-    public ConnectionPool ConnectionPool { get; }
+    public ConnectionPool ConnectionPool { get; } = connectionPool;
 
     /// <summary>
     /// Retourne l'instance du broker associé au type.
@@ -49,7 +44,7 @@ public abstract class BrokerManager
             }
             else
             {
-                var broker = new StandardBroker<T>(_transactionScopeManager, GetStore<T>(dataSourceName));
+                var broker = new StandardBroker<T>(transactionScopeManager, GetStore<T>(dataSourceName));
                 _brokerMap.Add(key, broker);
                 return broker;
             }

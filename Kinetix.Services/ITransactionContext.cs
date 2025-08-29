@@ -16,7 +16,7 @@ public interface ITransactionContext
     void OnAfterCommit();
 
     /// <summary>
-    /// Action a exécuter avant le commit du scope courant. 
+    /// Action a exécuter avant le commit du scope courant.
     /// </summary>
     void OnBeforeCommit();
 

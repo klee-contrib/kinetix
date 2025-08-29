@@ -49,7 +49,8 @@ public class SearchFieldAttribute : Attribute
     /// </summary>
     /// <param name="category">Catégorie.</param>
     /// <param name="indexing">Indexage.</param>
-    public SearchFieldAttribute(SearchFieldIndexing indexing, SearchFieldCategory category) : this(category, indexing)
+    public SearchFieldAttribute(SearchFieldIndexing indexing, SearchFieldCategory category)
+        : this(category, indexing)
     {
     }
 
@@ -72,5 +73,4 @@ public class SearchFieldAttribute : Attribute
     /// Boost à utiliser sur le champ dans la requête de recherche full-text (à utiliser avec SearchFieldCategory.Search).
     /// </summary>
     public double Boost { get; set; } = 1;
-
 }

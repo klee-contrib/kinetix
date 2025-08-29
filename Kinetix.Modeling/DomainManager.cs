@@ -14,7 +14,7 @@ internal static class DomainManager
     /// <summary>
     /// Dictionnaire des domaines.
     /// </summary>
-    private readonly static ConcurrentDictionary<Enum, Domain> _domainDictionary = new();
+    private static readonly ConcurrentDictionary<Enum, Domain> _domainDictionary = new();
 
     /// <summary>
     /// Récupère le domaine d'une propriété.
@@ -47,9 +47,9 @@ internal static class DomainManager
 
     private static Domain GetDomain(Enum domainName)
     {
-        return _domainDictionary.GetOrAdd(domainName, _ =>
+        return _domainDictionary.GetOrAdd(domainName, d =>
         {
-            var property = domainName.GetType().GetMember(domainName.ToString())[0];
+            var property = d.GetType().GetMember(d.ToString())[0];
             var validationAttributes = property.GetCustomAttributes<ValidationAttribute>();
             var extraAttributes = new List<Attribute>();
 
@@ -63,7 +63,7 @@ internal static class DomainManager
                 extraAttributes.Add(attribute as Attribute);
             }
 
-            return new Domain(domainName, validationAttributes.ToList(), extraAttributes);
+            return new Domain(d, validationAttributes.ToList(), extraAttributes);
         });
     }
 }

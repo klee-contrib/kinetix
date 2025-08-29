@@ -2,15 +2,9 @@
 
 namespace Kinetix.Monitoring.Core;
 
-public class AnalyticsManager
+public class AnalyticsManager(IEnumerable<IMonitoringStore> stores)
 {
-    private readonly IEnumerable<IMonitoringStore> _stores;
     private readonly ConcurrentStack<Process> _processes = new();
-
-    public AnalyticsManager(IEnumerable<IMonitoringStore> stores)
-    {
-        _stores = stores;
-    }
 
     public Process GetProcess()
     {
@@ -43,7 +37,7 @@ public class AnalyticsManager
         process.Disabled = parentProcess?.Disabled ?? false;
         _processes.Push(process);
 
-        foreach (var store in _stores)
+        foreach (var store in stores)
         {
             store.StartProcess(process.Id, name, category, target);
         }
@@ -54,7 +48,7 @@ public class AnalyticsManager
         _processes.TryPop(out var process);
         process.EndTime = DateTime.Now;
 
-        foreach (var store in _stores)
+        foreach (var store in stores)
         {
             store.StopProcess(process.Id, !process.Error, process.Disabled);
         }

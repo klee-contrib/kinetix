@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Reflection;
+using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 

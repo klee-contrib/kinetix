@@ -9,7 +9,7 @@ namespace Kinetix.Search.Core.DocumentModel;
 public class DocumentDescriptor
 {
     private readonly Dictionary<Type, DocumentDefinition> _beanDefinitionDictionnary = [];
-    private readonly object lockObj = new();
+    private readonly object _lockObj = new();
 
     /// <summary>
     /// Retourne la definition d'un document.
@@ -21,6 +21,52 @@ public class DocumentDescriptor
         return beanType == null
             ? throw new ArgumentNullException(nameof(beanType))
             : GetDefinitionInternal(beanType);
+    }
+
+    /// <summary>
+    /// Crée la collection des descripteurs de propriétés.
+    /// </summary>
+    /// <param name="beanType">Type du bean.</param>
+    /// <returns>Collection.</returns>
+    private DocumentFieldDescriptorCollection CreateCollection(Type beanType)
+    {
+        var coll = new DocumentFieldDescriptorCollection(beanType);
+        foreach (var description in GetProperties(beanType))
+        {
+            coll[description.FieldName] = description;
+        }
+
+        if (coll.Count(prop => prop.Category == SearchFieldCategory.Security) > 1)
+        {
+            throw new NotSupportedException($"{beanType} has multiple security properties");
+        }
+
+        if (coll.Count(d => d.IsPartialRebuildDate) > 1)
+        {
+            throw new NotSupportedException($"{beanType} has multiple partial rebuild date properties.");
+        }
+
+        return coll;
+    }
+
+    /// <summary>
+    /// Retourne la definition d'un bean.
+    /// </summary>
+    /// <param name="beanType">Type du bean.</param>
+    /// <returns>Description des propriétés.</returns>
+    private DocumentDefinition GetDefinitionInternal(Type beanType)
+    {
+        lock (_lockObj)
+        {
+            if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
+            {
+                var properties = CreateCollection(beanType);
+                definition = new DocumentDefinition(beanType, properties);
+                _beanDefinitionDictionnary[beanType] = definition;
+            }
+
+            return definition;
+        }
     }
 
     private IEnumerable<DocumentFieldDescriptor> GetProperties(Type beanType, string? prefix = null, bool isMultiValued = false)
@@ -68,32 +114,6 @@ public class DocumentDescriptor
     }
 
     /// <summary>
-    /// Crée la collection des descripteurs de propriétés.
-    /// </summary>
-    /// <param name="beanType">Type du bean.</param>
-    /// <returns>Collection.</returns>
-    private DocumentFieldDescriptorCollection CreateCollection(Type beanType)
-    {
-        var coll = new DocumentFieldDescriptorCollection(beanType);
-        foreach (var description in GetProperties(beanType))
-        {
-            coll[description.FieldName] = description;
-        }
-
-        if (coll.Count(prop => prop.Category == SearchFieldCategory.Security) > 1)
-        {
-            throw new NotSupportedException($"{beanType} has multiple security properties");
-        }
-
-        if (coll.Count(d => d.IsPartialRebuildDate) > 1)
-        {
-            throw new NotSupportedException($"{beanType} has multiple partial rebuild date properties.");
-        }
-
-        return coll;
-    }
-
-    /// <summary>
     /// Convertit une chaîne en camelCase.
     /// </summary>
     /// <param name="raw">Chaîne source.</param>
@@ -101,25 +121,5 @@ public class DocumentDescriptor
     private string ToCamelCase(string raw)
     {
         return string.IsNullOrEmpty(raw) ? raw : char.ToLower(raw[0]) + raw[1..];
-    }
-
-    /// <summary>
-    /// Retourne la definition d'un bean.
-    /// </summary>
-    /// <param name="beanType">Type du bean.</param>
-    /// <returns>Description des propriétés.</returns>
-    private DocumentDefinition GetDefinitionInternal(Type beanType)
-    {
-        lock (lockObj)
-        {
-            if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
-            {
-                var properties = CreateCollection(beanType);
-                definition = new DocumentDefinition(beanType, properties);
-                _beanDefinitionDictionnary[beanType] = definition;
-            }
-
-            return definition;
-        }
     }
 }

@@ -18,44 +18,29 @@ namespace Kinetix.Modeling;
 /// lui est associé.
 /// Un domaine ne définit pas si la données est obligatoire ou facultative.
 /// </summary>
-public sealed class Domain
+/// <remarks>
+/// Crée un nouveau domaine.
+/// Le formateur et la contrainte sont facultatifs.
+/// </remarks>
+/// <param name="name">Nom.</param>
+/// <param name="validationAttributes">Attributs gérant la validation de la donnée.</param>
+/// <param name="extraAttributes">Autres attributs.</param>
+public sealed class Domain(Enum name, ICollection<ValidationAttribute> validationAttributes, ICollection<Attribute> extraAttributes)
 {
-    /// <summary>
-    /// Crée un nouveau domaine.
-    /// Le formateur et la contrainte sont facultatifs.
-    /// </summary>
-    /// <param name="name">Nom.</param>
-    /// <param name="validationAttributes">Attributs gérant la validation de la donnée.</param>
-    /// <param name="extraAttributes">Autres attributs.</param>
-    public Domain(Enum name, ICollection<ValidationAttribute> validationAttributes, ICollection<Attribute> extraAttributes)
-    {
-        Name = name;
-        ValidationAttributes = validationAttributes;
-        ExtraAttributes = extraAttributes;
-    }
-
     /// <summary>
     /// Liste des attributs de validation.
     /// </summary>
-    public ICollection<ValidationAttribute> ValidationAttributes
-    {
-        get;
-        private set;
-    }
+    public ICollection<ValidationAttribute> ValidationAttributes { get; private set; } = validationAttributes;
 
     /// <summary>
     /// Liste des autres attributs.
     /// </summary>
-    public ICollection<Attribute> ExtraAttributes
-    {
-        get;
-        private set;
-    }
+    public ICollection<Attribute> ExtraAttributes { get; private set; } = extraAttributes;
 
     /// <summary>
     /// Nom du domaine.
     /// </summary>
-    public Enum Name { get; }
+    public Enum Name { get; } = name;
 
     /// <summary>
     /// Obtient la longueur maximale des données autorisées si elle est définie.
@@ -82,16 +67,30 @@ public sealed class Domain
     }
 
     /// <summary>
+    /// Teste si la valeur passée en paramètre est valide pour le champ.
+    /// </summary>
+    /// <param name="value">Valeur à tester.</param>
+    /// <param name="propertyDescriptor">Propriété.</param>
+    /// <exception cref="InvalidCastException">En cas d'erreur de type.</exception>
+    /// <exception cref="BusinessException">En cas d'erreur, le message décrit l'erreur.</exception>
+    /// <returns>Messages d'erreur.</returns>
+    public ErrorMessageCollection CheckValue(object value, BeanPropertyDescriptor propertyDescriptor)
+    {
+        return propertyDescriptor == null
+            ? throw new ArgumentNullException(nameof(propertyDescriptor))
+            : ValidationAttributes != null
+            ? new ErrorMessageCollection(ValidationAttributes.Where(va => !va.IsValid(value)).Select(va => va.FormatErrorMessage(propertyDescriptor.PropertyName)))
+            : new ErrorMessageCollection();
+    }
+
+    /// <summary>
     /// Obtient la valeur d'un attribut de validation à partir de son type s'il a été défini, null sinon.
     /// </summary>
     /// <param name="attributeType">Type de l'attribut de validation.</param>
     /// <returns>Valeur de l'attribut.</returns>
     public Attribute GetValidationAttribute(Type attributeType)
     {
-        if (attributeType == null)
-        {
-            throw new ArgumentNullException("attributeType");
-        }
+        ArgumentNullException.ThrowIfNull(attributeType);
 
         if (ValidationAttributes == null)
         {
@@ -100,7 +99,7 @@ public sealed class Domain
 
         foreach (Attribute attr in ValidationAttributes)
         {
-            if (attributeType.IsAssignableFrom(attr.GetType()))
+            if (attributeType.IsInstanceOfType(attr))
             {
                 return attr;
             }
@@ -122,30 +121,14 @@ public sealed class Domain
             return default;
         }
 
-        foreach (Attribute attr in ValidationAttributes)
+        foreach (var attr in ValidationAttributes)
         {
-            if (typeof(TValidation).IsAssignableFrom(attr.GetType()))
+            if (attr is TValidation valAttr)
             {
-                return attr as TValidation;
+                return valAttr;
             }
         }
 
         return default;
-    }
-
-    /// <summary>
-    /// Teste si la valeur passée en paramètre est valide pour le champ.
-    /// </summary>
-    /// <param name="value">Valeur à tester.</param>
-    /// <param name="propertyDescriptor">Propriété.</param>
-    /// <exception cref="InvalidCastException">En cas d'erreur de type.</exception>
-    /// <exception cref="BusinessException">En cas d'erreur, le message décrit l'erreur.</exception>
-    public ErrorMessageCollection CheckValue(object value, BeanPropertyDescriptor propertyDescriptor)
-    {
-        return propertyDescriptor == null
-            ? throw new ArgumentNullException("propertyDescriptor")
-            : ValidationAttributes != null
-            ? new ErrorMessageCollection(ValidationAttributes.Where(va => !va.IsValid(value)).Select(va => va.FormatErrorMessage(propertyDescriptor.PropertyName)))
-            : new ErrorMessageCollection();
     }
 }

@@ -36,6 +36,7 @@ public static class ServiceExtensions
                                 js.Converters.Add(converter);
                             }
                         }
+
                         return js;
                     }))
                     .DisableDirectStreaming()
