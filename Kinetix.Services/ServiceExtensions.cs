@@ -15,7 +15,11 @@ public static class ServiceExtensions
     /// <param name="serviceAssemblyPrefix">Préfixe des assemblies de services à enregistrer.</param>
     /// <param name="builder">Configurateur.</param>
     /// <returns>ServiceCollection.</returns>
-    public static IServiceCollection AddServices(this IServiceCollection services, string serviceAssemblyPrefix, Action<ServicesConfig> builder)
+    public static IServiceCollection AddServices(
+        this IServiceCollection services,
+        string serviceAssemblyPrefix,
+        Action<ServicesConfig> builder
+    )
     {
         var config = new ServicesConfig { ServiceAssemblyPrefix = serviceAssemblyPrefix };
         builder(config);
@@ -28,14 +32,13 @@ public static class ServiceExtensions
             var referencedAssemblies = assemblies.SelectMany(GetReferencedAssemblyNames).Select(Assembly.Load);
 
             return !referencedAssemblies.Any()
-                ? new List<Assembly>()
+                ? []
                 : assemblies.Concat(GetReferencedAssemblies(referencedAssemblies)).Distinct();
         }
 
         var assemblies = GetReferencedAssemblies(
-            config.ServiceAssemblies
-                .Concat(new[] { Assembly.GetEntryAssembly() })
-                .Where(a => a != null))
+                config.ServiceAssemblies.Concat([Assembly.GetEntryAssembly()]).Where(a => a != null)
+            )
             .Distinct();
 
         foreach (var type in assemblies.SelectMany(x => x.GetExportedTypes()))
@@ -48,7 +51,8 @@ public static class ServiceExtensions
                 {
                     if (interfaceType.GetCustomAttribute<RegisterContractAttribute>() != null)
                     {
-                        var iOptions = config.InterceptionOptions != null ? config.InterceptionOptions(interfaceType) : null;
+                        var iOptions =
+                            config.InterceptionOptions != null ? config.InterceptionOptions(interfaceType) : null;
 
                         if (iOptions != null)
                         {
@@ -57,7 +61,8 @@ public static class ServiceExtensions
                                 type,
                                 lifetime => ServiceDescriptor.Describe(type, type, lifetime),
                                 iOptions,
-                                registerImplAttribute.Lifetime);
+                                registerImplAttribute.Lifetime
+                            );
                         }
                         else
                         {
@@ -79,9 +84,13 @@ public static class ServiceExtensions
         services.TryAddScoped<TransactionScopeManager>();
         services.TryAddScoped<IReferenceManager>(provider =>
         {
-            var referenceManager = new ReferenceManager(provider, config.StaticListCacheDuration, config.ReferenceListCacheDuration);
+            var referenceManager = new ReferenceManager(provider, config.ReferenceCacheDuration);
 
-            foreach (var interfaceType in services.Select(s => s.ServiceType).Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null))
+            foreach (
+                var interfaceType in services
+                    .Select(s => s.ServiceType)
+                    .Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null)
+            )
             {
                 referenceManager.RegisterAccessors(interfaceType);
             }
@@ -92,7 +101,11 @@ public static class ServiceExtensions
         {
             var fileManager = new FileManager(provider);
 
-            foreach (var interfaceType in services.Select(s => s.ServiceType).Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null))
+            foreach (
+                var interfaceType in services
+                    .Select(s => s.ServiceType)
+                    .Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null)
+            )
             {
                 fileManager.RegisterAccessors(interfaceType);
             }

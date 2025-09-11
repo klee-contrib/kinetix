@@ -26,12 +26,7 @@ public class ServicesConfig
     /// <summary>
     /// Durée de cache des listes de référence.
     /// </summary>
-    internal TimeSpan ReferenceListCacheDuration { get; private set; } = TimeSpan.FromMinutes(10);
-
-    /// <summary>
-    /// Durée de cache des listes de référence statiques.
-    /// </summary>
-    internal TimeSpan StaticListCacheDuration { get; private set; } = TimeSpan.FromHours(1);
+    internal TimeSpan ReferenceCacheDuration { get; private set; } = TimeSpan.FromHours(1);
 
     /// <summary>
     /// Type a instancier pour notifier des flushs de liste de référence.
@@ -61,13 +56,13 @@ public class ServicesConfig
     }
 
     /// <summary>
-    /// Spécifie la durée du cache des listes de référence non statiques.
+    /// Spécifie la durée du cache des listes de référence.
     /// </summary>
     /// <param name="duration">Durée.</param>
     /// <returns>Config.</returns>
-    public ServicesConfig WithReferenceListCacheDuration(TimeSpan duration)
+    public ServicesConfig WithReferenceCacheDuration(TimeSpan duration)
     {
-        ReferenceListCacheDuration = duration;
+        ReferenceCacheDuration = duration;
         return this;
     }
 
@@ -80,17 +75,6 @@ public class ServicesConfig
         where T : IReferenceNotifier
     {
         ReferenceNotifier = typeof(T);
-        return this;
-    }
-
-    /// <summary>
-    /// Spécifie la durée du cache des listes statiques.
-    /// </summary>
-    /// <param name="duration">Durée.</param>
-    /// <returns>Config.</returns>
-    public ServicesConfig WithStaticListCacheDuration(TimeSpan duration)
-    {
-        StaticListCacheDuration = duration;
         return this;
     }
 }
