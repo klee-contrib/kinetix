@@ -12,7 +12,8 @@ namespace Kinetix.Search.Core.Querying;
 /// <param name="code">Code de la facette.</param>
 /// <param name="label">Libellé de la facette.</param>
 /// <param name="field">Champ sur lequel agit la facette.</param>
-public class DateFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : TermFacet<TDocument>(code, label, field)
+public class DateFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field)
+    : TermFacet<TDocument>(code, label, field)
 {
     /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
     public override string ResolveLabel(string primaryKey)

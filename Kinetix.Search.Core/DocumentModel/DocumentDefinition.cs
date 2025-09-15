@@ -44,18 +44,16 @@ public class DocumentDefinition
 
         if ((IgnoreOnPartialRebuild?.OlderThanDays ?? 0) > 0 && PartialRebuildDate == null)
         {
-            throw new NotSupportedException($"{beanType} must have a partial rebuild date property if 'OlderThanDays' > 0.");
+            throw new NotSupportedException(
+                $"{beanType} must have a partial rebuild date property if 'OlderThanDays' > 0."
+            );
         }
     }
 
     /// <summary>
     /// Retourne le type du bean.
     /// </summary>
-    public Type BeanType
-    {
-        get;
-        private set;
-    }
+    public Type BeanType { get; private set; }
 
     /// <summary>
     /// Retourne la clef primaire si elle existe.
@@ -70,36 +68,20 @@ public class DocumentDefinition
     /// <summary>
     /// Retourne la propriété de filtrage de sécurité.
     /// </summary>
-    public DocumentFieldDescriptor? SecurityField
-    {
-        get;
-        private set;
-    }
+    public DocumentFieldDescriptor? SecurityField { get; private set; }
 
     /// <summary>
     /// Retourne la liste des propriétés d'un bean.
     /// </summary>
-    public DocumentFieldDescriptorCollection Fields
-    {
-        get;
-        private set;
-    }
+    public DocumentFieldDescriptorCollection Fields { get; private set; }
 
     /// <summary>
     /// Précise si le document a une condition de rebuild partiel.
     /// </summary>
-    public IgnoreOnPartialRebuildAttribute? IgnoreOnPartialRebuild
-    {
-        get;
-        private set;
-    }
+    public IgnoreOnPartialRebuildAttribute? IgnoreOnPartialRebuild { get; private set; }
 
     /// <summary>
     /// Retourne la propriété de date qui contrôle le rebuild partiel.
     /// </summary>
-    public DocumentFieldDescriptor? PartialRebuildDate
-    {
-        get;
-        private set;
-    }
+    public DocumentFieldDescriptor? PartialRebuildDate { get; private set; }
 }

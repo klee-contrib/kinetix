@@ -15,12 +15,21 @@ using static AdvancedQueryUtil;
 /// <summary>
 /// Store ElasticSearch.
 /// </summary>
-public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient client, ElasticManager elasticManager, ElasticMappingFactory factory, ILogger<ElasticStore> logger, FacetHandler facetHandler, AnalyticsManager analytics, SearchConfig config) : ISearchStore
+public class ElasticStore(
+    DocumentDescriptor documentDescriptor,
+    ElasticClient client,
+    ElasticManager elasticManager,
+    ElasticMappingFactory factory,
+    ILogger<ElasticStore> logger,
+    FacetHandler facetHandler,
+    AnalyticsManager analytics,
+    SearchConfig config
+) : ISearchStore
 {
     /// <inheritdoc cref="ISearchStore.AdvancedCount{TDocument, TCriteria}" />
     public long AdvancedCount<TDocument, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input)
-            where TDocument : class
-            where TCriteria : ICriteria
+        where TDocument : class
+        where TCriteria : ICriteria
     {
         ArgumentNullException.ThrowIfNull(input);
 
@@ -28,21 +37,34 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
 
         /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
         var filterQuery = GetFilterAndPostFilterQuery(def, input, facetHandler);
-        return logger.LogQuery(analytics, "AdvancedCount", () => client
-            .Count<TDocument>(s => s.Query(filterQuery)))
+        return logger
+            .LogQuery(analytics, "AdvancedCount", () => client.Count<TDocument>(s => s.Query(filterQuery)))
             .Count;
     }
 
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
-    public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+    public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, TOutput> documentMapper
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return AdvancedQuery(input, (d, _) => documentMapper(d), filter: null, sorts: null, sortsAfter: false, aggs: null);
+        return AdvancedQuery(
+            input,
+            (d, _) => documentMapper(d),
+            filter: null,
+            sorts: null,
+            sortsAfter: false,
+            aggs: null
+        );
     }
 
     /// <inheritdoc cref="ISearchStore.AdvancedQuery{TDocument, TOutput, TCriteria}(AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
-    public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+    public QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -64,11 +86,12 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
 
     /// <inheritdoc cref="ISearchStore.EnsureIndex{TDocument}" />
     public bool EnsureIndex<TDocument>()
-            where TDocument : class
+        where TDocument : class
     {
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
-        var mapping = new PutMappingDescriptor<TDocument>()
-            .Properties(selector => factory.AddFields(selector, def.Fields));
+        var mapping = new PutMappingDescriptor<TDocument>().Properties(selector =>
+            factory.AddFields(selector, def.Fields)
+        );
 
         var indexCreated = elasticManager.InitIndex<TDocument, DefaultIndexConfigurator>(mapping);
 
@@ -85,12 +108,18 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
         where TDocument : class
     {
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
-        return logger.LogQuery(analytics, "Get", () => client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValueFromDocument(id)))).Source;
+        return logger
+            .LogQuery(
+                analytics,
+                "Get",
+                () => client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValueFromDocument(id)))
+            )
+            .Source;
     }
 
     /// <inheritdoc cref="ISearchStore.Index{TDocument}" />
     public void Index<TDocument>(TDocument document, bool refresh = true)
-            where TDocument : class
+        where TDocument : class
     {
         if (document != null)
         {
@@ -105,8 +134,12 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
     }
 
     /// <inheritdoc cref="ISearchStore.ResetIndex{TDocument}" />
-    public int ResetIndex<TDocument>(IEnumerable<TDocument> documents, bool partialRebuild, ILogger? rebuildLogger = null)
-            where TDocument : class
+    public int ResetIndex<TDocument>(
+        IEnumerable<TDocument> documents,
+        bool partialRebuild,
+        ILogger? rebuildLogger = null
+    )
+        where TDocument : class
     {
         var indexName = SearchConfig.GetTypeNameForIndex(typeof(TDocument));
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
@@ -116,12 +149,23 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
         {
             rebuildLogger?.LogInformation($"Partial rebuild. Deleting recent documents for {indexName}...");
 
-            var deleteRes = logger.LogQuery(analytics, "DeleteAllByQuery", () => client.DeleteByQuery<TDocument>(d =>
-                d.Query(q => q.DateRange(d => d
-                    .Field(def.PartialRebuildDate.FieldName)
-                    .GreaterThan(DateTime.UtcNow.Date.AddDays(-def.IgnoreOnPartialRebuild.OlderThanDays))))
-                .Timeout(TimeSpan.FromMinutes(5))
-                .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(5)))));
+            var deleteRes = logger.LogQuery(
+                analytics,
+                "DeleteAllByQuery",
+                () =>
+                    client.DeleteByQuery<TDocument>(d =>
+                        d.Query(q =>
+                                q.DateRange(d =>
+                                    d.Field(def.PartialRebuildDate.FieldName)
+                                        .GreaterThan(
+                                            DateTime.UtcNow.Date.AddDays(-def.IgnoreOnPartialRebuild.OlderThanDays)
+                                        )
+                                )
+                            )
+                            .Timeout(TimeSpan.FromMinutes(5))
+                            .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(5)))
+                    )
+            );
 
             rebuildLogger?.LogInformation($"{deleteRes.Deleted} documents deleted.");
         }
@@ -152,9 +196,16 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
         return count;
     }
 
-    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts, bool sortsAfter, Action<AggregationContainerDescriptor<TDocument>>? aggs)
-       where TDocument : class
-       where TCriteria : ICriteria
+    internal QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter,
+        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts,
+        bool sortsAfter,
+        Action<AggregationContainerDescriptor<TDocument>>? aggs
+    )
+        where TDocument : class
+        where TCriteria : ICriteria
     {
         ArgumentNullException.ThrowIfNull(input);
 
@@ -168,8 +219,24 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
         var groupFieldName = GetGroupFieldName(input);
         var hasGroup = groupFieldName != null;
 
-        var res = logger.LogQuery(analytics, "AdvancedQuery", () => client.Search(
-            GetAdvancedQueryDescriptor(def, input, facetHandler, filter, sorts, sortsAfter, aggs, facetDefList, groupFieldName)));
+        var res = logger.LogQuery(
+            analytics,
+            "AdvancedQuery",
+            () =>
+                client.Search(
+                    GetAdvancedQueryDescriptor(
+                        def,
+                        input,
+                        facetHandler,
+                        filter,
+                        sorts,
+                        sortsAfter,
+                        aggs,
+                        facetDefList,
+                        groupFieldName
+                    )
+                )
+        );
 
         /* Extraction des facettes. */
         var facetListOutput = new List<FacetOutput>();
@@ -177,15 +244,17 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
         {
             foreach (var facetDef in facetDefList)
             {
-                facetListOutput.Add(new FacetOutput
-                {
-                    Code = facetDef.Code,
-                    Label = facetDef.Label,
-                    IsMultiSelectable = facetDef.IsMultiSelectable,
-                    IsMultiValued = def.Fields[facetDef.FieldName].IsMultiValued,
-                    CanExclude = facetDef.CanExclude,
-                    Values = facetHandler.ExtractFacetItemList(res.Aggregations, facetDef)
-                });
+                facetListOutput.Add(
+                    new FacetOutput
+                    {
+                        Code = facetDef.Code,
+                        Label = facetDef.Label,
+                        IsMultiSelectable = facetDef.IsMultiSelectable,
+                        IsMultiValued = def.Fields[facetDef.FieldName].IsMultiValued,
+                        CanExclude = facetDef.CanExclude,
+                        Values = facetHandler.ExtractFacetItemList(res.Aggregations, facetDef),
+                    }
+                );
             }
         }
 
@@ -198,18 +267,19 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
             {
                 if (!facetItems.Any(f => f.Code == value))
                 {
-                    var label = value == FacetConst.NotNullValue
-                        ? FacetConst.NotNullLabel
-                        : value == FacetConst.NullValue
-                            ? FacetConst.NullLabel
-                            : facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(value);
+                    var label =
+                        value == FacetConst.NotNullValue ? FacetConst.NotNullLabel
+                        : value == FacetConst.NullValue ? FacetConst.NullLabel
+                        : facetDefList.FirstOrDefault(fct => fct.Code == facet.Key)?.ResolveLabel(value);
 
-                    facetItems.Add(new FacetItem
-                    {
-                        Code = value,
-                        Label = label!,
-                        Count = 0
-                    });
+                    facetItems.Add(
+                        new FacetItem
+                        {
+                            Code = value,
+                            Label = label!,
+                            Count = 0,
+                        }
+                    );
                 }
             }
         }
@@ -225,30 +295,46 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
 
             foreach (var group in bucket.Buckets)
             {
-                var list = group.TopHits(TopHitName).Hits<TDocument>().Select(d => documentMapper(d.Source, d.Highlight)).ToList();
-                groupResultList.Add(new GroupResult<TOutput>
-                {
-                    Code = group.Key.ToString(),
-                    Label = facetDefList.First(f => f.Code == input.SearchCriteria.First(sc => !string.IsNullOrEmpty(sc.Group)).Group).ResolveLabel(group.Key),
-                    List = list,
-                    TotalCount = (int)(group.DocCount ?? 0)
-                });
+                var list = group
+                    .TopHits(TopHitName)
+                    .Hits<TDocument>()
+                    .Select(d => documentMapper(d.Source, d.Highlight))
+                    .ToList();
+                groupResultList.Add(
+                    new GroupResult<TOutput>
+                    {
+                        Code = group.Key.ToString(),
+                        Label = facetDefList
+                            .First(f =>
+                                f.Code == input.SearchCriteria.First(sc => !string.IsNullOrEmpty(sc.Group)).Group
+                            )
+                            .ResolveLabel(group.Key),
+                        List = list,
+                        TotalCount = (int)(group.DocCount ?? 0),
+                    }
+                );
             }
 
             /* Groupe pour les valeurs missing. */
             var missingBucket = res.Aggregations.Missing(groupFieldName + MissingGroupPrefix);
             missingBucket ??= res.Aggregations.Filter(groupFieldName).Missing(groupFieldName + MissingGroupPrefix);
 
-            var nullDocs = missingBucket.TopHits(TopHitName).Hits<TDocument>().Select(d => documentMapper(d.Source, d.Highlight)).ToList();
+            var nullDocs = missingBucket
+                .TopHits(TopHitName)
+                .Hits<TDocument>()
+                .Select(d => documentMapper(d.Source, d.Highlight))
+                .ToList();
             if (nullDocs.Count != 0)
             {
-                groupResultList.Add(new GroupResult<TOutput>
-                {
-                    Code = FacetConst.NullValue,
-                    Label = input.FacetQueryDefinition.FacetNullValueLabel ?? "focus.search.results.missing",
-                    List = nullDocs,
-                    TotalCount = (int)missingBucket.DocCount
-                });
+                groupResultList.Add(
+                    new GroupResult<TOutput>
+                    {
+                        Code = FacetConst.NullValue,
+                        Label = input.FacetQueryDefinition.FacetNullValueLabel ?? "focus.search.results.missing",
+                        List = nullDocs,
+                        TotalCount = (int)missingBucket.DocCount,
+                    }
+                );
             }
         }
         else
@@ -266,21 +352,33 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
             Groups = groupResultList,
             SearchFields = def.SearchFields.Select(tf => tf.FieldName).ToList(),
             TotalCount = (int)res.Total,
-            Aggregations = res.Aggregations
+            Aggregations = res.Aggregations,
         };
     }
 
-    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts, bool sortsAfter)
-       where TDocument : class
-       where TCriteria : ICriteria
+    internal IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter,
+        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts,
+        bool sortsAfter
+    )
+        where TDocument : class
+        where TCriteria : ICriteria
     {
         ArgumentNullException.ThrowIfNull(input);
 
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
-        var pit = logger.LogQuery(analytics, "CreatePit", () => client.OpenPointInTime(
-               config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(TDocument)),
-               p => p.KeepAlive("1m")));
+        var pit = logger.LogQuery(
+            analytics,
+            "CreatePit",
+            () =>
+                client.OpenPointInTime(
+                    config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(TDocument)),
+                    p => p.KeepAlive("1m")
+                )
+        );
 
         var pitId = pit.Id;
         try
@@ -290,8 +388,23 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
             var search = true;
             do
             {
-                var res = logger.LogQuery(analytics, $"AdvancedQueryWithPit", () => client.Search(
-                    GetAdvancedQueryDescriptor(def, input, facetHandler, filter, sorts, sortsAfter, pitId: pitId, searchAfter: searchAfter)));
+                var res = logger.LogQuery(
+                    analytics,
+                    $"AdvancedQueryWithPit",
+                    () =>
+                        client.Search(
+                            GetAdvancedQueryDescriptor(
+                                def,
+                                input,
+                                facetHandler,
+                                filter,
+                                sorts,
+                                sortsAfter,
+                                pitId: pitId,
+                                searchAfter: searchAfter
+                            )
+                        )
+                );
 
                 foreach (var doc in res.Hits)
                 {
@@ -306,8 +419,7 @@ public class ElasticStore(DocumentDescriptor documentDescriptor, ElasticClient c
                 {
                     search = false;
                 }
-            }
-            while (search);
+            } while (search);
         }
         finally
         {

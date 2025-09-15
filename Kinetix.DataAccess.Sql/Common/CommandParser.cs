@@ -68,7 +68,7 @@ public abstract class CommandParser(SqlManager sqlManager)
         /// <summary>
         /// Order clause.
         /// </summary>
-        Order
+        Order,
     }
 
     /// <summary>
@@ -138,12 +138,18 @@ public abstract class CommandParser(SqlManager sqlManager)
         {
             if (queryParameter.Limit > 0)
             {
-                command.CommandText = command.CommandText.Replace(MaxRows, queryParameter.Limit.ToString(CultureInfo.InvariantCulture));
+                command.CommandText = command.CommandText.Replace(
+                    MaxRows,
+                    queryParameter.Limit.ToString(CultureInfo.InvariantCulture)
+                );
             }
 
             if (queryParameter.Offset > 0)
             {
-                command.CommandText = command.CommandText.Replace(Offset, queryParameter.Offset.ToString(CultureInfo.InvariantCulture));
+                command.CommandText = command.CommandText.Replace(
+                    Offset,
+                    queryParameter.Offset.ToString(CultureInfo.InvariantCulture)
+                );
             }
         }
 
@@ -242,7 +248,10 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <returns>Valeur finale de la chaîne.</returns>
     private string ExtractDynamicValue(string value)
     {
-        if (value.StartsWith(TagStaticParStart, StringComparison.Ordinal) && value.EndsWith(TagStaticParEnd, StringComparison.Ordinal))
+        if (
+            value.StartsWith(TagStaticParStart, StringComparison.Ordinal)
+            && value.EndsWith(TagStaticParEnd, StringComparison.Ordinal)
+        )
         {
             var constant = value[1..^1];
             var constantValue = sqlManager.GetConstValueByShortName(constant);
@@ -296,7 +305,12 @@ public abstract class CommandParser(SqlManager sqlManager)
 
                 if (OrderParameterName.Equals(constant))
                 {
-                    return new Token { Position = cstPos, Type = TokenType.Order, EndPosition = cstEndPos };
+                    return new Token
+                    {
+                        Position = cstPos,
+                        Type = TokenType.Order,
+                        EndPosition = cstEndPos,
+                    };
                 }
 
                 if (constant.Split('.').Length == 2)
@@ -314,7 +328,13 @@ public abstract class CommandParser(SqlManager sqlManager)
                             throw new NotImplementedException(constantValue.GetType().FullName);
                         }
 
-                        return new Token { Position = cstPos, Type = TokenType.Constant, EndPosition = cstEndPos, ConstantValue = stringValue };
+                        return new Token
+                        {
+                            Position = cstPos,
+                            Type = TokenType.Constant,
+                            EndPosition = cstEndPos,
+                            ConstantValue = stringValue,
+                        };
                     }
                 }
             }
@@ -374,8 +394,7 @@ public abstract class CommandParser(SqlManager sqlManager)
             var parameter = paramArray[i];
             if (!string.IsNullOrEmpty(parameter))
             {
-                var isNull = DBNull.Value.Equals(
-                        ((IDbDataParameter)parameters["@" + parameter.Trim()]).Value);
+                var isNull = DBNull.Value.Equals(((IDbDataParameter)parameters["@" + parameter.Trim()]).Value);
                 if ('&'.Equals(oper) && (checkNull ? !isNull : isNull))
                 {
                     return false;
@@ -401,7 +420,14 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <param name="isOutputEnabled">Indique si l'expression est valide.</param>
     /// <param name="queryParameter">Paramètre de tri et de pagination.</param>
     /// <returns>Position de sortie.</returns>
-    private int ParseExpression(StringBuilder sqlBuilder, IDbCommand command, string commandText, int index, bool isOutputEnabled, QueryParameter queryParameter)
+    private int ParseExpression(
+        StringBuilder sqlBuilder,
+        IDbCommand command,
+        string commandText,
+        int index,
+        bool isOutputEnabled,
+        QueryParameter queryParameter
+    )
     {
         var currentPos = index;
 
@@ -411,8 +437,8 @@ public abstract class CommandParser(SqlManager sqlManager)
             throw new NotSupportedException();
         }
 
-        var isExpressionEnabled = isOutputEnabled &&
-                IsExpressionEnabled(command.Parameters, commandText, index, currentPos);
+        var isExpressionEnabled =
+            isOutputEnabled && IsExpressionEnabled(command.Parameters, commandText, index, currentPos);
 
         var t = GetNextToken(commandText, currentPos);
         var nextClose = commandText.IndexOf(TagIfEnd, currentPos, StringComparison.OrdinalIgnoreCase);
@@ -447,12 +473,26 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <param name="isExpressionEnabled">Indique si l'expression en cours est active.</param>
     /// <param name="queryParameter">Paramètres de tri et de pagination.</param>
     /// <returns>Prochaine position.</returns>
-    private int ProcessToken(IDbCommand command, string commandText, StringBuilder sqlBuilder, Token t, bool isExpressionEnabled, QueryParameter queryParameter)
+    private int ProcessToken(
+        IDbCommand command,
+        string commandText,
+        StringBuilder sqlBuilder,
+        Token t,
+        bool isExpressionEnabled,
+        QueryParameter queryParameter
+    )
     {
         switch (t.Type)
         {
             case TokenType.IfStatement:
-                return ParseExpression(sqlBuilder, command, commandText, t.Position, isExpressionEnabled, queryParameter) + 1;
+                return ParseExpression(
+                        sqlBuilder,
+                        command,
+                        commandText,
+                        t.Position,
+                        isExpressionEnabled,
+                        queryParameter
+                    ) + 1;
             case TokenType.Constant:
                 if (isExpressionEnabled)
                 {
@@ -504,37 +544,21 @@ public abstract class CommandParser(SqlManager sqlManager)
         /// <summary>
         /// Position.
         /// </summary>
-        public int Position
-        {
-            get;
-            set;
-        }
+        public int Position { get; set; }
 
         /// <summary>
         /// Type.
         /// </summary>
-        public TokenType Type
-        {
-            get;
-            set;
-        }
+        public TokenType Type { get; set; }
 
         /// <summary>
         /// Position de fin.
         /// </summary>
-        public int EndPosition
-        {
-            get;
-            set;
-        }
+        public int EndPosition { get; set; }
 
         /// <summary>
         /// Valeur de la constante.
         /// </summary>
-        public string ConstantValue
-        {
-            get;
-            set;
-        }
+        public string ConstantValue { get; set; }
     }
 }

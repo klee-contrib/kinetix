@@ -9,18 +9,14 @@ public class ElasticException : Exception
     /// <summary>
     /// Crée un nouvelle exception.
     /// </summary>
-    public ElasticException()
-    {
-    }
+    public ElasticException() { }
 
     /// <summary>
     /// Crée une nouvelle exception.
     /// </summary>
     /// <param name="message">Description de l'exception.</param>
     public ElasticException(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 
     /// <summary>
     /// Crée une nouvelle exception.

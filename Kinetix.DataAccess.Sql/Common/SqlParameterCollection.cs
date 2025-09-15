@@ -83,7 +83,6 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
             var index = IndexOf(parameterName);
             return List[index];
         }
-
         set
         {
             var index = IndexOf(parameterName);

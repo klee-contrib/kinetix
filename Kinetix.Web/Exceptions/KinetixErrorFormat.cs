@@ -3,5 +3,5 @@
 public enum KinetixErrorFormat
 {
     ProblemDetails,
-    Kinetix
+    Kinetix,
 }

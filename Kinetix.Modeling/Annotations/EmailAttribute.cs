@@ -17,7 +17,8 @@ public sealed class EmailAttribute(int maximumLength) : StringLengthAttribute(ma
     /// <summary>
     /// Chaine d'expression régulière de validation des emails.
     /// </summary>
-    private const string _strRegex = @"^(([^<>()[\]\\.,;:\s@\""]+(\.[^<>()[\]\\.,;:\s@\""]+)*)|(\"".+\""))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$";
+    private const string _strRegex =
+        @"^(([^<>()[\]\\.,;:\s@\""]+(\.[^<>()[\]\\.,;:\s@\""]+)*)|(\"".+\""))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$";
 
     /// <summary>
     /// Expression régulière de validation des emails.

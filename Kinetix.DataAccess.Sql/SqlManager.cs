@@ -24,7 +24,12 @@ public sealed class SqlManager
 
         foreach (var type in config.ConstDataTypes.SelectMany(a => a.GetTypes()))
         {
-            if (type.IsPublic && type.IsClass && type.Namespace != null && type.Namespace.IndexOf("DataContract", StringComparison.Ordinal) != -1)
+            if (
+                type.IsPublic
+                && type.IsClass
+                && type.Namespace != null
+                && type.Namespace.IndexOf("DataContract", StringComparison.Ordinal) != -1
+            )
             {
                 foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Static))
                 {

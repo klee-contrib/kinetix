@@ -15,14 +15,13 @@ public static class ServiceExtensions
     /// <returns>ServiceCollection.</returns>
     public static IServiceCollection AddSecurity(this IServiceCollection services)
     {
-        return services
-            .AddScoped(provider =>
-            {
-                var httpContext = provider.GetService<IHttpContextAccessor>()?.HttpContext;
-                return httpContext == null
-                    ? throw new InvalidOperationException("Impossible d'utiliser ICurrentUser dans ce contexte.")
-                    : new WebUser(httpContext);
-            });
+        return services.AddScoped(provider =>
+        {
+            var httpContext = provider.GetService<IHttpContextAccessor>()?.HttpContext;
+            return httpContext == null
+                ? throw new InvalidOperationException("Impossible d'utiliser ICurrentUser dans ce contexte.")
+                : new WebUser(httpContext);
+        });
     }
 
     /// <summary>

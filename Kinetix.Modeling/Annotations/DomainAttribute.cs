@@ -23,18 +23,10 @@ public sealed class DomainAttribute(object name) : Attribute
     /// <summary>
     /// Obtient ou définit le nom de la clef de ressource.
     /// </summary>
-    public string ErrorMessageResourceName
-    {
-        get;
-        set;
-    }
+    public string ErrorMessageResourceName { get; set; }
 
     /// <summary>
     /// Obtient ou définit le suffix de la propriété portant les métadonnées utilent au domaine.
     /// </summary>
-    public string MetadataPropertySuffix
-    {
-        get;
-        set;
-    }
+    public string MetadataPropertySuffix { get; set; }
 }

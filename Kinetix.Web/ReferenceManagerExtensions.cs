@@ -19,29 +19,38 @@ public static class ReferenceManagerExtensions
     /// <param name="endpoints">EndpointBuilder.</param>
     /// <param name="prefix">Préfixe des routes.</param>
     /// <returns>GroupBuilder.</returns>
-    public static RouteGroupBuilder MapReferenceEndpoints(this IEndpointRouteBuilder endpoints, string prefix = "api/referenceList")
+    public static RouteGroupBuilder MapReferenceEndpoints(
+        this IEndpointRouteBuilder endpoints,
+        string prefix = "api/referenceList"
+    )
     {
         var group = endpoints.MapGroup(prefix);
 
-        group.MapGet("{referenceName}", (string referenceName, [FromServices] IReferenceManager referenceManager) =>
-        {
-            if (!referenceManager.ReferenceLists.Contains(referenceName))
+        group.MapGet(
+            "{referenceName}",
+            (string referenceName, [FromServices] IReferenceManager referenceManager) =>
             {
-                throw new BusinessException($"La liste de référence '{referenceName}' n'existe pas");
+                if (!referenceManager.ReferenceLists.Contains(referenceName))
+                {
+                    throw new BusinessException($"La liste de référence '{referenceName}' n'existe pas");
+                }
+
+                return referenceManager.GetReferenceList(referenceName);
             }
+        );
 
-            return referenceManager.GetReferenceList(referenceName);
-        });
-
-        group.MapDelete("{referenceName}", (string referenceName, [FromServices] IReferenceManager referenceManager) =>
-        {
-            if (!referenceManager.ReferenceLists.Contains(referenceName))
+        group.MapDelete(
+            "{referenceName}",
+            (string referenceName, [FromServices] IReferenceManager referenceManager) =>
             {
-                throw new BusinessException($"La liste de référence '{referenceName}' n'existe pas");
-            }
+                if (!referenceManager.ReferenceLists.Contains(referenceName))
+                {
+                    throw new BusinessException($"La liste de référence '{referenceName}' n'existe pas");
+                }
 
-            referenceManager.FlushCache(referenceName);
-        });
+                referenceManager.FlushCache(referenceName);
+            }
+        );
 
         group.AddEndpointFilter<TransactionFilter>();
 

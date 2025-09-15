@@ -37,7 +37,12 @@ public class FacetQueryDefinitionBuilder<TDocument>(IReferenceManager referenceM
     /// <param name="field">Champ sur lequel agit la facette.</param>
     /// <param name="configurator">Configurateur de facette.</param>
     /// <returns>FacetQueryDefinitionBuilder.</returns>
-    public FacetQueryDefinitionBuilder<TDocument> AddBoolean(string code, string label, Expression<Func<TDocument, object>> field, Action<BooleanFacet<TDocument>>? configurator = null)
+    public FacetQueryDefinitionBuilder<TDocument> AddBoolean(
+        string code,
+        string label,
+        Expression<Func<TDocument, object>> field,
+        Action<BooleanFacet<TDocument>>? configurator = null
+    )
     {
         var facet = new BooleanFacet<TDocument>(code, label, field);
         configurator?.Invoke(facet);
@@ -53,7 +58,12 @@ public class FacetQueryDefinitionBuilder<TDocument>(IReferenceManager referenceM
     /// <param name="field">Champ sur lequel agit la facette.</param>
     /// <param name="configurator">Configurateur de facette.</param>
     /// <returns>FacetQueryDefinitionBuilder.</returns>
-    public FacetQueryDefinitionBuilder<TDocument> AddDate(string code, string label, Expression<Func<TDocument, object>> field, Action<DateFacet<TDocument>>? configurator = null)
+    public FacetQueryDefinitionBuilder<TDocument> AddDate(
+        string code,
+        string label,
+        Expression<Func<TDocument, object>> field,
+        Action<DateFacet<TDocument>>? configurator = null
+    )
     {
         var facet = new DateFacet<TDocument>(code, label, field);
         configurator?.Invoke(facet);
@@ -68,7 +78,11 @@ public class FacetQueryDefinitionBuilder<TDocument>(IReferenceManager referenceM
     /// <param name="label">Libellé de la facette.</param>
     /// <param name="field">Champ sur lequel agit la facette.</param>
     /// <returns>FacetQueryDefinitionBuilder.</returns>
-    public FacetQueryDefinitionBuilder<TDocument> AddExists(string code, string label, Expression<Func<TDocument, object>> field)
+    public FacetQueryDefinitionBuilder<TDocument> AddExists(
+        string code,
+        string label,
+        Expression<Func<TDocument, object>> field
+    )
     {
         var facet = new ExistsFacet<TDocument>(code, label, field);
         Add(facet);
@@ -84,7 +98,12 @@ public class FacetQueryDefinitionBuilder<TDocument>(IReferenceManager referenceM
     /// <param name="field">Champ sur lequel agit la facette.</param>
     /// <param name="configurator">Configurateur de facette.</param>
     /// <returns>FacetQueryDefinitionBuilder.</returns>
-    public FacetQueryDefinitionBuilder<TDocument> AddReference<T>(string code, string label, Expression<Func<TDocument, object>> field, Action<ReferenceFacet<TDocument>>? configurator = null)
+    public FacetQueryDefinitionBuilder<TDocument> AddReference<T>(
+        string code,
+        string label,
+        Expression<Func<TDocument, object>> field,
+        Action<ReferenceFacet<TDocument>>? configurator = null
+    )
         where T : class
     {
         var facet = new ReferenceFacet<TDocument, T>(referenceManager, code, label, field);
@@ -101,7 +120,12 @@ public class FacetQueryDefinitionBuilder<TDocument>(IReferenceManager referenceM
     /// <param name="field">Champ sur lequel agit la facette.</param>
     /// <param name="configurator">Configurateur de facette.</param>
     /// <returns>FacetQueryDefinitionBuilder.</returns>
-    public FacetQueryDefinitionBuilder<TDocument> AddTerm(string code, string label, Expression<Func<TDocument, object>> field, Action<TermFacet<TDocument>>? configurator = null)
+    public FacetQueryDefinitionBuilder<TDocument> AddTerm(
+        string code,
+        string label,
+        Expression<Func<TDocument, object>> field,
+        Action<TermFacet<TDocument>>? configurator = null
+    )
     {
         var facet = new TermFacet<TDocument>(code, label, field);
         configurator?.Invoke(facet);

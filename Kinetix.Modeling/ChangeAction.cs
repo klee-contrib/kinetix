@@ -5,5 +5,5 @@ public enum ChangeAction
     None,
     Delete,
     Insert,
-    Update
+    Update,
 }

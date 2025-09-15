@@ -38,10 +38,12 @@ public sealed class DocumentFieldDescriptorCollection : IEnumerable<DocumentFiel
             }
             catch (KeyNotFoundException e)
             {
-                throw new ArgumentException("Champ " + fieldName + " non trouvée pour le type " + _beanType.FullName + ".", e);
+                throw new ArgumentException(
+                    "Champ " + fieldName + " non trouvée pour le type " + _beanType.FullName + ".",
+                    e
+                );
             }
         }
-
         set => _properties[fieldName] = value;
     }
 

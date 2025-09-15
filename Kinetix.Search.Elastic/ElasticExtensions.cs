@@ -39,7 +39,9 @@ internal static class ElasticExtensions
         var process = analytics.StopProcess();
         if (!process.Disabled)
         {
-            logger.LogInformation($"{context} ({response.ApiCall.HttpMethod} {response.ApiCall.Uri}) {response.ApiCall.HttpStatusCode} ({process.Duration} ms)");
+            logger.LogInformation(
+                $"{context} ({response.ApiCall.HttpMethod} {response.ApiCall.Uri}) {response.ApiCall.HttpStatusCode} ({process.Duration} ms)"
+            );
         }
 
         return response;

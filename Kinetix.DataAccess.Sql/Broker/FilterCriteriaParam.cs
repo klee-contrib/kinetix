@@ -21,27 +21,15 @@ public sealed class FilterCriteriaParam
     /// <summary>
     /// Valeur du champ en base.
     /// </summary>
-    public object Value
-    {
-        get;
-        private set;
-    }
+    public object Value { get; private set; }
 
     /// <summary>
     /// Nom de la colonne testée.
     /// </summary>
-    public string ColumnName
-    {
-        get;
-        private set;
-    }
+    public string ColumnName { get; private set; }
 
     /// <summary>
     /// Type d'expression invoquée.
     /// </summary>
-    public Expression Expression
-    {
-        get;
-        private set;
-    }
+    public Expression Expression { get; private set; }
 }

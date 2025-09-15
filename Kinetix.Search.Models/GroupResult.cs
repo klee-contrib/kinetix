@@ -11,36 +11,20 @@ public class GroupResult
     /// <summary>
     /// Code du groupe (= celui de la facette).
     /// </summary>
-    public required string Code
-    {
-        get;
-        set;
-    }
+    public required string Code { get; set; }
 
     /// <summary>
     /// Label du groupe (= celui de la facette)
     /// </summary>
-    public required string Label
-    {
-        get;
-        set;
-    }
+    public required string Label { get; set; }
 
     /// <summary>
     /// Liste d'éléments du groupe.
     /// </summary>
-    public required ICollection List
-    {
-        get;
-        set;
-    }
+    public required ICollection List { get; set; }
 
     /// <summary>
     /// Nombre d'éléments du groupe.
     /// </summary>
-    public int? TotalCount
-    {
-        get;
-        set;
-    }
+    public int? TotalCount { get; set; }
 }

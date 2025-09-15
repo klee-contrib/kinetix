@@ -17,14 +17,10 @@ internal class DbContextTransactionContext : ITransactionContext
     public bool Completed { get; set; }
 
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
-    public void OnAfterCommit()
-    {
-    }
+    public void OnAfterCommit() { }
 
     /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
-    public void OnBeforeCommit()
-    {
-    }
+    public void OnBeforeCommit() { }
 
     /// <inheritdoc cref="ITransactionContext.OnCommit" />
     public void OnCommit()

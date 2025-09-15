@@ -81,7 +81,12 @@ internal class SqlServerParameterCollection(IDbCommand command) : Common.SqlPara
         return false;
     }
 
-    private SqlDataParameter AddInParameter(string parameterName, IEnumerable list, string typeName, SqlDbType sqlDbType)
+    private SqlDataParameter AddInParameter(
+        string parameterName,
+        IEnumerable list,
+        string typeName,
+        SqlDbType sqlDbType
+    )
     {
         if (string.IsNullOrEmpty(parameterName))
         {
@@ -90,7 +95,10 @@ internal class SqlServerParameterCollection(IDbCommand command) : Common.SqlPara
 
         ArgumentNullException.ThrowIfNull(list);
 
-        var metaData = sqlDbType == SqlDbType.VarChar ? new SqlMetaData(ColDataTypeName, sqlDbType, VarCharLength) : new SqlMetaData(ColDataTypeName, sqlDbType);
+        var metaData =
+            sqlDbType == SqlDbType.VarChar
+                ? new SqlMetaData(ColDataTypeName, sqlDbType, VarCharLength)
+                : new SqlMetaData(ColDataTypeName, sqlDbType);
         var dataRecordList = new List<SqlDataRecord>();
         foreach (var item in list)
         {
@@ -110,7 +118,7 @@ internal class SqlServerParameterCollection(IDbCommand command) : Common.SqlPara
         {
             ParameterName = ParamValue + parameterName,
             Direction = ParameterDirection.Input,
-            Value = dataRecordList
+            Value = dataRecordList,
         };
 
         ((SqlParameter)parameter.InnerParameter).SqlDbType = SqlDbType.Structured;

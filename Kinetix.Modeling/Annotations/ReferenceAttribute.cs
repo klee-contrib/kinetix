@@ -26,9 +26,5 @@ public sealed class ReferenceAttribute : Attribute
     /// <summary>
     /// Obtient ou définit si la liste de référence est statique.
     /// </summary>
-    public bool IsStatic
-    {
-        get;
-        private set;
-    }
+    public bool IsStatic { get; private set; }
 }

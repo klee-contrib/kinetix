@@ -10,9 +10,5 @@ public sealed class ReferenceAccessorAttribute : Attribute
     /// <summary>
     /// Retourne le nom de l'accesseur.
     /// </summary>
-    public string Name
-    {
-        get;
-        set;
-    }
+    public string Name { get; set; }
 }

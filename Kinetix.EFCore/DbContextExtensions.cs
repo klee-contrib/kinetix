@@ -16,7 +16,10 @@ public static class DbContextExtensions
     /// <param name="services">ServiceCollection.</param>
     /// <param name="optionsAction">Configuration.</param>
     /// <returns>ServiceCollection.</returns>
-    public static IServiceCollection AddEFCore<TDbContext>(this IServiceCollection services, Action<DbContextOptionsBuilder> optionsAction = null)
+    public static IServiceCollection AddEFCore<TDbContext>(
+        this IServiceCollection services,
+        Action<DbContextOptionsBuilder> optionsAction = null
+    )
         where TDbContext : DbContext
     {
         return services

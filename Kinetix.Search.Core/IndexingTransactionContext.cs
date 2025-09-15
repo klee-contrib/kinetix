@@ -18,9 +18,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ITransact
     internal bool WaitForRefresh { get; set; } = true;
 
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
-    public void OnAfterCommit()
-    {
-    }
+    public void OnAfterCommit() { }
 
     /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
     public void OnBeforeCommit()
@@ -40,7 +38,8 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ITransact
                 foreach (var indexor in _indexors)
                 {
                     logger.LogInformation($"Prepare {indexor.Key.Name}");
-                    typeof(IndexingTransactionContext).GetMethod(nameof(PrepareBulkDescriptor), BindingFlags.Static | BindingFlags.NonPublic)!
+                    typeof(IndexingTransactionContext)
+                        .GetMethod(nameof(PrepareBulkDescriptor), BindingFlags.Static | BindingFlags.NonPublic)!
                         .MakeGenericMethod(indexor.Key)
                         .Invoke(null, [provider, bulk, indexor.Value]);
                 }
@@ -61,9 +60,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ITransact
     }
 
     /// <inheritdoc cref="ITransactionContext.OnCommit" />
-    public void OnCommit()
-    {
-    }
+    public void OnCommit() { }
 
     internal void IndexAll<TDocument>()
         where TDocument : class
@@ -83,7 +80,11 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ITransact
         return GetState<TDocument>().RegisterIndex(id);
     }
 
-    private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument>(IServiceProvider provider, ISearchBulkDescriptor bulk, IIndexingDocumentState state1)
+    private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument>(
+        IServiceProvider provider,
+        ISearchBulkDescriptor bulk,
+        IIndexingDocumentState state1
+    )
         where TDocument : class
     {
         var state = (IndexingDocumentState<TDocument>)state1;
@@ -93,9 +94,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ITransact
         if (state.Reindex)
         {
             var docs = loader.GetAll(false).ToList();
-            return docs.Count != 0
-                ? bulk.IndexMany(docs)
-                : bulk;
+            return docs.Count != 0 ? bulk.IndexMany(docs) : bulk;
         }
         else
         {

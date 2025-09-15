@@ -26,7 +26,13 @@ public class IndexManager<TDocument>
     /// <param name="searchStore">Composant injecté.</param>
     /// <param name="transactionScopeManager">Composant injecté.</param>
     /// <param name="waitForRefresh">WaitForRefresh/</param>
-    internal IndexManager(ILogger<IndexManager> logger, IServiceProvider provider, ISearchStore searchStore, TransactionScopeManager transactionScopeManager, bool waitForRefresh)
+    internal IndexManager(
+        ILogger<IndexManager> logger,
+        IServiceProvider provider,
+        ISearchStore searchStore,
+        TransactionScopeManager transactionScopeManager,
+        bool waitForRefresh
+    )
     {
         _logger = logger;
         _provider = provider;
@@ -144,6 +150,8 @@ public class IndexManager<TDocument>
             return context;
         }
 
-        throw new InvalidOperationException("Impossible d'enregistrer une réindexation en dehors d'un contexte de transaction.");
+        throw new InvalidOperationException(
+            "Impossible d'enregistrer une réindexation en dehors d'un contexte de transaction."
+        );
     }
 }

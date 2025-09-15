@@ -8,9 +8,7 @@ public class ColumnSelector
     /// <summary>
     /// Default constructeur.
     /// </summary>
-    public ColumnSelector()
-    {
-    }
+    public ColumnSelector() { }
 
     /// <summary>
     /// Default constructor.

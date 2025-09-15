@@ -18,7 +18,11 @@ namespace Kinetix.DataAccess.Sql.Postgres;
 /// <param name="connectionPool">Pool de connexion.</param>
 /// <param name="collection">Collection d'objet.</param>
 /// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
-internal class PostgresParameterBeanCollection<T>(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert) : SqlParameterBeanCollection<T>(connectionPool, collection, isInsert)
+internal class PostgresParameterBeanCollection<T>(
+    ConnectionPool connectionPool,
+    ICollection<T> collection,
+    bool isInsert
+) : SqlParameterBeanCollection<T>(connectionPool, collection, isInsert)
     where T : class, new()
 {
     private JsonArray _dataRecordList;
@@ -78,7 +82,10 @@ internal class PostgresParameterBeanCollection<T>(ConnectionPool connectionPool,
         sbSelect.Append(", ").Append(_insertKeyProp.MemberName);
         sbOutput.Append(", ").Append(_insertKeyProp.MemberName);
 
-        SbInsert.Append(sbSelect).Append($" from json_populate_recordset(null::{BeanDefinition.ContractName}, @table)").Append(sbOutput);
+        SbInsert
+            .Append(sbSelect)
+            .Append($" from json_populate_recordset(null::{BeanDefinition.ContractName}, @table)")
+            .Append(sbOutput);
     }
 
     /// <inheritdoc />

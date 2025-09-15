@@ -2,9 +2,7 @@
 
 namespace Kinetix.Search.Core;
 
-internal interface IIndexingDocumentState
-{
-}
+internal interface IIndexingDocumentState { }
 
 /// <summary>
 /// Contient l'état de réindexation en cours d'un document.

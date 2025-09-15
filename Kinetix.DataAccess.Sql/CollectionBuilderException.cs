@@ -10,18 +10,14 @@ public class CollectionBuilderException : Exception
     /// Crée un nouvelle exception.
     /// </summary>
     public CollectionBuilderException()
-        : base()
-    {
-    }
+        : base() { }
 
     /// <summary>
     /// Crée une nouvelle exception.
     /// </summary>
     /// <param name="message">Description de l'exception.</param>
     public CollectionBuilderException(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 
     /// <summary>
     /// Crée une nouvelle exception.
@@ -29,7 +25,5 @@ public class CollectionBuilderException : Exception
     /// <param name="message">Description de l'exception.</param>
     /// <param name="innerException">Exception source.</param>
     public CollectionBuilderException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
+        : base(message, innerException) { }
 }

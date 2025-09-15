@@ -36,7 +36,8 @@ public sealed class BeanPropertyDescriptor
         bool isRequired,
         Type referenceType,
         bool isReadOnly,
-        bool isBrowsable)
+        bool isBrowsable
+    )
     {
         PropertyName = propertyName;
         MemberName = memberName;
@@ -57,65 +58,37 @@ public sealed class BeanPropertyDescriptor
     /// <summary>
     /// Obtient la description de la valeur.
     /// </summary>
-    public string Description
-    {
-        get;
-        private set;
-    }
+    public string Description { get; private set; }
 
     /// <summary>
     /// Obtient le nom du domaine.
     /// </summary>
-    public Enum DomainName
-    {
-        get;
-        private set;
-    }
+    public Enum DomainName { get; private set; }
 
     /// <summary>
     /// Indique si la propriété est affichable à l'écran.
     /// </summary>
-    public bool IsBrowsable
-    {
-        get;
-        private set;
-    }
+    public bool IsBrowsable { get; private set; }
 
     /// <summary>
     /// Indique si la propriété est la propriété par défaut de l'objet.
     /// </summary>
-    public bool IsDefault
-    {
-        get;
-        private set;
-    }
+    public bool IsDefault { get; private set; }
 
     /// <summary>
     /// Indique si la propriété correspond à la clef primaire.
     /// </summary>
-    public bool IsPrimaryKey
-    {
-        get;
-        private set;
-    }
+    public bool IsPrimaryKey { get; private set; }
 
     /// <summary>
     /// Indique si la valeur est obligatoire.
     /// </summary>
-    public bool IsRequired
-    {
-        get;
-        private set;
-    }
+    public bool IsRequired { get; private set; }
 
     /// <summary>
     /// Indique si la colonne est traduisible (dans le cas d'une liste de référence).
     /// </summary>
-    public bool IsTranslatable
-    {
-        get;
-        private set;
-    }
+    public bool IsTranslatable { get; private set; }
 
     /// <summary>
     /// Retourne le nom du membre porté par DataMemberAttribute.
@@ -123,58 +96,34 @@ public sealed class BeanPropertyDescriptor
     /// de la colonne base de données. Pour des objets issus
     /// d'un service Web, il s'agit du nom Soap de la propriété.
     /// </summary>
-    public string MemberName
-    {
-        get;
-        private set;
-    }
+    public string MemberName { get; private set; }
 
     /// <summary>
     /// Retourne le type primitif de la propriété.
     /// Si PropertyType vaut Nullable&lt;int&gt;, PrimitiveType vaut int.
     /// </summary>
-    public Type PrimitiveType
-    {
-        get;
-        private set;
-    }
+    public Type PrimitiveType { get; private set; }
 
     /// <summary>
     /// Obtient le nom de la propriété.
     /// </summary>
-    public string PropertyName
-    {
-        get;
-        private set;
-    }
+    public string PropertyName { get; private set; }
 
     /// <summary>
     /// Obtient le type de la propriété.
     /// </summary>
-    public Type PropertyType
-    {
-        get;
-        private set;
-    }
+    public Type PropertyType { get; private set; }
 
     /// <summary>
     /// Obtient le type de l'objet de référence
     /// associé à la propriété.
     /// </summary>
-    public Type ReferenceType
-    {
-        get;
-        private set;
-    }
+    public Type ReferenceType { get; private set; }
 
     /// <summary>
     /// Retourne si la propriété est en lecture seule.
     /// </summary>
-    public bool IsReadOnly
-    {
-        get;
-        private set;
-    }
+    public bool IsReadOnly { get; private set; }
 
     /// <summary>
     /// Retourne le domaine associé à la propriété.
@@ -201,9 +150,15 @@ public sealed class BeanPropertyDescriptor
         }
 
         var valueType = value.GetType();
-        if (valueType.IsPrimitive || typeof(decimal).Equals(valueType) || typeof(Guid).Equals(valueType) ||
-                typeof(string).Equals(valueType) || typeof(DateTime).Equals(valueType)
-                || typeof(byte[]).Equals(valueType) || typeof(TimeSpan).Equals(valueType))
+        if (
+            valueType.IsPrimitive
+            || typeof(decimal).Equals(valueType)
+            || typeof(Guid).Equals(valueType)
+            || typeof(string).Equals(valueType)
+            || typeof(DateTime).Equals(valueType)
+            || typeof(byte[]).Equals(valueType)
+            || typeof(TimeSpan).Equals(valueType)
+        )
         {
             if (!valueType.Equals(PrimitiveType))
             {
@@ -213,16 +168,17 @@ public sealed class BeanPropertyDescriptor
                         SR.ExceptionInvalidValueType,
                         valueType,
                         PropertyType,
-                        PropertyName));
+                        PropertyName
+                    )
+                );
             }
 
             return;
         }
 
-        throw new NotSupportedException(string.Format(
-            CultureInfo.CurrentUICulture,
-            SR.ExceptionTypeDescription,
-            PropertyType));
+        throw new NotSupportedException(
+            string.Format(CultureInfo.CurrentUICulture, SR.ExceptionTypeDescription, PropertyType)
+        );
     }
 
     /// <summary>
@@ -246,7 +202,9 @@ public sealed class BeanPropertyDescriptor
         var descriptor = TypeDescriptor.GetProperties(bean)[PropertyName];
         if (descriptor.IsReadOnly)
         {
-            throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, SR.ReadOnlyProperty, PropertyName));
+            throw new NotSupportedException(
+                string.Format(CultureInfo.CurrentCulture, SR.ReadOnlyProperty, PropertyName)
+            );
         }
 
         descriptor.SetValue(bean, value);
@@ -277,9 +235,19 @@ public sealed class BeanPropertyDescriptor
     /// </summary>
     private void CheckPropertyTypeForReference()
     {
-        if (MemberName != null && ReferenceType != null && PrimitiveType != null && PrimitiveType != typeof(int) && PrimitiveType != typeof(string) && PrimitiveType != typeof(Guid) && !PrimitiveType.IsEnum)
+        if (
+            MemberName != null
+            && ReferenceType != null
+            && PrimitiveType != null
+            && PrimitiveType != typeof(int)
+            && PrimitiveType != typeof(string)
+            && PrimitiveType != typeof(Guid)
+            && !PrimitiveType.IsEnum
+        )
         {
-            throw new NotSupportedException(string.Format(CultureInfo.CurrentCulture, SR.ExceptionTypeInt32Required, PropertyType, PropertyName));
+            throw new NotSupportedException(
+                string.Format(CultureInfo.CurrentCulture, SR.ExceptionTypeInt32Required, PropertyType, PropertyName)
+            );
         }
     }
 
@@ -294,7 +262,11 @@ public sealed class BeanPropertyDescriptor
             return;
         }
 
-        if (PropertyType.IsValueType || PropertyType == typeof(string) || PropertyType.GetInterface("ICollection") != null)
+        if (
+            PropertyType.IsValueType
+            || PropertyType == typeof(string)
+            || PropertyType.GetInterface("ICollection") != null
+        )
         {
             PrimitiveType = PropertyType;
             return;

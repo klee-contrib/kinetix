@@ -13,20 +13,10 @@ public class FacetQueryDefinition<TDocument>(params IFacetDefinition<TDocument>[
     /// <summary>
     /// Libellé de la valeur de facette nulle.
     /// </summary>
-    public string? FacetNullValueLabel
-    {
-        get;
-        set;
-    }
+    public string? FacetNullValueLabel { get; set; }
 
     /// <summary>
     /// Liste des facettes.
     /// </summary>
-    public ICollection<IFacetDefinition<TDocument>> Facets
-    {
-        get;
-        private set;
-    }
-
-= facets.ToList();
+    public ICollection<IFacetDefinition<TDocument>> Facets { get; private set; } = facets.ToList();
 }

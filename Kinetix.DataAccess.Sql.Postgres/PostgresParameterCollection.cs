@@ -19,7 +19,7 @@ internal class PostgresParameterCollection(IDbCommand command) : SqlParameterCol
         {
             ParameterName = ParamValue + parameterName,
             Direction = ParameterDirection.Input,
-            Value = list.ToList()
+            Value = list.ToList(),
         };
         Add(parameter);
         return parameter;
@@ -32,7 +32,7 @@ internal class PostgresParameterCollection(IDbCommand command) : SqlParameterCol
         {
             ParameterName = ParamValue + parameterName,
             Direction = ParameterDirection.Input,
-            Value = list.ToList()
+            Value = list.ToList(),
         };
         Add(parameter);
         return parameter;
@@ -45,7 +45,7 @@ internal class PostgresParameterCollection(IDbCommand command) : SqlParameterCol
         {
             ParameterName = ParamValue + parameterName,
             Direction = ParameterDirection.Input,
-            Value = list.ToList()
+            Value = list.ToList(),
         };
         Add(parameter);
         return parameter;

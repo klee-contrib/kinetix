@@ -16,7 +16,11 @@ namespace Kinetix.DataAccess.Sql.Postgres;
 /// <param name="command">Commande.</param>
 /// <param name="analytics">AnalyticsManager.</param>
 /// <param name="logger">Logger.</param>
-internal class PostgresCommandListener(BaseSqlCommand command, AnalyticsManager analytics, ILogger<BaseSqlCommand> logger) : SqlCommandListener(command, analytics, logger)
+internal class PostgresCommandListener(
+    BaseSqlCommand command,
+    AnalyticsManager analytics,
+    ILogger<BaseSqlCommand> logger
+) : SqlCommandListener(command, analytics, logger)
 {
     /// <inheritdoc />
     public override Exception HandleException(DbException exception)
@@ -32,7 +36,8 @@ internal class PostgresCommandListener(BaseSqlCommand command, AnalyticsManager 
 
         if (sqlException.ConstraintName != null)
         {
-            message = HandleConstraintException(sqlException.ConstraintName)
+            message =
+                HandleConstraintException(sqlException.ConstraintName)
                 ?? HandleUniqueConstraintException(sqlException.ConstraintName);
         }
 

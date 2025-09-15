@@ -19,7 +19,13 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// <param name="commandParser">Composant injecté.</param>
 /// <param name="config">Composant injecté.</param>
 /// <param name="logger">Composant injecté.</param>
-internal class SqlServerConnectionPool(TransactionScopeManager transactionScopeManager, AnalyticsManager analytics, CommandParser commandParser, ILogger<SqlServerCommand> logger, SqlConfig config) : ConnectionPool(transactionScopeManager)
+internal class SqlServerConnectionPool(
+    TransactionScopeManager transactionScopeManager,
+    AnalyticsManager analytics,
+    CommandParser commandParser,
+    ILogger<SqlServerCommand> logger,
+    SqlConfig config
+) : ConnectionPool(transactionScopeManager)
 {
     private readonly Dictionary<string, string> _connectionSettings = config.ConnectionStrings;
     private readonly int _defaultCommandTimeout = config.DefaultCommandTimeout;
@@ -27,25 +33,58 @@ internal class SqlServerConnectionPool(TransactionScopeManager transactionScopeM
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string procName)
     {
-        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, analytics, procName) { CommandTimeout = _defaultCommandTimeout };
+        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, analytics, procName)
+        {
+            CommandTimeout = _defaultCommandTimeout,
+        };
     }
 
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, Assembly assembly, string resourcePath)
     {
-        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, analytics, assembly, resourcePath) { CommandTimeout = _defaultCommandTimeout };
+        return new SqlServerCommand(
+            GetConnection(connectionName),
+            logger,
+            commandParser,
+            analytics,
+            assembly,
+            resourcePath
+        )
+        {
+            CommandTimeout = _defaultCommandTimeout,
+        };
     }
 
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string commandName, string commandText)
     {
-        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, analytics, commandName, commandText) { CommandTimeout = _defaultCommandTimeout };
+        return new SqlServerCommand(
+            GetConnection(connectionName),
+            logger,
+            commandParser,
+            analytics,
+            commandName,
+            commandText
+        )
+        {
+            CommandTimeout = _defaultCommandTimeout,
+        };
     }
 
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string commandName, CommandType commandType)
     {
-        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, analytics, commandName, commandType) { CommandTimeout = _defaultCommandTimeout };
+        return new SqlServerCommand(
+            GetConnection(connectionName),
+            logger,
+            commandParser,
+            analytics,
+            commandName,
+            commandType
+        )
+        {
+            CommandTimeout = _defaultCommandTimeout,
+        };
     }
 
     /// <inheritdoc />

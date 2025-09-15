@@ -30,7 +30,9 @@ public class AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager anal
             var process = analytics.StopProcess();
             if (!process.Disabled)
             {
-                logger.LogInformation($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({process.Duration} ms)");
+                logger.LogInformation(
+                    $"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({process.Duration} ms)"
+                );
             }
         }
         catch (Exception ex)
@@ -43,8 +45,14 @@ public class AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager anal
                 ex = ex.InnerException;
             }
 
-            logger.LogError(ex, $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}");
-            throw new InterceptedException($"Une erreur est survenue sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", ex);
+            logger.LogError(
+                ex,
+                $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}"
+            );
+            throw new InterceptedException(
+                $"Une erreur est survenue sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}",
+                ex
+            );
         }
     }
 }

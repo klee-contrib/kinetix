@@ -53,7 +53,10 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
             }
             catch (KeyNotFoundException e)
             {
-                throw new ArgumentException("Propriété " + propertyName + " non trouvée pour le type " + _beanType.FullName + ".", e);
+                throw new ArgumentException(
+                    "Propriété " + propertyName + " non trouvée pour le type " + _beanType.FullName + ".",
+                    e
+                );
             }
         }
     }

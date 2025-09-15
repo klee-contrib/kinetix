@@ -31,10 +31,19 @@ internal static class DomainManager
             var primitiveType = property.PrimitiveType;
             if (primitiveType != null)
             {
-                var builtInDomain = typeof(BuiltInDomains).GetMembers().SingleOrDefault(p => p.GetCustomAttribute<DomainTypeAttribute>()?.Type == primitiveType);
-                domain = builtInDomain != null
-                    ? GetDomain(Enum.GetValues(typeof(BuiltInDomains)).Cast<Enum>().Single(e => e.ToString() == builtInDomain.Name))
-                    : throw new NotSupportedException("Pas de domaine par défaut pour le type " + primitiveType.Name + " !");
+                var builtInDomain = typeof(BuiltInDomains)
+                    .GetMembers()
+                    .SingleOrDefault(p => p.GetCustomAttribute<DomainTypeAttribute>()?.Type == primitiveType);
+                domain =
+                    builtInDomain != null
+                        ? GetDomain(
+                            Enum.GetValues(typeof(BuiltInDomains))
+                                .Cast<Enum>()
+                                .Single(e => e.ToString() == builtInDomain.Name)
+                        )
+                        : throw new NotSupportedException(
+                            "Pas de domaine par défaut pour le type " + primitiveType.Name + " !"
+                        );
             }
         }
         else
@@ -47,23 +56,30 @@ internal static class DomainManager
 
     private static Domain GetDomain(Enum domainName)
     {
-        return _domainDictionary.GetOrAdd(domainName, d =>
-        {
-            var property = d.GetType().GetMember(d.ToString())[0];
-            var validationAttributes = property.GetCustomAttributes<ValidationAttribute>();
-            var extraAttributes = new List<Attribute>();
-
-            foreach (var attribute in property.GetCustomAttributes(false))
+        return _domainDictionary.GetOrAdd(
+            domainName,
+            d =>
             {
-                if (attribute is DomainAttribute || attribute is TypeConverterAttribute || attribute is ValidationAttribute)
+                var property = d.GetType().GetMember(d.ToString())[0];
+                var validationAttributes = property.GetCustomAttributes<ValidationAttribute>();
+                var extraAttributes = new List<Attribute>();
+
+                foreach (var attribute in property.GetCustomAttributes(false))
                 {
-                    continue;
+                    if (
+                        attribute is DomainAttribute
+                        || attribute is TypeConverterAttribute
+                        || attribute is ValidationAttribute
+                    )
+                    {
+                        continue;
+                    }
+
+                    extraAttributes.Add(attribute as Attribute);
                 }
 
-                extraAttributes.Add(attribute as Attribute);
+                return new Domain(d, validationAttributes.ToList(), extraAttributes);
             }
-
-            return new Domain(d, validationAttributes.ToList(), extraAttributes);
-        });
+        );
     }
 }

@@ -44,22 +44,33 @@ public class MonitoringTelemetryFilter(ITelemetryProcessor next) : ITelemetryPro
                 return;
             }
 
-            dt.Type = dt.Type == "Service" ? "InProc" : dt.Type == "Database" ? "SQL" : dt.Type;
+            dt.Type =
+                dt.Type == "Service" ? "InProc"
+                : dt.Type == "Database" ? "SQL"
+                : dt.Type;
         }
 
         // Filtre les diagnostics et les appels aux listes de ref.
         var operationName = item.Context.Operation.Name;
-        if (operationName != null && (
-            operationName.Contains("/health")
-            || operationName.Contains("/diagnostic")
-            || operationName.Contains("GET") && operationName.Contains("Ws/Local/Edition.svc")
-            || operationName.Contains("ReferenceList/Get")))
+        if (
+            operationName != null
+            && (
+                operationName.Contains("/health")
+                || operationName.Contains("/diagnostic")
+                || operationName.Contains("GET") && operationName.Contains("Ws/Local/Edition.svc")
+                || operationName.Contains("ReferenceList/Get")
+            )
+        )
         {
             return;
         }
 
         // Filtre les exceptions depuis le middleware Analytics (elles sont déjà remontées par ailleurs).
-        if (item is ExceptionTelemetry et && et.Properties.TryGetValue("CategoryName", out var category) && category == "Kinetix.Services.Service")
+        if (
+            item is ExceptionTelemetry et
+            && et.Properties.TryGetValue("CategoryName", out var category)
+            && category == "Kinetix.Services.Service"
+        )
         {
             return;
         }

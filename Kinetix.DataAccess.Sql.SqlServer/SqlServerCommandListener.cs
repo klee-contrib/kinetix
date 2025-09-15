@@ -16,7 +16,11 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// <param name="command">Commande.</param>
 /// <param name="analytics">AnalyticsManager.</param>
 /// <param name="logger">Logger.</param>
-internal class SqlServerCommandListener(BaseSqlCommand command, AnalyticsManager analytics, ILogger<BaseSqlCommand> logger) : SqlCommandListener(command, analytics, logger)
+internal class SqlServerCommandListener(
+    BaseSqlCommand command,
+    AnalyticsManager analytics,
+    ILogger<BaseSqlCommand> logger
+) : SqlCommandListener(command, analytics, logger)
 {
     private const byte TimeOutErrorClass = 11;
     private const int TimeOutErrorCode1 = -2146232060;
@@ -33,13 +37,18 @@ internal class SqlServerCommandListener(BaseSqlCommand command, AnalyticsManager
         SqlErrorMessage message = null;
         foreach (SqlError error in sqlException.Errors)
         {
-            Logger.LogError($"Error class:{error.Class} message:{error.Message} line:{error.LineNumber} number:{error.Number} proc:{error.Procedure} server:{error.Server} source:{error.Source} state:{error.State}");
+            Logger.LogError(
+                $"Error class:{error.Class} message:{error.Message} line:{error.LineNumber} number:{error.Number} proc:{error.Procedure} server:{error.Server} source:{error.Source} state:{error.State}"
+            );
 
             if (error.Number == 1205)
             {
                 // Deadlock.
             }
-            else if (error.Class == TimeOutErrorClass && (error.Number == TimeOutErrorCode1 || error.Number == TimeOutErrorCode2))
+            else if (
+                error.Class == TimeOutErrorClass
+                && (error.Number == TimeOutErrorCode1 || error.Number == TimeOutErrorCode2)
+            )
             {
                 return new SqlTimeoutException(exception.Message, exception);
             }

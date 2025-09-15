@@ -12,7 +12,8 @@ namespace Kinetix.Search.Core.Querying;
 /// <param name="code">Code de la facette.</param>
 /// <param name="label">Libellé de la facette.</param>
 /// <param name="field">Champ sur lequel agit la facette.</param>
-public class TermFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : IFacetDefinition<TDocument>
+public class TermFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field)
+    : IFacetDefinition<TDocument>
 {
     /// <inheritdoc />
     public string Code { get; } = code;
@@ -24,12 +25,13 @@ public class TermFacet<TDocument>(string code, string label, Expression<Func<TDo
     public Expression<Func<TDocument, object>> Field { get; } = field;
 
     /// <inheritdoc />
-    public string FieldName => Field.Body switch
-    {
-        UnaryExpression ue => HandleMember((MemberExpression)ue.Operand),
-        MemberExpression me => HandleMember(me),
-        _ => throw new ArgumentException("Incorrect facet field definition.")
-    };
+    public string FieldName =>
+        Field.Body switch
+        {
+            UnaryExpression ue => HandleMember((MemberExpression)ue.Operand),
+            MemberExpression me => HandleMember(me),
+            _ => throw new ArgumentException("Incorrect facet field definition."),
+        };
 
     /// <inheritdoc />
     public virtual bool IsMultiSelectable { get; set; } = false;
@@ -55,7 +57,9 @@ public class TermFacet<TDocument>(string code, string label, Expression<Func<TDo
 
         while (me.Expression is MethodCallExpression or MemberExpression)
         {
-            me = me.Expression is MethodCallExpression mce ? (MemberExpression)mce.Arguments[0] : (MemberExpression)me.Expression;
+            me = me.Expression is MethodCallExpression mce
+                ? (MemberExpression)mce.Arguments[0]
+                : (MemberExpression)me.Expression;
             name = $"{ToCamelCase(me.Member.Name)}.{name}";
         }
 

@@ -51,16 +51,15 @@ public static class CollectionBuilder<T>
 
             while (reader.Read())
             {
-                adapter = adapter == null
-                    ? DataRecordAdapterManager<T>.CreateAdapter(reader)
-                    : throw new CollectionBuilderException("Too many rows selected !");
+                adapter =
+                    adapter == null
+                        ? DataRecordAdapterManager<T>.CreateAdapter(reader)
+                        : throw new CollectionBuilderException("Too many rows selected !");
 
                 destination = adapter.Read(destination, reader);
             }
 
-            return adapter == null && returnNullIfZeroRow
-                ? default
-                : destination;
+            return adapter == null && returnNullIfZeroRow ? default : destination;
         }
         catch (NotSupportedException e)
         {

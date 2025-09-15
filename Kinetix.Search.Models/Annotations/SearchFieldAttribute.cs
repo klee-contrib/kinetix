@@ -50,9 +50,7 @@ public class SearchFieldAttribute : Attribute
     /// <param name="category">Catégorie.</param>
     /// <param name="indexing">Indexage.</param>
     public SearchFieldAttribute(SearchFieldIndexing indexing, SearchFieldCategory category)
-        : this(category, indexing)
-    {
-    }
+        : this(category, indexing) { }
 
     /// <summary>
     /// Catégorie du champ.

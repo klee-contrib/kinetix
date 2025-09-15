@@ -76,7 +76,6 @@ public sealed class SqlDataParameter(IDbDataParameter parameter) : IDbDataParame
             var val = InnerParameter.Value;
             return DBNull.Value.Equals(val) ? null : val;
         }
-
         set => InnerParameter.Value = value ?? DBNull.Value;
     }
 

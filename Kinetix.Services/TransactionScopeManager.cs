@@ -5,7 +5,10 @@ namespace Kinetix.Services;
 /// <summary>
 /// Manager de transactions.
 /// </summary>
-public class TransactionScopeManager(IEnumerable<ITransactionContextProvider> contextProviders, ILogger<ServiceScope> logger) : IDisposable
+public class TransactionScopeManager(
+    IEnumerable<ITransactionContextProvider> contextProviders,
+    ILogger<ServiceScope> logger
+) : IDisposable
 {
     private readonly Stack<ServiceScope> _scopes = new();
 
@@ -44,9 +47,7 @@ public class TransactionScopeManager(IEnumerable<ITransactionContextProvider> co
     /// <returns>Scope de la transaction (actif si la transaction a été créee).</returns>
     public ServiceScope EnsureTransaction()
     {
-        return ActiveScope != null
-            ? new ServiceScope()
-            : BeginNewTransaction();
+        return ActiveScope != null ? new ServiceScope() : BeginNewTransaction();
     }
 
     /// <summary>

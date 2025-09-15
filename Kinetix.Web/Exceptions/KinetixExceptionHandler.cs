@@ -11,10 +11,18 @@ namespace Kinetix.Web.Exceptions;
 /// <summary>
 /// Handler d'exception pour Kinetix.
 /// </summary>
-internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory, TelemetryClient? telemetryClient = null) : IExceptionHandler
+internal class KinetixExceptionHandler(
+    KinetixExceptionConfig config,
+    ProblemDetailsFactory problemDetailsFactory,
+    TelemetryClient? telemetryClient = null
+) : IExceptionHandler
 {
     /// <inheritdoc cref="IExceptionHandler.TryHandleAsync" />
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
     {
         while (exception is TargetInvocationException || exception is InterceptedException)
         {
@@ -22,7 +30,7 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
             {
                 TargetInvocationException tex => tex.InnerException!,
                 InterceptedException iex => iex.InnerException!,
-                _ => exception
+                _ => exception,
             };
         }
 
@@ -30,7 +38,11 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
 
         IResult? result = null;
 
-        foreach (var exceptionHandler in httpContext.RequestServices.GetRequiredService<IEnumerable<IKinetixExceptionHandler>>().OrderByDescending(eh => eh.Priority))
+        foreach (
+            var exceptionHandler in httpContext
+                .RequestServices.GetRequiredService<IEnumerable<IKinetixExceptionHandler>>()
+                .OrderByDescending(eh => eh.Priority)
+        )
         {
             result = await exceptionHandler.Handle(exception, httpContext, cancellationToken);
             if (result != null)
@@ -59,7 +71,7 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
         var statusCode = ex switch
         {
             BadHttpRequestException br => br.StatusCode,
-            _ => 500
+            _ => 500,
         };
 
         if (config.Format == KinetixErrorFormat.Kinetix)
@@ -74,7 +86,10 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
 
             if (errors.Count > 1)
             {
-                problemDetails.Extensions["errors"] = new Dictionary<string, List<string>> { ["origin"] = errors.Skip(1).ToList() };
+                problemDetails.Extensions["errors"] = new Dictionary<string, List<string>>
+                {
+                    ["origin"] = errors.Skip(1).ToList(),
+                };
             }
 
             return Results.Problem(problemDetails);

@@ -13,7 +13,11 @@ namespace Kinetix.Search.Elastic;
 /// </summary>
 public static class ServiceExtensions
 {
-    public static IServiceCollection AddElasticSearch(this IServiceCollection services, SearchConfig searchConfig, Action<ElasticConfigBuilder> builder)
+    public static IServiceCollection AddElasticSearch(
+        this IServiceCollection services,
+        SearchConfig searchConfig,
+        Action<ElasticConfigBuilder> builder
+    )
     {
         var config = new ElasticConfigBuilder(services);
         builder(config);
@@ -26,25 +30,36 @@ public static class ServiceExtensions
                 var node = new Uri(server.NodeUri);
                 var settings = new ConnectionSettings(
                     new SingleNodeConnectionPool(node),
-                    (b, s) => new JsonNetSerializer(b, s, () =>
-                    {
-                        var js = new JsonSerializerSettings { DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'" };
-                        if (config.JsonConverters != null)
-                        {
-                            foreach (var converter in config.JsonConverters)
+                    (b, s) =>
+                        new JsonNetSerializer(
+                            b,
+                            s,
+                            () =>
                             {
-                                js.Converters.Add(converter);
-                            }
-                        }
+                                var js = new JsonSerializerSettings
+                                {
+                                    DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'",
+                                };
+                                if (config.JsonConverters != null)
+                                {
+                                    foreach (var converter in config.JsonConverters)
+                                    {
+                                        js.Converters.Add(converter);
+                                    }
+                                }
 
-                        return js;
-                    }))
-                    .DisableDirectStreaming()
-                    .EnableApiVersioningHeader();
+                                return js;
+                            }
+                        )
+                ).DisableDirectStreaming().EnableApiVersioningHeader();
 
                 foreach (var documentType in config.DocumentTypes)
                 {
-                    settings.DefaultMappingFor(documentType, m => m.IndexName(searchConfig.GetIndexNameForType(ElasticConfigBuilder.ServerName, documentType)));
+                    settings.DefaultMappingFor(
+                        documentType,
+                        m =>
+                            m.IndexName(searchConfig.GetIndexNameForType(ElasticConfigBuilder.ServerName, documentType))
+                    );
                 }
 
                 if (!string.IsNullOrEmpty(server.Login))

@@ -28,5 +28,5 @@ public enum FacetOrdering
     /// <summary>
     /// Pour une liste de référence, tri par ordre.
     /// </summary>
-    ReferenceOrder
+    ReferenceOrder,
 }

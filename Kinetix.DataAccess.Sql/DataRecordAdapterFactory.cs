@@ -44,20 +44,104 @@ internal class DataRecordAdapterFactory
         var name = new AssemblyName { Name = _assemblyName };
         var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
         _dynamicModule = assemblyBuilder.DefineDynamicModule(_assemblyName);
-        _readBooleanMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadBoolean), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readNonNullableBooleanMethodIndo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadNonNullableBoolean), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readByteMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadByte), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readDateTimeMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadDateTime), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readDecimalMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadDecimal), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readIntMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadInt), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readShortMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadShort), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readLongMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadLong), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readFloatMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadFloat), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readDoubleMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadDouble), BindingFlags.Static | BindingFlags.NonPublic, null, _abstractReadMethodParams, null);
-        _readStringMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadString), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readCharMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadChar), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readGuidMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadGuid), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
-        _readObjectMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(nameof(AbstractDataReaderAdapter.ReadObject), BindingFlags.Static | BindingFlags.Public, null, _abstractReadMethodParams, null);
+        _readBooleanMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadBoolean),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readNonNullableBooleanMethodIndo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadNonNullableBoolean),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readByteMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadByte),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readDateTimeMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadDateTime),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readDecimalMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadDecimal),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readIntMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadInt),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readShortMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadShort),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readLongMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadLong),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readFloatMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadFloat),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readDoubleMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadDouble),
+            BindingFlags.Static | BindingFlags.NonPublic,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readStringMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadString),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readCharMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadChar),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readGuidMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadGuid),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
+        _readObjectMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
+            nameof(AbstractDataReaderAdapter.ReadObject),
+            BindingFlags.Static | BindingFlags.Public,
+            null,
+            _abstractReadMethodParams,
+            null
+        );
     }
 
     /// <summary>
@@ -78,7 +162,8 @@ internal class DataRecordAdapterFactory
             "Kinetix.Broker.DataRecordAdapters.Adapter" + ++_adapterNum,
             TypeAttributes.Public,
             typeof(AbstractDataReaderAdapter),
-            [adapterContractType]);
+            [adapterContractType]
+        );
 
         CreateReadMethod(tb, record, t);
 
@@ -97,11 +182,15 @@ internal class DataRecordAdapterFactory
     {
         var mb = tb.DefineMethod(
             "Read",
-            MethodAttributes.Public | MethodAttributes.HideBySig |
-            MethodAttributes.NewSlot | MethodAttributes.Final | MethodAttributes.Virtual,
+            MethodAttributes.Public
+                | MethodAttributes.HideBySig
+                | MethodAttributes.NewSlot
+                | MethodAttributes.Final
+                | MethodAttributes.Virtual,
             CallingConventions.Standard,
             t,
-            _readMethodParams);
+            _readMethodParams
+        );
 
         var mthdIL = mb.GetILGenerator();
 
@@ -156,9 +245,7 @@ internal class DataRecordAdapterFactory
                             if (!localMap.TryGetValue(objName, out obj))
                             {
                                 // Chargement de la variable.
-                                obj = j > 0
-                                    ? localMap[string.Join(".", fieldPathItems, 0, j)]
-                                    : bean;
+                                obj = j > 0 ? localMap[string.Join(".", fieldPathItems, 0, j)] : bean;
 
                                 mthdIL.Emit(OpCodes.Ldloc, obj);
 
@@ -205,7 +292,14 @@ internal class DataRecordAdapterFactory
 
                     if (prop == null)
                     {
-                        throw new NotSupportedException("Unable to find property " + propertyName + " in " + obj.LocalType.FullName + " while constructing DataRecordAdapter for type " + t.FullName);
+                        throw new NotSupportedException(
+                            "Unable to find property "
+                                + propertyName
+                                + " in "
+                                + obj.LocalType.FullName
+                                + " while constructing DataRecordAdapter for type "
+                                + t.FullName
+                        );
                     }
                 }
 

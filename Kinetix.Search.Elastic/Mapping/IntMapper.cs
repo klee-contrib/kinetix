@@ -10,8 +10,11 @@ namespace Kinetix.Search.Elastic.Mapping;
 public class IntMapper : IElasticMapper<int>
 {
     /// <inheritdoc cref="IElasticMapper.Map{TDocument}" />
-    public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class
+    public PropertiesDescriptor<TDocument> Map<TDocument>(
+        PropertiesDescriptor<TDocument> selector,
+        DocumentFieldDescriptor field
+    )
+        where TDocument : class
     {
         switch (field.Indexing)
         {

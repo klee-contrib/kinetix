@@ -51,7 +51,7 @@ public class FileManager(IServiceProvider provider) : IFileManager
                 {
                     ContractType = contractType,
                     Method = method,
-                    Name = method.Name
+                    Name = method.Name,
                 };
 
                 if (_fileAccessors.ContainsKey(accessor.Name))

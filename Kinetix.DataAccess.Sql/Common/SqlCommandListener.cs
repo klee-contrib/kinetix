@@ -60,7 +60,9 @@ public abstract class SqlCommandListener : IDisposable
                 }
                 else
                 {
-                    Logger.LogDebug($"{parameter.ParameterName}: {Convert.ToString(parameter.Value, CultureInfo.InvariantCulture)}");
+                    Logger.LogDebug(
+                        $"{parameter.ParameterName}: {Convert.ToString(parameter.Value, CultureInfo.InvariantCulture)}"
+                    );
                 }
             }
         }
@@ -92,9 +94,7 @@ public abstract class SqlCommandListener : IDisposable
         }
 
         match = new Regex(CheckConstraintPattern).Match(initialMessage);
-        return match.Success
-            ? HandleCheckConstraintException(match.Value)
-            : null;
+        return match.Success ? HandleCheckConstraintException(match.Value) : null;
     }
 
     /// <summary>
@@ -111,7 +111,10 @@ public abstract class SqlCommandListener : IDisposable
         }
 
         var index = match.Value;
-        return new SqlErrorMessage(_command.CommandParser.GetConstraintMessage(index, SqlConstraintViolation.Unique), index);
+        return new SqlErrorMessage(
+            _command.CommandParser.GetConstraintMessage(index, SqlConstraintViolation.Unique),
+            index
+        );
     }
 
     /// <summary>
@@ -121,7 +124,10 @@ public abstract class SqlCommandListener : IDisposable
     /// <returns>Message final.</returns>
     private SqlErrorMessage HandleCheckConstraintException(string constraintName)
     {
-        return new SqlErrorMessage(_command.CommandParser.GetConstraintMessage(constraintName, SqlConstraintViolation.Check), constraintName);
+        return new SqlErrorMessage(
+            _command.CommandParser.GetConstraintMessage(constraintName, SqlConstraintViolation.Check),
+            constraintName
+        );
     }
 
     /// <summary>
@@ -132,10 +138,9 @@ public abstract class SqlCommandListener : IDisposable
     /// <returns>Message final.</returns>
     private SqlErrorMessage HandleForeignConstraintException(string initialMessage, string index)
     {
-        var violation =
-                    initialMessage.Contains("FOREIGN KEY") ?
-                    SqlConstraintViolation.ForeignKey :
-                    SqlConstraintViolation.ReferenceKey;
+        var violation = initialMessage.Contains("FOREIGN KEY")
+            ? SqlConstraintViolation.ForeignKey
+            : SqlConstraintViolation.ReferenceKey;
 
         var message = _command.CommandParser.GetConstraintMessage(index, violation);
         if (string.IsNullOrEmpty(message))

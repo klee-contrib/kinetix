@@ -12,7 +12,8 @@ namespace Kinetix.Search.Core.Querying;
 /// <param name="code">Code de la facette.</param>
 /// <param name="label">Libellé de la facette.</param>
 /// <param name="field">Champ sur lequel agit la facette.</param>
-public class BooleanFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : TermFacet<TDocument>(code, label, field)
+public class BooleanFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field)
+    : TermFacet<TDocument>(code, label, field)
 {
     /// <inheritdoc />
     public override bool IsMultiSelectable => false;
@@ -26,8 +27,6 @@ public class BooleanFacet<TDocument>(string code, string label, Expression<Func<
     /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
     public override string ResolveLabel(string primaryKey)
     {
-        return primaryKey == "1" || primaryKey == "true"
-            ? "focus.search.results.yes"
-            : "focus.search.results.no";
+        return primaryKey == "1" || primaryKey == "true" ? "focus.search.results.yes" : "focus.search.results.no";
     }
 }

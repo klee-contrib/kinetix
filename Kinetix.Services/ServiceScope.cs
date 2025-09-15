@@ -51,7 +51,10 @@ public class ServiceScope : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Une erreur est survenue lors de la préparation du commit de la transaction courante.");
+            _logger.LogError(
+                ex,
+                "Une erreur est survenue lors de la préparation du commit de la transaction courante."
+            );
             onBeforeException = ex;
             foreach (var context in _contexts)
             {

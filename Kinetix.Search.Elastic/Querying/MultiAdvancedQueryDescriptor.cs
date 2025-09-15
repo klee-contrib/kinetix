@@ -9,14 +9,23 @@ namespace Kinetix.Search.Elastic.Querying;
 
 using static AdvancedQueryUtil;
 
-public class MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescriptor documentDescriptor, FacetHandler facetHandler) : IMultiAdvancedQueryDescriptor
+public class MultiAdvancedQueryDescriptor(
+    ElasticClient client,
+    DocumentDescriptor documentDescriptor,
+    FacetHandler facetHandler
+) : IMultiAdvancedQueryDescriptor
 {
     private readonly Dictionary<string, IDocumentMapper> _documentMappers = [];
     private readonly Dictionary<string, ISearchRequest> _searchDescriptors = [];
     private readonly List<(string Code, string Label)> _searchLabels = [];
 
     /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery{TDocument, TOutput, TCriteria}(string, string, AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, TOutput})" />
-    public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+    public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(
+        string code,
+        string label,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, TOutput> documentMapper
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -24,7 +33,12 @@ public class MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescript
     }
 
     /// <inheritdoc cref="IMultiAdvancedQueryDescriptor.AddQuery{TDocument, TOutput, TCriteria}(string, string, AdvancedQueryInput{TDocument, TCriteria}, Func{TDocument, IReadOnlyDictionary{string, IReadOnlyCollection{string}}, TOutput})" />
-    public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+    public IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(
+        string code,
+        string label,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -34,16 +48,20 @@ public class MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescript
         }
 
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
-        _searchDescriptors.Add(code, GetAdvancedQueryDescriptor(
-            def,
-            input,
-            facetHandler,
-            filter: null,
-            sorts: null,
-            sortsAfter: false,
-            aggs: null,
-            input.FacetQueryDefinition.Facets,
-            GetGroupFieldName(input))(new SearchDescriptor<TDocument>()));
+        _searchDescriptors.Add(
+            code,
+            GetAdvancedQueryDescriptor(
+                def,
+                input,
+                facetHandler,
+                filter: null,
+                sorts: null,
+                sortsAfter: false,
+                aggs: null,
+                input.FacetQueryDefinition.Facets,
+                GetGroupFieldName(input)
+            )(new SearchDescriptor<TDocument>())
+        );
         _documentMappers.Add(code, new DocumentMapper<TDocument, TOutput>(documentMapper));
         _searchLabels.Add((code, label));
         return this;
@@ -55,27 +73,37 @@ public class MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescript
         var response = client.MultiSearch(new MultiSearchRequest { Operations = _searchDescriptors });
 
         /* Extraction des résultats. */
-        var groups = response.AllResponses.Select((dynamic res, int i) =>
-             new GroupResult
-             {
-                 Code = _searchLabels[i].Code,
-                 Label = _searchLabels[i].Label,
-                 List = ((IEnumerable<dynamic>)res.Hits).Select(h => _documentMappers[_searchLabels[i].Code].Map(h.Source, h.Highlight)).ToList(),
-                 TotalCount = (int)res.Total
-             }).ToList();
+        var groups = response
+            .AllResponses.Select(
+                (dynamic res, int i) =>
+                    new GroupResult
+                    {
+                        Code = _searchLabels[i].Code,
+                        Label = _searchLabels[i].Label,
+                        List = ((IEnumerable<dynamic>)res.Hits)
+                            .Select(h => _documentMappers[_searchLabels[i].Code].Map(h.Source, h.Highlight))
+                            .ToList(),
+                        TotalCount = (int)res.Total,
+                    }
+            )
+            .ToList();
 
         /* Facette */
         var scopeFacet = new FacetOutput
         {
             Code = "FCT_SCOPE",
             Label = "Scope",
-            Values = response.AllResponses.Select((dynamic res, int i) =>
-                new FacetItem
-                {
-                    Code = _searchLabels[i].Code,
-                    Label = _searchLabels[i].Label,
-                    Count = (int)res.Total
-                }).ToList()
+            Values = response
+                .AllResponses.Select(
+                    (dynamic res, int i) =>
+                        new FacetItem
+                        {
+                            Code = _searchLabels[i].Code,
+                            Label = _searchLabels[i].Label,
+                            Count = (int)res.Total,
+                        }
+                )
+                .ToList(),
         };
 
         /* Construction de la sortie. */
@@ -83,7 +111,7 @@ public class MultiAdvancedQueryDescriptor(ElasticClient client, DocumentDescript
         {
             Groups = groups,
             Facets = [scopeFacet],
-            TotalCount = response.AllResponses.Sum((dynamic res) => (int)res.Total)
+            TotalCount = response.AllResponses.Sum((dynamic res) => (int)res.Total),
         };
     }
 }
@@ -93,7 +121,9 @@ internal interface IDocumentMapper
     object Map(object input, IReadOnlyDictionary<string, IReadOnlyCollection<string>> highlights);
 }
 
-internal class DocumentMapper<TDocument, TOutput>(Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> mapper) : IDocumentMapper
+internal class DocumentMapper<TDocument, TOutput>(
+    Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> mapper
+) : IDocumentMapper
 {
     /// <inheritdoc cref="IDocumentMapper.Map" />
     public object Map(object input, IReadOnlyDictionary<string, IReadOnlyCollection<string>> highlights)

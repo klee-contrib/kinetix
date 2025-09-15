@@ -17,7 +17,8 @@ namespace Kinetix.DataAccess.Sql.SqlServer.Broker;
 /// <param name="dataSourceName">Nom de la chaine de base de données.</param>
 /// <param name="connectionPool">Pool de connexions.</param>
 /// <param name="logger">Logger.</param>
-internal class SqlServerStore<T>(string dataSourceName, ConnectionPool connectionPool, ILogger<BrokerManager> logger) : SqlStore<T>(dataSourceName, connectionPool, logger)
+internal class SqlServerStore<T>(string dataSourceName, ConnectionPool connectionPool, ILogger<BrokerManager> logger)
+    : SqlStore<T>(dataSourceName, connectionPool, logger)
     where T : class, new()
 {
     /// <inheritdoc />
@@ -27,7 +28,11 @@ internal class SqlServerStore<T>(string dataSourceName, ConnectionPool connectio
     protected override string ConcatCharacter => " + ";
 
     /// <inheritdoc />
-    protected override string BuildInsertQuery(BeanDefinition beanDefinition, bool isGeneratedPK, ColumnSelector columnSelector)
+    protected override string BuildInsertQuery(
+        BeanDefinition beanDefinition,
+        bool isGeneratedPK,
+        ColumnSelector columnSelector
+    )
     {
         var sbInsert = new StringBuilder(CurrentUserStatementLog);
         sbInsert.Append("insert into ");
@@ -42,7 +47,10 @@ internal class SqlServerStore<T>(string dataSourceName, ConnectionPool connectio
                 continue;
             }
 
-            if (property.MemberName == null || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName))
+            if (
+                property.MemberName == null
+                || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName)
+            )
             {
                 continue;
             }
@@ -70,7 +78,11 @@ internal class SqlServerStore<T>(string dataSourceName, ConnectionPool connectio
     }
 
     /// <inheritdoc />
-    protected override ICollection<T> InsertAll(string commandName, ICollection<T> collection, BeanDefinition beanDefinition)
+    protected override ICollection<T> InsertAll(
+        string commandName,
+        ICollection<T> collection,
+        BeanDefinition beanDefinition
+    )
     {
         ArgumentNullException.ThrowIfNull(collection);
 

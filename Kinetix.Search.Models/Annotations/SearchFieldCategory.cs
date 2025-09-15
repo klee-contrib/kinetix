@@ -23,5 +23,5 @@ public enum SearchFieldCategory
     /// <summary>
     /// Champ de filtrage de sécurité
     /// </summary>
-    Security
+    Security,
 }

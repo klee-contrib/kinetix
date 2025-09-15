@@ -80,11 +80,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <summary>
     /// Current user logging statement.
     /// </summary>
-    protected string CurrentUserStatementLog
-    {
-        get;
-        set;
-    }
+    protected string CurrentUserStatementLog { get; set; }
 
     /// <summary>
     /// Source de données du store.
@@ -109,18 +105,12 @@ public abstract class SqlStore<T> : IStore<T>
     /// <summary>
     /// Préfixe utilisé par le store pour faire référence à une variable.
     /// </summary>
-    protected abstract string VariablePrefix
-    {
-        get;
-    }
+    protected abstract string VariablePrefix { get; }
 
     /// <summary>
     /// Caractère de conacténation.
     /// </summary>
-    protected abstract string ConcatCharacter
-    {
-        get;
-    }
+    protected abstract string ConcatCharacter { get; }
 
     /// <summary>
     /// Ajoute un paramètre à une collection avec sa valeur.
@@ -129,7 +119,11 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="property">Propriété correspondant au paramètre.</param>
     /// <param name="value">Valeur du paramètre.</param>
     /// <returns>Paramètre ajouté.</returns>
-    public SqlDataParameter AddParameter(SqlParameterCollection parameters, BeanPropertyDescriptor property, object value)
+    public SqlDataParameter AddParameter(
+        SqlParameterCollection parameters,
+        BeanPropertyDescriptor property,
+        object value
+    )
     {
         ArgumentNullException.ThrowIfNull(parameters);
 
@@ -168,7 +162,12 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="criteria">Liste des critères de recherche.</param>
     /// <param name="queryParameter">Paramètre de tri des résultats et de limit des résultats.</param>
     /// <returns>IReadCommand contenant la commande.</returns>
-    public BaseSqlCommand GetCommand(string commandName, string tableName, FilterCriteria criteria, QueryParameter queryParameter)
+    public BaseSqlCommand GetCommand(
+        string commandName,
+        string tableName,
+        FilterCriteria criteria,
+        QueryParameter queryParameter
+    )
     {
         var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
         command.QueryParameters = queryParameter;
@@ -282,10 +281,11 @@ public abstract class SqlStore<T> : IStore<T>
         BeanDescriptor.Check(
             bean,
             columnSelector != null
-                ? Definition.Properties
-                    .Where(p => columnSelector.ColumnList.Contains(p.MemberName))
+                ? Definition
+                    .Properties.Where(p => columnSelector.ColumnList.Contains(p.MemberName))
                     .Select(p => p.PropertyName)
-                : null);
+                : null
+        );
 
         var value = Definition.PrimaryKey.GetValue(bean);
 
@@ -378,7 +378,13 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="parameters">Paramètres de la commande SQL.</param>
     /// <param name="dbGeneratedPK">True si la clef est générée par la base.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
-    protected void AddInsertParameters(T bean, BeanDefinition beanDefinition, SqlParameterCollection parameters, bool dbGeneratedPK, ColumnSelector columnSelector)
+    protected void AddInsertParameters(
+        T bean,
+        BeanDefinition beanDefinition,
+        SqlParameterCollection parameters,
+        bool dbGeneratedPK,
+        ColumnSelector columnSelector
+    )
     {
         ArgumentNullException.ThrowIfNull(beanDefinition);
 
@@ -389,7 +395,10 @@ public abstract class SqlStore<T> : IStore<T>
                 continue;
             }
 
-            if (property.MemberName == null || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName))
+            if (
+                property.MemberName == null
+                || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName)
+            )
             {
                 continue;
             }
@@ -412,7 +421,12 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="beanDefinition">Définition du bean.</param>
     /// <param name="parameters">Paramètres de la commande SQL.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
-    protected void AddUpdateParameters(T bean, BeanDefinition beanDefinition, SqlParameterCollection parameters, ColumnSelector columnSelector)
+    protected void AddUpdateParameters(
+        T bean,
+        BeanDefinition beanDefinition,
+        SqlParameterCollection parameters,
+        ColumnSelector columnSelector
+    )
     {
         ArgumentNullException.ThrowIfNull(beanDefinition);
 
@@ -420,7 +434,12 @@ public abstract class SqlStore<T> : IStore<T>
 
         foreach (var property in beanDefinition.Properties)
         {
-            if (property.MemberName == null || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName) && !property.IsPrimaryKey)
+            if (
+                property.MemberName == null
+                || columnSelector != null
+                    && !columnSelector.ColumnList.Contains(property.MemberName)
+                    && !property.IsPrimaryKey
+            )
             {
                 continue;
             }
@@ -449,7 +468,13 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="criteria">Critère de recherche.</param>
     /// <param name="sortOrder">Ordre de tri.</param>
     /// <param name="command">Commande d'appel à la base de données.</param>
-    protected void AppendSelectParameters(StringBuilder commandText, string tableName, FilterCriteria criteria, string sortOrder, BaseSqlCommand command)
+    protected void AppendSelectParameters(
+        StringBuilder commandText,
+        string tableName,
+        FilterCriteria criteria,
+        string sortOrder,
+        BaseSqlCommand command
+    )
     {
         ArgumentNullException.ThrowIfNull(commandText);
 
@@ -495,7 +520,11 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="isGeneratedPK">PK autogénérée ou non.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Query.</returns>
-    protected abstract string BuildInsertQuery(BeanDefinition beanDefinition, bool isGeneratedPK, ColumnSelector columnSelector);
+    protected abstract string BuildInsertQuery(
+        BeanDefinition beanDefinition,
+        bool isGeneratedPK,
+        ColumnSelector columnSelector
+    );
 
     /// <summary>
     /// Crée la requête SQL de mise à jour d'un bean.
@@ -514,7 +543,11 @@ public abstract class SqlStore<T> : IStore<T>
         sbUpdateSet.Append(" set");
 
         var sbUpdateWhere = new StringBuilder(" where ");
-        sbUpdateWhere.Append(beanDefinition.PrimaryKey.MemberName).Append(" = ").Append(VariablePrefix).Append(beanDefinition.PrimaryKey.MemberName);
+        sbUpdateWhere
+            .Append(beanDefinition.PrimaryKey.MemberName)
+            .Append(" = ")
+            .Append(VariablePrefix)
+            .Append(beanDefinition.PrimaryKey.MemberName);
 
         // Construction des champs de l'update SET et du WHERE
         var count = 0;
@@ -522,8 +555,12 @@ public abstract class SqlStore<T> : IStore<T>
         {
             // Si la propriété est une clé primaire ou n'est pas défini,
             // on passe à la propriété suivante.
-            if (property.MemberName == null || property.IsPrimaryKey || property.IsReadOnly ||
-                    columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName))
+            if (
+                property.MemberName == null
+                || property.IsPrimaryKey
+                || property.IsReadOnly
+                || columnSelector != null && !columnSelector.ColumnList.Contains(property.MemberName)
+            )
             {
                 continue;
             }
@@ -603,7 +640,13 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <param name="primaryKeyValue">Valeur de la clef primaire.</param>
     /// <returns>Bean inséré.</returns>
-    protected IDataReader Insert(string commandName, T bean, BeanDefinition beanDefinition, ColumnSelector columnSelector, object primaryKeyValue = null)
+    protected IDataReader Insert(
+        string commandName,
+        T bean,
+        BeanDefinition beanDefinition,
+        ColumnSelector columnSelector,
+        object primaryKeyValue = null
+    )
     {
         var sql = BuildInsertQuery(beanDefinition, primaryKeyValue == null, columnSelector);
         var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
@@ -619,7 +662,11 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="collection">Beans à enregistrer.</param>
     /// <param name="beanDefinition">Définition.</param>
     /// <returns>Beans enregistrés.</returns>
-    protected abstract ICollection<T> InsertAll(string commandName, ICollection<T> collection, BeanDefinition beanDefinition);
+    protected abstract ICollection<T> InsertAll(
+        string commandName,
+        ICollection<T> collection,
+        BeanDefinition beanDefinition
+    );
 
     /// <summary>
     /// Prépare la chaîne SQL et les paramètres de commandes pour appliquer un FilterCriteria.
@@ -651,7 +698,9 @@ public abstract class SqlStore<T> : IStore<T>
             else
             {
                 mapParameters[criteriaParam.ColumnName] = value + 1;
-                parameterName = criteriaParam.ColumnName + mapParameters[criteriaParam.ColumnName].ToString(CultureInfo.InvariantCulture);
+                parameterName =
+                    criteriaParam.ColumnName
+                    + mapParameters[criteriaParam.ColumnName].ToString(CultureInfo.InvariantCulture);
             }
 
             if (criteriaParam.Expression == Expression.Between)
@@ -678,7 +727,12 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="beanDefinition">Définition du bean.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Bean mise à jour.</returns>
-    protected IDataReader Update(string commandName, T bean, BeanDefinition beanDefinition, ColumnSelector columnSelector)
+    protected IDataReader Update(
+        string commandName,
+        T bean,
+        BeanDefinition beanDefinition,
+        ColumnSelector columnSelector
+    )
     {
         var sql = BuildUpdateQuery(beanDefinition, columnSelector);
         var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
@@ -693,7 +747,11 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="parameters">Collection des paramètres dans laquelle ajouter le nouveau paramètre.</param>
     /// <param name="primaryKeyName">Nom de la clé primaire.</param>
     /// <param name="primaryKeyValue">Valeur de la clé primaire.</param>
-    private void AddPrimaryKeyParameter(SqlParameterCollection parameters, string primaryKeyName, object primaryKeyValue)
+    private void AddPrimaryKeyParameter(
+        SqlParameterCollection parameters,
+        string primaryKeyName,
+        object primaryKeyValue
+    )
     {
         ArgumentNullException.ThrowIfNull(parameters);
 
@@ -708,7 +766,12 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="forceInsert">Force un insert (au lieu de déterminer automatiquement en fonction de la PK).</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>DataReader contenant le bean sauvegardé.</returns>
-    private IDataReader ExecutePutReader(T bean, object primaryKeyValue, bool forceInsert, ColumnSelector columnSelector)
+    private IDataReader ExecutePutReader(
+        T bean,
+        object primaryKeyValue,
+        bool forceInsert,
+        ColumnSelector columnSelector
+    )
     {
         if (!forceInsert && primaryKeyValue != null)
         {
@@ -732,7 +795,14 @@ public abstract class SqlStore<T> : IStore<T>
     {
         return criteriaParam.Expression switch
         {
-            Expression.Between => " BETWEEN " + VariablePrefix + parameterName + "T1" + " AND " + VariablePrefix + parameterName + "T2",
+            Expression.Between => " BETWEEN "
+                + VariablePrefix
+                + parameterName
+                + "T1"
+                + " AND "
+                + VariablePrefix
+                + parameterName
+                + "T2",
             Expression.Contains => " LIKE '%' + " + VariablePrefix + parameterName + " " + ConcatCharacter + " '%'",
             Expression.EndsWith => " LIKE '%' + " + VariablePrefix + parameterName,
             Expression.Equals => " = " + VariablePrefix + parameterName,
@@ -745,7 +815,9 @@ public abstract class SqlStore<T> : IStore<T>
             Expression.NotStartsWith => " NOT LIKE " + VariablePrefix + parameterName + " " + ConcatCharacter + "'%'",
             Expression.StartsWith => " LIKE " + VariablePrefix + parameterName + " " + ConcatCharacter + " '%'",
             Expression.NotEquals => " != " + VariablePrefix + parameterName,
-            _ => throw new NotSupportedException("Type d'expression de filtre non supportée : " + criteriaParam.Expression.ToString()),
+            _ => throw new NotSupportedException(
+                "Type d'expression de filtre non supportée : " + criteriaParam.Expression.ToString()
+            ),
         };
     }
 

@@ -12,15 +12,24 @@ namespace Kinetix.Search.Elastic;
 /// <remarks>
 /// Enregistre la configuration d'une connexion base de données.
 /// </remarks>
-public sealed class ElasticManager(ILogger<ElasticManager> logger, SearchConfig config, ElasticClient client, AnalyticsManager analytics, DocumentDescriptor documentDescriptor)
+public sealed class ElasticManager(
+    ILogger<ElasticManager> logger,
+    SearchConfig config,
+    ElasticClient client,
+    AnalyticsManager analytics,
+    DocumentDescriptor documentDescriptor
+)
 {
     /// <summary>
     /// Supprime l'index pour le document donné.
     /// </summary>
     public void DeleteIndex<T>()
     {
-        logger.LogQuery(analytics, nameof(DeleteIndex), () =>
-            client.Indices.Delete(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T))));
+        logger.LogQuery(
+            analytics,
+            nameof(DeleteIndex),
+            () => client.Indices.Delete(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))
+        );
     }
 
     /// <summary>
@@ -29,8 +38,11 @@ public sealed class ElasticManager(ILogger<ElasticManager> logger, SearchConfig 
     /// <returns>Ok.</returns>
     public bool DeleteIndexes()
     {
-        var response = logger.LogQuery(analytics, nameof(DeleteIndexes), () =>
-            client.Indices.Delete($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*"));
+        var response = logger.LogQuery(
+            analytics,
+            nameof(DeleteIndexes),
+            () => client.Indices.Delete($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*")
+        );
         return response.Acknowledged;
     }
 
@@ -63,23 +75,33 @@ public sealed class ElasticManager(ILogger<ElasticManager> logger, SearchConfig 
             var properties = typeMapping.Properties;
             var oldProperties = client.Indices.GetMapping<T>().Indices.FirstOrDefault().Value?.Mappings.Properties;
 
-            var mappingExists = oldProperties != null
+            var mappingExists =
+                oldProperties != null
                 && properties.Count == oldProperties.Count
-                && oldProperties.Zip(properties, (o, n) =>
-                {
-                    return o.Key == n.Key && (o.Value, n.Value) switch
-                    {
-                        (IKeywordProperty okp, IKeywordProperty nkp)
-                            => okp.Name == nkp.Name && okp.Index == nkp.Index,
-                        (ITextProperty otp, ITextProperty ntp)
-                            => otp.Name == ntp.Name && otp.Analyzer == ntp.Analyzer && otp.SearchAnalyzer == ntp.SearchAnalyzer,
-                        (INumberProperty onp, INumberProperty nnp)
-                            => onp.Name == nnp.Name && onp.Type == nnp.Type && onp.Index == nnp.Index,
-                        (IDateProperty odp, IDateProperty ndp)
-                            => odp.Name == ndp.Name && odp.Index == ndp.Index && odp.Format == ndp.Format,
-                        _ => false
-                    };
-                }).All(res => res);
+                && oldProperties
+                    .Zip(
+                        properties,
+                        (o, n) =>
+                        {
+                            return o.Key == n.Key
+                                && (o.Value, n.Value) switch
+                                {
+                                    (IKeywordProperty okp, IKeywordProperty nkp) => okp.Name == nkp.Name
+                                        && okp.Index == nkp.Index,
+                                    (ITextProperty otp, ITextProperty ntp) => otp.Name == ntp.Name
+                                        && otp.Analyzer == ntp.Analyzer
+                                        && otp.SearchAnalyzer == ntp.SearchAnalyzer,
+                                    (INumberProperty onp, INumberProperty nnp) => onp.Name == nnp.Name
+                                        && onp.Type == nnp.Type
+                                        && onp.Index == nnp.Index,
+                                    (IDateProperty odp, IDateProperty ndp) => odp.Name == ndp.Name
+                                        && odp.Index == ndp.Index
+                                        && odp.Format == ndp.Format,
+                                    _ => false,
+                                };
+                        }
+                    )
+                    .All(res => res);
 
             shouldCreate = !mappingExists;
         }
@@ -91,9 +113,15 @@ public sealed class ElasticManager(ILogger<ElasticManager> logger, SearchConfig 
                 DeleteIndex<T>();
             }
 
-            logger.LogQuery(analytics, nameof(InitIndex), () => client.Indices.Create(
-                config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                new TIndexConfigurator().ConfigureIndex));
+            logger.LogQuery(
+                analytics,
+                nameof(InitIndex),
+                () =>
+                    client.Indices.Create(
+                        config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
+                        new TIndexConfigurator().ConfigureIndex
+                    )
+            );
         }
         else
         {
@@ -108,9 +136,15 @@ public sealed class ElasticManager(ILogger<ElasticManager> logger, SearchConfig 
     /// </summary>
     public void OptimizeIndexForReindex<T>()
     {
-        logger.LogQuery(analytics, nameof(OptimizeIndexForReindex), () => client.Indices.UpdateSettings(
-            config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-            d => d.IndexSettings(i => i.RefreshInterval(30_000).NumberOfReplicas(0))));
+        logger.LogQuery(
+            analytics,
+            nameof(OptimizeIndexForReindex),
+            () =>
+                client.Indices.UpdateSettings(
+                    config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
+                    d => d.IndexSettings(i => i.RefreshInterval(30_000).NumberOfReplicas(0))
+                )
+        );
     }
 
     /// <summary>
@@ -126,8 +160,14 @@ public sealed class ElasticManager(ILogger<ElasticManager> logger, SearchConfig 
     /// </summary>
     public void RevertOptimizeIndexForReindex<T>()
     {
-        logger.LogQuery(analytics, nameof(RevertOptimizeIndexForReindex), () => client.Indices.UpdateSettings(
-            config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-            d => d.IndexSettings(i => i.RefreshInterval(1_000).NumberOfReplicas(1))));
+        logger.LogQuery(
+            analytics,
+            nameof(RevertOptimizeIndexForReindex),
+            () =>
+                client.Indices.UpdateSettings(
+                    config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
+                    d => d.IndexSettings(i => i.RefreshInterval(1_000).NumberOfReplicas(1))
+                )
+        );
     }
 }

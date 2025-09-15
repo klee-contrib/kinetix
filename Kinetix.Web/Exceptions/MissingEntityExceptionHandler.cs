@@ -6,7 +6,8 @@ namespace Kinetix.Web.Exceptions;
 /// <summary>
 /// Handler par défaut pour les "Single" en erreur dans EF Core et "KeyNotFoundException".
 /// </summary>
-public class MissingEntityExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory) : IKinetixExceptionHandler
+public class MissingEntityExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory)
+    : IKinetixExceptionHandler
 {
     /// <inheritdoc />
     public int Priority => 1;
@@ -18,7 +19,10 @@ public class MissingEntityExceptionHandler(KinetixExceptionConfig config, Proble
 
         if (exception is InvalidOperationException { Source: "Microsoft.EntityFrameworkCore" } or KeyNotFoundException)
         {
-            var message = exception is KeyNotFoundException ke && ke.Message != new KeyNotFoundException().Message ? ke.Message : "L'objet demandé n'existe pas.";
+            var message =
+                exception is KeyNotFoundException ke && ke.Message != new KeyNotFoundException().Message
+                    ? ke.Message
+                    : "L'objet demandé n'existe pas.";
 
             if (config.Format == KinetixErrorFormat.Kinetix)
             {
@@ -26,10 +30,9 @@ public class MissingEntityExceptionHandler(KinetixExceptionConfig config, Proble
             }
             else
             {
-                result = Results.Problem(problemDetailsFactory.CreateProblemDetails(
-                    context,
-                    StatusCodes.Status404NotFound,
-                    detail: message));
+                result = Results.Problem(
+                    problemDetailsFactory.CreateProblemDetails(context, StatusCodes.Status404NotFound, detail: message)
+                );
             }
         }
 

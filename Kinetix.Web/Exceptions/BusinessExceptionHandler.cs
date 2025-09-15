@@ -7,7 +7,8 @@ namespace Kinetix.Web.Exceptions;
 /// <summary>
 /// Handler par défaut pour les BusinessException.
 /// </summary>
-public class BusinessExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory) : IKinetixExceptionHandler
+public class BusinessExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory)
+    : IKinetixExceptionHandler
 {
     /// <inheritdoc />
     public int Priority => 1;
@@ -40,7 +41,10 @@ public class BusinessExceptionHandler(KinetixExceptionConfig config, ProblemDeta
             }
             else
             {
-                var problemDetails = problemDetailsFactory.CreateProblemDetails(context, StatusCodes.Status400BadRequest);
+                var problemDetails = problemDetailsFactory.CreateProblemDetails(
+                    context,
+                    StatusCodes.Status400BadRequest
+                );
                 var errors = new List<string>();
 
                 if (be.Errors != null && be.Errors.HasError)

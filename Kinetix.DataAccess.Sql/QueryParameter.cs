@@ -24,9 +24,7 @@ public class QueryParameter
     /// <summary>
     /// Constructeur vide.
     /// </summary>
-    public QueryParameter()
-    {
-    }
+    public QueryParameter() { }
 
     /// <summary>
     /// Constructeur.
@@ -222,9 +220,10 @@ public class QueryParameter
         var beanDef = BeanDescriptor.GetDefinition(typeof(TSource));
         var propertyDescriptor = beanDef.Properties[FirstToUpper(sortColumn)];
 
-        list = sortOrder == SortOrder.Asc
-            ? list.OrderBy(x => propertyDescriptor.GetValue(x)).ToList()
-            : list.OrderByDescending(x => propertyDescriptor.GetValue(x)).ToList();
+        list =
+            sortOrder == SortOrder.Asc
+                ? list.OrderBy(x => propertyDescriptor.GetValue(x)).ToList()
+                : list.OrderByDescending(x => propertyDescriptor.GetValue(x)).ToList();
 
         // If this.Limit == 0 we disable pagination.
         return list.Skip(Offset).Take(Limit > 0 ? Limit : list.Count).ToList();
@@ -331,8 +330,6 @@ public class QueryParameter
     /// <returns>Parsed value.</returns>
     private static string FirstToUpper(string value)
     {
-        return string.IsNullOrEmpty(value)
-            ? value
-            : value[..1].ToUpper(CultureInfo.CurrentCulture) + value[1..];
+        return string.IsNullOrEmpty(value) ? value : value[..1].ToUpper(CultureInfo.CurrentCulture) + value[1..];
     }
 }

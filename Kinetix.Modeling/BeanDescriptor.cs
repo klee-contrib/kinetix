@@ -54,21 +54,17 @@ public static class BeanDescriptor
         if (!collectionType.IsGenericType)
         {
             throw new ArgumentException(
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    SR.ExceptionTypeDescription,
-                    collection.GetType().FullName),
-                nameof(collection));
+                string.Format(CultureInfo.CurrentCulture, SR.ExceptionTypeDescription, collection.GetType().FullName),
+                nameof(collection)
+            );
         }
 
         var genericDefinition = collectionType.GetGenericTypeDefinition();
         if (genericDefinition.GetInterface(typeof(ICollection<>).Name) == null)
         {
             throw new NotSupportedException(
-                string.Format(
-                    CultureInfo.CurrentCulture,
-                    SR.ExceptionNotSupportedGeneric,
-                    genericDefinition.Name));
+                string.Format(CultureInfo.CurrentCulture, SR.ExceptionNotSupportedGeneric, genericDefinition.Name)
+            );
         }
 
         var objectType = collectionType.GetGenericArguments()[0];
@@ -167,7 +163,11 @@ public static class BeanDescriptor
     /// <param name="defaultProperty">Propriété par défaut.</param>
     /// <param name="beanType">Type du bean.</param>
     /// <returns>Collection.</returns>
-    private static BeanPropertyDescriptorCollection CreateCollection(PropertyDescriptorCollection properties, PropertyDescriptor defaultProperty, Type beanType)
+    private static BeanPropertyDescriptorCollection CreateCollection(
+        PropertyDescriptorCollection properties,
+        PropertyDescriptor defaultProperty,
+        Type beanType
+    )
     {
         var coll = new BeanPropertyDescriptorCollection(beanType);
         for (var i = 0; i < properties.Count; i++)
@@ -191,7 +191,9 @@ public static class BeanDescriptor
                         resourceProperties = [];
                         _resourceTypeMap.TryAdd(displayAttr.ResourceType, resourceProperties);
 
-                        foreach (var p in displayAttr.ResourceType.GetProperties(BindingFlags.Public | BindingFlags.Static))
+                        foreach (
+                            var p in displayAttr.ResourceType.GetProperties(BindingFlags.Public | BindingFlags.Static)
+                        )
                         {
                             resourceProperties.Add(p.Name, p);
                         }
@@ -209,7 +211,9 @@ public static class BeanDescriptor
             var isPrimaryKey = keyAttr != null;
             var isRequired = requiredAttr != null;
             var domainName = domainAttr?.Name;
-            var isDefault = property.Equals(defaultProperty) || DefaultPropertyDefaultName.Equals(property.Name) && defaultProperty == null;
+            var isDefault =
+                property.Equals(defaultProperty)
+                || DefaultPropertyDefaultName.Equals(property.Name) && defaultProperty == null;
             var referenceType = attr?.ReferenceType;
             var isBrowsable = property.IsBrowsable;
             var isReadonly = property.IsReadOnly;
@@ -225,7 +229,8 @@ public static class BeanDescriptor
                 isRequired,
                 referenceType,
                 isReadonly,
-                isBrowsable);
+                isBrowsable
+            );
 
             coll.Add(description);
         }

@@ -41,7 +41,8 @@ public static class AdvancedQueryUtil
         ICollection<IFacetDefinition<TDocument>>? facetDefList = null,
         string? groupFieldName = null,
         string? pitId = null,
-        object[]? searchAfter = null)
+        object[]? searchAfter = null
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -65,14 +66,16 @@ public static class AdvancedQueryUtil
         var size = hasGroup ? 0 : input.SearchCriteria.Max(sc => sc.Top) ?? 500;
 
         /* Source filtering */
-        var sourceFields = input.SearchCriteria.SelectMany(sc => sc.Criteria?.SourceFields ?? Array.Empty<string>()).Distinct().ToArray();
+        var sourceFields = input
+            .SearchCriteria.SelectMany(sc => sc.Criteria?.SourceFields ?? Array.Empty<string>())
+            .Distinct()
+            .ToArray();
 
         return (SearchDescriptor<TDocument> s) =>
         {
             s
-                /* Critère de filtrage. */
-                .Query(filterQuery)
-
+            /* Critère de filtrage. */
+            .Query(filterQuery)
                 /* Critère de post-filtrage. */
                 .PostFilter(postFilterQuery);
 
@@ -115,7 +118,12 @@ public static class AdvancedQueryUtil
             });
 
             IHighlight HighlightSelector(HighlightDescriptor<TDocument> h) =>
-                h.Fields(def.SearchFields.Select(f => (Func<HighlightFieldDescriptor<TDocument>, IHighlightField>)(h => h.Field(f.FieldName))).ToArray());
+                h.Fields(
+                    def.SearchFields.Select(f =>
+                            (Func<HighlightFieldDescriptor<TDocument>, IHighlightField>)(h => h.Field(f.FieldName))
+                        )
+                        .ToArray()
+                );
 
             /* Aggrégations. */
             if (hasFacet || hasGroup)
@@ -127,52 +135,73 @@ public static class AdvancedQueryUtil
                         /* Facettage. */
                         foreach (var facetDef in facetDefList)
                         {
-                            facetHandler.DefineAggregation(a, facetDef, facetDefList, input.SearchCriteria.Select(sc => sc.Facets));
+                            facetHandler.DefineAggregation(
+                                a,
+                                facetDef,
+                                facetDefList,
+                                input.SearchCriteria.Select(sc => sc.Facets)
+                            );
                         }
                     }
 
                     if (hasGroup)
                     {
-                        AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
+                        AggregationContainerDescriptor<TDocument> AggDescriptor(
+                            AggregationContainerDescriptor<TDocument> aa
+                        )
                         {
                             return aa
-                                /* Groupement. */
-                                .Terms(groupFieldName, st => st
-                                    .Field(groupFieldName)
-                                    .Size(50)
-                                    .Aggregations(g => g.TopHits(TopHitName, x =>
-                                    {
-                                        x.Size(input.GroupSize);
+                            /* Groupement. */
+                            .Terms(
+                                    groupFieldName,
+                                    st =>
+                                        st.Field(groupFieldName)
+                                            .Size(50)
+                                            .Aggregations(g =>
+                                                g.TopHits(
+                                                    TopHitName,
+                                                    x =>
+                                                    {
+                                                        x.Size(input.GroupSize);
 
-                                        if (input.Highlights)
-                                        {
-                                            x.Highlight(HighlightSelector);
-                                        }
+                                                        if (input.Highlights)
+                                                        {
+                                                            x.Highlight(HighlightSelector);
+                                                        }
 
-                                        return x;
-                                    })))
+                                                        return x;
+                                                    }
+                                                )
+                                            )
+                                )
                                 /* Groupement pour les valeurs nulles */
-                                .Missing(groupFieldName + MissingGroupPrefix, st => st
-                                    .Field(groupFieldName)
-                                    .Aggregations(g => g.TopHits(TopHitName, x =>
-                                    {
-                                        x.Size(input.GroupSize);
+                                .Missing(
+                                    groupFieldName + MissingGroupPrefix,
+                                    st =>
+                                        st.Field(groupFieldName)
+                                            .Aggregations(g =>
+                                                g.TopHits(
+                                                    TopHitName,
+                                                    x =>
+                                                    {
+                                                        x.Size(input.GroupSize);
 
-                                        if (input.Highlights)
-                                        {
-                                            x.Highlight(HighlightSelector);
-                                        }
+                                                        if (input.Highlights)
+                                                        {
+                                                            x.Highlight(HighlightSelector);
+                                                        }
 
-                                        return x;
-                                    })));
+                                                        return x;
+                                                    }
+                                                )
+                                            )
+                                );
                         }
 
                         if (hasPostFilter)
                         {
                             /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
-                            a.Filter(groupFieldName, f => f
-                                .Filter(postFilterQuery)
-                                .Aggregations(AggDescriptor));
+                            a.Filter(groupFieldName, f => f.Filter(postFilterQuery).Aggregations(AggDescriptor));
                         }
                         else
                         {
@@ -202,10 +231,10 @@ public static class AdvancedQueryUtil
     /// <param name="input">Input de la recherche.</param>
     /// <param name="facetHandler">Handler de facette.</param>
     /// <returns>QueryDescriptor.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterAndPostFilterQuery<TDocument, TCriteria>(
-        DocumentDefinition def,
-        AdvancedQueryInput<TDocument, TCriteria> input,
-        FacetHandler facetHandler)
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterAndPostFilterQuery<
+        TDocument,
+        TCriteria
+    >(DocumentDefinition def, AdvancedQueryInput<TDocument, TCriteria> input, FacetHandler facetHandler)
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -250,7 +279,8 @@ public static class AdvancedQueryUtil
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null)
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -261,110 +291,128 @@ public static class AdvancedQueryUtil
 
         if (input.Security != null && def.SecurityField == null)
         {
-            throw new ElasticException($@"The Document ""{typeof(TDocument)}"" needs a Security category field to allow Query with security filtering.");
+            throw new ElasticException(
+                $@"The Document ""{typeof(TDocument)}"" needs a Security category field to allow Query with security filtering."
+            );
         }
 
         /* Constuit la sous requête de sécurité. */
-        var securitySubQuery = input.Security != null
-            ? BuildOrQuery(input.Security.Select(s => BuildFilter<TDocument>(def.SecurityField!.FieldName, s)).ToArray())
-            : q => q;
+        var securitySubQuery =
+            input.Security != null
+                ? BuildOrQuery(
+                    input.Security.Select(s => BuildFilter<TDocument>(def.SecurityField!.FieldName, s)).ToArray()
+                )
+                : q => q;
 
         var isMultiCriteria = input.SearchCriteria.Count() > 1;
 
         /* Construit la sous requête des différents critères. */
-        var criteriaSubQuery = BuildOrQuery(input.SearchCriteria.Select(sc =>
-        {
-            var criteria = sc.Criteria;
-
-            /* Normalisation des paramètres. */
-            if (criteria is not null && (criteria.Query == "*" || string.IsNullOrWhiteSpace(criteria.Query)))
-            {
-                criteria.Query = null;
-            }
-
-            /* Récupération de la liste des champs texte sur lesquels rechercher, potentiellement filtrés par le critère. */
-            var searchFields = def.SearchFields
-                .Where(sf => criteria?.SearchFields == null || criteria.SearchFields.Contains(sf.FieldName))
-                .ToArray();
-
-            /* Constuit la sous requête de query. */
-            var textSubQuery = criteria?.Query != null && (criteria.SearchFields?.Any() ?? true)
-                ? BuildMultiMatchQuery<TDocument>(criteria.Query, searchFields)
-                : q => q;
-
-            /* Gestion des filtres additionnels. */
-            var criteriaProperties = typeof(TCriteria).GetProperties();
-
-            var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
-
-            foreach (var field in def.Fields)
-            {
-                var propName = field.PropertyName;
-                var propValue = input.AdditionalCriteria != null
-                    ? field.GetValue(input.AdditionalCriteria)
-                    : null;
-
-                if (sc.Criteria is not null)
+        var criteriaSubQuery = BuildOrQuery(
+            input
+                .SearchCriteria.Select(sc =>
                 {
-                    propValue ??= criteriaProperties.SingleOrDefault(p => p.Name == propName)?.GetValue(sc.Criteria);
-                }
+                    var criteria = sc.Criteria;
 
-                if (propValue != null)
-                {
-                    var propValueString = propValue switch
+                    /* Normalisation des paramètres. */
+                    if (criteria is not null && (criteria.Query == "*" || string.IsNullOrWhiteSpace(criteria.Query)))
                     {
-                        bool b => b ? "true" : "false",
-                        DateTime d => d.ToString("yyyy-MM-ddTHH:mm:ssZ"),
-                        _ => propValue.ToString()!
-                    };
-
-                    switch (field.Indexing)
-                    {
-                        case SearchFieldIndexing.FullText:
-                            filterList.Add(BuildMultiMatchQuery<TDocument>(propValueString, field));
-                            break;
-                        case SearchFieldIndexing.Term:
-                        case SearchFieldIndexing.Sort:
-                            filterList.Add(BuildFilter<TDocument>(field.FieldName, propValueString));
-                            break;
-                        default:
-                            throw new ElasticException($"Cannot filter on fields that are not indexed. Field: {field.FieldName}");
-                    }
-                }
-            }
-
-            /* Constuit la sous requête de filtres. */
-            var filterSubQuery = BuildAndQuery(filterList.ToArray());
-
-            /* Créé une sous-requête par facette. */
-            var facetSubQueryList = sc.Facets
-                .Select(f =>
-                {
-                    /* Récupère la définition de la facette non multi-sélectionnable. */
-                    var facetDef = input.FacetQueryDefinition.Facets.Single(x => x.Code == f.Key);
-                    if (facetDef.IsMultiSelectable && !isMultiCriteria)
-                    {
-                        return null!;
+                        criteria.Query = null;
                     }
 
-                    /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur (sélectionnée ou exclue). */
-                    return facetDef.IsMultiSelectable
-                        ? facetHandler.BuildMultiSelectableFilter(f.Value, facetDef, def.Fields[facetDef.FieldName].IsMultiValued)!
-                        : f.Value.Selected.Any()
-                            ? facetHandler.CreateFacetSubQuery(f.Value.Selected.First(), false, facetDef)
-                        : f.Value.Excluded.Any()
-                            ? facetHandler.CreateFacetSubQuery(f.Value.Excluded.First(), true, facetDef)
-                        : null!;
+                    /* Récupération de la liste des champs texte sur lesquels rechercher, potentiellement filtrés par le critère. */
+                    var searchFields = def
+                        .SearchFields.Where(sf =>
+                            criteria?.SearchFields == null || criteria.SearchFields.Contains(sf.FieldName)
+                        )
+                        .ToArray();
+
+                    /* Constuit la sous requête de query. */
+                    var textSubQuery =
+                        criteria?.Query != null && (criteria.SearchFields?.Any() ?? true)
+                            ? BuildMultiMatchQuery<TDocument>(criteria.Query, searchFields)
+                            : q => q;
+
+                    /* Gestion des filtres additionnels. */
+                    var criteriaProperties = typeof(TCriteria).GetProperties();
+
+                    var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
+
+                    foreach (var field in def.Fields)
+                    {
+                        var propName = field.PropertyName;
+                        var propValue =
+                            input.AdditionalCriteria != null ? field.GetValue(input.AdditionalCriteria) : null;
+
+                        if (sc.Criteria is not null)
+                        {
+                            propValue ??= criteriaProperties
+                                .SingleOrDefault(p => p.Name == propName)
+                                ?.GetValue(sc.Criteria);
+                        }
+
+                        if (propValue != null)
+                        {
+                            var propValueString = propValue switch
+                            {
+                                bool b => b ? "true" : "false",
+                                DateTime d => d.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                                _ => propValue.ToString()!,
+                            };
+
+                            switch (field.Indexing)
+                            {
+                                case SearchFieldIndexing.FullText:
+                                    filterList.Add(BuildMultiMatchQuery<TDocument>(propValueString, field));
+                                    break;
+                                case SearchFieldIndexing.Term:
+                                case SearchFieldIndexing.Sort:
+                                    filterList.Add(BuildFilter<TDocument>(field.FieldName, propValueString));
+                                    break;
+                                default:
+                                    throw new ElasticException(
+                                        $"Cannot filter on fields that are not indexed. Field: {field.FieldName}"
+                                    );
+                            }
+                        }
+                    }
+
+                    /* Constuit la sous requête de filtres. */
+                    var filterSubQuery = BuildAndQuery(filterList.ToArray());
+
+                    /* Créé une sous-requête par facette. */
+                    var facetSubQueryList = sc
+                        .Facets.Select(f =>
+                        {
+                            /* Récupère la définition de la facette non multi-sélectionnable. */
+                            var facetDef = input.FacetQueryDefinition.Facets.Single(x => x.Code == f.Key);
+                            if (facetDef.IsMultiSelectable && !isMultiCriteria)
+                            {
+                                return null!;
+                            }
+
+                            /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur (sélectionnée ou exclue). */
+                            return facetDef.IsMultiSelectable
+                                    ? facetHandler.BuildMultiSelectableFilter(
+                                        f.Value,
+                                        facetDef,
+                                        def.Fields[facetDef.FieldName].IsMultiValued
+                                    )!
+                                : f.Value.Selected.Any()
+                                    ? facetHandler.CreateFacetSubQuery(f.Value.Selected.First(), false, facetDef)
+                                : f.Value.Excluded.Any()
+                                    ? facetHandler.CreateFacetSubQuery(f.Value.Excluded.First(), true, facetDef)
+                                : null!;
+                        })
+                        .Where(f => f != null)
+                        .ToArray();
+
+                    /* Concatène en "ET" toutes les sous-requêtes de facettes. */
+                    var monoValuedFacetsSubQuery = BuildAndQuery(facetSubQueryList);
+
+                    return BuildMustQuery(textSubQuery, filterSubQuery, monoValuedFacetsSubQuery);
                 })
-                .Where(f => f != null)
-                .ToArray();
-
-            /* Concatène en "ET" toutes les sous-requêtes de facettes. */
-            var monoValuedFacetsSubQuery = BuildAndQuery(facetSubQueryList);
-
-            return BuildMustQuery(textSubQuery, filterSubQuery, monoValuedFacetsSubQuery);
-        })
-        .ToArray());
+                .ToArray()
+        );
 
         return BuildMustQuery(new[] { securitySubQuery, criteriaSubQuery, filter! }.Where(f => f != null).ToArray());
     }
@@ -376,10 +424,14 @@ public static class AdvancedQueryUtil
     /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="docDef">Document.</param>
     /// <returns>Sous-requête.</returns>
-    private static (bool HasPostFilter, Func<QueryContainerDescriptor<TDocument>, QueryContainer> Query) GetPostFilterSubQuery<TDocument, TCriteria>(
+    private static (
+        bool HasPostFilter,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer> Query
+    ) GetPostFilterSubQuery<TDocument, TCriteria>(
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
-        DocumentDefinition docDef)
+        DocumentDefinition docDef
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -389,25 +441,30 @@ public static class AdvancedQueryUtil
         }
 
         /* Créé une sous-requête par facette */
-        var facetSubQueriesList =
-            input.SearchCriteria.Select(sc =>
+        var facetSubQueriesList = input
+            .SearchCriteria.Select(sc =>
                 sc.Facets.Select(f =>
-                {
-                    /* Récupère la définition de la facette multi-sélectionnable. */
-                    var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x => x.IsMultiSelectable && x.Code == f.Key);
+                    {
+                        /* Récupère la définition de la facette multi-sélectionnable. */
+                        var def = input.FacetQueryDefinition.Facets.SingleOrDefault(x =>
+                            x.IsMultiSelectable && x.Code == f.Key
+                        );
 
-                    return def == null
-                        ? null!
-                        : facetHandler.BuildMultiSelectableFilter(f.Value, def, docDef.Fields[def.FieldName].IsMultiValued)!;
-                })
-                .Where(f => f != null)
-                .ToArray())
+                        return def == null
+                            ? null!
+                            : facetHandler.BuildMultiSelectableFilter(
+                                f.Value,
+                                def,
+                                docDef.Fields[def.FieldName].IsMultiValued
+                            )!;
+                    })
+                    .Where(f => f != null)
+                    .ToArray()
+            )
             .Where(c => c.Length != 0);
 
         /* Concatène en "ET" toutes les sous-requêtes. */
-        return (
-            facetSubQueriesList.Any(),
-            BuildOrQuery(facetSubQueriesList.Select(BuildAndQuery).ToArray()));
+        return (facetSubQueriesList.Any(), BuildOrQuery(facetSubQueriesList.Select(BuildAndQuery).ToArray()));
     }
 
     /// <summary>
@@ -418,29 +475,39 @@ public static class AdvancedQueryUtil
     /// <returns>Définition du tri.</returns>
     private static IEnumerable<Action<SortDescriptor<TDocument>>> GetSortDefinitions<TDocument, TCriteria>(
         DocumentDefinition def,
-        AdvancedQueryInput<TDocument, TCriteria> input)
+        AdvancedQueryInput<TDocument, TCriteria> input
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
         // On trie par le premier tri renseigné.
-        var criteria = input.SearchCriteria.FirstOrDefault(sc => !string.IsNullOrEmpty(sc.SortFieldName) || sc.Sort.Count > 0);
+        var criteria = input.SearchCriteria.FirstOrDefault(sc =>
+            !string.IsNullOrEmpty(sc.SortFieldName) || sc.Sort.Count > 0
+        );
         if (criteria == null)
         {
             yield break;
         }
 
-        var sorts = criteria.Sort.Count > 0 ? criteria.Sort : [new() { FieldName = criteria.SortFieldName!, SortDesc = criteria.SortDesc }];
+        var sorts =
+            criteria.Sort.Count > 0
+                ? criteria.Sort
+                : [new() { FieldName = criteria.SortFieldName!, SortDesc = criteria.SortDesc }];
 
         foreach (var sort in sorts)
         {
             if (!def.Fields.HasProperty(sort.FieldName))
             {
-                throw new ElasticException($@"The Document ""{typeof(TDocument)}"" is missing a ""{sort.FieldName}"" property to sort on.");
+                throw new ElasticException(
+                    $@"The Document ""{typeof(TDocument)}"" is missing a ""{sort.FieldName}"" property to sort on."
+                );
             }
 
-            yield return x => x.Field(
-                def.Fields[sort.FieldName].FieldName,
-                sort.SortDesc ? SortOrder.Descending : SortOrder.Ascending);
+            yield return x =>
+                x.Field(
+                    def.Fields[sort.FieldName].FieldName,
+                    sort.SortDesc ? SortOrder.Descending : SortOrder.Ascending
+                );
         }
     }
 }

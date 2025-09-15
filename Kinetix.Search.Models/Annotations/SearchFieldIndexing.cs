@@ -23,5 +23,5 @@ public enum SearchFieldIndexing
     /// <summary>
     /// Champ de facette : indexé tel quel.
     /// </summary>
-    Term
+    Term,
 }

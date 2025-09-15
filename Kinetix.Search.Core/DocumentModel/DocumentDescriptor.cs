@@ -18,9 +18,7 @@ public class DocumentDescriptor
     /// <returns>Description des propriétés.</returns>
     public DocumentDefinition GetDefinition(Type beanType)
     {
-        return beanType == null
-            ? throw new ArgumentNullException(nameof(beanType))
-            : GetDefinitionInternal(beanType);
+        return beanType == null ? throw new ArgumentNullException(nameof(beanType)) : GetDefinitionInternal(beanType);
     }
 
     /// <summary>
@@ -69,20 +67,29 @@ public class DocumentDescriptor
         }
     }
 
-    private IEnumerable<DocumentFieldDescriptor> GetProperties(Type beanType, string? prefix = null, bool isMultiValued = false)
+    private IEnumerable<DocumentFieldDescriptor> GetProperties(
+        Type beanType,
+        string? prefix = null,
+        bool isMultiValued = false
+    )
     {
         foreach (var property in beanType.GetProperties())
         {
             var fieldName = ToCamelCase(property.Name);
             var isArray = property.PropertyType.IsArray;
-            var propertyType = Nullable.GetUnderlyingType(property.PropertyType)
-                ?? (property.PropertyType.IsArray
-                    ? property.PropertyType.GetElementType()!
-                    : property.PropertyType);
+            var propertyType =
+                Nullable.GetUnderlyingType(property.PropertyType)
+                ?? (property.PropertyType.IsArray ? property.PropertyType.GetElementType()! : property.PropertyType);
 
             if (propertyType.GetProperties().Any(prop => prop.GetCustomAttribute<SearchFieldAttribute>() != null))
             {
-                foreach (var subProperty in GetProperties(propertyType, prefix != null ? $"{prefix}.{fieldName}" : fieldName, isArray || isMultiValued))
+                foreach (
+                    var subProperty in GetProperties(
+                        propertyType,
+                        prefix != null ? $"{prefix}.{fieldName}" : fieldName,
+                        isArray || isMultiValued
+                    )
+                )
                 {
                     yield return subProperty;
                 }
@@ -103,11 +110,16 @@ public class DocumentDescriptor
                     IsPartialRebuildDate = dateAttr != null,
                     IsMultiValued = isArray || isMultiValued,
                     Boost = searchAttr?.Boost ?? 1,
-                    OtherAttributes = property.GetCustomAttributes(true).Where(a => a is not SearchFieldAttribute and not PartialRebuildDatePropertyAttribute).ToList()
+                    OtherAttributes = property
+                        .GetCustomAttributes(true)
+                        .Where(a => a is not SearchFieldAttribute and not PartialRebuildDatePropertyAttribute)
+                        .ToList(),
                 };
 
                 yield return description.IsPartialRebuildDate && description.PropertyType != typeof(DateTime)
-                    ? throw new NotSupportedException($"{beanType}: the {description.FieldName} property must be of type 'DateTime'.")
+                    ? throw new NotSupportedException(
+                        $"{beanType}: the {description.FieldName} property must be of type 'DateTime'."
+                    )
                     : description;
             }
         }

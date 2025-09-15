@@ -10,8 +10,11 @@ namespace Kinetix.Search.Elastic.Mapping;
 public class FrenchMapper : IElasticMapper<string>
 {
     /// <inheritdoc cref="IElasticMapper.Map{TDocument}" />
-    public PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
-            where TDocument : class
+    public PropertiesDescriptor<TDocument> Map<TDocument>(
+        PropertiesDescriptor<TDocument> selector,
+        DocumentFieldDescriptor field
+    )
+        where TDocument : class
     {
         if (field.Indexing == SearchFieldIndexing.FullText)
         {

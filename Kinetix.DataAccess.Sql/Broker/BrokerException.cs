@@ -10,18 +10,14 @@ public class BrokerException : Exception
     /// Crée un nouvelle exception.
     /// </summary>
     public BrokerException()
-        : base()
-    {
-    }
+        : base() { }
 
     /// <summary>
     /// Crée une nouvelle exception.
     /// </summary>
     /// <param name="message">Description de l'exception.</param>
     public BrokerException(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 
     /// <summary>
     /// Crée une nouvelle exception.
@@ -29,7 +25,5 @@ public class BrokerException : Exception
     /// <param name="message">Description de l'exception.</param>
     /// <param name="innerException">Exception source.</param>
     public BrokerException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
+        : base(message, innerException) { }
 }

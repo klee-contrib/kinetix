@@ -13,7 +13,12 @@ namespace Kinetix.Search.Core;
 /// <param name="provider">Composant injecté.</param>
 /// <param name="searchStore">Composant injecté.</param>
 /// <param name="transactionScopeManager">Composant injecté.</param>
-public class IndexManager(ILogger<IndexManager> logger, IServiceProvider provider, ISearchStore searchStore, TransactionScopeManager transactionScopeManager)
+public class IndexManager(
+    ILogger<IndexManager> logger,
+    IServiceProvider provider,
+    ISearchStore searchStore,
+    TransactionScopeManager transactionScopeManager
+)
 {
     private bool _waitForRefresh = true;
 

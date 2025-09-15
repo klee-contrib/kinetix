@@ -14,9 +14,10 @@ namespace Kinetix.Search.Core.Querying;
 /// </remarks>
 /// <param name="referenceManager">ReferenceManager.</param>
 /// <param name="searchCriteria">Requêtes.</param>
-public class AdvancedQueryInputBuilder<TDocument>(IReferenceManager referenceManager, params QueryInput<DefaultCriteria>[] searchCriteria) : AdvancedQueryInputBuilder<TDocument, DefaultCriteria>(referenceManager, searchCriteria)
-{
-}
+public class AdvancedQueryInputBuilder<TDocument>(
+    IReferenceManager referenceManager,
+    params QueryInput<DefaultCriteria>[] searchCriteria
+) : AdvancedQueryInputBuilder<TDocument, DefaultCriteria>(referenceManager, searchCriteria) { }
 
 /// <summary>
 /// Builder de requête pour la recherche avancée.
@@ -60,7 +61,9 @@ public class AdvancedQueryInputBuilder<TDocument, TCriteria>
     /// </summary>
     /// <param name="facetsDefinition">Définitions de facettes.</param>
     /// <returns>AdvancedQueryInputBuilder.</returns>
-    public AdvancedQueryInputBuilder<TDocument, TCriteria> WithFacets(Action<FacetQueryDefinitionBuilder<TDocument>> facetsDefinition)
+    public AdvancedQueryInputBuilder<TDocument, TCriteria> WithFacets(
+        Action<FacetQueryDefinitionBuilder<TDocument>> facetsDefinition
+    )
     {
         var builder = new FacetQueryDefinitionBuilder<TDocument>(_referenceManager);
         facetsDefinition(builder);

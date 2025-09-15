@@ -6,7 +6,7 @@ namespace Kinetix.Search.Core.Querying;
 /// Entrée complète d'une recherche avancée.
 /// </summary>
 public class AdvancedQueryInput<TDocument, TCriteria>
-     where TCriteria : ICriteria
+    where TCriteria : ICriteria
 {
     /// <summary>
     /// Critères de recherche, combinés en "ou".
@@ -21,20 +21,12 @@ public class AdvancedQueryInput<TDocument, TCriteria>
     /// <summary>
     /// Filtrage de sécurité.
     /// </summary>
-    public string[]? Security
-    {
-        get;
-        set;
-    }
+    public string[]? Security { get; set; }
 
     /// <summary>
     /// Critères supplémentaires.
     /// </summary>
-    public TDocument? AdditionalCriteria
-    {
-        get;
-        set;
-    }
+    public TDocument? AdditionalCriteria { get; set; }
 
     /// <summary>
     /// Nombre d'éléments à récupérer dans un groupe.

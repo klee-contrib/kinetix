@@ -3,9 +3,7 @@
 /// <summary>
 /// Interface permettant de manipuler les brokers sans leur type anonyme.
 /// </summary>
-public interface IBroker
-{
-}
+public interface IBroker { }
 
 /// <summary>
 /// Interface de définition d'un broker d'accès aux données.

@@ -63,5 +63,5 @@ public enum FileFormat
     /// <summary>
     /// Document au format email.
     /// </summary>
-    Email
+    Email,
 }

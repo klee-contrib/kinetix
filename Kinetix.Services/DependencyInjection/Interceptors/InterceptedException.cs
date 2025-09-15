@@ -8,6 +8,4 @@
 /// </remarks>
 /// <param name="message">Message.</param>
 /// <param name="innerException">Exception interceptée.</param>
-public class InterceptedException(string message, Exception innerException) : Exception(message, innerException)
-{
-}
+public class InterceptedException(string message, Exception innerException) : Exception(message, innerException) { }

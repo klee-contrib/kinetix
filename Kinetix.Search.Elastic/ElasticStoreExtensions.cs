@@ -21,7 +21,15 @@ public static class ElasticStoreExtensions
     /// <param name="sortsAfter">Si les tris NEST additionnels doivent être après les tris de l'input.</param>
     /// <param name="aggs">Agrégations NEST additionnelles.</param>
     /// <returns>Sortie de la recherche.</returns>
-    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null, bool sortsAfter = false, Action<AggregationContainerDescriptor<TDocument>>? aggs = null)
+    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(
+        this ISearchStore store,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, TOutput> documentMapper,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
+        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        bool sortsAfter = false,
+        Action<AggregationContainerDescriptor<TDocument>>? aggs = null
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -39,7 +47,15 @@ public static class ElasticStoreExtensions
     /// <param name="sortsAfter">Si les tris NEST additionnels doivent être après les tris de l'input.</param>
     /// <param name="aggs">Agrégations NEST additionnelles.</param>
     /// <returns>Sortie de la recherche.</returns>
-    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null, bool sortsAfter = false, Action<AggregationContainerDescriptor<TDocument>>? aggs = null)
+    public static QueryOutput<TOutput> AdvancedQuery<TDocument, TOutput, TCriteria>(
+        this ISearchStore store,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
+        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        bool sortsAfter = false,
+        Action<AggregationContainerDescriptor<TDocument>>? aggs = null
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -56,7 +72,14 @@ public static class ElasticStoreExtensions
     /// <param name="sorts">Tris NEST additionnels.</param>
     /// <param name="sortsAfter">Si les tris NEST additionnels doivent être après les tris de l'input.</param>
     /// <returns>Résultats.</returns>
-    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null, bool sortsAfter = false)
+    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(
+        this ISearchStore store,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, TOutput> documentMapper,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
+        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        bool sortsAfter = false
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -73,9 +96,16 @@ public static class ElasticStoreExtensions
     /// <param name="sorts">Tris NEST additionnels.</param>
     /// <param name="sortsAfter">Si les tris NEST additionnels doivent être après les tris de l'input.</param>
     /// <returns>Résultats.</returns>
-    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(this ISearchStore store, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper, Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null, IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null, bool sortsAfter = false)
-    where TDocument : class
-    where TCriteria : ICriteria
+    public static IEnumerable<TOutput> AdvancedQueryAll<TDocument, TOutput, TCriteria>(
+        this ISearchStore store,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
+        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
+        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        bool sortsAfter = false
+    )
+        where TDocument : class
+        where TCriteria : ICriteria
     {
         return ((ElasticStore)store).AdvancedQueryAll(input, documentMapper, filter, sorts, sortsAfter);
     }

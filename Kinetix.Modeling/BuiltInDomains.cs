@@ -62,5 +62,5 @@ public enum BuiltInDomains
     StringArray,
 
     [DomainType(typeof(int[]))]
-    IntArray
+    IntArray,
 }

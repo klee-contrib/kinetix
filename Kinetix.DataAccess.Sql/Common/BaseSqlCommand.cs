@@ -36,7 +36,12 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="commandParser">Parser de requête.</param>
     /// <param name="assembly">Assembly dans lequel chercher la requête SQL.</param>
     /// <param name="resourcePath">Chemin vers le fichier SQL.</param>
-    protected BaseSqlCommand(IDbConnection connection, CommandParser commandParser, Assembly assembly, string resourcePath)
+    protected BaseSqlCommand(
+        IDbConnection connection,
+        CommandParser commandParser,
+        Assembly assembly,
+        string resourcePath
+    )
     {
         if (string.IsNullOrEmpty(resourcePath))
         {
@@ -74,7 +79,12 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="commandParser">Parser de requête.</param>
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="commandText">Requête SQL.</param>
-    protected BaseSqlCommand(IDbConnection connection, CommandParser commandParser, string commandName, string commandText)
+    protected BaseSqlCommand(
+        IDbConnection connection,
+        CommandParser commandParser,
+        string commandName,
+        string commandText
+    )
     {
         CommandParser = commandParser;
         CommandName = commandName;
@@ -90,7 +100,12 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="commandParser">Parser de requête.</param>
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="commandType">Type de la commande.</param>
-    protected BaseSqlCommand(IDbConnection connection, CommandParser commandParser, string commandName, CommandType commandType)
+    protected BaseSqlCommand(
+        IDbConnection connection,
+        CommandParser commandParser,
+        string commandName,
+        CommandType commandType
+    )
     {
         CommandParser = commandParser;
         CommandName = commandName;
@@ -127,17 +142,12 @@ public abstract class BaseSqlCommand : IDisposable
     /// <summary>
     /// Retourne la liste des paramétres de la commande.
     /// </summary>
-    public SqlParameterCollection Parameters =>
-        _parameterColl ??= GetSqlParameterCollection();
+    public SqlParameterCollection Parameters => _parameterColl ??= GetSqlParameterCollection();
 
     /// <summary>
     /// Obtient ou définit les paramètres de la requête (limit, offset, tri).
     /// </summary>
-    public QueryParameter QueryParameters
-    {
-        get;
-        set;
-    }
+    public QueryParameter QueryParameters { get; set; }
 
     /// <summary>
     /// Commande SQL.
@@ -231,7 +241,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="collection">Collection à passer en paramètre.</param>
     /// <returns>La commande.</returns>
     public BaseSqlCommand AddTableParameter<T>(ICollection<T> collection)
-            where T : class, new()
+        where T : class, new()
     {
         Parameters.AddTableParameter(collection);
         return this;
@@ -292,18 +302,15 @@ public abstract class BaseSqlCommand : IDisposable
             throw rowsAffected == 0
                 ? new SqlDataException(SR.ExceptionZeroRowAffected)
                 : new SqlDataException(
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        SR.ExceptionTooFewRowsAffected,
-                        rowsAffected));
+                    string.Format(CultureInfo.CurrentCulture, SR.ExceptionTooFewRowsAffected, rowsAffected)
+                );
         }
 
         if (rowsAffected > maxRowsAffected)
         {
-            throw new SqlDataException(string.Format(
-                CultureInfo.CurrentCulture,
-                SR.ExceptionTooManyRowsAffected,
-                rowsAffected));
+            throw new SqlDataException(
+                string.Format(CultureInfo.CurrentCulture, SR.ExceptionTooManyRowsAffected, rowsAffected)
+            );
         }
 
         return rowsAffected;
@@ -370,18 +377,16 @@ public abstract class BaseSqlCommand : IDisposable
             var rowsAffected = reader.RecordsAffected;
             if (rowsAffected > maxRowsAffected)
             {
-                throw new SqlDataException(string.Format(
-                    CultureInfo.CurrentCulture,
-                    SR.ExceptionTooManyRowsAffected,
-                    rowsAffected));
+                throw new SqlDataException(
+                    string.Format(CultureInfo.CurrentCulture, SR.ExceptionTooManyRowsAffected, rowsAffected)
+                );
             }
 
             if (rowsAffected < minRowsAffected)
             {
-                throw new SqlDataException(string.Format(
-                    CultureInfo.CurrentCulture,
-                    SR.ExceptionTooFewRowsAffected,
-                    rowsAffected));
+                throw new SqlDataException(
+                    string.Format(CultureInfo.CurrentCulture, SR.ExceptionTooFewRowsAffected, rowsAffected)
+                );
             }
 
             return reader.GetValue(0);

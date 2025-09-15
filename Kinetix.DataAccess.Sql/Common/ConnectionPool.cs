@@ -59,7 +59,9 @@ public abstract class ConnectionPool(TransactionScopeManager transactionScopeMan
 
         if (transactionContext == null)
         {
-            throw new InvalidOperationException("Impossible de récupérer une connection en dehors d'un scope de transaction.");
+            throw new InvalidOperationException(
+                "Impossible de récupérer une connection en dehors d'un scope de transaction."
+            );
         }
 
         transactionContext.Connections.TryGetValue(datasourceName, out var connection);

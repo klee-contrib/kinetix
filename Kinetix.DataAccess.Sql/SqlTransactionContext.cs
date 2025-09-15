@@ -9,7 +9,14 @@ namespace Kinetix.DataAccess.Sql;
 /// </summary>
 internal class SqlTransactionContext : ITransactionContext
 {
-    private readonly TransactionScope _scope = new(TransactionScopeOption.RequiresNew, new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero });
+    private readonly TransactionScope _scope = new(
+        TransactionScopeOption.RequiresNew,
+        new TransactionOptions
+        {
+            IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted,
+            Timeout = TimeSpan.Zero,
+        }
+    );
 
     /// <inheritdoc />
     public bool Completed { get; set; }
@@ -20,14 +27,10 @@ internal class SqlTransactionContext : ITransactionContext
     internal Dictionary<string, IDbConnection> Connections { get; } = new();
 
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
-    public void OnAfterCommit()
-    {
-    }
+    public void OnAfterCommit() { }
 
     /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
-    public void OnBeforeCommit()
-    {
-    }
+    public void OnBeforeCommit() { }
 
     /// <inheritdoc cref="ITransactionContext.OnCommit" />
     public void OnCommit()

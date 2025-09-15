@@ -17,9 +17,7 @@ public class FilterCriteria
     /// <summary>
     /// Constructeur par défaut.
     /// </summary>
-    public FilterCriteria()
-    {
-    }
+    public FilterCriteria() { }
 
     /// <summary>
     /// Constructeur à partir d'une liste de critères.
@@ -113,7 +111,10 @@ public class FilterCriteria
 
         if (value == null)
         {
-            throw new ArgumentNullException(nameof(value), "Utiliser la méthode IsNull si vous souhaitez tester la nullité.");
+            throw new ArgumentNullException(
+                nameof(value),
+                "Utiliser la méthode IsNull si vous souhaitez tester la nullité."
+            );
         }
 
         AddCriteria(enumCol.ToString(), Expression.Equals, value);

@@ -18,7 +18,11 @@ public sealed class NumeroSiretAttribute : ValidationAttribute
     /// <summary>
     /// Expression régulière permettant de valider le format SIRET.
     /// </summary>
-    private static readonly string SiretRegex = string.Format(CultureInfo.InvariantCulture, "^[0-9]{{{0}}}$", SiretLength);
+    private static readonly string SiretRegex = string.Format(
+        CultureInfo.InvariantCulture,
+        "^[0-9]{{{0}}}$",
+        SiretLength
+    );
 
     /// <summary>
     /// Constructeur.

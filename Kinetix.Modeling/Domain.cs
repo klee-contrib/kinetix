@@ -25,7 +25,11 @@ namespace Kinetix.Modeling;
 /// <param name="name">Nom.</param>
 /// <param name="validationAttributes">Attributs gérant la validation de la donnée.</param>
 /// <param name="extraAttributes">Autres attributs.</param>
-public sealed class Domain(Enum name, ICollection<ValidationAttribute> validationAttributes, ICollection<Attribute> extraAttributes)
+public sealed class Domain(
+    Enum name,
+    ICollection<ValidationAttribute> validationAttributes,
+    ICollection<Attribute> extraAttributes
+)
 {
     /// <summary>
     /// Liste des attributs de validation.
@@ -76,10 +80,13 @@ public sealed class Domain(Enum name, ICollection<ValidationAttribute> validatio
     /// <returns>Messages d'erreur.</returns>
     public ErrorMessageCollection CheckValue(object value, BeanPropertyDescriptor propertyDescriptor)
     {
-        return propertyDescriptor == null
-            ? throw new ArgumentNullException(nameof(propertyDescriptor))
+        return propertyDescriptor == null ? throw new ArgumentNullException(nameof(propertyDescriptor))
             : ValidationAttributes != null
-            ? new ErrorMessageCollection(ValidationAttributes.Where(va => !va.IsValid(value)).Select(va => va.FormatErrorMessage(propertyDescriptor.PropertyName)))
+                ? new ErrorMessageCollection(
+                    ValidationAttributes
+                        .Where(va => !va.IsValid(value))
+                        .Select(va => va.FormatErrorMessage(propertyDescriptor.PropertyName))
+                )
             : new ErrorMessageCollection();
     }
 

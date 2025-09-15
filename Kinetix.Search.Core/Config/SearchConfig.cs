@@ -18,7 +18,9 @@ public class SearchConfig
     /// <returns>Nom.</returns>
     public static string GetTypeNameForIndex(Type documentType)
     {
-        return Regex.Replace(Regex.Replace(documentType.Name, "Document$", string.Empty), @"\p{Lu}", m => "_" + m.Value)[1..].ToLowerInvariant();
+        return Regex
+            .Replace(Regex.Replace(documentType.Name, "Document$", string.Empty), @"\p{Lu}", m => "_" + m.Value)[1..]
+            .ToLowerInvariant();
     }
 
     public string GetIndexNameForType(string dataSourceName, Type documentType)
@@ -31,7 +33,9 @@ public class SearchConfig
     {
         if (!Servers.TryGetValue(dataSourceName, out var server))
         {
-            throw new ArgumentException($@"Le server de recherche ""{dataSourceName}"" est introuvable dans la configuration.");
+            throw new ArgumentException(
+                $@"Le server de recherche ""{dataSourceName}"" est introuvable dans la configuration."
+            );
         }
 
         return server;

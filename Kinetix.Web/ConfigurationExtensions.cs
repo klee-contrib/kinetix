@@ -32,7 +32,9 @@ public static class ConfigurationExtensions
     /// <param name="builder">Builder d'endpoint de contrôleurs.</param>
     /// <typeparam name="TFilter">Type du filter.</typeparam>
     /// <returns>this.</returns>
-    public static ControllerActionEndpointConventionBuilder AddEndpointFilter<TFilter>(this ControllerActionEndpointConventionBuilder builder)
+    public static ControllerActionEndpointConventionBuilder AddEndpointFilter<TFilter>(
+        this ControllerActionEndpointConventionBuilder builder
+    )
         where TFilter : IEndpointFilter
     {
         return builder.AddEndpointFilter<ControllerActionEndpointConventionBuilder, TFilter>();
@@ -45,7 +47,10 @@ public static class ConfigurationExtensions
     /// <param name="services">Services.</param>
     /// <param name="config">Configuration.</param>
     /// <returns>Services.</returns>
-    public static IServiceCollection AddKinetixExceptionHandler(this IServiceCollection services, KinetixExceptionConfig? config = null)
+    public static IServiceCollection AddKinetixExceptionHandler(
+        this IServiceCollection services,
+        KinetixExceptionConfig? config = null
+    )
     {
         return services
             .AddProblemDetails(o =>
@@ -85,12 +90,19 @@ public static class ConfigurationExtensions
     {
         return builder.ConfigureApiBehaviorOptions(o =>
         {
-            o.InvalidModelStateResponseFactory = context =>
-                 new JsonResult(new KinetixErrorResponse
-                 {
-                     Errors = context.ModelState.SelectMany(field => (field.Value?.Errors ?? []).Select(error => $"{field.Key}: {error.ErrorMessage}")).ToArray()
-                 })
-                 { StatusCode = 400 };
+            o.InvalidModelStateResponseFactory = context => new JsonResult(
+                new KinetixErrorResponse
+                {
+                    Errors = context
+                        .ModelState.SelectMany(field =>
+                            (field.Value?.Errors ?? []).Select(error => $"{field.Key}: {error.ErrorMessage}")
+                        )
+                        .ToArray(),
+                }
+            )
+            {
+                StatusCode = 400,
+            };
         });
     }
 }

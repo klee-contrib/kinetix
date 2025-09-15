@@ -613,8 +613,6 @@ public sealed class SqlDataReader : IDataReader
     private bool ReadBoolean(int i)
     {
         var value = _innerDataReader.GetValue(i);
-        return value is int val ?
-            val != 0
-            : _innerDataReader.GetBoolean(i);
+        return value is int val ? val != 0 : _innerDataReader.GetBoolean(i);
     }
 }

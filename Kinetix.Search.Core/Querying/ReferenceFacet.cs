@@ -17,7 +17,8 @@ namespace Kinetix.Search.Core.Querying;
 /// <param name="code">Code de la facette.</param>
 /// <param name="label">Libellé de la facette.</param>
 /// <param name="field">Champ sur lequel agit la facette.</param>
-public abstract class ReferenceFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : TermFacet<TDocument>(code, label, field)
+public abstract class ReferenceFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field)
+    : TermFacet<TDocument>(code, label, field)
 {
     /// <summary>
     /// Affiche l'intégralité des valeurs de la liste de référence dans les résultats de facettes, même si les buckets sont vides.
@@ -43,18 +44,24 @@ public abstract class ReferenceFacet<TDocument>(string code, string label, Expre
 /// <param name="code">Code de la facette.</param>
 /// <param name="label">Libellé de la facette.</param>
 /// <param name="field">Champ sur lequel agit la facette.</param>
-public class ReferenceFacet<TDocument, T>(IReferenceManager referenceManager, string code, string label, Expression<Func<TDocument, object>> field) : ReferenceFacet<TDocument>(code, label, field)
+public class ReferenceFacet<TDocument, T>(
+    IReferenceManager referenceManager,
+    string code,
+    string label,
+    Expression<Func<TDocument, object>> field
+) : ReferenceFacet<TDocument>(code, label, field)
 {
     /// <inheritdoc />
     public override IList<FacetItem> GetReferenceList()
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return referenceManager.GetReferenceList<T>()
+        return referenceManager
+            .GetReferenceList<T>()
             .Select(item => new FacetItem
             {
                 Code = def.PrimaryKey.GetValue(item).ToString()!,
                 Label = (string)def.DefaultProperty.GetValue(item),
-                Count = 0
+                Count = 0,
             })
             .ToList();
     }

@@ -1,6 +1,4 @@
 ﻿namespace Kinetix.Search.Models.Annotations;
 
 [AttributeUsage(AttributeTargets.Property)]
-public class PartialRebuildDatePropertyAttribute : Attribute
-{
-}
+public class PartialRebuildDatePropertyAttribute : Attribute { }

@@ -15,7 +15,11 @@ namespace Kinetix.DataAccess.Sql.Postgres.Broker;
 /// <param name="connectionPool">Composant injecté.</param>
 /// <param name="transactionScopeManager">Composant injecté.</param>
 /// <param name="logger">Composant injecté.</param>
-internal class PostgresBrokerManager(ConnectionPool connectionPool, TransactionScopeManager transactionScopeManager, ILogger<BrokerManager> logger) : BrokerManager(connectionPool, transactionScopeManager)
+internal class PostgresBrokerManager(
+    ConnectionPool connectionPool,
+    TransactionScopeManager transactionScopeManager,
+    ILogger<BrokerManager> logger
+) : BrokerManager(connectionPool, transactionScopeManager)
 {
     /// <inheritdoc />
     protected override IStore<T> GetStore<T>(string dataSourceName)

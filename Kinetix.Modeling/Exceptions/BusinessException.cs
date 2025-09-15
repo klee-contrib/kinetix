@@ -20,9 +20,7 @@ public class BusinessException : Exception
     /// </summary>
     /// <param name="message">Description de l'exception.</param>
     public BusinessException(string message)
-        : base(message)
-    {
-    }
+        : base(message) { }
 
     /// <summary>
     /// Crée une nouvelle exception.
@@ -65,9 +63,7 @@ public class BusinessException : Exception
     /// <param name="message">Description de l'exception.</param>
     /// <param name="innerException">Exception source.</param>
     public BusinessException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
+        : base(message, innerException) { }
 
     /// <summary>
     /// Crée une nouvelle exception.
@@ -109,7 +105,10 @@ public class BusinessException : Exception
     /// </summary>
     public override string Message
     {
-        get => string.IsNullOrEmpty(base.Message) && Errors.HasError ? string.Join(", ", Errors.Select(s => s.Message)) : base.Message;
+        get =>
+            string.IsNullOrEmpty(base.Message) && Errors.HasError
+                ? string.Join(", ", Errors.Select(s => s.Message))
+                : base.Message;
     }
 
     /// <summary>
@@ -120,32 +119,21 @@ public class BusinessException : Exception
     /// <summary>
     /// Code d'erreur.
     /// </summary>
-    public string Code
-    {
-        get;
-        private set;
-    }
+    public string Code { get; private set; }
 
     /// <summary>
     /// Retourne la pile des erreurs.
     /// </summary>
-    public ErrorMessageCollection Errors
-    {
-        get;
-        private set;
-    }
+    public ErrorMessageCollection Errors { get; private set; }
 
     /// <summary>
     /// List of parameters to inject in the message describing the exception.
     /// </summary>
-    public Dictionary<string, ErrorMessageParameter> MessageParameters { get; } = new Dictionary<string, ErrorMessageParameter>();
+    public Dictionary<string, ErrorMessageParameter> MessageParameters { get; } =
+        new Dictionary<string, ErrorMessageParameter>();
 
     /// <summary>
     /// Retourne la propriété associée à la violation de contrainte.
     /// </summary>
-    public BeanPropertyDescriptor Property
-    {
-        get;
-        private set;
-    }
+    public BeanPropertyDescriptor Property { get; private set; }
 }

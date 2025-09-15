@@ -7,7 +7,8 @@ namespace Kinetix.Web.Exceptions;
 /// <summary>
 /// Handler par défaut pour les SecurityException
 /// </summary>
-public class SecurityExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory) : IKinetixExceptionHandler
+public class SecurityExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory)
+    : IKinetixExceptionHandler
 {
     /// <inheritdoc />
     public int Priority => 1;
@@ -20,9 +21,9 @@ public class SecurityExceptionHandler(KinetixExceptionConfig config, ProblemDeta
             return ValueTask.FromResult<IResult?>(null);
         }
 
-        return ValueTask.FromResult<IResult?>(Results.Json(
-            new KinetixErrorResponse { Errors = [exception.Message] },
-            statusCode: 403));
+        return ValueTask.FromResult<IResult?>(
+            Results.Json(new KinetixErrorResponse { Errors = [exception.Message] }, statusCode: 403)
+        );
     }
 
     /// <inheritdoc cref="IKinetixExceptionHandler.Handle" />
@@ -34,14 +35,20 @@ public class SecurityExceptionHandler(KinetixExceptionConfig config, ProblemDeta
         {
             if (config.Format == KinetixErrorFormat.Kinetix)
             {
-                result = Results.Json(new KinetixErrorResponse { Errors = [exception.Message] }, statusCode: StatusCodes.Status403Forbidden);
+                result = Results.Json(
+                    new KinetixErrorResponse { Errors = [exception.Message] },
+                    statusCode: StatusCodes.Status403Forbidden
+                );
             }
             else
             {
-                result = Results.Problem(problemDetailsFactory.CreateProblemDetails(
-                    context,
-                    StatusCodes.Status403Forbidden,
-                    detail: exception.Message));
+                result = Results.Problem(
+                    problemDetailsFactory.CreateProblemDetails(
+                        context,
+                        StatusCodes.Status403Forbidden,
+                        detail: exception.Message
+                    )
+                );
             }
         }
 

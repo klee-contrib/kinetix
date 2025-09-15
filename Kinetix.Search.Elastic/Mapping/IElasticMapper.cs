@@ -9,9 +9,7 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// Définit un mapping pour un type de champ, selon sa catégorie.
 /// </summary>
 /// <typeparam name="T">Type du champ pour le mapping.</typeparam>
-public interface IElasticMapper<T> : IElasticMapper
-{
-}
+public interface IElasticMapper<T> : IElasticMapper { }
 
 /// <summary>
 /// Définit un mapping pour un type de champ, selon sa catégorie.
@@ -25,6 +23,9 @@ public interface IElasticMapper
     /// <param name="field">Catégorie de champ.</param>
     /// <returns>Mapping de champ.</returns>
     /// <typeparam name="TDocument">Type du document.</typeparam>
-    PropertiesDescriptor<TDocument> Map<TDocument>(PropertiesDescriptor<TDocument> selector, DocumentFieldDescriptor field)
+    PropertiesDescriptor<TDocument> Map<TDocument>(
+        PropertiesDescriptor<TDocument> selector,
+        DocumentFieldDescriptor field
+    )
         where TDocument : class;
 }

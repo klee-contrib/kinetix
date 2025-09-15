@@ -79,9 +79,7 @@ public interface ICurrentUser
     int? GetInt(string claimType)
     {
         var raw = GetString(claimType);
-        return raw == null
-            ? null
-            : int.Parse(raw, CultureInfo.InvariantCulture);
+        return raw == null ? null : int.Parse(raw, CultureInfo.InvariantCulture);
     }
 
     /// <summary>

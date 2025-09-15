@@ -12,7 +12,8 @@ namespace Kinetix.Search.Core.Querying;
 /// <param name="code">Code de la facette.</param>
 /// <param name="label">Libellé de la facette.</param>
 /// <param name="field">Champ sur lequel agit la facette.</param>
-public class ExistsFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field) : TermFacet<TDocument>(code, label, field)
+public class ExistsFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field)
+    : TermFacet<TDocument>(code, label, field)
 {
     /// <inheritdoc />
     public override bool IsMultiSelectable => false;

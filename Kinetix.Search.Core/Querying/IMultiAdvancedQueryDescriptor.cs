@@ -15,7 +15,12 @@ public interface IMultiAdvancedQueryDescriptor
     /// <param name="input">Input de la recherche.</param>
     /// <param name="documentMapper">Mapper de document.</param>
     /// <returns>Descriptor.</returns>
-    IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, TOutput> documentMapper)
+    IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(
+        string code,
+        string label,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, TOutput> documentMapper
+    )
         where TDocument : class
         where TCriteria : ICriteria;
 
@@ -27,7 +32,12 @@ public interface IMultiAdvancedQueryDescriptor
     /// <param name="input">Input de la recherche.</param>
     /// <param name="documentMapper">Mapper de document.</param>
     /// <returns>Descriptor.</returns>
-    IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(string code, string label, AdvancedQueryInput<TDocument, TCriteria> input, Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper)
+    IMultiAdvancedQueryDescriptor AddQuery<TDocument, TOutput, TCriteria>(
+        string code,
+        string label,
+        AdvancedQueryInput<TDocument, TCriteria> input,
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper
+    )
         where TDocument : class
         where TCriteria : ICriteria;
 

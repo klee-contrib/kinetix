@@ -14,7 +14,12 @@ namespace Kinetix.Modeling.Annotations;
 /// <param name="isMinimumIncluded">Defines whether minimum is included.</param>
 /// <param name="isMaximumIncluded">Defines whether maximum is included.</param>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false)]
-public sealed class RangeDecimalAttribute(double minimum, double maximum, bool isMinimumIncluded, bool isMaximumIncluded) : RangeAttribute(minimum, maximum)
+public sealed class RangeDecimalAttribute(
+    double minimum,
+    double maximum,
+    bool isMinimumIncluded,
+    bool isMaximumIncluded
+) : RangeAttribute(minimum, maximum)
 {
     /// <summary>
     /// Constructor.
@@ -22,9 +27,7 @@ public sealed class RangeDecimalAttribute(double minimum, double maximum, bool i
     /// <param name="minimum">Minium value.</param>
     /// <param name="maximum">Maximum value.</param>
     public RangeDecimalAttribute(double minimum, double maximum)
-        : this(minimum, maximum, true, true)
-    {
-    }
+        : this(minimum, maximum, true, true) { }
 
     /// <summary>
     /// Defines whether is the minimum is included in the range.

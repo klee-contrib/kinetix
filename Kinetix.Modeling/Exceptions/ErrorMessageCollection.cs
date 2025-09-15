@@ -13,9 +13,7 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     /// <summary>
     /// Constructeur.
     /// </summary>
-    public ErrorMessageCollection()
-    {
-    }
+    public ErrorMessageCollection() { }
 
     /// <summary>
     /// Constructeur.
@@ -132,7 +130,9 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     /// <param name="errorMessage">Message d'erreur.</param>
     public void AddEntry(int rownum, string fieldName, string errorMessage)
     {
-        _entryList.Add(new ErrorMessage("[" + rownum.ToString(CultureInfo.InvariantCulture) + "]." + fieldName, errorMessage, null));
+        _entryList.Add(
+            new ErrorMessage("[" + rownum.ToString(CultureInfo.InvariantCulture) + "]." + fieldName, errorMessage, null)
+        );
     }
 
     /// <summary>

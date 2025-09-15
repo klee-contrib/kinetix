@@ -27,7 +27,10 @@ public sealed class ElasticMappingFactory(IServiceProvider provider)
             return ((IElasticMapper)Activator.CreateInstance(mapperType)!).Map(selector, field);
         }
 
-        if (provider.GetService(typeof(IElasticMapper<>).MakeGenericType(field.PropertyType)) is not IElasticMapper mapper)
+        if (
+            provider.GetService(typeof(IElasticMapper<>).MakeGenericType(field.PropertyType))
+            is not IElasticMapper mapper
+        )
         {
             mapper = provider.GetRequiredService<IElasticMapper<string>>();
         }
@@ -42,8 +45,11 @@ public sealed class ElasticMappingFactory(IServiceProvider provider)
     /// <param name="fields">Les champs.</param>
     /// <returns>Mapping de champ.</returns>
     /// <typeparam name="T">Type du document.</typeparam>
-    public PropertiesDescriptor<T> AddFields<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptorCollection fields)
-         where T : class
+    public PropertiesDescriptor<T> AddFields<T>(
+        PropertiesDescriptor<T> selector,
+        DocumentFieldDescriptorCollection fields
+    )
+        where T : class
     {
         foreach (var field in fields.OrderBy(field => field.FieldName))
         {

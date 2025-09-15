@@ -72,7 +72,12 @@ public static class DistributedCacheExtensions
     /// <param name="factory">Factory pour construire et configurer l'entrée de cache.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet du cache/inséré dans le cache.</returns>
-    public static async Task<T> GetOrSetAsync<T>(this IDistributedCache cache, string key, Func<DistributedCacheEntryOptions, T> factory, CancellationToken ct = default)
+    public static async Task<T> GetOrSetAsync<T>(
+        this IDistributedCache cache,
+        string key,
+        Func<DistributedCacheEntryOptions, T> factory,
+        CancellationToken ct = default
+    )
     {
         var item = await cache.GetAsync<T>(key, ct);
         if (!Equals(item, default(T)))
@@ -94,7 +99,12 @@ public static class DistributedCacheExtensions
     /// <param name="key">Clé.</param>
     /// <param name="item">Entrée de cache.</param>
     /// <param name="options">Option de cache.</param>
-    public static void Set<T>(this IDistributedCache cache, string key, T item, DistributedCacheEntryOptions options = null)
+    public static void Set<T>(
+        this IDistributedCache cache,
+        string key,
+        T item,
+        DistributedCacheEntryOptions options = null
+    )
     {
         cache.SetString(key, JsonSerializer.Serialize(item), options ?? new());
     }
@@ -109,7 +119,13 @@ public static class DistributedCacheExtensions
     /// <param name="options">Option de cache.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Task.</returns>
-    public static Task SetAsync<T>(this IDistributedCache cache, string key, T item, DistributedCacheEntryOptions options = null, CancellationToken ct = default)
+    public static Task SetAsync<T>(
+        this IDistributedCache cache,
+        string key,
+        T item,
+        DistributedCacheEntryOptions options = null,
+        CancellationToken ct = default
+    )
     {
         return cache.SetStringAsync(key, JsonSerializer.Serialize(item), options ?? new(), ct);
     }
