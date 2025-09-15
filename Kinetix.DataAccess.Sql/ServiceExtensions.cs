@@ -22,7 +22,7 @@ public static class ServiceExtensions
         builder(config);
 
         // Pour override le timeout par défaut à 10min.
-        SetTransactionManagerField("s_cachedMaxTimeout", true);
+        SetTransactionManagerField("s_cachedMaxTimeout", value: true);
         SetTransactionManagerField("s_maximumTimeout", TimeSpan.FromHours(1));
 
         return services

@@ -49,10 +49,10 @@ public abstract class SqlStore<T> : IStore<T>
         try
         {
             // Charge la définition de l'objet donné T.
-            Definition = BeanDescriptor.GetDefinition(typeof(T), true);
+            Definition = BeanDescriptor.GetDefinition(typeof(T), ignoreCustomTypeDesc: true);
             ConnectionPool = connectionPool;
 
-            var attrs = typeof(T).GetCustomAttributes(typeof(TableAttribute), true);
+            var attrs = typeof(T).GetCustomAttributes(typeof(TableAttribute), inherit: true);
             if (attrs == null || attrs.Length == 0)
             {
                 throw new NotSupportedException(typeof(T).FullName + " has no TableAttribute. Check type persistence.");
@@ -140,7 +140,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>True if one of the objects is used by another object.</returns>
     public virtual bool AreUsed(ICollection<int> primaryKeys, ICollection<string> tablesToIgnore = null)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     /// <summary>
@@ -201,7 +201,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>True if the object is used by another object.</returns>
     public virtual bool IsUsed(object primaryKey, ICollection<string> tablesToIgnore = null)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException();
     }
 
     /// <summary>
@@ -221,7 +221,7 @@ public abstract class SqlStore<T> : IStore<T>
         // correspondant à sa clé primaire
         var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName, Expression.Equals, primaryKey);
 
-        var cmd = GetCommand(commandName, Definition.ContractName, criteria, null);
+        var cmd = GetCommand(commandName, Definition.ContractName, criteria, queryParameter: null);
         return CollectionBuilder<T>.ParseCommandForSingleObject(cmd);
     }
 
@@ -262,7 +262,7 @@ public abstract class SqlStore<T> : IStore<T>
         ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceSelect + "_LIKE_" + Definition.ContractName;
-        var cmd = GetCommand(commandName, Definition.ContractName, criteria, null);
+        var cmd = GetCommand(commandName, Definition.ContractName, criteria, queryParameter: null);
         return CollectionBuilder<T>.ParseCommandForSingleObject(cmd);
     }
 
@@ -747,7 +747,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="parameters">Collection des paramètres dans laquelle ajouter le nouveau paramètre.</param>
     /// <param name="primaryKeyName">Nom de la clé primaire.</param>
     /// <param name="primaryKeyValue">Valeur de la clé primaire.</param>
-    private void AddPrimaryKeyParameter(
+    private static void AddPrimaryKeyParameter(
         SqlParameterCollection parameters,
         string primaryKeyName,
         object primaryKeyValue

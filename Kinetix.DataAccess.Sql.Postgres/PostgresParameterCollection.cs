@@ -54,7 +54,11 @@ internal class PostgresParameterCollection(IDbCommand command) : SqlParameterCol
     /// <inheritdoc />
     public override SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
     {
-        var parameter = new PostgresParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
+        var parameter = new PostgresParameterBeanCollection<T>(
+            connectionPool: null,
+            collection,
+            isInsert: false
+        ).CreateParameter(InnerCommand);
         List.Add(parameter);
         return parameter;
     }

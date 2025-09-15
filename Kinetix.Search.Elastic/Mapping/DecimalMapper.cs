@@ -24,7 +24,7 @@ public class DecimalMapper : IElasticMapper<decimal>
             case SearchFieldIndexing.Sort:
                 return selector.Number(x => x.Name(field.FieldName));
             case SearchFieldIndexing.None:
-                return selector.Number(x => x.Name(field.FieldName).Index(false));
+                return selector.Number(x => x.Name(field.FieldName).Index(index: false));
             default:
                 throw new NotSupportedException();
         }

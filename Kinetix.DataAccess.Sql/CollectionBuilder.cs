@@ -28,7 +28,7 @@ public static class CollectionBuilder<T>
         while (reader.Read())
         {
             adapter ??= DataRecordAdapterManager<T>.CreateAdapter(reader);
-            yield return adapter.Read(null, reader);
+            yield return adapter.Read(destination: null, reader);
         }
     }
 

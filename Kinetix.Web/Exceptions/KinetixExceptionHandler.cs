@@ -82,7 +82,7 @@ internal class KinetixExceptionHandler(
         {
             var problemDetails = problemDetailsFactory.CreateProblemDetails(httpContext, statusCode: statusCode);
 
-            problemDetails.Detail = errors.First();
+            problemDetails.Detail = errors[0];
 
             if (errors.Count > 1)
             {

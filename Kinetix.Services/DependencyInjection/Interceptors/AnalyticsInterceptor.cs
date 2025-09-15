@@ -19,7 +19,7 @@ public class AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager anal
     {
         analytics.StartProcess($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", "Service");
 
-        if (invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(true).Length > 0)
+        if (invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(inherit: true).Length > 0)
         {
             analytics.MarkProcessDisabled();
         }

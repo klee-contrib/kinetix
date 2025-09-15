@@ -18,7 +18,7 @@ public class WebUser(HttpContext httpContext) : ICurrentUser
     /// <inheritdoc cref="ICurrentUser.Roles" />
     public IEnumerable<string> Roles =>
         httpContext.User.Identity is not ClaimsIdentity identity
-            ? null
+            ? []
             : identity
                 .FindAll(identity.RoleClaimType)
                 .Where(c => c.Issuer == ClaimsIdentity.DefaultIssuer)
@@ -40,7 +40,7 @@ public class WebUser(HttpContext httpContext) : ICurrentUser
     public IEnumerable<string> GetStrings(string claimType)
     {
         return httpContext.User.Identity is not ClaimsIdentity identity
-            ? null
+            ? []
             : identity.FindAll(claimType).Select(x => x.Value);
     }
 

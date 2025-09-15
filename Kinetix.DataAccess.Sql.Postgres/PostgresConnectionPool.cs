@@ -27,7 +27,7 @@ internal class PostgresConnectionPool(
     SqlConfig config
 ) : ConnectionPool(transactionScopeManager)
 {
-    private readonly Dictionary<string, string> _connectionSettings = config.ConnectionStrings;
+    private readonly IDictionary<string, string> _connectionSettings = config.ConnectionStrings;
     private readonly int _defaultCommandTimeout = config.DefaultCommandTimeout;
 
     /// <inheritdoc />

@@ -23,7 +23,7 @@ public class StringMapper : IElasticMapper<string>
             ),
             SearchFieldIndexing.Term => selector.Keyword(x => x.Name(field.FieldName)),
             SearchFieldIndexing.Sort => selector.Keyword(x => x.Name(field.FieldName).Normalizer("keyword")),
-            SearchFieldIndexing.None => selector.Text(x => x.Name(field.FieldName).Index(false)),
+            SearchFieldIndexing.None => selector.Text(x => x.Name(field.FieldName).Index(index: false)),
             _ => throw new NotSupportedException(),
         };
     }

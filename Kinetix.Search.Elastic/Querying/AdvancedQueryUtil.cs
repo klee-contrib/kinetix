@@ -54,8 +54,8 @@ public static class AdvancedQueryUtil
         }
 
         /* Requêtes de filtrage. */
-        var filterQuery = GetFilterQuery(def, input, facetHandler, filter);
-        var (hasPostFilter, postFilterQuery) = GetPostFilterSubQuery(input, facetHandler, def);
+        var filterQuery = GetFilterQuery(def, input, filter);
+        var (hasPostFilter, postFilterQuery) = GetPostFilterSubQuery(input, def);
 
         /* Booléens */
         var hasGroup = GetGroupFieldName(input) != null;
@@ -71,7 +71,7 @@ public static class AdvancedQueryUtil
             .Distinct()
             .ToArray();
 
-        return (SearchDescriptor<TDocument> s) =>
+        return s =>
         {
             s
             /* Critère de filtrage. */
@@ -229,17 +229,16 @@ public static class AdvancedQueryUtil
     /// </summary>
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
-    /// <param name="facetHandler">Handler de facette.</param>
     /// <returns>QueryDescriptor.</returns>
     public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterAndPostFilterQuery<
         TDocument,
         TCriteria
-    >(DocumentDefinition def, AdvancedQueryInput<TDocument, TCriteria> input, FacetHandler facetHandler)
+    >(DocumentDefinition def, AdvancedQueryInput<TDocument, TCriteria> input)
         where TDocument : class
         where TCriteria : ICriteria
     {
-        var (_, postFilterQuery) = GetPostFilterSubQuery(input, facetHandler, def);
-        return BuildMustQuery(GetFilterQuery(def, input, facetHandler), postFilterQuery);
+        var (_, postFilterQuery) = GetPostFilterSubQuery(input, def);
+        return BuildMustQuery(GetFilterQuery(def, input), postFilterQuery);
     }
 
     /// <summary>
@@ -272,13 +271,11 @@ public static class AdvancedQueryUtil
     /// </summary>
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
-    /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="filter">Filtre NEST additionnel.</param>
     /// <returns>Requête de filtrage.</returns>
     private static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
-        FacetHandler facetHandler,
         Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null
     )
         where TDocument : class
@@ -392,15 +389,15 @@ public static class AdvancedQueryUtil
 
                             /* La facette n'est pas multi-sélectionnable donc on prend direct la première valeur (sélectionnée ou exclue). */
                             return facetDef.IsMultiSelectable
-                                    ? facetHandler.BuildMultiSelectableFilter(
+                                    ? FacetHandler.BuildMultiSelectableFilter(
                                         f.Value,
                                         facetDef,
                                         def.Fields[facetDef.FieldName].IsMultiValued
                                     )!
                                 : f.Value.Selected.Any()
-                                    ? facetHandler.CreateFacetSubQuery(f.Value.Selected.First(), false, facetDef)
+                                    ? FacetHandler.CreateFacetSubQuery(f.Value.Selected[0], exclude: false, facetDef)
                                 : f.Value.Excluded.Any()
-                                    ? facetHandler.CreateFacetSubQuery(f.Value.Excluded.First(), true, facetDef)
+                                    ? FacetHandler.CreateFacetSubQuery(f.Value.Excluded[0], exclude: true, facetDef)
                                 : null!;
                         })
                         .Where(f => f != null)
@@ -421,7 +418,6 @@ public static class AdvancedQueryUtil
     /// Créé la sous-requête de post-filtrage pour les facettes multi-sélectionnables.
     /// </summary>
     /// <param name="input">Input de la recherche.</param>
-    /// <param name="facetHandler">Handler de facette.</param>
     /// <param name="docDef">Document.</param>
     /// <returns>Sous-requête.</returns>
     private static (
@@ -429,7 +425,6 @@ public static class AdvancedQueryUtil
         Func<QueryContainerDescriptor<TDocument>, QueryContainer> Query
     ) GetPostFilterSubQuery<TDocument, TCriteria>(
         AdvancedQueryInput<TDocument, TCriteria> input,
-        FacetHandler facetHandler,
         DocumentDefinition docDef
     )
         where TDocument : class
@@ -452,7 +447,7 @@ public static class AdvancedQueryUtil
 
                         return def == null
                             ? null!
-                            : facetHandler.BuildMultiSelectableFilter(
+                            : FacetHandler.BuildMultiSelectableFilter(
                                 f.Value,
                                 def,
                                 docDef.Fields[def.FieldName].IsMultiValued

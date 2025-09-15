@@ -28,9 +28,9 @@ public class TermFacet<TDocument>(string code, string label, Expression<Func<TDo
     public string FieldName =>
         Field.Body switch
         {
-            UnaryExpression ue => HandleMember((MemberExpression)ue.Operand),
-            MemberExpression me => HandleMember(me),
-            _ => throw new ArgumentException("Incorrect facet field definition."),
+            UnaryExpression ue => TermFacet<TDocument>.HandleMember((MemberExpression)ue.Operand),
+            MemberExpression me => TermFacet<TDocument>.HandleMember(me),
+            _ => throw new Exception("Incorrect facet field definition."),
         };
 
     /// <inheritdoc />
@@ -51,23 +51,23 @@ public class TermFacet<TDocument>(string code, string label, Expression<Func<TDo
         return primaryKey;
     }
 
-    private string HandleMember(MemberExpression me)
+    private static string HandleMember(MemberExpression me)
     {
-        var name = ToCamelCase(me.Member.Name);
+        var name = TermFacet<TDocument>.ToCamelCase(me.Member.Name);
 
         while (me.Expression is MethodCallExpression or MemberExpression)
         {
             me = me.Expression is MethodCallExpression mce
                 ? (MemberExpression)mce.Arguments[0]
                 : (MemberExpression)me.Expression;
-            name = $"{ToCamelCase(me.Member.Name)}.{name}";
+            name = $"{TermFacet<TDocument>.ToCamelCase(me.Member.Name)}.{name}";
         }
 
         return name;
     }
 
-    private string ToCamelCase(string text)
+    private static string ToCamelCase(string text)
     {
-        return char.ToLower(text[0]) + text.Substring(1);
+        return char.ToLower(text[0]) + text[1..];
     }
 }

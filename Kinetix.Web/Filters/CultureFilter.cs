@@ -31,7 +31,7 @@ public class CultureFilter : IEndpointFilter
 
         if (cultureList.Count == 1)
         {
-            var cultureCode = cultureList.First()!;
+            var cultureCode = cultureList[0]!;
             Thread.CurrentThread.CurrentCulture = new CultureInfo(cultureCode);
             Thread.CurrentThread.CurrentUICulture = new CultureInfo(cultureCode);
         }

@@ -60,7 +60,11 @@ internal class SqlServerParameterCollection(IDbCommand command) : Common.SqlPara
     /// <inheritdoc />
     public override SqlDataParameter AddTableParameter<T>(ICollection<T> collection)
     {
-        var parameter = new SqlServerParameterBeanCollection<T>(null, collection, false).CreateParameter(InnerCommand);
+        var parameter = new SqlServerParameterBeanCollection<T>(
+            connectionPool: null,
+            collection,
+            isInsert: false
+        ).CreateParameter(InnerCommand);
         List.Add(parameter);
         return parameter;
     }
@@ -110,7 +114,7 @@ internal class SqlServerParameterCollection(IDbCommand command) : Common.SqlPara
         if (dataRecordList.Count == 0)
         {
             var record = new SqlDataRecord(metaData);
-            record.SetValue(0, null);
+            record.SetValue(0, value: null);
             dataRecordList.Add(record);
         }
 

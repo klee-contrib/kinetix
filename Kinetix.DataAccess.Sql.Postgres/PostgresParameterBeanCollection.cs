@@ -92,7 +92,7 @@ internal class PostgresParameterBeanCollection<T>(
     protected override void PopulateParamList(bool isInsert)
     {
         Index = new Dictionary<int, T>();
-        _dataRecordList = new JsonArray();
+        _dataRecordList = [];
         var insertKey = 0;
         foreach (var item in Collection)
         {

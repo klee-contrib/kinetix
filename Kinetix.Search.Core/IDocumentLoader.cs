@@ -1,4 +1,6 @@
-﻿namespace Kinetix.Search.Core;
+﻿#pragma warning disable MA0048
+
+namespace Kinetix.Search.Core;
 
 /// <summary>
 /// Contrat pour les loaders de documents pour indexation.

@@ -20,7 +20,11 @@ public static class ServiceCollectionExtensions
         var interceptionOptions = new InterceptionOptions();
         configurator(interceptionOptions);
 
-        interceptionOptions.Interceptors.ForEach(services.TryAddScoped);
+        foreach (var i in interceptionOptions.Interceptors)
+        {
+            services.TryAddScoped(i);
+        }
+
         services.TryAdd(descriptorFactory(lifetime));
 
         services.Add(
@@ -188,7 +192,11 @@ public static class ServiceCollectionExtensions
         var interceptionOptions = new InterceptionOptions();
         configurator(interceptionOptions);
 
-        interceptionOptions.Interceptors.ForEach(services.TryAddScoped);
+        foreach (var i in interceptionOptions.Interceptors)
+        {
+            services.TryAddScoped(i);
+        }
+
         services.TryAdd(descriptorFactory(lifetime));
 
         services.TryAdd(

@@ -8,8 +8,8 @@ namespace Kinetix.DataAccess.Sql;
 /// </summary>
 public sealed class SqlManager
 {
-    private readonly Dictionary<string, object> _constValues = new();
-    private readonly List<ResourceManager> _constraintMessagesResources = new();
+    private readonly Dictionary<string, object> _constValues = [];
+    private readonly List<ResourceManager> _constraintMessagesResources = [];
 
     /// <summary>
     /// Constructeur.
@@ -17,19 +17,14 @@ public sealed class SqlManager
     /// <param name="config">Config.</param>
     public SqlManager(SqlConfig config)
     {
-        if (!config.ConnectionStrings.TryGetValue(SqlConfig.DefaultConnection, out var _))
+        if (!config.ConnectionStrings.ContainsKey(SqlConfig.DefaultConnection))
         {
-            throw new ArgumentException("Une source de données par défaut doit être renseignée.");
+            throw new NotSupportedException("Une source de données par défaut doit être renseignée.");
         }
 
         foreach (var type in config.ConstDataTypes.SelectMany(a => a.GetTypes()))
         {
-            if (
-                type.IsPublic
-                && type.IsClass
-                && type.Namespace != null
-                && type.Namespace.IndexOf("DataContract", StringComparison.Ordinal) != -1
-            )
+            if (type.IsPublic && type.IsClass && type.Namespace != null && type.Namespace.Contains("DataContract"))
             {
                 foreach (var field in type.GetFields(BindingFlags.Public | BindingFlags.Static))
                 {

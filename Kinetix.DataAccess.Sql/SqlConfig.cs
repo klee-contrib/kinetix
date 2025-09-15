@@ -16,7 +16,7 @@ public class SqlConfig
     /// <summary>
     /// ConnectionStrings.
     /// </summary>
-    public Dictionary<string, string> ConnectionStrings { get; } = new Dictionary<string, string>();
+    public IDictionary<string, string> ConnectionStrings { get; } = new Dictionary<string, string>();
 
     /// <summary>
     /// Timeout SQL par défaut.
@@ -26,12 +26,12 @@ public class SqlConfig
     /// <summary>
     /// Assemblies avec les constantes.
     /// </summary>
-    internal List<Assembly> ConstDataTypes { get; } = new List<Assembly>();
+    internal List<Assembly> ConstDataTypes { get; } = [];
 
     /// <summary>
     /// Ressources pour les messages d'erreur.
     /// </summary>
-    internal List<ResourceManager> ResourceManagers { get; } = new List<ResourceManager>();
+    internal List<ResourceManager> ResourceManagers { get; } = [];
 
     /// <summary>
     /// Enregistre une connection.

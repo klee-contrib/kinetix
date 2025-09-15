@@ -27,7 +27,7 @@ public class FilterCriteria
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
-        AddAllCriteria(criteria, null);
+        AddAllCriteria(criteria, expressionIndex: null);
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ public class FilterCriteria
     {
         ArgumentNullException.ThrowIfNull(enumCol);
 
-        AddCriteria(enumCol.ToString(), Expression.IsNotNull, null);
+        AddCriteria(enumCol.ToString(), Expression.IsNotNull, value: null);
         return this;
     }
 
@@ -175,7 +175,7 @@ public class FilterCriteria
     {
         ArgumentNullException.ThrowIfNull(enumCol);
 
-        AddCriteria(enumCol.ToString(), Expression.IsNull, null);
+        AddCriteria(enumCol.ToString(), Expression.IsNull, value: null);
         return this;
     }
 

@@ -26,7 +26,7 @@ public class DbCommandTelemetryProcessor : ITelemetryProcessor
         _next = next;
 
         var db = new DbConnectionStringBuilder { ConnectionString = config.GetConnectionString("default") };
-        _databaseName = $"{(string)db["Database"]}@{((string)db["Server"]).Split(".").First()}";
+        _databaseName = $"{(string)db["Database"]}@{((string)db["Server"]).Split(".")[0]}";
     }
 
     /// <inheritdoc cref="ITelemetryProcessor.Process" />

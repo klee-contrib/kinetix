@@ -14,7 +14,7 @@ namespace Kinetix.DataAccess.Sql.Common.Broker;
 /// <param name="transactionScopeManager">Composant injecté.</param>
 public abstract class BrokerManager(ConnectionPool connectionPool, TransactionScopeManager transactionScopeManager)
 {
-    private readonly Dictionary<string, IBroker> _brokerMap = new();
+    private readonly Dictionary<string, IBroker> _brokerMap = [];
 
     /// <summary>
     /// Pool de connection.

@@ -119,7 +119,10 @@ public class BeanDefinition
             foreach (var valRes in validationResults)
             {
                 errors.AddEntry(
-                    new ErrorMessage(property.PropertyName, valRes.ErrorMessage, null) { ModelName = BeanType.Name }
+                    new ErrorMessage(property.PropertyName, valRes.ErrorMessage, code: null)
+                    {
+                        ModelName = BeanType.Name,
+                    }
                 );
             }
 

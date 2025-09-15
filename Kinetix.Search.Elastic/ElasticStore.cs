@@ -36,7 +36,7 @@ public class ElasticStore(
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
         /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
-        var filterQuery = GetFilterAndPostFilterQuery(def, input, facetHandler);
+        var filterQuery = GetFilterAndPostFilterQuery(def, input);
         return logger
             .LogQuery(analytics, "AdvancedCount", () => client.Count<TDocument>(s => s.Query(filterQuery)))
             .Count;
@@ -181,7 +181,7 @@ public class ElasticStore(
 
             foreach (var cluster in documents.Chunk(config.ClusterSize))
             {
-                Bulk().IndexMany(cluster).Run(false);
+                Bulk().IndexMany(cluster).Run(refresh: false);
                 count += cluster.Length;
                 rebuildLogger?.LogInformation($"{count} documents indexed.");
             }
@@ -259,7 +259,7 @@ public class ElasticStore(
         }
 
         /* Ajout des valeurs de facettes manquantes (cas d'une valeur demandée par le client non trouvée par la recherche.) */
-        foreach (var facet in input.SearchCriteria.SelectMany(sc => sc.Facets ?? []))
+        foreach (var facet in input.SearchCriteria.SelectMany(sc => sc.Facets ?? new Dictionary<string, FacetInput>()))
         {
             var facetItems = facetListOutput.Single(f => f.Code == facet.Key).Values;
             /* On ajoute un FacetItem par valeur non trouvée, avec un compte de 0. */
@@ -303,7 +303,7 @@ public class ElasticStore(
                 groupResultList.Add(
                     new GroupResult<TOutput>
                     {
-                        Code = group.Key.ToString(),
+                        Code = group.Key,
                         Label = facetDefList
                             .First(f =>
                                 f.Code == input.SearchCriteria.First(sc => !string.IsNullOrEmpty(sc.Group)).Group

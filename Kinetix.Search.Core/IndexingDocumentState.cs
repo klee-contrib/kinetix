@@ -1,4 +1,4 @@
-﻿#pragma warning disable SA1649, S2326
+﻿#pragma warning disable MA0048, S2326
 
 namespace Kinetix.Search.Core;
 

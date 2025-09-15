@@ -275,7 +275,7 @@ public abstract class BaseSqlCommand : IDisposable
         var listener = GetSqlCommandListener();
         try
         {
-            CommandParser.ParseCommand(InnerCommand, _parserKey, null);
+            CommandParser.ParseCommand(InnerCommand, _parserKey, queryParameter: null);
             return InnerCommand.ExecuteNonQuery();
         }
         catch (DbException sqle)
@@ -348,7 +348,7 @@ public abstract class BaseSqlCommand : IDisposable
         var listener = GetSqlCommandListener();
         try
         {
-            CommandParser.ParseCommand(InnerCommand, _parserKey, null);
+            CommandParser.ParseCommand(InnerCommand, _parserKey, queryParameter: null);
             var value = InnerCommand.ExecuteScalar();
             return value == DBNull.Value ? null : value;
         }

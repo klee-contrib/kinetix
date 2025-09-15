@@ -43,8 +43,7 @@ public class ReferenceManager : IReferenceManager
     }
 
     /// <inheritdoc />
-    public IEnumerable<string> ReferenceLists =>
-        _referenceAccessors.Values.Select(accessor => accessor.Name).OrderBy(x => x);
+    public IEnumerable<string> ReferenceLists => _referenceAccessors.Values.Select(accessor => accessor.Name).Order();
 
     /// <inheritdoc cref="IReferenceManager.CheckReferenceKeys" />
     public void CheckReferenceKeys(object bean)
@@ -215,6 +214,11 @@ public class ReferenceManager : IReferenceManager
         }
     }
 
+    private static string GetCacheKey(string referenceName)
+    {
+        return $"ReferenceManager_{referenceName}";
+    }
+
     private ErrorMessageCollection CheckReferenceKeysInternal(object bean)
     {
         var errors = new ErrorMessageCollection();
@@ -276,11 +280,6 @@ public class ReferenceManager : IReferenceManager
         return errors;
     }
 
-    private string GetCacheKey(string referenceName)
-    {
-        return $"ReferenceManager_{referenceName}";
-    }
-
     /// <summary>
     /// Construit l'entrée du cache associé à la référence demandée.
     /// </summary>
@@ -339,13 +338,16 @@ public class ReferenceManager : IReferenceManager
     {
         if (!_referenceAccessors.TryGetValue(referenceName, out var accessor))
         {
-            throw new ArgumentException($"Pas d'accesseur disponible pour la liste {referenceName}");
+            throw new ArgumentException(
+                $"Pas d'accesseur disponible pour la liste {referenceName}",
+                nameof(referenceName)
+            );
         }
 
         var service = _provider.GetService(accessor.ContractType);
-        var list = accessor.Method.Invoke(service, null);
+        var list = accessor.Method.Invoke(service, parameters: null);
 
         var coll = (ICollection)list;
-        return coll == null ? throw new ArgumentException(list.GetType().Name) : coll.Cast<T>().ToList();
+        return coll == null ? throw new NotSupportedException(list.GetType().Name) : coll.Cast<T>().ToList();
     }
 }

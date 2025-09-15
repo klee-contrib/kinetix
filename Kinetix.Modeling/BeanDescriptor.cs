@@ -80,7 +80,7 @@ public static class BeanDescriptor
             objectType = coll.Cast<object>().First().GetType();
         }
 
-        return GetDefinition(objectType, true);
+        return GetDefinition(objectType, ignoreCustomTypeDesc: true);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public static class BeanDescriptor
             throw new NotSupportedException(SR.ExceptionICustomTypeDescriptorNotSupported);
         }
 
-        return GetDefinitionInternal(beanType, null);
+        return GetDefinitionInternal(beanType, bean: null);
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public static class BeanDescriptor
                         }
                     }
 
-                    display = resourceProperties[displayAttr.Name].GetValue(null, null).ToString();
+                    display = resourceProperties[displayAttr.Name].GetValue(null, index: null).ToString();
                 }
                 else
                 {

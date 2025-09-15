@@ -44,10 +44,10 @@ public abstract class CommandParser(SqlManager sqlManager)
     private const string OrderParameterName = "Order";
     private const string TagIfEnd = "[/if]";
     private const string TagIfStart = "[if ";
-    private const string TagStaticParEnd = "}";
-    private const string TagStaticParStart = "{";
+    private const char TagStaticParEnd = '}';
+    private const char TagStaticParStart = '{';
 
-    private readonly Dictionary<string, bool> _keyTable = new();
+    private readonly Dictionary<string, bool> _keyTable = [];
     private readonly object _keyTableLock = new();
 
     /// <summary>
@@ -126,7 +126,14 @@ public abstract class CommandParser(SqlManager sqlManager)
             while (t != null)
             {
                 sqlBuilder.Append(commandText[currentPos..t.Position]);
-                currentPos = ProcessToken(command, commandText, sqlBuilder, t, true, queryParameter);
+                currentPos = ProcessToken(
+                    command,
+                    commandText,
+                    sqlBuilder,
+                    t,
+                    isExpressionEnabled: true,
+                    queryParameter
+                );
                 t = GetNextToken(commandText, currentPos);
             }
         }
@@ -173,6 +180,86 @@ public abstract class CommandParser(SqlManager sqlManager)
     protected abstract bool IsNull(object parameter);
 
     /// <summary>
+    /// Create orderby clause.
+    /// </summary>
+    /// <param name="queryParameter">Query parameter.</param>
+    /// <returns>Order by clause.</returns>
+    private static string GenerateOrderByClause(QueryParameter queryParameter)
+    {
+        if (queryParameter != null)
+        {
+            var sortCondition = queryParameter.SortCondition;
+            if (!string.IsNullOrEmpty(sortCondition))
+            {
+                return " order by " + sortCondition;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// Parse une exception.
+    /// </summary>
+    /// <param name="oper">Opérateur.</param>
+    /// <param name="parameters">Liste des paramètres.</param>
+    /// <param name="expression">Chaîne de caractères courante.</param>
+    /// <param name="checkNull">True si la nullité doit être testée, False pour tester la non-nullité.</param>
+    /// <returns>True ou false.</returns>
+    private static bool ParseExpression(
+        char oper,
+        IDataParameterCollection parameters,
+        string expression,
+        bool checkNull
+    )
+    {
+        var paramArray = expression.Split(oper);
+        for (var i = 0; i < paramArray.Length; i++)
+        {
+            var parameter = paramArray[i];
+            if (!string.IsNullOrEmpty(parameter))
+            {
+                var isNull = DBNull.Value.Equals(((IDbDataParameter)parameters["@" + parameter.Trim()]).Value);
+                if ('&'.Equals(oper) && (checkNull ? !isNull : isNull))
+                {
+                    return false;
+                }
+
+                if ('|'.Equals(oper) && (checkNull ? isNull : !isNull))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return '&'.Equals(oper);
+    }
+
+    /// <summary>
+    /// Supprime les paramètres inutilisés de la commande.
+    /// </summary>
+    /// <param name="command">Commande.</param>
+    private static void RemoveUnusedParameters(IDbCommand command)
+    {
+        var unusedParameters = new List<IDataParameter>();
+        var parameters = command.Parameters;
+
+        var commandText = command.CommandText;
+        foreach (IDataParameter param in parameters)
+        {
+            if (commandText.IndexOf(param.ParameterName, StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                unusedParameters.Add(param);
+            }
+        }
+
+        foreach (var param in unusedParameters)
+        {
+            parameters.Remove(param);
+        }
+    }
+
+    /// <summary>
     /// Vérifie si un paramètre est égal à une valeur.
     /// </summary>
     /// <param name="parameters">Liste des paramètres.</param>
@@ -212,8 +299,8 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <returns>True ou false.</returns>
     private bool CheckNull(IDataParameterCollection parameters, string expression, bool checkNull)
     {
-        var containsAnd = expression.IndexOf("&", StringComparison.OrdinalIgnoreCase) >= 0;
-        var containsOr = expression.IndexOf("|", StringComparison.OrdinalIgnoreCase) >= 0;
+        var containsAnd = expression.Contains('&', StringComparison.OrdinalIgnoreCase);
+        var containsOr = expression.Contains('|', StringComparison.OrdinalIgnoreCase);
 
         if (containsOr && containsAnd)
         {
@@ -248,41 +335,14 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <returns>Valeur finale de la chaîne.</returns>
     private string ExtractDynamicValue(string value)
     {
-        if (
-            value.StartsWith(TagStaticParStart, StringComparison.Ordinal)
-            && value.EndsWith(TagStaticParEnd, StringComparison.Ordinal)
-        )
+        if (value.StartsWith(TagStaticParStart) && value.EndsWith(TagStaticParEnd))
         {
             var constant = value[1..^1];
-            var constantValue = sqlManager.GetConstValueByShortName(constant);
-            if (constantValue == null)
-            {
-                throw new NotSupportedException();
-            }
-
+            var constantValue = sqlManager.GetConstValueByShortName(constant) ?? throw new NotSupportedException();
             value = Convert.ToString(constantValue, CultureInfo.InvariantCulture);
         }
 
         return value;
-    }
-
-    /// <summary>
-    /// Create orderby clause.
-    /// </summary>
-    /// <param name="queryParameter">Query parameter.</param>
-    /// <returns>Order by clause.</returns>
-    private string GenerateOrderByClause(QueryParameter queryParameter)
-    {
-        if (queryParameter != null)
-        {
-            var sortCondition = queryParameter.SortCondition;
-            if (!string.IsNullOrEmpty(sortCondition))
-            {
-                return " order by " + sortCondition;
-            }
-        }
-
-        return string.Empty;
     }
 
     /// <summary>
@@ -294,11 +354,11 @@ public abstract class CommandParser(SqlManager sqlManager)
     private Token GetNextToken(string commandText, int currentPos)
     {
         var ifPos = commandText.IndexOf(TagIfStart, currentPos, StringComparison.OrdinalIgnoreCase);
-        var cstPos = commandText.IndexOf(TagStaticParStart, currentPos, StringComparison.OrdinalIgnoreCase);
+        var cstPos = commandText.IndexOf(TagStaticParStart, currentPos);
 
         if (cstPos >= 0 && (cstPos < ifPos || ifPos < 0))
         {
-            var cstEndPos = commandText.IndexOf(TagStaticParEnd, cstPos, StringComparison.OrdinalIgnoreCase);
+            var cstEndPos = commandText.IndexOf(TagStaticParEnd, cstPos);
             if (cstEndPos >= 0)
             {
                 var constant = commandText.Substring(cstPos + 1, cstEndPos - cstPos - 1);
@@ -325,7 +385,7 @@ public abstract class CommandParser(SqlManager sqlManager)
                         }
                         else
                         {
-                            throw new NotImplementedException(constantValue.GetType().FullName);
+                            throw new NotSupportedException(constantValue.GetType().FullName);
                         }
 
                         return new Token
@@ -353,61 +413,31 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <returns>True si le bloc de texte est actif.</returns>
     private bool IsExpressionEnabled(IDataParameterCollection parameters, string commandText, int startPos, int endPos)
     {
-        var array = commandText.Substring(startPos + 4, endPos - startPos - 4).Split('=', '"');
+        var array = commandText
+            .Substring(startPos + 4, endPos - startPos - 4)
+            .Split(['=', '"'], StringSplitOptions.None);
 
         if (AttributeNotNull.Equals(array[0]))
         {
-            return CheckNull(parameters, array[2], false);
+            return CheckNull(parameters, array[2], checkNull: false);
         }
 
         if (AttributeNull.Equals(array[0]))
         {
-            return CheckNull(parameters, array[2], true);
+            return CheckNull(parameters, array[2], checkNull: true);
         }
 
         if (AttributeEquals.Equals(array[0]))
         {
-            return CheckEquals(parameters, array[2], true);
+            return CheckEquals(parameters, array[2], checkEquals: true);
         }
 
         if (AttributeNotEquals.Equals(array[0]))
         {
-            return CheckEquals(parameters, array[2], false);
+            return CheckEquals(parameters, array[2], checkEquals: false);
         }
 
         throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Parse une exception.
-    /// </summary>
-    /// <param name="oper">Opérateur.</param>
-    /// <param name="parameters">Liste des paramètres.</param>
-    /// <param name="expression">Chaîne de caractères courante.</param>
-    /// <param name="checkNull">True si la nullité doit être testée, False pour tester la non-nullité.</param>
-    /// <returns>True ou false.</returns>
-    private bool ParseExpression(char oper, IDataParameterCollection parameters, string expression, bool checkNull)
-    {
-        var paramArray = expression.Split(oper);
-        for (var i = 0; i < paramArray.Length; i++)
-        {
-            var parameter = paramArray[i];
-            if (!string.IsNullOrEmpty(parameter))
-            {
-                var isNull = DBNull.Value.Equals(((IDbDataParameter)parameters["@" + parameter.Trim()]).Value);
-                if ('&'.Equals(oper) && (checkNull ? !isNull : isNull))
-                {
-                    return false;
-                }
-
-                if ('|'.Equals(oper) && (checkNull ? isNull : !isNull))
-                {
-                    return true;
-                }
-            }
-        }
-
-        return '&'.Equals(oper);
     }
 
     /// <summary>
@@ -509,30 +539,6 @@ public abstract class CommandParser(SqlManager sqlManager)
                 return t.EndPosition + 1;
             default:
                 throw new NotSupportedException();
-        }
-    }
-
-    /// <summary>
-    /// Supprime les paramètres inutilisés de la commande.
-    /// </summary>
-    /// <param name="command">Commande.</param>
-    private void RemoveUnusedParameters(IDbCommand command)
-    {
-        var unusedParameters = new List<IDataParameter>();
-        var parameters = command.Parameters;
-
-        var commandText = command.CommandText;
-        foreach (IDataParameter param in parameters)
-        {
-            if (commandText.IndexOf(param.ParameterName, StringComparison.OrdinalIgnoreCase) < 0)
-            {
-                unusedParameters.Add(param);
-            }
-        }
-
-        foreach (var param in unusedParameters)
-        {
-            parameters.Remove(param);
         }
     }
 

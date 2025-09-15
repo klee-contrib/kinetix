@@ -22,7 +22,7 @@ public class DateTimeMapper : IElasticMapper<DateTime>
             case SearchFieldIndexing.Sort:
                 return selector.Date(x => x.Name(field.FieldName).Format("date_time_no_millis"));
             case SearchFieldIndexing.None:
-                return selector.Date(x => x.Name(field.FieldName).Format("date_time_no_millis").Index(false));
+                return selector.Date(x => x.Name(field.FieldName).Format("date_time_no_millis").Index(index: false));
             default:
                 throw new NotSupportedException();
         }

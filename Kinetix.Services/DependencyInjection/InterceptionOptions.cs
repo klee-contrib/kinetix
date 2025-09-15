@@ -6,7 +6,7 @@ public class InterceptionOptions
 {
     private readonly IDictionary<Type, Type> _interceptors = new Dictionary<Type, Type>();
 
-    public List<Type> Interceptors => _interceptors.Values.ToList();
+    public IList<Type> Interceptors => _interceptors.Values.ToList();
 
     public InterceptionOptions With<TInterceptor>()
         where TInterceptor : IInterceptor

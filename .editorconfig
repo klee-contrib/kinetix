@@ -86,12 +86,15 @@ dotnet_diagnostic.MA0004.severity = none
 dotnet_diagnostic.MA0006.severity = none
 dotnet_diagnostic.MA0009.severity = none
 dotnet_diagnostic.MA0011.severity = none
+dotnet_diagnostic.MA0018.severity = none
 dotnet_diagnostic.MA0028.severity = warning
 dotnet_diagnostic.MA0029.severity = warning
 dotnet_diagnostic.MA0031.severity = none
 dotnet_diagnostic.MA0040.severity = none
 dotnet_diagnostic.MA0044.severity = warning
+dotnet_diagnostic.MA0050.severity = none
 dotnet_diagnostic.MA0051.severity = none
+dotnet_diagnostic.MA0055.severity = none
 dotnet_diagnostic.MA0056.severity = none
 dotnet_diagnostic.MA0071.severity = none
 dotnet_diagnostic.MA0074.severity = none
@@ -115,21 +118,28 @@ dotnet_diagnostic.S2365.severity = none
 dotnet_diagnostic.S2376.severity = none
 dotnet_diagnostic.S2629.severity = none
 dotnet_diagnostic.S2692.severity = none
+dotnet_diagnostic.S3011.severity = none
 dotnet_diagnostic.S3060.severity = none
 dotnet_diagnostic.S3246.severity = none
 dotnet_diagnostic.S3251.severity = none
 dotnet_diagnostic.S3267.severity = none
 dotnet_diagnostic.S3358.severity = none
 dotnet_diagnostic.S3881.severity = none
+dotnet_diagnostic.S3925.severity = none
 dotnet_diagnostic.S3963.severity = none
+dotnet_diagnostic.S4456.severity = none
 dotnet_diagnostic.S6562.severity = none
 dotnet_diagnostic.S6580.severity = none
 dotnet_diagnostic.S6667.severity = none
+dotnet_diagnostic.S6672.severity = none
 dotnet_diagnostic.S6934.severity = none
 dotnet_diagnostic.S6961.severity = none
 dotnet_diagnostic.S6967.severity = none
 
 dotnet_diagnostic.SYSLIB1045.severity = none
+
+# TODO
+dotnet_diagnostic.CS1591.severity = none
 
 # C#
 

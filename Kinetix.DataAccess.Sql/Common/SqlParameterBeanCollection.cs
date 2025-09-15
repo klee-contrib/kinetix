@@ -25,7 +25,7 @@ public abstract class SqlParameterBeanCollection<T>
     {
         _connectionPool = connectionPool;
         Collection = collection;
-        BeanDefinition = BeanDescriptor.GetDefinition(typeof(T), true);
+        BeanDefinition = BeanDescriptor.GetDefinition(typeof(T), ignoreCustomTypeDesc: true);
 
         Init();
         PopulateParamList(isInsert);
@@ -44,7 +44,7 @@ public abstract class SqlParameterBeanCollection<T>
     /// <summary>
     /// Index.
     /// </summary>
-    protected Dictionary<int, T> Index { get; set; }
+    protected IDictionary<int, T> Index { get; set; }
 
     /// <summary>
     /// StringBuilder pour l'insert.

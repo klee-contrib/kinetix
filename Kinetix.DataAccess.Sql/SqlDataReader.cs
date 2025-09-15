@@ -36,7 +36,7 @@ public sealed class SqlDataReader : IDataReader
     /// </summary>
     ~SqlDataReader()
     {
-        Dispose(false);
+        Dispose(disposing: false);
     }
 
     /// <summary>
@@ -107,7 +107,7 @@ public sealed class SqlDataReader : IDataReader
     /// </summary>
     public void Dispose()
     {
-        Dispose(true);
+        Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
 

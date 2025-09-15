@@ -7,7 +7,7 @@ namespace Kinetix.Search.Core.Config;
 /// </summary>
 public class SearchConfig
 {
-    public Dictionary<string, SearchConfigItem> Servers { get; set; } = [];
+    public IDictionary<string, SearchConfigItem> Servers { get; set; } = new Dictionary<string, SearchConfigItem>();
 
     public int ClusterSize { get; set; } = 5000;
 
@@ -34,7 +34,8 @@ public class SearchConfig
         if (!Servers.TryGetValue(dataSourceName, out var server))
         {
             throw new ArgumentException(
-                $@"Le server de recherche ""{dataSourceName}"" est introuvable dans la configuration."
+                $@"Le server de recherche est introuvable dans la configuration.",
+                nameof(dataSourceName)
             );
         }
 

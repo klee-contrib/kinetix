@@ -17,7 +17,7 @@ public static class MethodBaseExtensions
     /// <returns>List of custom attributes.</returns>
     public static T[] GetCustomAttributes<T>(this MethodBase method, bool inherit)
     {
-        return GetCustomAttributes(method, typeof(T), inherit).Select(attr => (T)attr).ToArray();
+        return GetCustomAttributes(method, typeof(T), inherit).Cast<T>().ToArray();
     }
 
     /// <summary>

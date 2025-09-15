@@ -24,9 +24,9 @@ public class ElasticConfigBuilder
         AddMapper<DictionaryMapper>();
     }
 
-    internal ICollection<Type> DocumentTypes { get; } = new List<Type>();
+    internal ICollection<Type> DocumentTypes { get; } = [];
 
-    internal ICollection<JsonConverter> JsonConverters { get; } = new List<JsonConverter>();
+    internal ICollection<JsonConverter> JsonConverters { get; } = [];
 
     /// <summary>
     /// Enregistre un index en lecture pour un document.
@@ -74,7 +74,7 @@ public class ElasticConfigBuilder
     public ElasticConfigBuilder AddMapper<TMapper>()
         where TMapper : class, IElasticMapper
     {
-        _services.AddSingleton(typeof(TMapper).GetInterfaces().First(), typeof(TMapper));
+        _services.AddSingleton(typeof(TMapper).GetInterfaces()[0], typeof(TMapper));
         return this;
     }
 }

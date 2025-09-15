@@ -54,7 +54,7 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// <summary>
     /// Liste des paramètres.
     /// </summary>
-    protected List<SqlDataParameter> List { get; } = [];
+    protected IList<SqlDataParameter> List { get; } = [];
 
     /// <summary>
     /// Obtient ou définit un paramètre de la collection.
@@ -204,7 +204,7 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
             var t = value.GetType();
             if (!SetDbType(param, t))
             {
-                throw new NotImplementedException("La gestion du type " + t.Name + " doit être implémentée.");
+                throw new NotSupportedException("La gestion du type " + t.Name + " doit être implémentée.");
             }
 
             param.Value = value;

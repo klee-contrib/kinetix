@@ -10,7 +10,7 @@ public class QueryInput<TCriteria>
     /// <summary>
     /// Liste des facettes.
     /// </summary>
-    public Dictionary<string, FacetInput> Facets { get; set; } = [];
+    public IDictionary<string, FacetInput> Facets { get; set; } = new Dictionary<string, FacetInput>();
 
     /// <summary>
     /// Critères de recherche.

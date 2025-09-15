@@ -93,7 +93,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ITransact
 
         if (state.Reindex)
         {
-            var docs = loader.GetAll(false).ToList();
+            var docs = loader.GetAll(partialRebuild: false).ToList();
             return docs.Count != 0 ? bulk.IndexMany(docs) : bulk;
         }
         else

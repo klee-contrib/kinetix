@@ -71,7 +71,9 @@ public class ServiceScope : IDisposable
 
         if (onBeforeException != null)
         {
+#pragma warning disable S3877
             throw onBeforeException;
+#pragma warning restore S3877
         }
 
         try

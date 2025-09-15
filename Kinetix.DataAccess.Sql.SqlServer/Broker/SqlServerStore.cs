@@ -88,7 +88,7 @@ internal class SqlServerStore<T>(string dataSourceName, ConnectionPool connectio
 
         ArgumentNullException.ThrowIfNull(beanDefinition);
 
-        var collectionStore = new SqlServerParameterBeanCollection<T>(ConnectionPool, collection, true);
+        var collectionStore = new SqlServerParameterBeanCollection<T>(ConnectionPool, collection, isInsert: true);
         return collectionStore.ExecuteInsert(commandName, DataSourceName);
     }
 }

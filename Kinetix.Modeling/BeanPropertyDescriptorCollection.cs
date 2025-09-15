@@ -20,7 +20,7 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
     internal BeanPropertyDescriptorCollection(Type beanType)
     {
         _beanType = beanType ?? throw new ArgumentNullException(nameof(beanType));
-        _properties = new Dictionary<string, BeanPropertyDescriptor>();
+        _properties = [];
     }
 
     /// <summary>
@@ -51,11 +51,11 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
             {
                 return _properties[propertyName];
             }
-            catch (KeyNotFoundException e)
+            catch (KeyNotFoundException)
             {
-                throw new ArgumentException(
-                    "Propriété " + propertyName + " non trouvée pour le type " + _beanType.FullName + ".",
-                    e
+                throw new ArgumentOutOfRangeException(
+                    nameof(propertyName),
+                    "Propriété " + propertyName + " non trouvée pour le type " + _beanType.FullName + "."
                 );
             }
         }

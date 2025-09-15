@@ -13,7 +13,7 @@ public class TransactionInterceptor(TransactionScopeManager transactionScopeMana
     /// <param name="invocation">Paramètres d'appel de la méthode cible.</param>
     public void Intercept(IInvocation invocation)
     {
-        var noTransactionAttrs = invocation.Method.GetCustomAttributes<NoTransactionAttribute>(true);
+        var noTransactionAttrs = invocation.Method.GetCustomAttributes<NoTransactionAttribute>(inherit: true);
         if (noTransactionAttrs.Length > 0)
         {
             invocation.Proceed();

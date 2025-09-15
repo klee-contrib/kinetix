@@ -24,7 +24,7 @@ internal class SqlServerParameterBeanCollection<T>(
 ) : SqlParameterBeanCollection<T>(connectionPool, collection, isInsert)
     where T : class, new()
 {
-    private readonly List<SqlMetaData> _metadataList = new();
+    private readonly List<SqlMetaData> _metadataList = [];
 
     private List<SqlDataRecord> _dataRecordList;
     private BeanPropertyDescriptor _insertKeyProp;
@@ -37,7 +37,7 @@ internal class SqlServerParameterBeanCollection<T>(
         _typeName = BeanDefinition.ContractName + "_TABLE_TYPE";
 
         SbInsert = new StringBuilder("insert into ");
-        SbInsert.Append(BeanDefinition.ContractName).Append("(");
+        SbInsert.Append(BeanDefinition.ContractName).Append('(');
 
         var sbOutput = new StringBuilder(") output ");
         var sbSelect = new StringBuilder(" select ");
@@ -139,7 +139,7 @@ internal class SqlServerParameterBeanCollection<T>(
     {
         Index = new Dictionary<int, T>();
         var array = _metadataList.ToArray();
-        _dataRecordList = new List<SqlDataRecord>();
+        _dataRecordList = [];
         var insertKey = 0;
         foreach (var item in Collection)
         {
@@ -183,7 +183,7 @@ internal class SqlServerParameterBeanCollection<T>(
             var record = new SqlDataRecord(array);
             for (var i = 0; i < array.Length; i++)
             {
-                record.SetValue(i, null);
+                record.SetValue(i, value: null);
             }
 
             _dataRecordList.Add(record);

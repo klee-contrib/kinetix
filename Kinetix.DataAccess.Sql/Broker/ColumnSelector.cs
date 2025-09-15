@@ -31,7 +31,7 @@ public class ColumnSelector
     /// <summary>
     /// Get the selected columns.
     /// </summary>
-    public ICollection<string> ColumnList { get; } = new List<string>();
+    public ICollection<string> ColumnList { get; } = [];
 
     /// <summary>
     /// Add columns.

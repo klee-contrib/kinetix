@@ -88,7 +88,7 @@ public sealed class BeanPropertyDescriptor
     /// <summary>
     /// Indique si la colonne est traduisible (dans le cas d'une liste de référence).
     /// </summary>
-    public bool IsTranslatable { get; private set; }
+    public bool IsTranslatable { get; }
 
     /// <summary>
     /// Retourne le nom du membre porté par DataMemberAttribute.

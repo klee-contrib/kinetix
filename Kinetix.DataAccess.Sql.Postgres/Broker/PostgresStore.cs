@@ -88,7 +88,7 @@ internal class PostgresStore<T>(string dataSourceName, ConnectionPool connection
 
         ArgumentNullException.ThrowIfNull(beanDefinition);
 
-        var collectionStore = new PostgresParameterBeanCollection<T>(ConnectionPool, collection, true);
+        var collectionStore = new PostgresParameterBeanCollection<T>(ConnectionPool, collection, isInsert: true);
         return collectionStore.ExecuteInsert(commandName, DataSourceName);
     }
 }

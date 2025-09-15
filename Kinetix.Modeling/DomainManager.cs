@@ -64,7 +64,7 @@ internal static class DomainManager
                 var validationAttributes = property.GetCustomAttributes<ValidationAttribute>();
                 var extraAttributes = new List<Attribute>();
 
-                foreach (var attribute in property.GetCustomAttributes(false))
+                foreach (var attribute in property.GetCustomAttributes(inherit: false))
                 {
                     if (
                         attribute is DomainAttribute

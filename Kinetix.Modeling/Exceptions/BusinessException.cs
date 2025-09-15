@@ -129,7 +129,7 @@ public class BusinessException : Exception
     /// <summary>
     /// List of parameters to inject in the message describing the exception.
     /// </summary>
-    public Dictionary<string, ErrorMessageParameter> MessageParameters { get; } =
+    public IDictionary<string, ErrorMessageParameter> MessageParameters { get; } =
         new Dictionary<string, ErrorMessageParameter>();
 
     /// <summary>

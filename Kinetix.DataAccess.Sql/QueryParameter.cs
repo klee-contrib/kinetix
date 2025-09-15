@@ -14,7 +14,7 @@ public class QueryParameter
     /// <summary>
     /// Liste des ordres de tri.
     /// </summary>
-    private readonly List<string> _sortList = new();
+    private readonly List<string> _sortList = [];
 
     /// <summary>
     /// If manualSort.
@@ -151,7 +151,7 @@ public class QueryParameter
     /// <summary>
     /// Map des ordres de tri par paramètre.
     /// </summary>
-    public Dictionary<string, SortOrder> MapSort { get; } = new();
+    public IDictionary<string, SortOrder> MapSort { get; } = new Dictionary<string, SortOrder>();
 
     /// <summary>
     /// Retourne le tri associé au champ.
@@ -211,7 +211,7 @@ public class QueryParameter
 
         if (_sortList.Count != 1)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         var sortColumn = _sortList[0];

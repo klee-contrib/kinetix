@@ -28,7 +28,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
     /// <param name="facetDef">Définition de facette.</param>
     /// <param name="isMultiValued">Si multi valué.</param>
     /// <returns>QueryDescriptor.</returns>
-    public Func<QueryContainerDescriptor<TDocument>, QueryContainer>? BuildMultiSelectableFilter<TDocument>(
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer>? BuildMultiSelectableFilter<TDocument>(
         FacetInput input,
         IFacetDefinition<TDocument> facetDef,
         bool isMultiValued
@@ -43,8 +43,8 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
         }
 
         var queries = input
-            .Selected.Select(sf => CreateFacetSubQuery(sf, false, facetDef))
-            .Concat(input.Excluded.Select(sf => CreateFacetSubQuery(sf, true, facetDef)))
+            .Selected.Select(sf => CreateFacetSubQuery(sf, exclude: false, facetDef))
+            .Concat(input.Excluded.Select(sf => CreateFacetSubQuery(sf, exclude: true, facetDef)))
             .ToArray();
 
         return !queries.Any() ? null
@@ -61,7 +61,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
     /// <param name="exclude">Exclut les valeurs pour lesquelles la facette correspond au lieu de les inclure.</param>
     /// <param name="facetDef">Définition de la facette.</param>
     /// <returns>QueryDescriptor.</returns>
-    public Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery<TDocument>(
+    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery<TDocument>(
         string facet,
         bool exclude,
         IFacetDefinition<TDocument> facetDef

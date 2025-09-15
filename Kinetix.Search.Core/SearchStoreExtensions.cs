@@ -72,7 +72,7 @@ public static class SearchStoreExtensions
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return store.Query(null, criteria, documentMapper);
+        return store.Query(queryInput: null, criteria, documentMapper);
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public static class SearchStoreExtensions
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return store.Query(null, criteria, documentMapper);
+        return store.Query(queryInput: null, criteria, documentMapper);
     }
 
     /// <summary>

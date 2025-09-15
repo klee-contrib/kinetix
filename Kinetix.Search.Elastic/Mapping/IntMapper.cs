@@ -24,7 +24,7 @@ public class IntMapper : IElasticMapper<int>
             case SearchFieldIndexing.Sort:
                 return selector.Number(x => x.Name(field.FieldName).Type(NumberType.Integer));
             case SearchFieldIndexing.None:
-                return selector.Number(x => x.Name(field.FieldName).Type(NumberType.Integer).Index(false));
+                return selector.Number(x => x.Name(field.FieldName).Type(NumberType.Integer).Index(index: false));
             default:
                 throw new NotSupportedException();
         }

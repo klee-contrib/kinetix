@@ -40,6 +40,7 @@ public sealed class DocumentFieldDescriptorCollection : IEnumerable<DocumentFiel
             {
                 throw new ArgumentException(
                     "Champ " + fieldName + " non trouvée pour le type " + _beanType.FullName + ".",
+                    nameof(fieldName),
                     e
                 );
             }

@@ -1,4 +1,4 @@
-﻿#pragma warning disable SA1402, SA1201
+﻿#pragma warning disable MA0048
 
 using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;

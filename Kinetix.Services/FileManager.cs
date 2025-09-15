@@ -17,7 +17,7 @@ public class FileManager(IServiceProvider provider) : IFileManager
     {
         if (!_fileAccessors.TryGetValue(accessorName, out var accessor))
         {
-            throw new ArgumentException($"L'accesseur {accessorName} n'existe pas.");
+            throw new ArgumentException($"L'accesseur {accessorName} n'existe pas.", nameof(accessorName));
         }
 
         var service = provider.GetService(accessor.ContractType);

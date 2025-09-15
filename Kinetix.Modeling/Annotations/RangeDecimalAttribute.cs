@@ -27,7 +27,7 @@ public sealed class RangeDecimalAttribute(
     /// <param name="minimum">Minium value.</param>
     /// <param name="maximum">Maximum value.</param>
     public RangeDecimalAttribute(double minimum, double maximum)
-        : this(minimum, maximum, true, true) { }
+        : this(minimum, maximum, isMinimumIncluded: true, isMaximumIncluded: true) { }
 
     /// <summary>
     /// Defines whether is the minimum is included in the range.

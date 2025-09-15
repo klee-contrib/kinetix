@@ -24,7 +24,7 @@ internal class SqlTransactionContext : ITransactionContext
     /// <summary>
     /// Connections.
     /// </summary>
-    internal Dictionary<string, IDbConnection> Connections { get; } = new();
+    internal Dictionary<string, IDbConnection> Connections { get; } = [];
 
     /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
     public void OnAfterCommit() { }

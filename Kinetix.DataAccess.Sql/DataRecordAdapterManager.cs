@@ -10,7 +10,7 @@ namespace Kinetix.DataAccess.Sql;
 internal static class DataRecordAdapterManager<T>
     where T : new()
 {
-    private static readonly Dictionary<string, IDataRecordAdapter<T>> _adaptorMap = new();
+    private static readonly Dictionary<string, IDataRecordAdapter<T>> _adaptorMap = [];
 
     /// <summary>
     /// Crée un adapteur.

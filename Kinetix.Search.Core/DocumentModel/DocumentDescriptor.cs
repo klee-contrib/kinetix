@@ -22,6 +22,16 @@ public class DocumentDescriptor
     }
 
     /// <summary>
+    /// Convertit une chaîne en camelCase.
+    /// </summary>
+    /// <param name="raw">Chaîne source.</param>
+    /// <returns>Chaîne en camelCase.</returns>
+    private static string ToCamelCase(string raw)
+    {
+        return string.IsNullOrEmpty(raw) ? raw : char.ToLower(raw[0]) + raw[1..];
+    }
+
+    /// <summary>
     /// Crée la collection des descripteurs de propriétés.
     /// </summary>
     /// <param name="beanType">Type du bean.</param>
@@ -111,7 +121,7 @@ public class DocumentDescriptor
                     IsMultiValued = isArray || isMultiValued,
                     Boost = searchAttr?.Boost ?? 1,
                     OtherAttributes = property
-                        .GetCustomAttributes(true)
+                        .GetCustomAttributes(inherit: true)
                         .Where(a => a is not SearchFieldAttribute and not PartialRebuildDatePropertyAttribute)
                         .ToList(),
                 };
@@ -123,15 +133,5 @@ public class DocumentDescriptor
                     : description;
             }
         }
-    }
-
-    /// <summary>
-    /// Convertit une chaîne en camelCase.
-    /// </summary>
-    /// <param name="raw">Chaîne source.</param>
-    /// <returns>Chaîne en camelCase.</returns>
-    private string ToCamelCase(string raw)
-    {
-        return string.IsNullOrEmpty(raw) ? raw : char.ToLower(raw[0]) + raw[1..];
     }
 }
