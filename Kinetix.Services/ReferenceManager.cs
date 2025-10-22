@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Globalization;
 using System.Reflection;
 using Kinetix.Modeling;
 using Kinetix.Modeling.Exceptions;
@@ -216,7 +217,7 @@ public class ReferenceManager : IReferenceManager
 
     private static string GetCacheKey(string referenceName)
     {
-        return $"ReferenceManager_{referenceName}";
+        return $"ReferenceManager_{CultureInfo.CurrentCulture.Name}_{referenceName}";
     }
 
     private ErrorMessageCollection CheckReferenceKeysInternal(object bean)
