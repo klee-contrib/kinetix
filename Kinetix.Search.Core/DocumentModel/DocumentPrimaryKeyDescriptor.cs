@@ -60,6 +60,7 @@ public class DocumentPrimaryKeyDescriptor
         return string.Join(
             "__",
             _fieldDescriptors
+                .OrderBy(f => f.PkOrder)
                 .Select(f => f.PkOrder - 1 < tuple.Length ? tuple[f.PkOrder - 1] : null)
                 .Where(v => v != null)
         );
