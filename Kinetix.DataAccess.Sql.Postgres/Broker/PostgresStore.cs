@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using Kinetix.DataAccess.Sql.Broker;
 using Kinetix.DataAccess.Sql.Common;
-using Kinetix.DataAccess.Sql.Common.Broker;
 using Kinetix.Modeling;
 using Microsoft.Extensions.Logging;
 

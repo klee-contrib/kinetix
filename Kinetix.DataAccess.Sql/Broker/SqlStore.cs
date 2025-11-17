@@ -2,11 +2,11 @@
 using System.Data;
 using System.Globalization;
 using System.Text;
-using Kinetix.DataAccess.Sql.Broker;
+using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Modeling;
 using Microsoft.Extensions.Logging;
 
-namespace Kinetix.DataAccess.Sql.Common.Broker;
+namespace Kinetix.DataAccess.Sql.Broker;
 
 /// <summary>
 /// Store de base pour le stockage en base de données.

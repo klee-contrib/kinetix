@@ -8,7 +8,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>8.1.2</Version>
+    <Version>8.1.3</Version>
     <Authors>JabX</Authors>
     <Description>Module ORM Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

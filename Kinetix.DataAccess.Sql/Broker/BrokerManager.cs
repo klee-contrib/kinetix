@@ -1,8 +1,7 @@
-﻿using Kinetix.DataAccess.Sql.Broker;
-using Kinetix.DataAccess.Sql.Common;
+﻿using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Services;
 
-namespace Kinetix.DataAccess.Sql.Common.Broker;
+namespace Kinetix.DataAccess.Sql.Broker;
 
 /// <summary>
 /// Manager pour les brokers.

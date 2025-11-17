@@ -24,7 +24,7 @@ public class InsightMonitoringStore(TelemetryClient telemetryClient) : IMonitori
             return;
         }
 
-        var processName = string.Join('.', name.Split('.').Reverse().Take(2).Reverse());
+        var processName = string.Join('.', name.Split('.').AsEnumerable().Reverse().Take(2).Reverse());
 
         if (category == "Service" && !processName.StartsWith("IService"))
         {
