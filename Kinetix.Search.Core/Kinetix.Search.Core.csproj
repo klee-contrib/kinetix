@@ -9,7 +9,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <PackageOutputPath>../.nupkg</PackageOutputPath>
-    <Version>8.3.2</Version>
+    <Version>8.3.4</Version>
     <Authors>JabX</Authors>
     <Description>Module de recherche avancée Kinetix.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
