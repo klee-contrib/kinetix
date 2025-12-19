@@ -116,8 +116,9 @@ public class IndexManager<TDocument>
     /// Reconstruit un index.
     /// </summary>
     /// <param name="rebuildLogger">Logger custom pour suivre l'avancement de la réindexation.</param>
+    /// <param name="forcePartialRebuild">Force la réindexation partielle, même si l'index n'existait pas avant.</param>
     /// <returns>Le nombre de documents.</returns>
-    public int RebuildIndex(ILogger? rebuildLogger = null)
+    public int RebuildIndex(ILogger? rebuildLogger = null, bool forcePartialRebuild = false)
     {
         using var tx = _transactionScopeManager.EnsureTransaction();
 
@@ -130,14 +131,16 @@ public class IndexManager<TDocument>
             rebuildLogger?.LogInformation($"Index {indexName} (re)created.");
         }
 
+        var partialRebuild = !indexCreated || forcePartialRebuild;
+
         rebuildLogger?.LogInformation($"Loading data for index {indexName}...");
 
         var loader = _provider.GetRequiredService<IDocumentLoader<TDocument>>();
 
-        var documents = loader.GetAll(!indexCreated);
+        var documents = loader.GetAll(partialRebuild);
         rebuildLogger?.LogInformation($"Data for index {indexName} loaded.");
 
-        return _searchStore.ResetIndex(documents, !indexCreated, rebuildLogger);
+        return _searchStore.ResetIndex(documents, partialRebuild, rebuildLogger);
     }
 
     private IndexingTransactionContext GetContext()
