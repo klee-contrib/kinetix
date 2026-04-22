@@ -14,6 +14,6 @@ public static class ServiceExtensions
         return services
             .AddSingleton<DocumentDescriptor>()
             .AddScoped<ITransactionContextProvider, IndexingTransactionContextProvider>()
-            .AddScoped<IndexManager>();
+            .AddScoped<IIndexManager, IndexManager>();
     }
 }

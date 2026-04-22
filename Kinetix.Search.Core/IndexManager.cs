@@ -1,30 +1,23 @@
-﻿using Kinetix.Services;
+﻿using Kinetix.Search.Core.Config;
+using Kinetix.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search.Core;
 
 /// <summary>
-/// Gère la réindexation des documents.
+/// Implémentation de IIndexManager.
 /// </summary>
-/// <remarks>
-/// Constructeur.
-/// </remarks>
-/// <param name="logger">Logger.</param>
-/// <param name="provider">Composant injecté.</param>
-/// <param name="searchStore">Composant injecté.</param>
-/// <param name="transactionScopeManager">Composant injecté.</param>
-public class IndexManager(
+internal class IndexManager(
     ILogger<IndexManager> logger,
     IServiceProvider provider,
     ISearchStore searchStore,
     TransactionScopeManager transactionScopeManager
-)
+) : IIndexManager
 {
     private bool _waitForRefresh = true;
 
-    /// <summary>
-    /// Attends le refresh de l'index lors du commit ou non. Par défaut: true.
-    /// </summary>
+    /// <inheritdoc />
     public bool WaitForRefresh
     {
         get => _waitForRefresh;
@@ -39,14 +32,102 @@ public class IndexManager(
         }
     }
 
-    /// <summary>
-    /// Instancie un IndexManager pour le document demandé.
-    /// </summary>
-    /// <typeparam name="TDocument">Type de document.</typeparam>
-    /// <returns>IndexManager.</returns>
-    public IndexManager<TDocument> For<TDocument>()
+    /// <inheritdoc cref="IIndexManager.Delete{TDocument, TKey}" />
+    public IIndexManager Delete<TDocument, TKey>(TKey id)
+        where TDocument : class
+        where TKey : notnull
+    {
+        logger.LogInformation($"RegisterDelete 1 {typeof(TDocument).Name}");
+        GetContext().RegisterDelete<TDocument>(id);
+        return this;
+    }
+
+    /// <inheritdoc cref="IIndexManager.DeleteMany{TDocument, TKey}" />
+    public IIndexManager DeleteMany<TDocument, TKey>(IEnumerable<TKey> ids)
+        where TDocument : class
+        where TKey : notnull
+    {
+        logger.LogInformation($"RegisterDelete {ids.Count()} {typeof(TDocument).Name}");
+        foreach (var id in ids)
+        {
+            GetContext().RegisterDelete<TDocument>(id);
+        }
+
+        return this;
+    }
+
+    /// <inheritdoc cref="IIndexManager.Index{TDocument, TKey}" />
+    public IIndexManager Index<TDocument, TKey>(TKey id)
+        where TDocument : class
+        where TKey : notnull
+    {
+        logger.LogInformation($"RegisterIndex 1 {typeof(TDocument).Name}");
+        GetContext().RegisterIndex<TDocument>(id);
+        return this;
+    }
+
+    /// <inheritdoc cref="IIndexManager.IndexAll{TDocument}" />
+    public IIndexManager IndexAll<TDocument>()
         where TDocument : class
     {
-        return new IndexManager<TDocument>(logger, provider, searchStore, transactionScopeManager, _waitForRefresh);
+        logger.LogInformation($"Reindex {typeof(TDocument).Name}");
+        GetContext().IndexAll<TDocument>();
+        return this;
+    }
+
+    /// <inheritdoc cref="IIndexManager.IndexMany{TDocument, TKey}" />
+    public IIndexManager IndexMany<TDocument, TKey>(IEnumerable<TKey> ids)
+        where TDocument : class
+        where TKey : notnull
+    {
+        logger.LogInformation($"RegisterIndex {ids.Count()} {typeof(TDocument).Name}");
+        foreach (var id in ids)
+        {
+            GetContext().RegisterIndex<TDocument>(id);
+        }
+
+        return this;
+    }
+
+    /// <inheritdoc cref="IIndexManager.RebuildIndex{TDocument}" />
+    public int RebuildIndex<TDocument>(ILogger? rebuildLogger = null, bool forcePartialRebuild = false)
+        where TDocument : class
+    {
+        using var tx = transactionScopeManager.EnsureTransaction();
+
+        var indexName = SearchConfig.GetTypeNameForIndex(typeof(TDocument));
+
+        rebuildLogger?.LogInformation($"Index {indexName} rebuild started...");
+        var indexCreated = searchStore.EnsureIndex<TDocument>();
+        if (indexCreated)
+        {
+            rebuildLogger?.LogInformation($"Index {indexName} (re)created.");
+        }
+
+        var partialRebuild = !indexCreated || forcePartialRebuild;
+
+        rebuildLogger?.LogInformation($"Loading data for index {indexName}...");
+
+        var loader = provider.GetRequiredService<IDocumentLoader<TDocument>>();
+
+        var documents = loader.GetAll(partialRebuild);
+        rebuildLogger?.LogInformation($"Data for index {indexName} loaded.");
+
+        return searchStore.ResetIndex(documents, partialRebuild, rebuildLogger);
+    }
+
+    private IndexingTransactionContext GetContext()
+    {
+        var context = transactionScopeManager.ActiveScope?.GetContext<IndexingTransactionContext>();
+
+        if (context != null)
+        {
+            context.WaitForRefresh = _waitForRefresh;
+            return context;
+        }
+
+        throw new InvalidOperationException(
+            "Impossible d'enregistrer une réindexation en dehors d'un contexte de transaction."
+        );
     }
 }

@@ -3,69 +3,57 @@
 namespace Kinetix.Search.Core;
 
 /// <summary>
-/// IndexManager pour un document.
+/// Gestionnaire de réindexation des documents.
 /// </summary>
-/// <typeparam name="TDocument">Type du document.</typeparam>
-public class IndexManager<TDocument>(IIndexManager indexManager)
-    where TDocument : class
+public interface IIndexManager
 {
+    /// <summary>
+    /// Attends le refresh de l'index lors du commit ou non. Par défaut: true.
+    /// </summary>
+    bool WaitForRefresh { get; set; }
+
     /// <summary>
     /// Marque un document pour suppression dans son index.
     /// </summary>
     /// <param name="id">ID du document.</param>
     /// <returns>IndexManager.</returns>
-    public IndexManager<TDocument> Delete<TKey>(TKey id)
-        where TKey : notnull
-    {
-        indexManager.Delete<TDocument, TKey>(id);
-        return this;
-    }
+    IIndexManager Delete<TDocument, TKey>(TKey id)
+        where TDocument : class
+        where TKey : notnull;
 
     /// <summary>
     /// Marque plusieurs documents pour suppression dans leur index.
     /// </summary>
     /// <param name="ids">IDs des documents.</param>
     /// <returns>IndexManager.</returns>
-    public IndexManager<TDocument> DeleteMany<TKey>(IEnumerable<TKey> ids)
-        where TKey : notnull
-    {
-        indexManager.DeleteMany<TDocument, TKey>(ids);
-        return this;
-    }
+    IIndexManager DeleteMany<TDocument, TKey>(IEnumerable<TKey> ids)
+        where TDocument : class
+        where TKey : notnull;
 
     /// <summary>
     /// Marque un document pour (ré)indexation.
     /// </summary>
     /// <param name="id">ID du document.</param>
     /// <returns>IndexManager.</returns>
-    public IndexManager<TDocument> Index<TKey>(TKey id)
-        where TKey : notnull
-    {
-        indexManager.Index<TDocument, TKey>(id);
-        return this;
-    }
+    IIndexManager Index<TDocument, TKey>(TKey id)
+        where TDocument : class
+        where TKey : notnull;
 
     /// <summary>
     /// Réinitialise un index.
     /// </summary>
     /// <returns>this.</returns>
-    public IndexManager<TDocument> IndexAll()
-    {
-        indexManager.IndexAll<TDocument>();
-        return this;
-    }
+    IIndexManager IndexAll<TDocument>()
+        where TDocument : class;
 
     /// <summary>
     /// Marque plusieurs documents pour ré(indexation).
     /// </summary>
     /// <param name="ids">IDs des documents.</param>
     /// <returns>IndexManager.</returns>
-    public IndexManager<TDocument> IndexMany<TKey>(IEnumerable<TKey> ids)
-        where TKey : notnull
-    {
-        indexManager.IndexMany<TDocument, TKey>(ids);
-        return this;
-    }
+    IIndexManager IndexMany<TDocument, TKey>(IEnumerable<TKey> ids)
+        where TDocument : class
+        where TKey : notnull;
 
     /// <summary>
     /// Reconstruit un index.
@@ -73,8 +61,6 @@ public class IndexManager<TDocument>(IIndexManager indexManager)
     /// <param name="rebuildLogger">Logger custom pour suivre l'avancement de la réindexation.</param>
     /// <param name="forcePartialRebuild">Force la réindexation partielle, même si l'index n'existait pas avant.</param>
     /// <returns>Le nombre de documents.</returns>
-    public int RebuildIndex(ILogger? rebuildLogger = null, bool forcePartialRebuild = false)
-    {
-        return indexManager.RebuildIndex<TDocument>(rebuildLogger, forcePartialRebuild);
-    }
+    int RebuildIndex<TDocument>(ILogger? rebuildLogger = null, bool forcePartialRebuild = false)
+        where TDocument : class;
 }

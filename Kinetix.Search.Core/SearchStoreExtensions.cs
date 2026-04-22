@@ -9,6 +9,17 @@ namespace Kinetix.Search.Core;
 public static class SearchStoreExtensions
 {
     /// <summary>
+    /// Instancie un IndexManager pour le document demandé.
+    /// </summary>
+    /// <typeparam name="TDocument">Type de document.</typeparam>
+    /// <returns>IndexManager.</returns>
+    public static IndexManager<TDocument> For<TDocument>(this IIndexManager indexManager)
+        where TDocument : class
+    {
+        return new IndexManager<TDocument>(indexManager);
+    }
+
+    /// <summary>
     /// Effectue une requête sur le champ texte.
     /// </summary>
     /// <param name="store">Store de recherche.</param>
