@@ -13,16 +13,16 @@ public class TransactionFilter(TransactionScopeManager transactionScopeManager) 
     /// <inheritdoc cref="IEndpointFilter.InvokeAsync" />
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        _scope = transactionScopeManager.EnsureTransaction();
+        _scope = await transactionScopeManager.EnsureTransactionAsync(default);
         try
         {
             var result = await next(context);
-            _scope?.Complete();
+            _scope.Complete();
             return result;
         }
         finally
         {
-            _scope?.Dispose();
+            await _scope.DisposeAsync();
         }
     }
 }

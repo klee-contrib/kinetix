@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿#pragma warning disable S3877, KTA1104
+
+using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Services;
 
@@ -6,7 +8,7 @@ namespace Kinetix.Services;
 /// Scope définissant une transaction en cours, muni de divers contextes transactionnels
 /// (exemple : une transaction ouverte en BDD est un contexte transactionnel).
 /// </summary>
-public class ServiceScope : IDisposable
+public class ServiceScope : IAsyncDisposable, IDisposable
 {
     private readonly ITransactionContext[] _contexts;
     private readonly ILogger<ServiceScope> _logger;
@@ -40,11 +42,13 @@ public class ServiceScope : IDisposable
     /// </summary>
     public void Dispose()
     {
+        var contexts = _contexts.OfType<ISyncTransactionContext>();
+
         Exception onBeforeException = null;
 
         try
         {
-            foreach (var context in _contexts)
+            foreach (var context in contexts)
             {
                 context.OnBeforeCommit();
             }
@@ -56,13 +60,13 @@ public class ServiceScope : IDisposable
                 "Une erreur est survenue lors de la préparation du commit de la transaction courante."
             );
             onBeforeException = ex;
-            foreach (var context in _contexts)
+            foreach (var context in contexts)
             {
                 context.Completed = false;
             }
         }
 
-        foreach (var context in _contexts)
+        foreach (var context in contexts)
         {
             context.OnCommit();
         }
@@ -71,14 +75,12 @@ public class ServiceScope : IDisposable
 
         if (onBeforeException != null)
         {
-#pragma warning disable S3877
             throw onBeforeException;
-#pragma warning restore S3877
         }
 
         try
         {
-            foreach (var context in _contexts)
+            foreach (var context in contexts)
             {
                 context.OnAfterCommit();
             }
@@ -86,6 +88,102 @@ public class ServiceScope : IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
+        }
+
+        foreach (var context in contexts)
+        {
+            context.Status = TransactionContextStatus.Handled;
+        }
+
+        if (_contexts.Any(c => c.Status == TransactionContextStatus.Initialized))
+        {
+            throw new NotSupportedException(
+                "Ce scope a été initialisé via une transaction asynchrone mais disposé de manière synchrone. Veuillez utiliser `DisposeAsync`/`await using` à la place."
+            );
+        }
+    }
+
+    /// <summary>
+    /// Libère le scope.
+    /// </summary>
+    /// <returns>Task.</returns>
+    public async ValueTask DisposeAsync()
+    {
+        Exception onBeforeException = null;
+
+        var contexts = _contexts.Where(c => c.Status == TransactionContextStatus.Initialized);
+
+        try
+        {
+            foreach (var context in contexts)
+            {
+                switch (context)
+                {
+                    case IAsyncTransactionContext asyncContext:
+                        await asyncContext.OnBeforeCommit();
+                        break;
+                    case ISyncTransactionContext syncContext:
+                        syncContext.OnBeforeCommit();
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Une erreur est survenue lors de la préparation du commit de la transaction courante."
+            );
+            onBeforeException = ex;
+            foreach (var context in contexts)
+            {
+                context.Completed = false;
+            }
+        }
+
+        foreach (var context in contexts)
+        {
+            switch (context)
+            {
+                case IAsyncTransactionContext asyncContext:
+                    await asyncContext.OnCommit();
+                    break;
+                case ISyncTransactionContext syncContext:
+                    syncContext.OnCommit();
+                    break;
+            }
+        }
+
+        _manager?.PopScope(this);
+
+        if (onBeforeException != null)
+        {
+            throw onBeforeException;
+        }
+
+        try
+        {
+            foreach (var context in contexts)
+            {
+                switch (context)
+                {
+                    case IAsyncTransactionContext asyncContext:
+                        await asyncContext.OnAfterCommit();
+                        break;
+                    case ISyncTransactionContext syncContext:
+                        syncContext.OnAfterCommit();
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
+        }
+
+        foreach (var context in contexts)
+        {
+            context.Status = TransactionContextStatus.Handled;
         }
     }
 
@@ -98,5 +196,31 @@ public class ServiceScope : IDisposable
         where T : ITransactionContext
     {
         return _contexts.OfType<T>().SingleOrDefault();
+    }
+
+    public void Init()
+    {
+        foreach (var context in _contexts.OfType<ISyncTransactionContext>())
+        {
+            context.Init();
+            context.Status = TransactionContextStatus.Initialized;
+        }
+    }
+
+    public async Task InitAsync(CancellationToken ct = default)
+    {
+        foreach (var context in _contexts)
+        {
+            switch (context)
+            {
+                case IAsyncTransactionContext asyncContext:
+                    await asyncContext.Init(ct);
+                    break;
+                case ISyncTransactionContext syncContext:
+                    syncContext.Init();
+                    break;
+            }
+            context.Status = TransactionContextStatus.Initialized;
+        }
     }
 }

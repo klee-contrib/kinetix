@@ -49,7 +49,7 @@ public static class ServiceExtensions
                 var hasContract = false;
                 foreach (var interfaceType in type.GetInterfaces())
                 {
-                    if (interfaceType.GetCustomAttribute<RegisterContractAttribute>() != null)
+                    if (Attribute.IsDefined(interfaceType, typeof(RegisterContractAttribute)))
                     {
                         var iOptions =
                             config.InterceptionOptions != null ? config.InterceptionOptions(interfaceType) : null;
@@ -89,7 +89,7 @@ public static class ServiceExtensions
             foreach (
                 var interfaceType in services
                     .Select(s => s.ServiceType)
-                    .Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null)
+                    .Where(s => Attribute.IsDefined(s, typeof(RegisterContractAttribute)))
             )
             {
                 referenceManager.RegisterAccessors(interfaceType);
@@ -104,7 +104,7 @@ public static class ServiceExtensions
             foreach (
                 var interfaceType in services
                     .Select(s => s.ServiceType)
-                    .Where(s => s.GetCustomAttribute<RegisterContractAttribute>() != null)
+                    .Where(s => Attribute.IsDefined(s, typeof(RegisterContractAttribute)))
             )
             {
                 fileManager.RegisterAccessors(interfaceType);

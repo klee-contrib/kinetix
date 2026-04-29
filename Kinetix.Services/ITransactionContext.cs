@@ -11,17 +11,7 @@ public interface ITransactionContext
     bool Completed { get; set; }
 
     /// <summary>
-    /// Action a exécuter après le commit du scope courant.
+    /// Statut du contexte transactionnel, pour savoir s'il a été initialisé et traité dans la transaction.
     /// </summary>
-    void OnAfterCommit();
-
-    /// <summary>
-    /// Action a exécuter avant le commit du scope courant.
-    /// </summary>
-    void OnBeforeCommit();
-
-    /// <summary>
-    /// Action a exécuter lors du commit du scope courant.
-    /// </summary>
-    void OnCommit();
+    TransactionContextStatus Status { get; set; }
 }

@@ -5,22 +5,28 @@ using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search.Core;
 
-internal class IndexingTransactionContext(IServiceProvider provider) : ITransactionContext
+internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTransactionContext
 {
     private readonly Dictionary<Type, IIndexingDocumentState> _indexors = [];
 
     /// <inheritdoc />
     public bool Completed { get; set; }
 
+    /// <inheritdoc />
+    public TransactionContextStatus Status { get; set; }
+
     /// <summary>
     /// Attends le refresh de l'index lors du commit ou non. Par défaut: true.
     /// </summary>
     internal bool WaitForRefresh { get; set; } = true;
 
-    /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
+    /// <inheritdoc cref="ISyncTransactionContext.Init" />
+    public void Init() { }
+
+    /// <inheritdoc cref="ISyncTransactionContext.OnAfterCommit" />
     public void OnAfterCommit() { }
 
-    /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
+    /// <inheritdoc cref="ISyncTransactionContext.OnBeforeCommit" />
     public void OnBeforeCommit()
     {
         if (Completed && _indexors.Count != 0)
@@ -59,7 +65,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ITransact
         }
     }
 
-    /// <inheritdoc cref="ITransactionContext.OnCommit" />
+    /// <inheritdoc cref="ISyncTransactionContext.OnCommit" />
     public void OnCommit() { }
 
     internal void IndexAll<TDocument>()

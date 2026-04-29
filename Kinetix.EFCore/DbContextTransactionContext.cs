@@ -3,35 +3,67 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Kinetix.EFCore;
 
-internal class DbContextTransactionContext : ITransactionContext
+internal class DbContextTransactionContext(DbContext dbContext) : IAsyncTransactionContext, ISyncTransactionContext
 {
-    private readonly DbContext _dbContext;
-
-    public DbContextTransactionContext(DbContext dbContext)
-    {
-        _dbContext = dbContext;
-        _dbContext.Database.BeginTransaction();
-    }
-
     /// <inheritdoc />
     public bool Completed { get; set; }
 
-    /// <inheritdoc cref="ITransactionContext.OnAfterCommit" />
+    /// <inheritdoc />
+    public TransactionContextStatus Status { get; set; }
+
+    /// <inheritdoc cref="ISyncTransactionContext.Init" />
+    public void Init()
+    {
+        dbContext.Database.BeginTransaction();
+    }
+
+    /// <inheritdoc cref="IAsyncTransactionContext.Init" />
+    public async Task Init(CancellationToken ct = default)
+    {
+        await dbContext.Database.BeginTransactionAsync(ct);
+    }
+
+    /// <inheritdoc cref="ISyncTransactionContext.OnAfterCommit" />
     public void OnAfterCommit() { }
 
-    /// <inheritdoc cref="ITransactionContext.OnBeforeCommit" />
+    /// <inheritdoc cref="IAsyncTransactionContext.OnAfterCommit" />
+    public Task OnAfterCommit(CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc cref="ISyncTransactionContext.OnBeforeCommit" />
     public void OnBeforeCommit() { }
 
-    /// <inheritdoc cref="ITransactionContext.OnCommit" />
+    /// <inheritdoc cref="IAsyncTransactionContext.OnBeforeCommit" />
+    public Task OnBeforeCommit(CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc cref="ISyncTransactionContext.OnCommit" />
     public void OnCommit()
     {
         if (Completed)
         {
-            _dbContext.Database.CommitTransaction();
+            dbContext.Database.CommitTransaction();
         }
         else
         {
-            _dbContext.Database.RollbackTransaction();
+            dbContext.Database.RollbackTransaction();
+        }
+    }
+
+    /// <inheritdoc cref="IAsyncTransactionContext.OnCommit" />
+    public async Task OnCommit(CancellationToken ct = default)
+    {
+        if (Completed)
+        {
+            await dbContext.Database.CommitTransactionAsync(ct);
+        }
+        else
+        {
+            await dbContext.Database.RollbackTransactionAsync(ct);
         }
     }
 }
