@@ -8,10 +8,10 @@ public class ErrorMessageParameter
     /// <summary>
     /// Value of the parameter.
     /// </summary>
-    public object Value { get; set; }
+    public object? Value { get; set; }
 
     /// <summary>
     /// Domain of the parameter.
     /// </summary>
-    public string Domain { get; set; }
+    public string? Domain { get; set; }
 }

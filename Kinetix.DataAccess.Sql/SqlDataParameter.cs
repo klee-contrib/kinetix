@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Kinetix.DataAccess.Sql;
 
@@ -32,6 +33,7 @@ public sealed class SqlDataParameter(IDbDataParameter parameter) : IDbDataParame
     /// <summary>
     /// Obtient ou définit le nom du paramétre.
     /// </summary>
+    [AllowNull]
     public string ParameterName
     {
         get => InnerParameter.ParameterName;
@@ -41,6 +43,7 @@ public sealed class SqlDataParameter(IDbDataParameter parameter) : IDbDataParame
     /// <summary>
     /// Obtient ou définit la précision.
     /// </summary>
+    [AllowNull]
     public byte Precision
     {
         get => InnerParameter.Precision;
@@ -69,7 +72,7 @@ public sealed class SqlDataParameter(IDbDataParameter parameter) : IDbDataParame
     /// Obtient ou définit la valeur du paramètre.
     /// La valeur peut être nulle.
     /// </summary>
-    public object Value
+    public object? Value
     {
         get
         {
@@ -87,6 +90,7 @@ public sealed class SqlDataParameter(IDbDataParameter parameter) : IDbDataParame
     /// <summary>
     /// Obtient ou définit la colonne source.
     /// </summary>
+    [AllowNull]
     string IDataParameter.SourceColumn
     {
         get => InnerParameter.SourceColumn;

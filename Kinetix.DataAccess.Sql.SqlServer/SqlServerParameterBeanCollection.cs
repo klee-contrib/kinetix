@@ -79,9 +79,10 @@ internal class SqlServerParameterBeanCollection<T>(
                 }
                 else if (property.PrimitiveType == typeof(string))
                 {
-                    metaData = property.Domain.Length.HasValue
-                        ? new SqlMetaData(property.MemberName, SqlDbType.NVarChar, property.Domain.Length.Value)
-                        : new SqlMetaData(property.MemberName, SqlDbType.Text);
+                    metaData =
+                        property.Domain?.Length != null
+                            ? new SqlMetaData(property.MemberName, SqlDbType.NVarChar, property.Domain.Length.Value)
+                            : new SqlMetaData(property.MemberName, SqlDbType.Text);
                 }
                 else if (property.PrimitiveType == typeof(DateTime))
                 {
@@ -195,7 +196,7 @@ internal class SqlServerParameterBeanCollection<T>(
     {
         parameter.ParameterName = "@table";
         parameter.Direction = ParameterDirection.Input;
-        parameter.Value = _dataRecordList;
+        parameter.Value = _dataRecordList!;
         ((SqlParameter)parameter.InnerParameter).SqlDbType = SqlDbType.Structured;
         ((SqlParameter)parameter.InnerParameter).TypeName = _typeName;
         return parameter;
@@ -207,7 +208,7 @@ internal class SqlServerParameterBeanCollection<T>(
     /// <param name="item">Item.</param>
     /// <param name="property">Descrition de l'item.</param>
     /// <returns>Valeur.</returns>
-    private static object GetPropertyValue(T item, BeanPropertyDescriptor property)
+    private static object? GetPropertyValue(T item, BeanPropertyDescriptor property)
     {
         return property.GetValue(item);
     }

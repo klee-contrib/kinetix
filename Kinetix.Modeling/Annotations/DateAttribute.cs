@@ -23,7 +23,7 @@ public sealed class DateAttribute : ValidationAttribute
     /// </summary>
     /// <param name="value">Objet testé.</param>
     /// <returns><code>True</code> si l'objet est une date et qu'elle est bien dans l'intervalle de date SQL Server.</returns>
-    public override bool IsValid(object value)
+    public override bool IsValid(object? value)
     {
         if (value is string strValue)
         {

@@ -12,7 +12,7 @@ public sealed class ErrorMessage
     /// </summary>
     /// <param name="message">Message d'erreur.</param>
     /// <param name="code">Le code d'erreur.</param>
-    public ErrorMessage(string message, string code = null)
+    public ErrorMessage(string message, string? code = null)
     {
         Message = message;
         Code = code;
@@ -26,7 +26,7 @@ public sealed class ErrorMessage
     /// <param name="objetCibleId">Id de l'objet cible.</param>
     /// <param name="section">Section cible.</param>
     /// <param name="code">Le code d'erreur.</param>
-    public ErrorMessage(string message, string typeCible, int objetCibleId, string section = null, string code = null)
+    public ErrorMessage(string message, string typeCible, int objetCibleId, string? section = null, string? code = null)
     {
         Message = message;
         Code = code;
@@ -47,8 +47,8 @@ public sealed class ErrorMessage
         string message,
         string typeCible,
         Guid objetCibleGuid,
-        string section = null,
-        string code = null
+        string? section = null,
+        string? code = null
     )
     {
         Message = message;
@@ -64,7 +64,7 @@ public sealed class ErrorMessage
     /// <param name="fieldName">Nom du champ.</param>
     /// <param name="message">Message d'erreur.</param>
     /// <param name="code">Le code d'erreur.</param>
-    internal ErrorMessage(string fieldName, string message, string code)
+    internal ErrorMessage(string fieldName, string? message, string? code)
     {
         FieldName = fieldName;
         Message = message;
@@ -74,12 +74,12 @@ public sealed class ErrorMessage
     /// <summary>
     /// Le code de l'erreur.
     /// </summary>
-    public string Code { get; private set; }
+    public string? Code { get; private set; }
 
     /// <summary>
     /// Le code de section.
     /// </summary>
-    public string SectionCode { get; private set; }
+    public string? SectionCode { get; private set; }
 
     /// <summary>
     /// L'id cible
@@ -94,17 +94,17 @@ public sealed class ErrorMessage
     /// <summary>
     /// Le type de cible
     /// </summary>
-    public string TypeCible { get; private set; }
+    public string? TypeCible { get; private set; }
 
     /// <summary>
     /// Nom du champ en erreur.
     /// </summary>
-    public string FieldName { get; private set; }
+    public string? FieldName { get; private set; }
 
     /// <summary>
     /// Nom complet.
     /// </summary>
-    public string FullFieldName =>
+    public string? FullFieldName =>
         string.IsNullOrEmpty(ModelName)
             ? FieldName
             : string.Format(CultureInfo.InvariantCulture, "{0}.{1}", ModelName, FieldName);
@@ -112,10 +112,10 @@ public sealed class ErrorMessage
     /// <summary>
     /// Message d'erreur.
     /// </summary>
-    public string Message { get; private set; }
+    public string? Message { get; private set; }
 
     /// <summary>
     /// Nom du modèle concerné par l'erreur.
     /// </summary>
-    public string ModelName { get; set; }
+    public string? ModelName { get; set; }
 }

@@ -35,7 +35,7 @@ public static class SqlCommandExtensions
     /// <typeparam name="T">Type de l'élement.</typeparam>
     /// <param name="cmd">Commande à exécuter.</param>
     /// <returns>Objet.</returns>
-    public static T ReadItem<T>(this BaseSqlCommand cmd)
+    public static T? ReadItem<T>(this BaseSqlCommand cmd)
         where T : class, new()
     {
         return CollectionBuilder<T>.ParseCommandForSingleObject(cmd);
@@ -59,7 +59,7 @@ public static class SqlCommandExtensions
     /// <typeparam name="T">Type de l'élement.</typeparam>
     /// <param name="cmd">Commande à exécuter.</param>
     /// <returns>Objet.</returns>
-    public static T ReadScalar<T>(this BaseSqlCommand cmd)
+    public static T? ReadScalar<T>(this BaseSqlCommand cmd)
     {
         var value = cmd.ExecuteScalar();
 
@@ -72,7 +72,7 @@ public static class SqlCommandExtensions
         /* Valeur null : on renvoie seulement si le type est nullable. */
         if (typeof(T).IsClass || Nullable.GetUnderlyingType(typeof(T)) != null)
         {
-            return (T)value;
+            return default;
         }
 
         /* Valeur null pour un type non nullable : exception. */

@@ -9,7 +9,7 @@ namespace Kinetix.Modeling;
 /// </summary>
 public sealed class BeanPropertyDescriptor
 {
-    private Domain _domainChecker;
+    private Domain? _domainChecker;
 
     /// <summary>
     /// Crée une nouvelle instance.
@@ -27,14 +27,14 @@ public sealed class BeanPropertyDescriptor
     /// <param name="isBrowsable">Indique si la propriété est affichable.</param>
     internal BeanPropertyDescriptor(
         string propertyName,
-        string memberName,
+        string? memberName,
         Type propertyType,
-        string description,
-        Enum domainName,
+        string? description,
+        Enum? domainName,
         bool isPrimaryKey,
         bool isDefault,
         bool isRequired,
-        Type referenceType,
+        Type? referenceType,
         bool isReadOnly,
         bool isBrowsable
     )
@@ -58,12 +58,12 @@ public sealed class BeanPropertyDescriptor
     /// <summary>
     /// Obtient la description de la valeur.
     /// </summary>
-    public string Description { get; private set; }
+    public string? Description { get; private set; }
 
     /// <summary>
     /// Obtient le nom du domaine.
     /// </summary>
-    public Enum DomainName { get; private set; }
+    public Enum? DomainName { get; private set; }
 
     /// <summary>
     /// Indique si la propriété est affichable à l'écran.
@@ -96,13 +96,13 @@ public sealed class BeanPropertyDescriptor
     /// de la colonne base de données. Pour des objets issus
     /// d'un service Web, il s'agit du nom Soap de la propriété.
     /// </summary>
-    public string MemberName { get; private set; }
+    public string? MemberName { get; private set; }
 
     /// <summary>
     /// Retourne le type primitif de la propriété.
     /// Si PropertyType vaut Nullable&lt;int&gt;, PrimitiveType vaut int.
     /// </summary>
-    public Type PrimitiveType { get; private set; }
+    public Type? PrimitiveType { get; private set; }
 
     /// <summary>
     /// Obtient le nom de la propriété.
@@ -118,7 +118,7 @@ public sealed class BeanPropertyDescriptor
     /// Obtient le type de l'objet de référence
     /// associé à la propriété.
     /// </summary>
-    public Type ReferenceType { get; private set; }
+    public Type? ReferenceType { get; private set; }
 
     /// <summary>
     /// Retourne si la propriété est en lecture seule.
@@ -128,7 +128,7 @@ public sealed class BeanPropertyDescriptor
     /// <summary>
     /// Retourne le domaine associé à la propriété.
     /// </summary>
-    public Domain Domain
+    public Domain? Domain
     {
         get
         {
@@ -186,9 +186,9 @@ public sealed class BeanPropertyDescriptor
     /// </summary>
     /// <param name="bean">Objet.</param>
     /// <returns>Valeur.</returns>
-    public object GetValue(object bean)
+    public object? GetValue(object bean)
     {
-        return TypeDescriptor.GetProperties(bean)[PropertyName].GetValue(bean);
+        return TypeDescriptor.GetProperties(bean)[PropertyName]?.GetValue(bean);
     }
 
     /// <summary>
@@ -197,17 +197,9 @@ public sealed class BeanPropertyDescriptor
     /// <param name="bean">Objet.</param>
     /// <param name="value">Valeur.</param>
     /// <exception cref="System.NotSupportedException">Si la propriété est en lecture seule.</exception>
-    public void SetValue(object bean, object value)
+    public void SetValue(object bean, object? value)
     {
-        var descriptor = TypeDescriptor.GetProperties(bean)[PropertyName];
-        if (descriptor.IsReadOnly)
-        {
-            throw new NotSupportedException(
-                string.Format(CultureInfo.CurrentCulture, SR.ReadOnlyProperty, PropertyName)
-            );
-        }
-
-        descriptor.SetValue(bean, value);
+        TypeDescriptor.GetProperties(bean)[PropertyName]?.SetValue(bean, value);
     }
 
     /// <summary>
@@ -224,9 +216,9 @@ public sealed class BeanPropertyDescriptor
     /// </summary>
     /// <param name="value">Valeur de la propriété.</param>
     /// <returns>Erreurs.</returns>
-    internal ErrorMessageCollection CheckDomain(object value)
+    internal ErrorMessageCollection CheckDomain(object? value)
     {
-        return Domain.CheckValue(value, this);
+        return Domain?.CheckValue(value, this) ?? [];
     }
 
     /// <summary>

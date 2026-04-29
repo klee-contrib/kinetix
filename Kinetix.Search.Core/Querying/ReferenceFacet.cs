@@ -1,6 +1,4 @@
-﻿#pragma warning disable SA1402
-
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using Kinetix.Modeling;
 using Kinetix.Search.Models;
 using Kinetix.Services;
@@ -50,6 +48,7 @@ public class ReferenceFacet<TDocument, T>(
     string label,
     Expression<Func<TDocument, object>> field
 ) : ReferenceFacet<TDocument>(code, label, field)
+    where T : notnull
 {
     /// <inheritdoc />
     public override IList<FacetItem> GetReferenceList()
@@ -59,8 +58,8 @@ public class ReferenceFacet<TDocument, T>(
             .GetReferenceList<T>()
             .Select(item => new FacetItem
             {
-                Code = def.PrimaryKey.GetValue(item).ToString()!,
-                Label = (string)def.DefaultProperty.GetValue(item),
+                Code = def.PrimaryKey.GetValue(item)!.ToString()!,
+                Label = (string)(def.DefaultProperty?.GetValue(item) ?? string.Empty),
                 Count = 0,
             })
             .ToList();

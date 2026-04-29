@@ -27,7 +27,7 @@ public class BusinessException : Exception
     /// </summary>
     /// <param name="messageList">Liste de messages d'erreurs.</param>
     /// <param name="code">Le code de l'erreur.</param>
-    public BusinessException(IEnumerable<ErrorMessage> messageList, string code = null)
+    public BusinessException(IEnumerable<ErrorMessage> messageList, string? code = null)
         : base(string.Empty)
     {
         Errors = new ErrorMessageCollection(messageList);
@@ -50,7 +50,7 @@ public class BusinessException : Exception
     /// </summary>
     /// <param name="fieldName">Nom du champ en erreur.</param>
     /// <param name="message">Message d'erreur.</param>
-    public BusinessException(string fieldName, string message)
+    public BusinessException(string fieldName, string? message)
         : base(string.Empty)
     {
         Errors = new ErrorMessageCollection();
@@ -82,7 +82,7 @@ public class BusinessException : Exception
     /// <param name="fieldName">Nom du champ en erreur.</param>
     /// <param name="message">Message d'erreur.</param>
     /// <param name="code">Code d'erreur.</param>
-    public BusinessException(string fieldName, string message, string code)
+    public BusinessException(string fieldName, string? message, string? code)
         : this(fieldName, message)
     {
         Code = code;
@@ -94,7 +94,7 @@ public class BusinessException : Exception
     /// <param name="message">Description de l'exception.</param>
     /// <param name="code">Code d'erreur.</param>
     /// <param name="innerException">Exception source.</param>
-    public BusinessException(string message, string code, Exception innerException)
+    public BusinessException(string? message, string? code, Exception innerException)
         : base(message, innerException)
     {
         Code = code;
@@ -119,12 +119,12 @@ public class BusinessException : Exception
     /// <summary>
     /// Code d'erreur.
     /// </summary>
-    public string Code { get; private set; }
+    public string? Code { get; private set; }
 
     /// <summary>
     /// Retourne la pile des erreurs.
     /// </summary>
-    public ErrorMessageCollection Errors { get; private set; }
+    public ErrorMessageCollection Errors { get; private set; } = [];
 
     /// <summary>
     /// List of parameters to inject in the message describing the exception.
@@ -135,5 +135,5 @@ public class BusinessException : Exception
     /// <summary>
     /// Retourne la propriété associée à la violation de contrainte.
     /// </summary>
-    public BeanPropertyDescriptor Property { get; private set; }
+    public BeanPropertyDescriptor? Property { get; private set; }
 }

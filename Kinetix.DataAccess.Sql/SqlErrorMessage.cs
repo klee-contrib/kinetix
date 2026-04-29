@@ -8,12 +8,12 @@
 /// </remarks>
 /// <param name="message">Message d'erreur.</param>
 /// <param name="code">Code de l'erreur.</param>
-public sealed class SqlErrorMessage(string message, string code)
+public sealed class SqlErrorMessage(string? message, string code)
 {
     /// <summary>
     /// Obtient le message d'erreur.
     /// </summary>
-    public string Message { get; private set; } = message;
+    public string? Message { get; private set; } = message;
 
     /// <summary>
     /// Obtient le code d'erreur.

@@ -71,7 +71,7 @@ public sealed class RangeDecimalAttribute(
     /// </summary>
     /// <param name="value">Obect to test.</param>
     /// <returns>Boolean.</returns>
-    public override bool IsValid(object value)
+    public override bool IsValid(object? value)
     {
         var s = value as string;
         return string.IsNullOrEmpty(s)

@@ -23,7 +23,8 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence à vider.</typeparam>
     /// <returns>Task.</returns>
-    void FlushCache<T>();
+    void FlushCache<T>()
+        where T : notnull;
 
     /// <summary>
     /// Vide le cache de référence.
@@ -38,7 +39,8 @@ public interface IReferenceManager
     /// <param name="ct">CancellationToken.</param>
     /// <typeparam name="T">Le type de la liste de référence à vider.</typeparam>
     /// <returns>Task.</returns>
-    Task FlushCacheAsync<T>(CancellationToken ct = default);
+    Task FlushCacheAsync<T>(CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Vide le cache de référence.
@@ -53,7 +55,8 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <returns>La liste de référence.</returns>
-    ICollection<T> GetReferenceList<T>();
+    ICollection<T> GetReferenceList<T>()
+        where T : notnull;
 
     /// <summary>
     /// Récupère une liste de référence.
@@ -61,7 +64,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <returns>Liste de référence.</returns>
-    ICollection<T> GetReferenceList<T>(Func<T, bool> predicate);
+    ICollection<T> GetReferenceList<T>(Func<T, bool> predicate)
+        where T : notnull;
 
     /// <summary>
     /// Récupère une liste de référence.
@@ -76,7 +80,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>La liste de référence.</returns>
-    Task<ICollection<T>> GetReferenceListAsync<T>(CancellationToken ct = default);
+    Task<ICollection<T>> GetReferenceListAsync<T>(CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère une liste de référence.
@@ -85,7 +90,8 @@ public interface IReferenceManager
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Liste de référence.</returns>
-    Task<ICollection<T>> GetReferenceListAsync<T>(Func<T, bool> predicate, CancellationToken ct = default);
+    Task<ICollection<T>> GetReferenceListAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère une liste de référence.
@@ -100,7 +106,8 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <returns>La liste de référence.</returns>
-    IDictionary<object, T> GetReferenceMap<T>();
+    IDictionary<object, T> GetReferenceMap<T>()
+        where T : notnull;
 
     /// <summary>
     /// Récupère une liste de référence sous forme de map clé primaire => objet.
@@ -108,7 +115,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <returns>Liste de référence.</returns>
-    IDictionary<object, T> GetReferenceMap<T>(Func<T, bool> predicate);
+    IDictionary<object, T> GetReferenceMap<T>(Func<T, bool> predicate)
+        where T : notnull;
 
     /// <summary>
     /// Récupère une liste de référence sous forme de map clé primaire => objet.
@@ -116,7 +124,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>La liste de référence.</returns>
-    Task<IDictionary<object, T>> GetReferenceMapAsync<T>(CancellationToken ct = default);
+    Task<IDictionary<object, T>> GetReferenceMapAsync<T>(CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère une liste de référence sous forme de map clé primaire => objet.
@@ -125,7 +134,8 @@ public interface IReferenceManager
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Liste de référence.</returns>
-    Task<IDictionary<object, T>> GetReferenceMapAsync<T>(Func<T, bool> predicate, CancellationToken ct = default);
+    Task<IDictionary<object, T>> GetReferenceMapAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère un objet d'une liste de référence.
@@ -133,7 +143,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="primaryKey">Une clé primaire.</param>
     /// <returns>Objet.</returns>
-    T? GetReferenceObject<T>(object? primaryKey);
+    T? GetReferenceObject<T>(object? primaryKey)
+        where T : notnull;
 
     /// <summary>
     /// Récupère un objet d'une liste de référence.
@@ -141,7 +152,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <returns>Objet.</returns>
-    T? GetReferenceObject<T>(Func<T, bool> predicate);
+    T? GetReferenceObject<T>(Func<T, bool> predicate)
+        where T : notnull;
 
     /// <summary>
     /// Récupère un objet d'une liste de référence.
@@ -158,7 +170,8 @@ public interface IReferenceManager
     /// <param name="primaryKey">Une clé primaire.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet.</returns>
-    Task<T?> GetReferenceObjectAsync<T>(object? primaryKey, CancellationToken ct = default);
+    Task<T?> GetReferenceObjectAsync<T>(object? primaryKey, CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère un objet d'une liste de référence.
@@ -167,7 +180,8 @@ public interface IReferenceManager
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet.</returns>
-    Task<T?> GetReferenceObjectAsync<T>(Func<T, bool> predicate, CancellationToken ct = default);
+    Task<T?> GetReferenceObjectAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère un objet d'une liste de référence.
@@ -184,7 +198,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="primaryKey">Une clé primaire.</param>
     /// <returns>Valeur.</returns>
-    string? GetReferenceValue<T>(object? primaryKey);
+    string? GetReferenceValue<T>(object? primaryKey)
+        where T : notnull;
 
     /// <summary>
     /// Récupère la valeur d'un objet d'une liste de référence.
@@ -192,7 +207,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <returns>Valeur.</returns>
-    string? GetReferenceValue<T>(Func<T, bool> predicate);
+    string? GetReferenceValue<T>(Func<T, bool> predicate)
+        where T : notnull;
 
     /// <summary>
     /// Récupère la valeur d'un objet d'une liste de référence.
@@ -209,7 +225,8 @@ public interface IReferenceManager
     /// <param name="primaryKey">Une clé primaire.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Valeur.</returns>
-    Task<string?> GetReferenceValueAsync<T>(object? primaryKey, CancellationToken ct = default);
+    Task<string?> GetReferenceValueAsync<T>(object? primaryKey, CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère la valeur d'un objet d'une liste de référence.
@@ -218,7 +235,8 @@ public interface IReferenceManager
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Valeur.</returns>
-    Task<string?> GetReferenceValueAsync<T>(Func<T, bool> predicate, CancellationToken ct = default);
+    Task<string?> GetReferenceValueAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère la valeur d'un objet d'une liste de référence.
@@ -234,7 +252,8 @@ public interface IReferenceManager
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <returns>Map clé => valeur.</returns>
-    IDictionary<object, string> GetReferenceValueMap<T>();
+    IDictionary<object, string> GetReferenceValueMap<T>()
+        where T : notnull;
 
     /// <summary>
     /// Récupère une map clé primaire => valeur pour une liste de référence donnée.
@@ -242,7 +261,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="predicate">Un prédicat pour filtrer la liste.</param>
     /// <returns>Map clé => valeur.</returns>
-    IDictionary<object, string> GetReferenceValueMap<T>(Func<T, bool> predicate);
+    IDictionary<object, string> GetReferenceValueMap<T>(Func<T, bool> predicate)
+        where T : notnull;
 
     /// <summary>
     /// Récupère une map clé primaire => valeur pour une liste de référence donnée.
@@ -257,7 +277,8 @@ public interface IReferenceManager
     /// <typeparam name="T">Le type de la liste de référence.</typeparam>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Map clé => valeur.</returns>
-    Task<IDictionary<object, string>> GetReferenceValueMapAsync<T>(CancellationToken ct = default);
+    Task<IDictionary<object, string>> GetReferenceValueMapAsync<T>(CancellationToken ct = default)
+        where T : notnull;
 
     /// <summary>
     /// Récupère une map clé primaire => valeur pour une liste de référence donnée.
@@ -269,7 +290,8 @@ public interface IReferenceManager
     Task<IDictionary<object, string>> GetReferenceValueMapAsync<T>(
         Func<T, bool> predicate,
         CancellationToken ct = default
-    );
+    )
+        where T : notnull;
 
     /// <summary>
     /// Récupère une map clé primaire => valeur pour une liste de référence donnée.

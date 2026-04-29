@@ -30,7 +30,7 @@ internal class SqlServerStore<T>(string dataSourceName, ConnectionPool connectio
     protected override string BuildInsertQuery(
         BeanDefinition beanDefinition,
         bool isGeneratedPK,
-        ColumnSelector columnSelector
+        ColumnSelector? columnSelector
     )
     {
         var sbInsert = new StringBuilder(CurrentUserStatementLog);

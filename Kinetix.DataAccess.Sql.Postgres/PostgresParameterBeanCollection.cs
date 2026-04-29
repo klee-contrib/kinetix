@@ -123,7 +123,7 @@ internal class PostgresParameterBeanCollection<T>(
                 record.Add(property.MemberName.ToLowerInvariant(), JsonValue.Create(value));
             }
 
-            record.Add(_insertKeyProp!.MemberName.ToLowerInvariant(), JsonValue.Create(insertKey));
+            record.Add(_insertKeyProp!.MemberName!.ToLowerInvariant(), JsonValue.Create(insertKey));
             _dataRecordList.Add(record);
             Index.Add(insertKey, item);
             ++insertKey;
@@ -146,7 +146,7 @@ internal class PostgresParameterBeanCollection<T>(
     /// <param name="item">Item.</param>
     /// <param name="property">Descrition de l'item.</param>
     /// <returns>Valeur.</returns>
-    private static object GetPropertyValue(T item, BeanPropertyDescriptor property)
+    private static object? GetPropertyValue(T item, BeanPropertyDescriptor property)
     {
         return property.GetValue(item);
     }

@@ -15,5 +15,5 @@ public interface IDataRecordAdapter<out T>
     /// <param name="destination">Le bean à charger.</param>
     /// <param name="record">Enregistrement.</param>
     /// <returns>Bean.</returns>
-    T Read(object destination, IDataRecord record);
+    T? Read(object? destination, IDataRecord record);
 }

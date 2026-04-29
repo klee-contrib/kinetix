@@ -7,11 +7,10 @@ namespace Kinetix.DataAccess.Sql;
 /// </summary>
 public sealed class SqlDataReader : IDataReader
 {
-    private readonly QueryParameter _queryParameter;
+    private readonly IDataReader _innerDataReader;
+    private readonly QueryParameter? _queryParameter;
     private readonly int _readLimit = 0;
     private readonly int _readOffset = 0;
-
-    private IDataReader _innerDataReader;
     private long _readIndex = 0;
 
     /// <summary>
@@ -19,7 +18,7 @@ public sealed class SqlDataReader : IDataReader
     /// </summary>
     /// <param name="dataReader">Reader interne.</param>
     /// <param name="queryParameter">Paramètres de requêtage.</param>
-    internal SqlDataReader(IDataReader dataReader, QueryParameter queryParameter)
+    internal SqlDataReader(IDataReader dataReader, QueryParameter? queryParameter)
     {
         _innerDataReader = dataReader;
         _queryParameter = queryParameter;
@@ -69,7 +68,7 @@ public sealed class SqlDataReader : IDataReader
         get
         {
             var val = _innerDataReader[name];
-            return DBNull.Value.Equals(val) ? null : val;
+            return DBNull.Value.Equals(val) ? null! : val;
         }
     }
 
@@ -78,7 +77,7 @@ public sealed class SqlDataReader : IDataReader
     /// </summary>
     /// <param name="index">Indice du champ.</param>
     /// <returns>Valeur (peut être nulle).</returns>
-    public object this[int index]
+    public object? this[int index]
     {
         get
         {
@@ -160,7 +159,7 @@ public sealed class SqlDataReader : IDataReader
     /// <param name="bufferoffset">Offset de début d'écriture.</param>
     /// <param name="length">Nombre d'octets à écrire.</param>
     /// <returns>Nombre d'octets lus.</returns>
-    public long GetBytes(int index, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+    public long GetBytes(int index, long fieldOffset, byte[]? buffer, int bufferoffset, int length)
     {
         return _innerDataReader.GetBytes(index, fieldOffset, buffer, bufferoffset, length);
     }
@@ -174,7 +173,7 @@ public sealed class SqlDataReader : IDataReader
     /// <param name="bufferoffset">Offset de début d'écriture.</param>
     /// <param name="length">Nombre d'octets à écrire.</param>
     /// <returns>Nombre d'octets lus.</returns>
-    long IDataRecord.GetBytes(int i, long fieldOffset, byte[] buffer, int bufferoffset, int length)
+    long IDataRecord.GetBytes(int i, long fieldOffset, byte[]? buffer, int bufferoffset, int length)
     {
         return GetBytes(i, fieldOffset, buffer, bufferoffset, length);
     }
@@ -198,7 +197,7 @@ public sealed class SqlDataReader : IDataReader
     /// <param name="bufferoffset">Offset de début d'écriture.</param>
     /// <param name="length">Nombre de caractères à écrire.</param>
     /// <returns>Nombre de caractères lus.</returns>
-    public long GetChars(int index, long fieldoffset, char[] buffer, int bufferoffset, int length)
+    public long GetChars(int index, long fieldoffset, char[]? buffer, int bufferoffset, int length)
     {
         return _innerDataReader.GetChars(index, fieldoffset, buffer, bufferoffset, length);
     }
@@ -212,7 +211,7 @@ public sealed class SqlDataReader : IDataReader
     /// <param name="bufferoffset">Offset de début d'écriture.</param>
     /// <param name="length">Nombre de caractères à écrire.</param>
     /// <returns>Nombre de caractères lus.</returns>
-    long IDataRecord.GetChars(int i, long fieldoffset, char[] buffer, int bufferoffset, int length)
+    long IDataRecord.GetChars(int i, long fieldoffset, char[]? buffer, int bufferoffset, int length)
     {
         return GetChars(i, fieldoffset, buffer, bufferoffset, length);
     }
@@ -384,7 +383,7 @@ public sealed class SqlDataReader : IDataReader
     /// <returns>Int ou null.</returns>
     public int? GetInt32(int index)
     {
-        return IsDBNull(index) ? null : (int?)_innerDataReader.GetInt32(index);
+        return IsDBNull(index) ? null : _innerDataReader.GetInt32(index);
     }
 
     /// <summary>
@@ -404,7 +403,7 @@ public sealed class SqlDataReader : IDataReader
     /// <returns>Long ou null.</returns>
     public long? GetInt64(int index)
     {
-        return IsDBNull(index) ? null : (long?)_innerDataReader.GetInt64(index);
+        return IsDBNull(index) ? null : _innerDataReader.GetInt64(index);
     }
 
     /// <summary>
@@ -451,7 +450,7 @@ public sealed class SqlDataReader : IDataReader
     /// Retourne une table correspondant aux enregistrements retournés.
     /// </summary>
     /// <returns>Table.</returns>
-    DataTable IDataReader.GetSchemaTable()
+    DataTable? IDataReader.GetSchemaTable()
     {
         return _innerDataReader.GetSchemaTable();
     }
@@ -461,7 +460,7 @@ public sealed class SqlDataReader : IDataReader
     /// </summary>
     /// <param name="index">Indice.</param>
     /// <returns>String ou null.</returns>
-    public string GetString(int index)
+    public string? GetString(int index)
     {
         return IsDBNull(index) ? null : _innerDataReader.GetString(index);
     }
@@ -481,7 +480,7 @@ public sealed class SqlDataReader : IDataReader
     /// </summary>
     /// <param name="index">Indice.</param>
     /// <returns>Valeur ou null.</returns>
-    public object GetValue(int index)
+    public object? GetValue(int index)
     {
         return IsDBNull(index) ? null : _innerDataReader.GetValue(index);
     }
@@ -598,11 +597,7 @@ public sealed class SqlDataReader : IDataReader
         }
 
         // dispose unmanaged resources.
-        if (_innerDataReader != null)
-        {
-            _innerDataReader.Dispose();
-            _innerDataReader = null;
-        }
+        _innerDataReader?.Dispose();
     }
 
     /// <summary>

@@ -10,8 +10,8 @@ namespace Kinetix.DataAccess.Sql.Common;
 /// </summary>
 public abstract class BaseSqlCommand : IDisposable
 {
-    private readonly string _parserKey;
-    private SqlParameterCollection _parameterColl;
+    private readonly string? _parserKey;
+    private SqlParameterCollection? _parameterColl;
 
     /// <summary>
     /// Constructeur.
@@ -57,7 +57,7 @@ public abstract class BaseSqlCommand : IDisposable
         Connection = connection;
 
         string commandText;
-        using (var reader = new StreamReader(assembly.GetManifestResourceStream(resourcePath)))
+        using (var reader = new StreamReader(assembly.GetManifestResourceStream(resourcePath)!))
         {
             commandText = reader.ReadToEnd();
         }
@@ -147,7 +147,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <summary>
     /// Obtient ou définit les paramètres de la requête (limit, offset, tri).
     /// </summary>
-    public QueryParameter QueryParameters { get; set; }
+    public QueryParameter? QueryParameters { get; set; }
 
     /// <summary>
     /// Commande SQL.
@@ -228,7 +228,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="parameterName">Nom du paramètre.</param>
     /// <param name="value">Valeur du paramètre.</param>
     /// <returns>Commande.</returns>
-    public BaseSqlCommand AddParameter(string parameterName, object value)
+    public BaseSqlCommand AddParameter(string parameterName, object? value)
     {
         Parameters.AddWithValue(parameterName, value);
         return this;
@@ -261,9 +261,6 @@ public abstract class BaseSqlCommand : IDisposable
     public void Dispose()
     {
         InnerCommand.Dispose();
-        InnerCommand = null;
-        Connection = null;
-        _parameterColl = null;
     }
 
     /// <summary>
@@ -343,7 +340,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// de la première ligne.
     /// </summary>
     /// <returns>Retourne la valeur ou null.</returns>
-    public object ExecuteScalar()
+    public object? ExecuteScalar()
     {
         var listener = GetSqlCommandListener();
         try
@@ -369,7 +366,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="minRowsAffected">Nombre minimum de lignes affectées.</param>
     /// <param name="maxRowsAffected">Nombre maximum de lignes affectées.</param>
     /// <returns>Retourne la valeur ou null.</returns>
-    public object ExecuteScalar(int minRowsAffected, int maxRowsAffected)
+    public object? ExecuteScalar(int minRowsAffected, int maxRowsAffected)
     {
         using var reader = ExecuteReader();
         if (reader.Read())

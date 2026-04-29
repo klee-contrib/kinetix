@@ -21,7 +21,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// <param name="primaryKeys">Clés primaires des objets à vérifier.</param>
     /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
     /// <returns>True si au moins un objet est utilisé.</returns>
-    public bool AreUsed(ICollection<int> primaryKeys, ICollection<string> tablesToIgnore = null)
+    public bool AreUsed(ICollection<int> primaryKeys, ICollection<string>? tablesToIgnore = null)
     {
         return store.AreUsed(primaryKeys, tablesToIgnore);
     }
@@ -80,7 +80,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// </summary>
     /// <param name="primaryKey">Valeur de la clef primaire.</param>
     /// <returns>Bean.</returns>
-    public virtual T Get(object primaryKey)
+    public virtual T? Get(object primaryKey)
     {
         ArgumentNullException.ThrowIfNull(primaryKey);
 
@@ -95,7 +95,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// </summary>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    public virtual IList<T> GetAll(QueryParameter queryParameter = null)
+    public virtual IList<T> GetAll(QueryParameter? queryParameter = null)
     {
         using var tx = transactionScopeManager.EnsureTransaction();
         var coll = store.LoadAll(queryParameter);
@@ -110,7 +110,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// <param name="criteria">Critères de sélection.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    public virtual IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter queryParameter = null)
+    public virtual IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter? queryParameter = null)
     {
         using var tx = transactionScopeManager.EnsureTransaction();
         var coll = store.LoadAllByCriteria(criteria, queryParameter);
@@ -118,8 +118,8 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
         return coll;
     }
 
-    /// <inheritdoc cref="IBroker{T}.GetAllByCriteria(T, QueryParameter)" />
-    public IList<T> GetAllByCriteria(T bean, QueryParameter queryParameter = null)
+    /// <inheritdoc cref="IBroker{T}.GetAllByCriteria(T, QueryParameter?)" />
+    public IList<T> GetAllByCriteria(T bean, QueryParameter? queryParameter = null)
     {
         return GetAllByCriteria(new FilterCriteria(bean), queryParameter);
     }
@@ -130,7 +130,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// <param name="criteria">Le critère de recherche.</param>
     /// <returns>Bean.</returns>
     /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
-    public virtual T GetByCriteria(FilterCriteria criteria)
+    public virtual T? GetByCriteria(FilterCriteria criteria)
     {
         using var tx = transactionScopeManager.EnsureTransaction();
         var value = store.LoadByCriteria(criteria);
@@ -144,7 +144,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// <param name="criteria">Le critère de recherche.</param>
     /// <returns>Bean.</returns>
     /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
-    public virtual T GetByCriteria(T criteria)
+    public virtual T? GetByCriteria(T criteria)
     {
         using var tx = transactionScopeManager.EnsureTransaction();
         var value = store.LoadByCriteria(new FilterCriteria(criteria));
@@ -153,7 +153,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     }
 
     /// <inheritdoc cref="IBroker{T}.Insert" />
-    public object Insert(T bean, ColumnSelector columnSelector = null)
+    public object Insert(T bean, ColumnSelector? columnSelector = null)
     {
         using var tx = transactionScopeManager.EnsureTransaction();
         var result = store.Put(bean, forceInsert: true, columnSelector);
@@ -182,7 +182,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// <param name="primaryKey">Clé primaire de l'objet à vérifier.</param>
     /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
     /// <returns>True si l'objet est utilisé.</returns>
-    public bool IsUsed(object primaryKey, ICollection<string> tablesToIgnore = null)
+    public bool IsUsed(object primaryKey, ICollection<string>? tablesToIgnore = null)
     {
         return store.IsUsed(primaryKey, tablesToIgnore);
     }
@@ -193,7 +193,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// <param name="bean">Bean à enregistrer.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou ignorer.</param>
     /// <returns>Clef primaire.</returns>
-    public virtual object Save(T bean, ColumnSelector columnSelector = null)
+    public virtual object Save(T bean, ColumnSelector? columnSelector = null)
     {
         ArgumentNullException.ThrowIfNull(bean);
 
@@ -209,7 +209,7 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// <param name="values">Les valeurs à ajouter via associations.</param>
     /// <param name="columnSelector">Sélecteur de colonnes à mettre à jour.</param>
     /// <exception cref="ArgumentException">Si la collection n'est pas composée d'objets implémentant l'interface IBeanState.</exception>
-    public virtual void SaveAll(ICollection<T> values, ColumnSelector columnSelector = null)
+    public virtual void SaveAll(ICollection<T> values, ColumnSelector? columnSelector = null)
     {
         ArgumentNullException.ThrowIfNull(values);
 

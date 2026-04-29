@@ -25,7 +25,7 @@ internal static class DataRecordAdapterManager<T>
             sb.Append(record.GetName(i)).Append(',');
         }
 
-        IDataRecordAdapter<T> adapter;
+        IDataRecordAdapter<T>? adapter;
         lock (_adaptorMap)
         {
             if (!_adaptorMap.TryGetValue(sb.ToString(), out adapter))

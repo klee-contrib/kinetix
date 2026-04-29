@@ -40,6 +40,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.FlushCache{T}()" />
     public void FlushCache<T>()
+        where T : notnull
     {
         FlushCache(typeof(T).Name);
     }
@@ -52,6 +53,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.FlushCacheAsync{T}(CancellationToken)" />
     public Task FlushCacheAsync<T>(CancellationToken ct = default)
+        where T : notnull
     {
         return FlushCacheAsync(typeof(T).Name, ct);
     }
@@ -69,12 +71,14 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}()" />
     public ICollection<T> GetReferenceList<T>()
+        where T : notnull
     {
         return GetReferenceEntry<T>().Map.Values;
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(Func{T, bool})" />
     public ICollection<T> GetReferenceList<T>(Func<T, bool> predicate)
+        where T : notnull
     {
         return GetReferenceList<T>().Where(predicate).ToList();
     }
@@ -89,12 +93,14 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceListAsync{T}(CancellationToken)" />
     public async Task<ICollection<T>> GetReferenceListAsync<T>(CancellationToken ct = default)
+        where T : notnull
     {
         return (await GetReferenceEntryAsync<T>(ct)).Map.Values;
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceListAsync{T}(Func{T, bool}, CancellationToken)" />
     public async Task<ICollection<T>> GetReferenceListAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+        where T : notnull
     {
         return (await GetReferenceListAsync<T>(ct)).Where(predicate).ToList();
     }
@@ -115,23 +121,26 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceMap{T}()" />
     public IDictionary<object, T> GetReferenceMap<T>()
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
+        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x)!, x => x);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceMap{T}(Func{T, bool})" />
     public IDictionary<object, T> GetReferenceMap<T>(Func<T, bool> predicate)
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
+        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x)!, x => x);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceMapAsync{T}(CancellationToken)" />
     public async Task<IDictionary<object, T>> GetReferenceMapAsync<T>(CancellationToken ct = default)
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return (await GetReferenceListAsync<T>(ct)).ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
+        return (await GetReferenceListAsync<T>(ct)).ToDictionary(x => def.PrimaryKey.GetValue(x)!, x => x);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceMapAsync{T}(Func{T, bool}, CancellationToken)" />
@@ -139,13 +148,15 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         Func<T, bool> predicate,
         CancellationToken ct = default
     )
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return (await GetReferenceListAsync(predicate, ct)).ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
+        return (await GetReferenceListAsync(predicate, ct)).ToDictionary(x => def.PrimaryKey.GetValue(x)!, x => x);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(object?)" />
     public T? GetReferenceObject<T>(object? primaryKey)
+        where T : notnull
     {
         if (primaryKey == null)
         {
@@ -157,6 +168,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(Func{T, bool})" />
     public T? GetReferenceObject<T>(Func<T, bool> predicate)
+        where T : notnull
     {
         return GetReferenceEntry<T>().GetReferenceObject(predicate);
     }
@@ -171,6 +183,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceObjectAsync{T}(object?, CancellationToken)" />
     public async Task<T?> GetReferenceObjectAsync<T>(object? primaryKey, CancellationToken ct = default)
+        where T : notnull
     {
         if (primaryKey == null)
         {
@@ -182,6 +195,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceObjectAsync{T}(Func{T, bool}, CancellationToken)" />
     public async Task<T?> GetReferenceObjectAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+        where T : notnull
     {
         return (await GetReferenceEntryAsync<T>(ct)).GetReferenceObject(predicate);
     }
@@ -204,12 +218,14 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object?)" />
     public string? GetReferenceValue<T>(object? primaryKey)
+        where T : notnull
     {
         return primaryKey == null ? null : GetReferenceValue(GetReferenceObject<T>(primaryKey));
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(Func{T, bool})" />
     public string? GetReferenceValue<T>(Func<T, bool> predicate)
+        where T : notnull
     {
         return GetReferenceValue(GetReferenceObject(predicate));
     }
@@ -224,12 +240,14 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueAsync{T}(object?, CancellationToken)" />
     public async Task<string?> GetReferenceValueAsync<T>(object? primaryKey, CancellationToken ct = default)
+        where T : notnull
     {
         return primaryKey == null ? null : GetReferenceValue(await GetReferenceObjectAsync<T>(primaryKey, ct));
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueAsync{T}(Func{T, bool}, CancellationToken)" />
     public async Task<string?> GetReferenceValueAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+        where T : notnull
     {
         return GetReferenceValue(await GetReferenceObjectAsync(predicate, ct));
     }
@@ -252,16 +270,18 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap{T}()" />
     public IDictionary<object, string> GetReferenceValueMap<T>()
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x), GetRequiredReferenceValue);
+        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x)!, GetRequiredReferenceValue);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap{T}(Func{T, bool})" />
     public IDictionary<object, string> GetReferenceValueMap<T>(Func<T, bool> predicate)
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x), GetRequiredReferenceValue);
+        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x)!, GetRequiredReferenceValue);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap(string)" />
@@ -274,10 +294,11 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueMapAsync{T}(CancellationToken)" />
     public async Task<IDictionary<object, string>> GetReferenceValueMapAsync<T>(CancellationToken ct = default)
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
         return (await GetReferenceListAsync<T>(ct)).ToDictionary(
-            x => def.PrimaryKey.GetValue(x),
+            x => def.PrimaryKey.GetValue(x)!,
             GetRequiredReferenceValue
         );
     }
@@ -287,10 +308,11 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         Func<T, bool> predicate,
         CancellationToken ct = default
     )
+        where T : notnull
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
         return (await GetReferenceListAsync(predicate, ct)).ToDictionary(
-            x => def.PrimaryKey.GetValue(x),
+            x => def.PrimaryKey.GetValue(x)!,
             GetRequiredReferenceValue
         );
     }
@@ -393,13 +415,14 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         }
 
         var definition = BeanDescriptor.GetDefinition(reference);
-        return definition.DefaultProperty.GetValue(reference).ToString();
+        return definition.DefaultProperty?.GetValue(reference)?.ToString();
     }
 
     private static string GetRequiredReferenceValue<T>(T reference)
+        where T : notnull
     {
         var definition = BeanDescriptor.GetDefinition(reference);
-        return definition.DefaultProperty.GetValue(reference).ToString()!;
+        return definition.DefaultProperty?.GetValue(reference)?.ToString()!;
     }
 
     private async Task<ErrorMessageCollection> CheckReferenceKeysInternal(object? bean, CancellationToken ct = default)
@@ -464,6 +487,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     }
 
     private ReferenceEntry<T> GetReferenceEntry<T>()
+        where T : notnull
     {
         return GetReferenceEntryAsync<T>(default).GetAwaiter().GetResult();
     }
@@ -474,6 +498,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     /// <param name="ct">CancellationToken.</param>
     /// <returns>L'entrée de cache.</returns>
     private async Task<ReferenceEntry<T>> GetReferenceEntryAsync<T>(CancellationToken ct = default)
+        where T : notnull
     {
         var key = GetCacheKey(typeof(T).Name);
         return new ReferenceEntry<T>
@@ -511,7 +536,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
                     var def = BeanDescriptor.GetDefinition(typeof(T));
                     return (await InvokeReferenceAccessor<T>(ct)).ToDictionary(
-                        r => def.PrimaryKey.GetValue(r).ToString()!,
+                        r => def.PrimaryKey.GetValue(r)!.ToString()!,
                         r => r
                     );
                 },
@@ -536,6 +561,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     /// <param name="ct">CancellationToken.</param>
     /// <returns>La liste de référence.</returns>
     private async Task<ICollection<T>> InvokeReferenceAccessor<T>(CancellationToken ct = default)
+        where T : notnull
     {
         if (!_referenceAccessors.TryGetValue(typeof(T), out var accessor))
         {

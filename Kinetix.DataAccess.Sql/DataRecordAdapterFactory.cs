@@ -50,98 +50,98 @@ internal class DataRecordAdapterFactory
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readNonNullableBooleanMethodIndo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadNonNullableBoolean),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readByteMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadByte),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readDateTimeMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadDateTime),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readDecimalMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadDecimal),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readIntMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadInt),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readShortMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadShort),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readLongMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadLong),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readFloatMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadFloat),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readDoubleMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadDouble),
             BindingFlags.Static | BindingFlags.NonPublic,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readStringMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadString),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readCharMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadChar),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readGuidMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadGuid),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
         _readObjectMethodInfo = typeof(AbstractDataReaderAdapter).GetMethod(
             nameof(AbstractDataReaderAdapter.ReadObject),
             BindingFlags.Static | BindingFlags.Public,
             binder: null,
             _abstractReadMethodParams,
             modifiers: null
-        );
+        )!;
     }
 
     /// <summary>
@@ -169,7 +169,7 @@ internal class DataRecordAdapterFactory
 
         var adapterType = tb.CreateTypeInfo();
 
-        return Activator.CreateInstance(adapterType);
+        return Activator.CreateInstance(adapterType)!;
     }
 
     /// <summary>
@@ -206,18 +206,18 @@ internal class DataRecordAdapterFactory
         // Si le bean passé en paramètre est différent de null, on ne crée pas une nouvelle instance.
         mthdIL.Emit(OpCodes.Brtrue_S, lbl);
 
-        mthdIL.Emit(OpCodes.Newobj, t.GetConstructor(_constructorParams));
+        mthdIL.Emit(OpCodes.Newobj, t.GetConstructor(_constructorParams)!);
         mthdIL.Emit(OpCodes.Stloc, bean);
 
         mthdIL.MarkLabel(lbl);
 
         // Création d'un dictionnaire d'accès aux propriétés du bean.
-        PropertyInfo prop;
+        PropertyInfo? prop;
         var definition = BeanDescriptor.GetDefinition(t, ignoreCustomTypeDesc: true);
         var dic = new Dictionary<string, PropertyInfo>();
         foreach (var property in definition.Properties)
         {
-            prop = t.GetProperty(property.PropertyName);
+            prop = t.GetProperty(property.PropertyName)!;
             dic.Add(property.PropertyName.ToLowerInvariant(), prop);
             if (property.MemberName != null)
             {
@@ -225,7 +225,7 @@ internal class DataRecordAdapterFactory
             }
         }
 
-        LocalBuilder obj;
+        LocalBuilder? obj;
         for (var i = 0; i < record.FieldCount; ++i)
         {
             var fieldPathItems = record.GetName(i).Split('.');
@@ -264,7 +264,7 @@ internal class DataRecordAdapterFactory
                                     }
                                 }
 
-                                mthdIL.Emit(OpCodes.Callvirt, prop.GetGetMethod());
+                                mthdIL.Emit(OpCodes.Callvirt, prop!.GetGetMethod()!);
 
                                 // Affectation de la variable.
                                 obj = mthdIL.DeclareLocal(prop.PropertyType);
@@ -276,7 +276,7 @@ internal class DataRecordAdapterFactory
                     }
 
                     var propertyName = fieldPathItems[^1];
-                    prop = obj.LocalType.GetProperty(propertyName);
+                    prop = obj!.LocalType.GetProperty(propertyName);
                     if (prop == null)
                     {
                         foreach (var p in obj.LocalType.GetProperties())
@@ -307,7 +307,7 @@ internal class DataRecordAdapterFactory
                 mthdIL.Emit(OpCodes.Ldarg_2);
                 mthdIL.Emit(OpCodes.Ldc_I4, i);
                 mthdIL.Emit(OpCodes.Call, GetReadMethodByType(prop.PropertyType));
-                mthdIL.Emit(OpCodes.Callvirt, prop.GetSetMethod(nonPublic: true));
+                mthdIL.Emit(OpCodes.Callvirt, prop.GetSetMethod(nonPublic: true)!);
             }
         }
 

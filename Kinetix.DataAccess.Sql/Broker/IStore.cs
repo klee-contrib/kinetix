@@ -14,7 +14,7 @@ public interface IStore<T>
     /// <param name="primaryKeys">Ids of the objects.</param>
     /// <param name="tablesToIgnore">A collection of tables to ignore when looking for tables that depend on the object.</param>
     /// <returns>True if one of the objects is used by another object.</returns>
-    bool AreUsed(ICollection<int> primaryKeys, ICollection<string> tablesToIgnore = null);
+    bool AreUsed(ICollection<int> primaryKeys, ICollection<string>? tablesToIgnore = null);
 
     /// <summary>
     /// Checks if the object is used by another object in the application.
@@ -22,21 +22,21 @@ public interface IStore<T>
     /// <param name="primaryKey">Id of the object.</param>
     /// <param name="tablesToIgnore">A collection of tables to ignore when looking for tables that depend on the object.</param>
     /// <returns>True if the object is used by another object.</returns>
-    bool IsUsed(object primaryKey, ICollection<string> tablesToIgnore = null);
+    bool IsUsed(object primaryKey, ICollection<string>? tablesToIgnore = null);
 
     /// <summary>
     /// Charge un bean à partir de sa clef primaire.
     /// </summary>
     /// <param name="primaryKey">Valeur de la clef primaire.</param>
     /// <returns>Bean.</returns>
-    T Load(object primaryKey);
+    T? Load(object primaryKey);
 
     /// <summary>
     /// Charge toutes les données pour un type.
     /// </summary>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    IList<T> LoadAll(QueryParameter queryParameter);
+    IList<T> LoadAll(QueryParameter? queryParameter);
 
     /// <summary>
     /// Récupération d'une liste d'objets d'un certain type correspondant à un critère donnée.
@@ -44,14 +44,14 @@ public interface IStore<T>
     /// <param name="criteria">Map de critères auquelle la recherche doit correpondre.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    IList<T> LoadAllByCriteria(FilterCriteria criteria, QueryParameter queryParameter);
+    IList<T> LoadAllByCriteria(FilterCriteria criteria, QueryParameter? queryParameter);
 
     /// <summary>
     /// Récupération d'un objet à partir de critères de recherches.
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
     /// <returns>Objet.</returns>
-    T LoadByCriteria(FilterCriteria criteria);
+    T? LoadByCriteria(FilterCriteria criteria);
 
     /// <summary>
     /// Dépose un bean dans le store.
@@ -60,7 +60,7 @@ public interface IStore<T>
     /// <param name="forceInsert">Force un insert (au lieu de déterminer automatiquement en fonction de la PK).</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Clef primaire de l'objet.</returns>
-    object Put(T bean, bool forceInsert, ColumnSelector columnSelector = null);
+    object Put(T bean, bool forceInsert, ColumnSelector? columnSelector = null);
 
     /// <summary>
     /// Dépose les beans dans le store.

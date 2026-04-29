@@ -20,7 +20,7 @@ public class BeanDefinition
     internal BeanDefinition(
         Type beanType,
         BeanPropertyDescriptorCollection properties,
-        string contractName,
+        string? contractName,
         bool isReference,
         bool isStatic
     )
@@ -54,7 +54,7 @@ public class BeanDefinition
     /// <summary>
     /// Retourne le nom du contrat.
     /// </summary>
-    public string ContractName { get; private set; }
+    public string? ContractName { get; private set; }
 
     /// <summary>
     /// Retourne <code>True</code> si le bean est une liste de référence, <code>False</code> sinon.
@@ -69,7 +69,7 @@ public class BeanDefinition
     /// <summary>
     /// Retourne la propriété par défaut si elle existe.
     /// </summary>
-    public BeanPropertyDescriptor DefaultProperty { get; private set; }
+    public BeanPropertyDescriptor? DefaultProperty { get; private set; }
 
     /// <summary>
     /// Retourne la clef primaire si elle existe.
@@ -86,7 +86,7 @@ public class BeanDefinition
     /// </summary>
     /// <param name="bean">Bean à vérifier.</param>
     /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
-    internal void Check(object bean, IEnumerable<string> propertiesToCheck = null)
+    internal void Check(object bean, IEnumerable<string>? propertiesToCheck = null)
     {
         var errors = GetErrors(bean, propertiesToCheck);
         if (errors.Any())
@@ -101,7 +101,7 @@ public class BeanDefinition
     /// <param name="bean">Bean à vérifier.</param>
     /// <param name="propertiesToCheck">Si renseigné, seules ces propriétés seront validées.</param>
     /// <returns>Les erreurs.</returns>
-    internal ErrorMessageCollection GetErrors(object bean, IEnumerable<string> propertiesToCheck = null)
+    internal ErrorMessageCollection GetErrors(object bean, IEnumerable<string>? propertiesToCheck = null)
     {
         var errors = new ErrorMessageCollection();
         foreach (

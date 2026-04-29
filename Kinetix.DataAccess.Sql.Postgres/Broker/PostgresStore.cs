@@ -30,7 +30,7 @@ internal class PostgresStore<T>(string dataSourceName, ConnectionPool connection
     protected override string BuildInsertQuery(
         BeanDefinition beanDefinition,
         bool isGeneratedPK,
-        ColumnSelector columnSelector
+        ColumnSelector? columnSelector
     )
     {
         var sbInsert = new StringBuilder(CurrentUserStatementLog);

@@ -80,7 +80,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <summary>
     /// Current user logging statement.
     /// </summary>
-    protected string CurrentUserStatementLog { get; set; }
+    protected string? CurrentUserStatementLog { get; set; }
 
     /// <summary>
     /// Source de données du store.
@@ -122,14 +122,14 @@ public abstract class SqlStore<T> : IStore<T>
     public SqlDataParameter AddParameter(
         SqlParameterCollection parameters,
         BeanPropertyDescriptor property,
-        object value
+        object? value
     )
     {
         ArgumentNullException.ThrowIfNull(parameters);
 
         ArgumentNullException.ThrowIfNull(property);
 
-        return parameters.AddWithValue(property.MemberName, value);
+        return parameters.AddWithValue(property.MemberName!, value);
     }
 
     /// <summary>
@@ -138,7 +138,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="primaryKeys">Ids of the objects.</param>
     /// <param name="tablesToIgnore">A collection of tables to ignore when looking for tables that depend on the object.</param>
     /// <returns>True if one of the objects is used by another object.</returns>
-    public virtual bool AreUsed(ICollection<int> primaryKeys, ICollection<string> tablesToIgnore = null)
+    public virtual bool AreUsed(ICollection<int> primaryKeys, ICollection<string>? tablesToIgnore = null)
     {
         throw new NotSupportedException();
     }
@@ -166,7 +166,7 @@ public abstract class SqlStore<T> : IStore<T>
         string commandName,
         string tableName,
         FilterCriteria criteria,
-        QueryParameter queryParameter
+        QueryParameter? queryParameter
     )
     {
         var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
@@ -174,7 +174,7 @@ public abstract class SqlStore<T> : IStore<T>
 
         var commandText = new StringBuilder("select ");
 
-        string order = null;
+        string? order = null;
         if (queryParameter != null && !string.IsNullOrEmpty(queryParameter.SortCondition))
         {
             order = queryParameter.SortCondition;
@@ -199,7 +199,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="primaryKey">Id of the object.</param>
     /// <param name="tablesToIgnore">A collection of tables to ignore when looking for tables that depend on the object.</param>
     /// <returns>True if the object is used by another object.</returns>
-    public virtual bool IsUsed(object primaryKey, ICollection<string> tablesToIgnore = null)
+    public virtual bool IsUsed(object primaryKey, ICollection<string>? tablesToIgnore = null)
     {
         throw new NotSupportedException();
     }
@@ -209,7 +209,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// </summary>
     /// <param name="primaryKey">Valeur de la clef primaire.</param>
     /// <returns>Bean.</returns>
-    public T Load(object primaryKey)
+    public T? Load(object primaryKey)
     {
         ArgumentNullException.ThrowIfNull(primaryKey);
 
@@ -219,9 +219,9 @@ public abstract class SqlStore<T> : IStore<T>
 
         // On charge l'objet à partir d'un seul critère
         // correspondant à sa clé primaire
-        var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName, Expression.Equals, primaryKey);
+        var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName!, Expression.Equals, primaryKey);
 
-        var cmd = GetCommand(commandName, Definition.ContractName, criteria, queryParameter: null);
+        var cmd = GetCommand(commandName, Definition.ContractName!, criteria, queryParameter: null);
         return CollectionBuilder<T>.ParseCommandForSingleObject(cmd);
     }
 
@@ -230,7 +230,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// </summary>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    public IList<T> LoadAll(QueryParameter queryParameter)
+    public IList<T> LoadAll(QueryParameter? queryParameter)
     {
         var commandName = ServiceSelect + "_ALL_" + Definition.ContractName;
         return InternalLoadAll(commandName, queryParameter, new FilterCriteria());
@@ -242,7 +242,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="criteria">Liste des critères de correpondance.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    public IList<T> LoadAllByCriteria(FilterCriteria criteria, QueryParameter queryParameter)
+    public IList<T> LoadAllByCriteria(FilterCriteria criteria, QueryParameter? queryParameter)
     {
         // Les critères ne doivent pas être vides
         ArgumentNullException.ThrowIfNull(criteria);
@@ -257,12 +257,12 @@ public abstract class SqlStore<T> : IStore<T>
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
     /// <returns>Objet.</returns>
-    public T LoadByCriteria(FilterCriteria criteria)
+    public T? LoadByCriteria(FilterCriteria criteria)
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceSelect + "_LIKE_" + Definition.ContractName;
-        var cmd = GetCommand(commandName, Definition.ContractName, criteria, queryParameter: null);
+        var cmd = GetCommand(commandName, Definition.ContractName!, criteria, queryParameter: null);
         return CollectionBuilder<T>.ParseCommandForSingleObject(cmd);
     }
 
@@ -274,7 +274,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Clef primaire.</returns>
     /// <exception cref="BrokerException">Retourne une erreur en cas de mise à jour erronée.</exception>
-    public object Put(T bean, bool forceInsert, ColumnSelector columnSelector = null)
+    public object Put(T bean, bool forceInsert, ColumnSelector? columnSelector = null)
     {
         ArgumentNullException.ThrowIfNull(bean);
 
@@ -282,7 +282,7 @@ public abstract class SqlStore<T> : IStore<T>
             bean,
             columnSelector != null
                 ? Definition
-                    .Properties.Where(p => columnSelector.ColumnList.Contains(p.MemberName))
+                    .Properties.Where(p => columnSelector.ColumnList.Contains(p.MemberName!))
                     .Select(p => p.PropertyName)
                 : null
         );
@@ -344,9 +344,9 @@ public abstract class SqlStore<T> : IStore<T>
 
         // On charge l'objet à partir d'un seul critère
         // correspondant à sa clé primaire
-        var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName, Expression.Equals, primaryKey);
+        var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName!, Expression.Equals, primaryKey);
 
-        var rowsAffected = DeleteAllByCriteria(commandName, Definition.ContractName, criteria);
+        var rowsAffected = DeleteAllByCriteria(commandName, Definition.ContractName!, criteria);
         if (rowsAffected == 0)
         {
             throw new BrokerException("Zero row deleted");
@@ -367,7 +367,7 @@ public abstract class SqlStore<T> : IStore<T>
         ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceDelete + "_ALL_LIKE_" + Definition.ContractName;
-        DeleteAllByCriteria(commandName, Definition.ContractName, criteria);
+        DeleteAllByCriteria(commandName, Definition.ContractName!, criteria);
     }
 
     /// <summary>
@@ -383,7 +383,7 @@ public abstract class SqlStore<T> : IStore<T>
         BeanDefinition beanDefinition,
         SqlParameterCollection parameters,
         bool dbGeneratedPK,
-        ColumnSelector columnSelector
+        ColumnSelector? columnSelector
     )
     {
         ArgumentNullException.ThrowIfNull(beanDefinition);
@@ -425,7 +425,7 @@ public abstract class SqlStore<T> : IStore<T>
         T bean,
         BeanDefinition beanDefinition,
         SqlParameterCollection parameters,
-        ColumnSelector columnSelector
+        ColumnSelector? columnSelector
     )
     {
         ArgumentNullException.ThrowIfNull(beanDefinition);
@@ -472,7 +472,7 @@ public abstract class SqlStore<T> : IStore<T>
         StringBuilder commandText,
         string tableName,
         FilterCriteria criteria,
-        string sortOrder,
+        string? sortOrder,
         BaseSqlCommand command
     )
     {
@@ -523,7 +523,7 @@ public abstract class SqlStore<T> : IStore<T>
     protected abstract string BuildInsertQuery(
         BeanDefinition beanDefinition,
         bool isGeneratedPK,
-        ColumnSelector columnSelector
+        ColumnSelector? columnSelector
     );
 
     /// <summary>
@@ -532,7 +532,7 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="beanDefinition">Définition du bean.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou à ignorer.</param>
     /// <returns>Requête SQL.</returns>
-    protected string BuildUpdateQuery(BeanDefinition beanDefinition, ColumnSelector columnSelector)
+    protected string BuildUpdateQuery(BeanDefinition beanDefinition, ColumnSelector? columnSelector)
     {
         ArgumentNullException.ThrowIfNull(beanDefinition);
 
@@ -644,8 +644,8 @@ public abstract class SqlStore<T> : IStore<T>
         string commandName,
         T bean,
         BeanDefinition beanDefinition,
-        ColumnSelector columnSelector,
-        object primaryKeyValue = null
+        ColumnSelector? columnSelector,
+        object? primaryKeyValue = null
     )
     {
         var sql = BuildInsertQuery(beanDefinition, primaryKeyValue == null, columnSelector);
@@ -689,7 +689,7 @@ public abstract class SqlStore<T> : IStore<T>
             commandText.Append(pos == 0 ? " where " : " and ");
             commandText.Append(GetColumnCriteriaByColumnName(criteriaParam.ColumnName));
 
-            string parameterName = null;
+            string? parameterName = null;
             if (!mapParameters.TryGetValue(criteriaParam.ColumnName, out var value))
             {
                 parameterName = criteriaParam.ColumnName;
@@ -705,7 +705,7 @@ public abstract class SqlStore<T> : IStore<T>
 
             if (criteriaParam.Expression == Expression.Between)
             {
-                var dateValues = (DateTime[])criteriaParam.Value;
+                var dateValues = (DateTime[])criteriaParam.Value!;
                 command.AddParameter(parameterName + "T1", dateValues[0]);
                 command.AddParameter(parameterName + "T2", dateValues[1]);
             }
@@ -731,7 +731,7 @@ public abstract class SqlStore<T> : IStore<T>
         string commandName,
         T bean,
         BeanDefinition beanDefinition,
-        ColumnSelector columnSelector
+        ColumnSelector? columnSelector
     )
     {
         var sql = BuildUpdateQuery(beanDefinition, columnSelector);
@@ -750,7 +750,7 @@ public abstract class SqlStore<T> : IStore<T>
     private static void AddPrimaryKeyParameter(
         SqlParameterCollection parameters,
         string primaryKeyName,
-        object primaryKeyValue
+        object? primaryKeyValue
     )
     {
         ArgumentNullException.ThrowIfNull(parameters);
@@ -768,9 +768,9 @@ public abstract class SqlStore<T> : IStore<T>
     /// <returns>DataReader contenant le bean sauvegardé.</returns>
     private IDataReader ExecutePutReader(
         T bean,
-        object primaryKeyValue,
+        object? primaryKeyValue,
         bool forceInsert,
-        ColumnSelector columnSelector
+        ColumnSelector? columnSelector
     )
     {
         if (!forceInsert && primaryKeyValue != null)
@@ -828,12 +828,12 @@ public abstract class SqlStore<T> : IStore<T>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <param name="criteria">Map de critères auquelle la recherche doit correpondre.</param>
     /// <returns>Collection.</returns>
-    private List<T> InternalLoadAll(string commandName, QueryParameter queryParameter, FilterCriteria criteria)
+    private List<T> InternalLoadAll(string commandName, QueryParameter? queryParameter, FilterCriteria criteria)
     {
         // Définition du tri à partir de la requete.
         queryParameter?.RemapSortColumn(typeof(T));
 
-        var cmd = GetCommand(commandName, Definition.ContractName, criteria, queryParameter);
+        var cmd = GetCommand(commandName, Definition.ContractName!, criteria, queryParameter);
         return CollectionBuilder<T>.ParseCommand(cmd).ToList();
     }
 }

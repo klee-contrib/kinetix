@@ -222,8 +222,8 @@ public class QueryParameter
 
         list =
             sortOrder == SortOrder.Asc
-                ? list.OrderBy(x => propertyDescriptor.GetValue(x)).ToList()
-                : list.OrderByDescending(x => propertyDescriptor.GetValue(x)).ToList();
+                ? list.OrderBy(x => propertyDescriptor.GetValue(x!)).ToList()
+                : list.OrderByDescending(x => propertyDescriptor.GetValue(x!)).ToList();
 
         // If this.Limit == 0 we disable pagination.
         return list.Skip(Offset).Take(Limit > 0 ? Limit : list.Count).ToList();
@@ -243,7 +243,7 @@ public class QueryParameter
     /// </summary>
     /// <param name="columns">Liste des colonnes à exclure.</param>
     /// <returns>Paramètres.</returns>
-    public QueryParameter ExcludeColumns(params string[] columns)
+    public QueryParameter? ExcludeColumns(params string[] columns)
     {
         ArgumentNullException.ThrowIfNull(columns);
 

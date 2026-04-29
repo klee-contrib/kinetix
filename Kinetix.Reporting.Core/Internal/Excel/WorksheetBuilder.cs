@@ -73,14 +73,14 @@ internal class WorksheetBuilder<T>(
 
                     var property = def.Properties.SingleOrDefault(p => p.PropertyName == me.Member.Name);
                     booleanFormat =
-                        property?.Domain.ExtraAttributes.OfType<BooleanFormatAttribute>().SingleOrDefault()?.Format
+                        property?.Domain?.ExtraAttributes.OfType<BooleanFormatAttribute>().SingleOrDefault()?.Format
                         ?? default;
                     dateFormat = property
-                        ?.Domain.ExtraAttributes.OfType<DateFormatAttribute>()
+                        ?.Domain?.ExtraAttributes.OfType<DateFormatAttribute>()
                         .SingleOrDefault()
                         ?.Format;
                     numberFormat = property
-                        ?.Domain.ExtraAttributes.OfType<NumberFormatAttribute>()
+                        ?.Domain?.ExtraAttributes.OfType<NumberFormatAttribute>()
                         .SingleOrDefault()
                         ?.Format;
                     if (property?.ReferenceType?.GetCustomAttributes<ReferenceAttribute>().Any() ?? false)

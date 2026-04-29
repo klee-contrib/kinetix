@@ -31,7 +31,7 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
     /// <summary>
     /// Le filtre (?).
     /// </summary>
-    public object Filter { get; set; }
+    public object? Filter { get; set; }
 
     /// <summary>
     /// Indique sur le collection est en lecture seule.

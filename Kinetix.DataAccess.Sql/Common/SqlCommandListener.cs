@@ -48,7 +48,7 @@ public abstract class SqlCommandListener : IDisposable
     public void Dispose()
     {
         var process = Analytics.StopProcess();
-        if (!process.Disabled)
+        if (process != null && !process.Disabled)
         {
             Logger.LogInformation($"{_command.CommandName} ({process.Duration} ms)");
             Logger.LogDebug(_command.InnerCommand.CommandText);
@@ -85,7 +85,7 @@ public abstract class SqlCommandListener : IDisposable
     /// <remarks>
     /// Prend en charge les messages 547 et 2601 dans les langues 1033 et 1036.
     /// </remarks>
-    protected SqlErrorMessage HandleConstraintException(string initialMessage)
+    protected SqlErrorMessage? HandleConstraintException(string initialMessage)
     {
         var match = new Regex(ForeignKeyConstraintPattern).Match(initialMessage);
         if (match.Success)
@@ -102,7 +102,7 @@ public abstract class SqlCommandListener : IDisposable
     /// </summary>
     /// <param name="initialMessage">Message initial.</param>
     /// <returns>Message final.</returns>
-    protected SqlErrorMessage HandleUniqueConstraintException(string initialMessage)
+    protected SqlErrorMessage? HandleUniqueConstraintException(string initialMessage)
     {
         var match = new Regex(UniqueKeyConstraintPattern).Match(initialMessage);
         if (!match.Success)

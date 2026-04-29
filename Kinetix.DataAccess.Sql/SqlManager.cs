@@ -8,7 +8,7 @@ namespace Kinetix.DataAccess.Sql;
 /// </summary>
 public sealed class SqlManager
 {
-    private readonly Dictionary<string, object> _constValues = [];
+    private readonly Dictionary<string, object?> _constValues = [];
     private readonly List<ResourceManager> _constraintMessagesResources = [];
 
     /// <summary>
@@ -41,7 +41,7 @@ public sealed class SqlManager
     /// </summary>
     /// <param name="shortName">Nom court.</param>
     /// <returns>Valeur de la constante statique.</returns>
-    public object GetConstValueByShortName(string shortName)
+    public object? GetConstValueByShortName(string shortName)
     {
         if (string.IsNullOrEmpty(shortName))
         {
@@ -57,7 +57,7 @@ public sealed class SqlManager
     /// <param name="indexName">Nom de l'index.</param>
     /// <param name="violation">Type de violation.</param>
     /// <returns>Message d'erreur ou null.</returns>
-    internal string GetConstraintMessage(string indexName, SqlConstraintViolation violation)
+    internal string? GetConstraintMessage(string indexName, SqlConstraintViolation violation)
     {
         var resourceName = indexName;
         if (violation == SqlConstraintViolation.ForeignKey)

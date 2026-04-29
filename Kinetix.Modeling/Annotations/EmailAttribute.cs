@@ -40,7 +40,7 @@ public sealed class EmailAttribute(int maximumLength) : StringLengthAttribute(ma
     /// </summary>
     /// <param name="value">Valeur testée.</param>
     /// <returns><code>True</code> si l'objet est valide, <code>False</code> sinon.</returns>
-    public override bool IsValid(object value)
+    public override bool IsValid(object? value)
     {
         var strValue = value as string;
         return base.IsValid(value) && (strValue == null || _mailRegex.IsMatch(strValue));

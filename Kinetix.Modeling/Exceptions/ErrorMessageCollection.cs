@@ -117,7 +117,7 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     /// </summary>
     /// <param name="fieldName">Nom du champ.</param>
     /// <param name="errorMessage">Message d'erreur.</param>
-    public void AddEntry(string fieldName, string errorMessage)
+    public void AddEntry(string fieldName, string? errorMessage)
     {
         _entryList.Add(new ErrorMessage(fieldName, errorMessage, code: null));
     }

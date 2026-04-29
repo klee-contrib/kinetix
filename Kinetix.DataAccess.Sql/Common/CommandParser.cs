@@ -77,7 +77,7 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <param name="index">L'index.</param>
     /// <param name="violation">La violation.</param>
     /// <returns>Le message.</returns>
-    internal string GetConstraintMessage(string index, SqlConstraintViolation violation)
+    internal string? GetConstraintMessage(string index, SqlConstraintViolation violation)
     {
         return sqlManager.GetConstraintMessage(index, violation);
     }
@@ -88,7 +88,7 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <param name="command">Commande.</param>
     /// <param name="parserKey">Clef représentative de la commande.</param>
     /// <param name="queryParameter">Paramètres de la requête (limit, offset, tri).</param>
-    internal void ParseCommand(IDbCommand command, string parserKey, QueryParameter queryParameter = null)
+    internal void ParseCommand(IDbCommand command, string? parserKey, QueryParameter? queryParameter = null)
     {
         ArgumentNullException.ThrowIfNull(command);
 
@@ -184,7 +184,7 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// </summary>
     /// <param name="queryParameter">Query parameter.</param>
     /// <returns>Order by clause.</returns>
-    private static string GenerateOrderByClause(QueryParameter queryParameter)
+    private static string GenerateOrderByClause(QueryParameter? queryParameter)
     {
         if (queryParameter != null)
         {
@@ -277,7 +277,7 @@ public abstract class CommandParser(SqlManager sqlManager)
             return !checkEquals;
         }
 
-        var strValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+        var strValue = Convert.ToString(value, CultureInfo.InvariantCulture)!;
         for (var i = 1; i < array.Length; i++)
         {
             var compareValue = ExtractDynamicValue(array[i]);
@@ -339,7 +339,7 @@ public abstract class CommandParser(SqlManager sqlManager)
         {
             var constant = value[1..^1];
             var constantValue = sqlManager.GetConstValueByShortName(constant) ?? throw new NotSupportedException();
-            value = Convert.ToString(constantValue, CultureInfo.InvariantCulture);
+            value = Convert.ToString(constantValue, CultureInfo.InvariantCulture)!;
         }
 
         return value;
@@ -351,7 +351,7 @@ public abstract class CommandParser(SqlManager sqlManager)
     /// <param name="commandText">Texte de la commande SQL.</param>
     /// <param name="currentPos">Position courante.</param>
     /// <returns>Position de la prochaine instruction.</returns>
-    private Token GetNextToken(string commandText, int currentPos)
+    private Token? GetNextToken(string commandText, int currentPos)
     {
         var ifPos = commandText.IndexOf(TagIfStart, currentPos, StringComparison.OrdinalIgnoreCase);
         var cstPos = commandText.IndexOf(TagStaticParStart, currentPos);
@@ -456,7 +456,7 @@ public abstract class CommandParser(SqlManager sqlManager)
         string commandText,
         int index,
         bool isOutputEnabled,
-        QueryParameter queryParameter
+        QueryParameter? queryParameter
     )
     {
         var currentPos = index;
@@ -509,7 +509,7 @@ public abstract class CommandParser(SqlManager sqlManager)
         StringBuilder sqlBuilder,
         Token t,
         bool isExpressionEnabled,
-        QueryParameter queryParameter
+        QueryParameter? queryParameter
     )
     {
         switch (t.Type)
@@ -565,6 +565,6 @@ public abstract class CommandParser(SqlManager sqlManager)
         /// <summary>
         /// Valeur de la constante.
         /// </summary>
-        public string ConstantValue { get; set; }
+        public string? ConstantValue { get; set; }
     }
 }

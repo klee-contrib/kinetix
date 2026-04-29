@@ -265,7 +265,7 @@ public class FilterCriteria
     /// <param name="param">Nom du paramètre (champ dans la table).</param>
     /// <param name="exprType">Expression utilisée.</param>
     /// <param name="value">Valeur du critère.</param>
-    internal void AddCriteria(string param, Expression exprType, object value)
+    internal void AddCriteria(string param, Expression exprType, object? value)
     {
         if (string.IsNullOrEmpty(param))
         {
@@ -290,7 +290,7 @@ public class FilterCriteria
     /// </summary>
     /// <param name="criteria">Critère.</param>
     /// <param name="expressionIndex">Index des expressions à appliquer.</param>
-    private void AddAllCriteria(object criteria, IDictionary<string, Expression> expressionIndex)
+    private void AddAllCriteria(object criteria, IDictionary<string, Expression>? expressionIndex)
     {
         var definition = BeanDescriptor.GetDefinition(criteria);
         foreach (var property in definition.Properties)

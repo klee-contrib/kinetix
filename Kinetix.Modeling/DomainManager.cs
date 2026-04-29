@@ -21,9 +21,9 @@ internal static class DomainManager
     /// </summary>
     /// <param name="property">Propriété.</param>
     /// <returns>Domaine.</returns>
-    internal static Domain GetDomain(BeanPropertyDescriptor property)
+    internal static Domain? GetDomain(BeanPropertyDescriptor property)
     {
-        Domain domain = null;
+        Domain? domain = null;
         ArgumentNullException.ThrowIfNull(property);
 
         if (property.DomainName == null)
@@ -37,7 +37,7 @@ internal static class DomainManager
                 domain =
                     builtInDomain != null
                         ? GetDomain(
-                            Enum.GetValues(typeof(BuiltInDomains))
+                            Enum.GetValues<BuiltInDomains>()
                                 .Cast<Enum>()
                                 .Single(e => e.ToString() == builtInDomain.Name)
                         )
@@ -75,7 +75,7 @@ internal static class DomainManager
                         continue;
                     }
 
-                    extraAttributes.Add(attribute as Attribute);
+                    extraAttributes.Add((attribute as Attribute)!);
                 }
 
                 return new Domain(d, validationAttributes.ToList(), extraAttributes);

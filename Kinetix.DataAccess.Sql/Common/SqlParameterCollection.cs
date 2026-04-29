@@ -94,23 +94,23 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// <summary>
     /// Obtient ou définit un paramètre de la collection.
     /// </summary>
-    /// <param name="index">Numéro du paramètre.</param>
-    /// <returns>Paramètre.</returns>
-    object IList.this[int index]
-    {
-        get => this[index];
-        set => this[index] = (SqlDataParameter)value;
-    }
-
-    /// <summary>
-    /// Obtient ou définit un paramètre de la collection.
-    /// </summary>
     /// <param name="parameterName">Nom du paramètre.</param>
     /// <returns>Paramètre.</returns>
     object IDataParameterCollection.this[string parameterName]
     {
         get => this[parameterName];
         set => this[parameterName] = (SqlDataParameter)value;
+    }
+
+    /// <summary>
+    /// Obtient ou définit un paramètre de la collection.
+    /// </summary>
+    /// <param name="index">Numéro du paramètre.</param>
+    /// <returns>Paramètre.</returns>
+    object? IList.this[int index]
+    {
+        get => this[index];
+        set => this[index] = (SqlDataParameter)value!;
     }
 
     /// <summary>
@@ -132,9 +132,9 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// </summary>
     /// <param name="value">Nouveau paramètre.</param>
     /// <returns>Indice d'ajout.</returns>
-    int IList.Add(object value)
+    int IList.Add(object? value)
     {
-        Add((SqlDataParameter)value);
+        Add((SqlDataParameter)value!);
         return List.Count - 1;
     }
 
@@ -190,7 +190,7 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// <param name="parameterName">Nom du paramètre.</param>
     /// <param name="value">Valeur du paramètre.</param>
     /// <returns>Paramètre.</returns>
-    public SqlDataParameter AddWithValue(string parameterName, object value)
+    public SqlDataParameter AddWithValue(string parameterName, object? value)
     {
         var param = InnerCommand.CreateParameter();
         param.ParameterName = ParamValue + parameterName;
@@ -265,9 +265,9 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// </summary>
     /// <param name="value">Paramètre.</param>
     /// <returns>True si la collection contient le paramètre.</returns>
-    bool IList.Contains(object value)
+    bool IList.Contains(object? value)
     {
-        return List.Contains((SqlDataParameter)value);
+        return List.Contains((SqlDataParameter)value!);
     }
 
     /// <summary>
@@ -335,9 +335,9 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// </summary>
     /// <param name="value">Paramètre.</param>
     /// <returns>Postion du paramètre ou -1 si il est absent de la collection.</returns>
-    int IList.IndexOf(object value)
+    int IList.IndexOf(object? value)
     {
-        return IndexOf((SqlDataParameter)value);
+        return IndexOf((SqlDataParameter)value!);
     }
 
     /// <summary>
@@ -358,9 +358,9 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// </summary>
     /// <param name="index">Index d'insertion (0 pour insérer en première position).</param>
     /// <param name="value">Paramètre.</param>
-    void IList.Insert(int index, object value)
+    void IList.Insert(int index, object? value)
     {
-        Insert(index, (SqlDataParameter)value);
+        Insert(index, (SqlDataParameter)value!);
     }
 
     /// <summary>
@@ -381,9 +381,9 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
     /// Supprime un paramètre de la collection.
     /// </summary>
     /// <param name="value">Paramètre.</param>
-    void IList.Remove(object value)
+    void IList.Remove(object? value)
     {
-        Remove((SqlDataParameter)value);
+        Remove((SqlDataParameter)value!);
     }
 
     /// <summary>

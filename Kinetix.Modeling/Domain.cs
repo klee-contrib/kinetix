@@ -62,7 +62,7 @@ public sealed class Domain(
             var ranAttr = GetValidationAttribute<RangeAttribute>();
             if (ranAttr != null && ranAttr.Maximum != null)
             {
-                return ranAttr.Maximum.ToString().Length;
+                return ranAttr.Maximum.ToString()!.Length;
             }
 
             var siretAttr = GetValidationAttribute<NumeroSiretAttribute>();
@@ -78,7 +78,7 @@ public sealed class Domain(
     /// <exception cref="InvalidCastException">En cas d'erreur de type.</exception>
     /// <exception cref="BusinessException">En cas d'erreur, le message décrit l'erreur.</exception>
     /// <returns>Messages d'erreur.</returns>
-    public ErrorMessageCollection CheckValue(object value, BeanPropertyDescriptor propertyDescriptor)
+    public ErrorMessageCollection CheckValue(object? value, BeanPropertyDescriptor propertyDescriptor)
     {
         return propertyDescriptor == null ? throw new ArgumentNullException(nameof(propertyDescriptor))
             : ValidationAttributes != null
@@ -95,7 +95,7 @@ public sealed class Domain(
     /// </summary>
     /// <param name="attributeType">Type de l'attribut de validation.</param>
     /// <returns>Valeur de l'attribut.</returns>
-    public Attribute GetValidationAttribute(Type attributeType)
+    public Attribute? GetValidationAttribute(Type attributeType)
     {
         ArgumentNullException.ThrowIfNull(attributeType);
 
@@ -120,7 +120,7 @@ public sealed class Domain(
     /// </summary>
     /// <returns>Valeur de l'attribut.</returns>
     /// <typeparam name="TValidation">Type de l'attribut de validation.</typeparam>
-    public TValidation GetValidationAttribute<TValidation>()
+    public TValidation? GetValidationAttribute<TValidation>()
         where TValidation : class
     {
         if (ValidationAttributes == null)

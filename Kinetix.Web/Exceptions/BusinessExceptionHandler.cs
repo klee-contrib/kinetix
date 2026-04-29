@@ -28,7 +28,10 @@ public class BusinessExceptionHandler(KinetixExceptionConfig config, ProblemDeta
                 {
                     foreach (var error in be.Errors)
                     {
-                        response.Errors.Add(error.Message);
+                        if (error.Message != null)
+                        {
+                            response.Errors.Add(error.Message);
+                        }
                     }
                 }
 
@@ -51,7 +54,10 @@ public class BusinessExceptionHandler(KinetixExceptionConfig config, ProblemDeta
                 {
                     foreach (var error in be.Errors)
                     {
-                        errors.Add(error.Message);
+                        if (error.Message != null)
+                        {
+                            errors.Add(error.Message);
+                        }
                     }
                 }
 

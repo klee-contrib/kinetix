@@ -11,7 +11,7 @@ public sealed class FilterCriteriaParam
     /// <param name="columnName">Nom de la colonne en base de données.</param>
     /// <param name="exprType">Expression de comparaison utilisée.</param>
     /// <param name="value">Valeur du critère.</param>
-    internal FilterCriteriaParam(string columnName, Expression exprType, object value)
+    internal FilterCriteriaParam(string columnName, Expression exprType, object? value)
     {
         ColumnName = columnName;
         Value = value;
@@ -21,7 +21,7 @@ public sealed class FilterCriteriaParam
     /// <summary>
     /// Valeur du champ en base.
     /// </summary>
-    public object Value { get; private set; }
+    public object? Value { get; private set; }
 
     /// <summary>
     /// Nom de la colonne testée.

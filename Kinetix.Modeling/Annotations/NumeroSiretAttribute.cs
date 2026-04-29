@@ -37,8 +37,8 @@ public sealed class NumeroSiretAttribute : ValidationAttribute
     /// Indique si le numéro SIRET est valide ou non.
     /// </summary>
     /// <param name="value">Numéro SIRET.</param>
-    /// <returns><code>True</code> si le numéro SIRET est valide, <code>false</code> sinon.</returns>
-    public override bool IsValid(object value)
+    /// <returns><code>True</code> si le numéro SIRET est valide, <see langword="false"/> sinon.</returns>
+    public override bool IsValid(object? value)
     {
         var siret = value as string;
 

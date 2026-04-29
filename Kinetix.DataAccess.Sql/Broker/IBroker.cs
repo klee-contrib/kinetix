@@ -18,7 +18,7 @@ public interface IBroker<T> : IBroker
     /// <param name="primaryKeys">Clés primaires des objets à vérifier.</param>
     /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
     /// <returns>True si au moins un objet est utilisé.</returns>
-    bool AreUsed(ICollection<int> primaryKeys, ICollection<string> tablesToIgnore = null);
+    bool AreUsed(ICollection<int> primaryKeys, ICollection<string>? tablesToIgnore = null);
 
     /// <summary>
     /// Supprime un bean à partir de sa clef primaire.
@@ -49,14 +49,14 @@ public interface IBroker<T> : IBroker
     /// </summary>
     /// <param name="primaryKey">Valeur de la clef primaire.</param>
     /// <returns>Bean.</returns>
-    T Get(object primaryKey);
+    T? Get(object primaryKey);
 
     /// <summary>
     /// Retourne tous les beans pour un type.
     /// </summary>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    IList<T> GetAll(QueryParameter queryParameter = null);
+    IList<T> GetAll(QueryParameter? queryParameter = null);
 
     /// <summary>
     /// Retourne tous les beans pour un type suivant
@@ -65,7 +65,7 @@ public interface IBroker<T> : IBroker
     /// <param name="criteria">Liste des critères.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter queryParameter = null);
+    IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter? queryParameter = null);
 
     /// <summary>
     /// Retourne tous les beans pour un type suivant
@@ -74,21 +74,21 @@ public interface IBroker<T> : IBroker
     /// <param name="bean">Bean de critère.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
     /// <returns>Collection.</returns>
-    IList<T> GetAllByCriteria(T bean, QueryParameter queryParameter = null);
+    IList<T> GetAllByCriteria(T bean, QueryParameter? queryParameter = null);
 
     /// <summary>
     /// Retourne un bean à partir de critères de recherches.
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
     /// <returns>Bean.</returns>
-    T GetByCriteria(FilterCriteria criteria);
+    T? GetByCriteria(FilterCriteria criteria);
 
     /// <summary>
     /// Retourne un bean à partir de critères de recherches.
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
     /// <returns>Bean.</returns>
-    T GetByCriteria(T criteria);
+    T? GetByCriteria(T criteria);
 
     /// <summary>
     /// Insère un élément.
@@ -96,7 +96,7 @@ public interface IBroker<T> : IBroker
     /// <param name="bean">Bean à enregistrer.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
     /// <returns>Clef primaire de l'objet.</returns>
-    object Insert(T bean, ColumnSelector columnSelector = null);
+    object Insert(T bean, ColumnSelector? columnSelector = null);
 
     /// <summary>
     /// Insére l'ensemble des éléments.
@@ -111,7 +111,7 @@ public interface IBroker<T> : IBroker
     /// <param name="primaryKey">Clé primaire de l'objet à vérifier.</param>
     /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
     /// <returns>True si l'objet est utilisé.</returns>
-    bool IsUsed(object primaryKey, ICollection<string> tablesToIgnore = null);
+    bool IsUsed(object primaryKey, ICollection<string>? tablesToIgnore = null);
 
     /// <summary>
     /// Sauvegarde un bean (update si PK renseignée, insert sinon).
@@ -119,12 +119,12 @@ public interface IBroker<T> : IBroker
     /// <param name="bean">Bean à enregistrer.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
     /// <returns>Clef primaire de l'objet.</returns>
-    object Save(T bean, ColumnSelector columnSelector = null);
+    object Save(T bean, ColumnSelector? columnSelector = null);
 
     /// <summary>
     /// Sauvegarde l'ensemble des éléments d'une association n-n.
     /// </summary>
     /// <param name="values">Les valeurs à ajouter via associations.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
-    void SaveAll(ICollection<T> values, ColumnSelector columnSelector = null);
+    void SaveAll(ICollection<T> values, ColumnSelector? columnSelector = null);
 }

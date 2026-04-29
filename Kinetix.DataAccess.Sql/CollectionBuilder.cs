@@ -23,12 +23,12 @@ public static class CollectionBuilder<T>
         cmd.QueryParameters?.RemapSortColumn(typeof(T));
 
         using var reader = cmd.ExecuteReader() ?? throw new ArgumentNullException(nameof(cmd));
-        IDataRecordAdapter<T> adapter = null;
+        IDataRecordAdapter<T>? adapter = null;
 
         while (reader.Read())
         {
             adapter ??= DataRecordAdapterManager<T>.CreateAdapter(reader);
-            yield return adapter.Read(destination: null, reader);
+            yield return adapter.Read(destination: null, reader)!;
         }
     }
 
@@ -38,7 +38,7 @@ public static class CollectionBuilder<T>
     /// <param name="cmd">Commande a executer.</param>
     /// <param name="returnNullIfZeroRow">Indique si une valeur nulle doit être retournée si il n'y a aucune ligne.</param>
     /// <returns>Objet.</returns>
-    public static T ParseCommandForSingleObject(BaseSqlCommand cmd, bool returnNullIfZeroRow = false)
+    public static T? ParseCommandForSingleObject(BaseSqlCommand cmd, bool returnNullIfZeroRow = false)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
@@ -46,8 +46,8 @@ public static class CollectionBuilder<T>
         {
             using var reader = cmd.ExecuteReader();
 
-            IDataRecordAdapter<T> adapter = null;
-            T destination = null;
+            IDataRecordAdapter<T>? adapter = null;
+            T? destination = null;
 
             while (reader.Read())
             {

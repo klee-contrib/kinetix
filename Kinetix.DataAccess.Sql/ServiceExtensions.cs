@@ -39,7 +39,7 @@ public static class ServiceExtensions
     private static void SetTransactionManagerField(string fieldName, object value)
     {
         typeof(TransactionManager)
-            .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Static)
+            .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Static)!
             .SetValue(null, value);
     }
 }

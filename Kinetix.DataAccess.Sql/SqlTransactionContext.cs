@@ -9,7 +9,7 @@ namespace Kinetix.DataAccess.Sql;
 /// </summary>
 internal class SqlTransactionContext : ISyncTransactionContext
 {
-    private TransactionScope _scope;
+    private TransactionScope? _scope;
 
     /// <inheritdoc />
     public bool Completed { get; set; }

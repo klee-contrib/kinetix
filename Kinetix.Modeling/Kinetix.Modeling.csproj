@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Nullable>disable</Nullable>
     <Version>8.1.2</Version>
     <Description>Module de modélisation Kinetix.</Description>
   </PropertyGroup>

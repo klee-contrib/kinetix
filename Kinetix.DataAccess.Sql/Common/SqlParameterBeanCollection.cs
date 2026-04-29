@@ -13,7 +13,7 @@ namespace Kinetix.DataAccess.Sql.Common;
 public abstract class SqlParameterBeanCollection<T>
     where T : class, new()
 {
-    private readonly ConnectionPool _connectionPool;
+    private readonly ConnectionPool? _connectionPool;
 
     /// <summary>
     /// Constructeur.
@@ -21,7 +21,7 @@ public abstract class SqlParameterBeanCollection<T>
     /// <param name="connectionPool">Pool de connexion.</param>
     /// <param name="collection">Collection d'objet.</param>
     /// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
-    protected SqlParameterBeanCollection(ConnectionPool connectionPool, ICollection<T> collection, bool isInsert)
+    protected SqlParameterBeanCollection(ConnectionPool? connectionPool, ICollection<T> collection, bool isInsert)
     {
         _connectionPool = connectionPool;
         Collection = collection;
@@ -44,12 +44,12 @@ public abstract class SqlParameterBeanCollection<T>
     /// <summary>
     /// Index.
     /// </summary>
-    protected IDictionary<int, T> Index { get; set; }
+    protected IDictionary<int, T>? Index { get; set; }
 
     /// <summary>
     /// StringBuilder pour l'insert.
     /// </summary>
-    protected StringBuilder SbInsert { get; set; }
+    protected StringBuilder? SbInsert { get; set; }
 
     /// <summary>
     /// Crée le paramètre de liste a ajouter à la commande.
@@ -83,16 +83,17 @@ public abstract class SqlParameterBeanCollection<T>
     /// <returns>Liste d'objet insérés.</returns>
     public ICollection<T> ExecuteInsert(string commandName, string dataSourceName)
     {
-        var command = _connectionPool.GetSqlCommand(dataSourceName, commandName, SbInsert.ToString());
-        CreateParameter(command);
-        command.CommandTimeout = 0;
-        var primaryKey = BeanDefinition.PrimaryKey;
-        using (var reader = command.ExecuteReader())
+        if (_connectionPool != null && SbInsert != null)
         {
+            var command = _connectionPool.GetSqlCommand(dataSourceName, commandName, SbInsert.ToString());
+            CreateParameter(command);
+            command.CommandTimeout = 0;
+            var primaryKey = BeanDefinition.PrimaryKey;
+            using var reader = command.ExecuteReader();
             while (reader.Read())
             {
-                var source = Index[reader.GetInt32(1).Value];
-                primaryKey.SetValue(source, reader.GetInt32(0).Value);
+                var source = Index![reader.GetInt32(1)!.Value];
+                primaryKey.SetValue(source, reader.GetInt32(0)!.Value);
             }
         }
 

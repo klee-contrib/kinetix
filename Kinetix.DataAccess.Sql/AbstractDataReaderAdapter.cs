@@ -212,7 +212,7 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="idx">Index.</param>
     /// <typeparam name="T">Type de l'objet.</typeparam>
     /// <returns>Tableau de char..</returns>
-    public static T ReadObject<T>(IDataRecord record, int idx)
+    public static T? ReadObject<T>(IDataRecord record, int idx)
     {
         ArgumentNullException.ThrowIfNull(record);
 
@@ -248,7 +248,7 @@ public abstract class AbstractDataReaderAdapter
     /// <param name="record">Record.</param>
     /// <param name="idx">Index.</param>
     /// <returns>String.</returns>
-    public static string ReadString(IDataRecord record, int idx)
+    public static string? ReadString(IDataRecord record, int idx)
     {
         ArgumentNullException.ThrowIfNull(record);
 
