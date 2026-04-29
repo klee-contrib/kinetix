@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Data.Common;
 using System.Reflection;
 using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Monitoring.Core;
@@ -88,7 +89,7 @@ internal class SqlServerConnectionPool(
     }
 
     /// <inheritdoc />
-    protected override IDbConnection GetNewConnection(string datasourceName)
+    protected override DbConnection GetNewConnection(string datasourceName)
     {
         return new SqlConnection(_connectionSettings[datasourceName]);
     }

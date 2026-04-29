@@ -19,7 +19,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="connection">Connection SQL.</param>
     /// <param name="commandParser">Parser de requête.</param>
     /// <param name="procName">Nom de la procédure stockée.</param>
-    protected BaseSqlCommand(IDbConnection connection, CommandParser commandParser, string procName)
+    protected BaseSqlCommand(DbConnection connection, CommandParser commandParser, string procName)
     {
         CommandParser = commandParser;
         CommandName = procName ?? throw new ArgumentNullException(nameof(procName));
@@ -37,7 +37,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="assembly">Assembly dans lequel chercher la requête SQL.</param>
     /// <param name="resourcePath">Chemin vers le fichier SQL.</param>
     protected BaseSqlCommand(
-        IDbConnection connection,
+        DbConnection connection,
         CommandParser commandParser,
         Assembly assembly,
         string resourcePath
@@ -80,7 +80,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="commandText">Requête SQL.</param>
     protected BaseSqlCommand(
-        IDbConnection connection,
+        DbConnection connection,
         CommandParser commandParser,
         string commandName,
         string commandText
@@ -101,7 +101,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="commandType">Type de la commande.</param>
     protected BaseSqlCommand(
-        IDbConnection connection,
+        DbConnection connection,
         CommandParser commandParser,
         string commandName,
         CommandType commandType
@@ -167,7 +167,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <summary>
     /// Connexion SQL.
     /// </summary>
-    internal IDbConnection Connection { get; private set; }
+    internal DbConnection Connection { get; private set; }
 
     /// <summary>
     /// Ajoute les paramètres pour une clause IN portant sur des entiers.

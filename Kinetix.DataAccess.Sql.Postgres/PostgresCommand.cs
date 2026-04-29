@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Data.Common;
 using System.Reflection;
 using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Monitoring.Core;
@@ -23,7 +24,7 @@ internal class PostgresCommand : BaseSqlCommand
     /// <param name="commandParser">Parser de requête.</param>
     /// <param name="procName">Nom de la procédure stockée.</param>
     internal PostgresCommand(
-        IDbConnection connection,
+        DbConnection connection,
         ILogger<PostgresCommand> logger,
         CommandParser commandParser,
         AnalyticsManager analytics,
@@ -45,7 +46,7 @@ internal class PostgresCommand : BaseSqlCommand
     /// <param name="assembly">Assembly dans lequel chercher la requête SQL.</param>
     /// <param name="resourcePath">Chemin vers le fichier SQL.</param>
     internal PostgresCommand(
-        IDbConnection connection,
+        DbConnection connection,
         ILogger<PostgresCommand> logger,
         CommandParser commandParser,
         AnalyticsManager analytics,
@@ -68,7 +69,7 @@ internal class PostgresCommand : BaseSqlCommand
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="commandText">Requête SQL.</param>
     internal PostgresCommand(
-        IDbConnection connection,
+        DbConnection connection,
         ILogger<PostgresCommand> logger,
         CommandParser commandParser,
         AnalyticsManager analytics,
@@ -91,7 +92,7 @@ internal class PostgresCommand : BaseSqlCommand
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="commandType">Type de la commande.</param>
     internal PostgresCommand(
-        IDbConnection connection,
+        DbConnection connection,
         ILogger<PostgresCommand> logger,
         CommandParser commandParser,
         AnalyticsManager analytics,

@@ -1,4 +1,4 @@
-﻿using System.Data;
+﻿using System.Data.Common;
 using System.Transactions;
 using Kinetix.Services;
 
@@ -20,18 +20,14 @@ internal class SqlTransactionContext : ISyncTransactionContext
     /// <summary>
     /// Connections.
     /// </summary>
-    internal Dictionary<string, IDbConnection> Connections { get; } = [];
+    internal Dictionary<string, DbConnection> Connections { get; } = [];
 
     /// <inheritdoc cref="ISyncTransactionContext.Init" />
     public void Init()
     {
         _scope = new(
             TransactionScopeOption.RequiresNew,
-            new TransactionOptions
-            {
-                IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted,
-                Timeout = TimeSpan.Zero,
-            }
+            new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TimeSpan.Zero }
         );
     }
 

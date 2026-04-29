@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Data.Common;
 using System.Reflection;
 using Kinetix.Services;
 
@@ -53,16 +54,13 @@ public abstract class ConnectionPool(TransactionScopeManager transactionScopeMan
     /// </summary>
     /// <param name="datasourceName">Nom de la datasource.</param>
     /// <returns>La connection.</returns>
-    protected IDbConnection GetConnection(string datasourceName)
+    protected DbConnection GetConnection(string datasourceName)
     {
-        var transactionContext = transactionScopeManager.ActiveScope?.GetContext<SqlTransactionContext>();
-
-        if (transactionContext == null)
-        {
-            throw new InvalidOperationException(
+        var transactionContext =
+            (transactionScopeManager.ActiveScope?.GetContext<SqlTransactionContext>())
+            ?? throw new InvalidOperationException(
                 "Impossible de récupérer une connection en dehors d'un scope de transaction."
             );
-        }
 
         transactionContext.Connections.TryGetValue(datasourceName, out var connection);
 
@@ -86,5 +84,5 @@ public abstract class ConnectionPool(TransactionScopeManager transactionScopeMan
     /// </summary>
     /// <param name="datasourceName">Nom de la datasource.</param>
     /// <returns>Connexion.</returns>
-    protected abstract IDbConnection GetNewConnection(string datasourceName);
+    protected abstract DbConnection GetNewConnection(string datasourceName);
 }
