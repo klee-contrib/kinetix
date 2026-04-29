@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using Kinetix.Services.DependencyInjection.Interceptors;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -11,11 +10,8 @@ namespace Kinetix.Web.Exceptions;
 /// <summary>
 /// Handler d'exception pour Kinetix.
 /// </summary>
-internal class KinetixExceptionHandler(
-    KinetixExceptionConfig config,
-    ProblemDetailsFactory problemDetailsFactory,
-    TelemetryClient? telemetryClient = null
-) : IExceptionHandler
+internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDetailsFactory problemDetailsFactory)
+    : IExceptionHandler
 {
     /// <inheritdoc cref="IExceptionHandler.TryHandleAsync" />
     public async ValueTask<bool> TryHandleAsync(
@@ -33,8 +29,6 @@ internal class KinetixExceptionHandler(
                 _ => exception,
             };
         }
-
-        telemetryClient?.TrackException(exception);
 
         IResult? result = null;
 

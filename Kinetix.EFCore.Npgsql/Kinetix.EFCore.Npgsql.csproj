@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>8.0.0</Version>
+    <Description>Module pour la configuration spécifique Npgsql pour EF Core.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Api" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Kinetix.EFCore\Kinetix.EFCore.csproj" />
+  </ItemGroup>
+</Project>

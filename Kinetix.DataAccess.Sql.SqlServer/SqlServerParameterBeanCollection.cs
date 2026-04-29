@@ -18,7 +18,7 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// <param name="collection">Collection d'objet.</param>
 /// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
 internal class SqlServerParameterBeanCollection<T>(
-    ConnectionPool connectionPool,
+    ConnectionPool? connectionPool,
     ICollection<T> collection,
     bool isInsert
 ) : SqlParameterBeanCollection<T>(connectionPool, collection, isInsert)
@@ -26,9 +26,9 @@ internal class SqlServerParameterBeanCollection<T>(
 {
     private readonly List<SqlMetaData> _metadataList = [];
 
-    private List<SqlDataRecord> _dataRecordList;
-    private BeanPropertyDescriptor _insertKeyProp;
-    private string _typeName;
+    private List<SqlDataRecord>? _dataRecordList;
+    private BeanPropertyDescriptor? _insertKeyProp;
+    private string? _typeName;
 
     /// <inheritdoc />
     protected override void Init()

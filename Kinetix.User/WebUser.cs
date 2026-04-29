@@ -13,7 +13,7 @@ namespace Kinetix.User;
 public class WebUser(HttpContext httpContext) : ICurrentUser
 {
     /// <inheritdoc cref="ICurrentUser.Login" />
-    public string Login => httpContext.User.Identity.Name;
+    public string? Login => httpContext.User.Identity?.Name;
 
     /// <inheritdoc cref="ICurrentUser.Roles" />
     public IEnumerable<string> Roles =>
@@ -25,7 +25,7 @@ public class WebUser(HttpContext httpContext) : ICurrentUser
                 .Select(c => c.Value);
 
     /// <inheritdoc cref="ICurrentUser.GetString" />
-    public string GetString(string claimType)
+    public string? GetString(string claimType)
     {
         if (httpContext.User.Identity is not ClaimsIdentity identity)
         {

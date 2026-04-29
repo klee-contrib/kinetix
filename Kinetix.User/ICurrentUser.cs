@@ -11,7 +11,7 @@ public interface ICurrentUser
     /// <summary>
     /// Retourne le login de l'utilisateur.
     /// </summary>
-    string Login { get; }
+    string? Login { get; }
 
     /// <summary>
     /// Obtient la liste des rôles de l'utilisateur courant.
@@ -22,12 +22,12 @@ public interface ICurrentUser
     /// <summary>
     /// Retourne le nom de l'utilisateur.
     /// </summary>
-    string UserName => GetString(StandardClaims.UserName);
+    string? UserName => GetString(StandardClaims.UserName);
 
     /// <summary>
     /// Retourne la culture de l'utilisateur.
     /// </summary>
-    string Culture => GetString(StandardClaims.Culture);
+    string? Culture => GetString(StandardClaims.Culture);
 
     /// <summary>
     /// Retourne l'identité de l'utilisateur.
@@ -37,7 +37,7 @@ public interface ICurrentUser
     /// <summary>
     /// Retourne le profil de l'utilisateur.
     /// </summary>
-    string ProfileId => GetString(StandardClaims.ProfileId);
+    string? ProfileId => GetString(StandardClaims.ProfileId);
 
     /// <summary>
     /// Indique si l'utilisateur courant est un super utilisateur.
@@ -87,7 +87,7 @@ public interface ICurrentUser
     /// </summary>
     /// <param name="claimType">Claim Type.</param>
     /// <returns>Data.</returns>
-    string GetString(string claimType);
+    string? GetString(string claimType);
 
     /// <summary>
     /// Returns the datas corresponding to the claim type.

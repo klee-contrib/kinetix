@@ -19,14 +19,14 @@ namespace Kinetix.DataAccess.Sql.Postgres;
 /// <param name="collection">Collection d'objet.</param>
 /// <param name="isInsert">True si les parmètres sont utilisés pour une insertion.</param>
 internal class PostgresParameterBeanCollection<T>(
-    ConnectionPool connectionPool,
+    ConnectionPool? connectionPool,
     ICollection<T> collection,
     bool isInsert
 ) : SqlParameterBeanCollection<T>(connectionPool, collection, isInsert)
     where T : class, new()
 {
-    private JsonArray _dataRecordList;
-    private BeanPropertyDescriptor _insertKeyProp;
+    private JsonArray? _dataRecordList;
+    private BeanPropertyDescriptor? _insertKeyProp;
 
     /// <inheritdoc />
     protected override void Init()
@@ -123,7 +123,7 @@ internal class PostgresParameterBeanCollection<T>(
                 record.Add(property.MemberName.ToLowerInvariant(), JsonValue.Create(value));
             }
 
-            record.Add(_insertKeyProp.MemberName.ToLowerInvariant(), JsonValue.Create(insertKey));
+            record.Add(_insertKeyProp!.MemberName.ToLowerInvariant(), JsonValue.Create(insertKey));
             _dataRecordList.Add(record);
             Index.Add(insertKey, item);
             ++insertKey;
@@ -136,7 +136,7 @@ internal class PostgresParameterBeanCollection<T>(
         parameter.ParameterName = "@table";
         parameter.Direction = ParameterDirection.Input;
         ((NpgsqlParameter)parameter.InnerParameter).NpgsqlDbType = NpgsqlDbType.Json;
-        parameter.Value = _dataRecordList.ToJsonString();
+        parameter.Value = _dataRecordList!.ToJsonString();
         return parameter;
     }
 

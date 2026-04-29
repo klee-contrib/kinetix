@@ -14,7 +14,7 @@ public static class ExcelBuilderExtensions
     /// <returns>FileContentResult.</returns>
     public static FileContentResult BuildFileContentResult(
         this IExcelBuilder builder,
-        Action<IXLWorkbook> preBuildAction = null
+        Action<IXLWorkbook>? preBuildAction = null
     )
     {
         return new FileContentResult(
@@ -23,7 +23,7 @@ public static class ExcelBuilderExtensions
         )
         {
             FileDownloadName = builder.FileName,
-            LastModified = DateTime.Now,
+            LastModified = DateTimeOffset.Now,
         };
     }
 }

@@ -34,7 +34,7 @@ internal class SqlServerCommandListener(
             return new SqlDataException(exception.Message, exception);
         }
 
-        SqlErrorMessage message = null;
+        SqlErrorMessage? message = null;
         foreach (SqlError error in sqlException.Errors)
         {
             Logger.LogError(

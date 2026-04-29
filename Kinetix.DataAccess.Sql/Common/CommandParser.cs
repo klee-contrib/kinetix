@@ -48,7 +48,7 @@ public abstract class CommandParser(SqlManager sqlManager)
     private const char TagStaticParStart = '{';
 
     private readonly Dictionary<string, bool> _keyTable = [];
-    private readonly object _keyTableLock = new();
+    private readonly Lock _keyTableLock = new();
 
     /// <summary>
     /// Type de jeton.

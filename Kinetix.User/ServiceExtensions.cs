@@ -38,7 +38,7 @@ public static class ServiceExtensions
             .AddScoped(provider =>
             {
                 var httpContext = provider.GetService<IHttpContextAccessor>()?.HttpContext;
-                return httpContext != null && httpContext.User.Identity.IsAuthenticated
+                return httpContext?.User.Identity != null && httpContext.User.Identity.IsAuthenticated
                     ? new WebUser(httpContext)
                     : (ICurrentUser)provider.GetRequiredService<T>();
             });

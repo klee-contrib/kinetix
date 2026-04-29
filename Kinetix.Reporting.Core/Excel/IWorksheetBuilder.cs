@@ -14,21 +14,21 @@ public interface IWorksheetBuilder<T>
     /// </summary>
     /// <param name="postBuildAction">Actions manuelles à effectuer sur la worksheet après construction.</param>
     /// <returns>ExcelBuilder.</returns>
-    Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction = null);
+    Task<IExcelBuilder> Build(Func<IXLWorksheet, Task>? postBuildAction = null);
 
     /// <summary>
     /// Configure une nouvelle colonne dans la Worksheet.
     /// </summary>
     /// <param name="selector">Le champ à afficher dans la colonne.</param>
     /// <returns>Builder.</returns>
-    IWorksheetBuilder<T> Column(Expression<Func<T, object>> selector);
+    IWorksheetBuilder<T> Column(Expression<Func<T, object?>> selector);
 
     /// <summary>
     /// Configure une nouvelle colonne dans la Worksheet.
     /// </summary>
     /// <param name="label">Le libellé de la colonne.</param>
     /// <returns>Builder.</returns>
-    IWorksheetBuilder<T> Column(string label = null);
+    IWorksheetBuilder<T> Column(string? label = null);
 
     /// <summary>
     /// Configure une nouvelle colonne dans la Worksheet.
@@ -36,7 +36,7 @@ public interface IWorksheetBuilder<T>
     /// <param name="label">Le libellé de la colonne.</param>
     /// <param name="selector">Le champ à afficher dans la colonne.</param>
     /// <returns>Builder.</returns>
-    IWorksheetBuilder<T> Column(string label, Expression<Func<T, object>> selector);
+    IWorksheetBuilder<T> Column(string? label, Expression<Func<T, object?>> selector);
 
     /// <summary>
     /// Configure la source de données pour la Worksheet.

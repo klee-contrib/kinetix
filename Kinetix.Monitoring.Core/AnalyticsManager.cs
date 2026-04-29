@@ -6,7 +6,7 @@ public class AnalyticsManager(IEnumerable<IMonitoringStore> stores)
 {
     private readonly ConcurrentStack<Process> _processes = new();
 
-    public Process GetProcess()
+    public Process? GetProcess()
     {
         _processes.TryPeek(out var process);
         return process;
@@ -15,22 +15,16 @@ public class AnalyticsManager(IEnumerable<IMonitoringStore> stores)
     public void MarkProcessDisabled()
     {
         var process = GetProcess();
-        if (process != null)
-        {
-            process.Disabled = true;
-        }
+        process?.Disabled = true;
     }
 
     public void MarkProcessInError()
     {
         var process = GetProcess();
-        if (process != null)
-        {
-            process.Error = true;
-        }
+        process?.Error = true;
     }
 
-    public void StartProcess(string name, string category, string target = null)
+    public void StartProcess(string name, string category, string? target = null)
     {
         var process = new Process();
         _processes.TryPeek(out var parentProcess);
@@ -43,14 +37,16 @@ public class AnalyticsManager(IEnumerable<IMonitoringStore> stores)
         }
     }
 
-    public Process StopProcess()
+    public Process? StopProcess()
     {
-        _processes.TryPop(out var process);
-        process.EndTime = DateTime.Now;
-
-        foreach (var store in stores)
+        if (_processes.TryPop(out var process))
         {
-            store.StopProcess(process.Id, !process.Error, process.Disabled);
+            process.EndTime = DateTime.Now;
+
+            foreach (var store in stores)
+            {
+                store.StopProcess(process.Id, !process.Error, process.Disabled);
+            }
         }
 
         return process;

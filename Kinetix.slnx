@@ -1,0 +1,25 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="Kinetix.DataAccess.Sql.Postgres/Kinetix.DataAccess.Sql.Postgres.csproj" />
+  <Project Path="Kinetix.DataAccess.Sql.SqlServer/Kinetix.DataAccess.Sql.SqlServer.csproj" />
+  <Project Path="Kinetix.DataAccess.Sql/Kinetix.DataAccess.Sql.csproj" />
+  <Project Path="Kinetix.EFCore.Npgsql/Kinetix.EFCore.Npgsql.csproj" />
+  <Project Path="Kinetix.EFCore/Kinetix.EFCore.csproj" />
+  <Project Path="Kinetix.Modeling/Kinetix.Modeling.csproj" />
+  <Project Path="Kinetix.Monitoring.Core/Kinetix.Monitoring.Core.csproj" />
+  <Project Path="Kinetix.Monitoring.Insights/Kinetix.Monitoring.Insights.csproj" />
+  <Project Path="Kinetix.Reporting.Annotations/Kinetix.Reporting.Annotations.csproj" />
+  <Project Path="Kinetix.Reporting.Core/Kinetix.Reporting.Core.csproj" />
+  <Project Path="Kinetix.Reporting.Web/Kinetix.Reporting.Web.csproj" />
+  <Project Path="Kinetix.Search.Core/Kinetix.Search.Core.csproj" />
+  <Project Path="Kinetix.Search.Elastic/Kinetix.Search.Elastic.csproj" />
+  <Project Path="Kinetix.Search.Models/Kinetix.Search.Models.csproj" />
+  <Project Path="Kinetix.Services.Annotations/Kinetix.Services.Annotations.csproj" />
+  <Project Path="Kinetix.Services/Kinetix.Services.csproj" />
+  <Project Path="Kinetix.User/Kinetix.User.csproj" />
+  <Project Path="Kinetix.Web/Kinetix.Web.csproj" />
+</Solution>

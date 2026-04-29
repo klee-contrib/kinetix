@@ -22,15 +22,15 @@ internal class WorksheetBuilder<T>(
     IXLWorksheet worksheet
 ) : IWorksheetBuilder<T>
 {
-    private readonly List<(string Label, Expression<Func<T, object>> Selector)> _columns = [];
+    private readonly List<(string Label, Expression<Func<T, object?>> Selector)> _columns = [];
     private readonly IExcelBuilder _excelBuilder = excelBuilder;
-    private IEnumerable<T> _data;
-    private IAsyncEnumerable<T> _dataAsync;
+    private IEnumerable<T>? _data;
+    private IAsyncEnumerable<T>? _dataAsync;
     private int _maxResults;
     private bool _transpose = false;
 
     /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
-    public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task> postBuildAction = null)
+    public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task>? postBuildAction = null)
     {
         for (var i = 0; i < _columns.Count; i++)
         {
@@ -51,14 +51,13 @@ internal class WorksheetBuilder<T>(
                 var (_, selector) = column;
                 var definition = BeanDescriptor.GetDefinition(typeof(T));
                 (string True, string False) booleanFormat = default;
-                string dateFormat = null;
-                string numberFormat = null;
-                Type referenceType = null;
+                string? dateFormat = null;
+                string? numberFormat = null;
+                Type? referenceType = null;
 
-                if (selector.Body is not MemberExpression me)
-                {
-                    me = (selector.Body as UnaryExpression)?.Operand as MemberExpression;
-                }
+                var me =
+                    (selector.Body as MemberExpression)
+                    ?? (selector.Body as UnaryExpression)?.Operand as MemberExpression;
 
                 if (me != null)
                 {
@@ -165,22 +164,22 @@ internal class WorksheetBuilder<T>(
         return _excelBuilder;
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(Expression{Func{T, object}})" />
-    public IWorksheetBuilder<T> Column(Expression<Func<T, object>> selector)
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(Expression{Func{T, object?}})" />
+    public IWorksheetBuilder<T> Column(Expression<Func<T, object?>> selector)
     {
         return Column(string.Empty, selector);
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string)" />
-    public IWorksheetBuilder<T> Column(string label = null)
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string?)" />
+    public IWorksheetBuilder<T> Column(string? label = null)
     {
         return Column(label, _ => null);
     }
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string, Expression{Func{T, object}})" />
-    public IWorksheetBuilder<T> Column(string label, Expression<Func<T, object>> selector)
+    /// <inheritdoc cref="IWorksheetBuilder{T}.Column(string?, Expression{Func{T, object?}})" />
+    public IWorksheetBuilder<T> Column(string? label, Expression<Func<T, object?>> selector)
     {
-        _columns.Add((label, selector));
+        _columns.Add((label ?? string.Empty, selector));
         return this;
     }
 

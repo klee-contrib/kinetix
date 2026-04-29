@@ -17,7 +17,7 @@ public class InsightMonitoringStore(TelemetryClient telemetryClient) : IMonitori
     private readonly ConcurrentDictionary<Guid, IOperationHolder<DependencyTelemetry>> _holders = new();
 
     /// <inheritdoc cref="IMonitoringStore.StartProcess" />
-    public void StartProcess(Guid id, string name, string category, string target = null)
+    public void StartProcess(Guid id, string name, string category, string? target = null)
     {
         if (category != "Service" && category != "Database")
         {

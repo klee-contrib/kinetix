@@ -9,7 +9,7 @@ public interface IMonitoringStore
     /// <param name="name">Nom.</param>
     /// <param name="category">Catégorie.</param>
     /// <param name="target">Target.</param>
-    void StartProcess(Guid id, string name, string category, string target = null);
+    void StartProcess(Guid id, string name, string category, string? target = null);
 
     /// <summary>
     /// Enregistre la fin d'un process.

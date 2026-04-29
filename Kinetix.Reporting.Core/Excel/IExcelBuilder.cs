@@ -25,5 +25,5 @@ public interface IExcelBuilder
     /// </summary>
     /// <param name="preBuildAction">Actions manuelles à effectuer sur le workbook avant finalisation.</param>
     /// <returns>Le fichier binaire.</returns>
-    byte[] Build(Action<IXLWorkbook> preBuildAction = null);
+    byte[] Build(Action<IXLWorkbook>? preBuildAction = null);
 }

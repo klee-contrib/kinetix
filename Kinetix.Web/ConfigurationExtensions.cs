@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
 
 namespace Kinetix.Web;
 
@@ -65,6 +66,20 @@ public static class ConfigurationExtensions
             .AddSingleton<IKinetixExceptionHandler, BusinessExceptionHandler>()
             .AddSingleton<IKinetixExceptionHandler, MissingEntityExceptionHandler>()
             .AddSingleton<IKinetixExceptionHandler, SecurityExceptionHandler>();
+    }
+
+    /// <summary>
+    /// Ajoute le filtre de télémétrie par défaut.
+    /// </summary>
+    /// <param name="builder">TracerProviterBuilder.</param>
+    /// <param name="filteredRoutes">Routes à filtrer.</param>
+    /// <returns>TracerProviterBuilder.</returns>
+    public static TracerProviderBuilder AddTelemetryFilter(
+        this TracerProviderBuilder builder,
+        params IEnumerable<string> filteredRoutes
+    )
+    {
+        return builder.AddProcessor(new OpenTelemetryFilterProcessor(filteredRoutes));
     }
 
     /// <summary>

@@ -6,7 +6,7 @@ public static class ServiceExtensions
 {
     public static IServiceCollection AddMonitoring(
         this IServiceCollection services,
-        Action<MonitoringConfig> action = null
+        Action<MonitoringConfig>? action = null
     )
     {
         var config = new MonitoringConfig(services);

@@ -9,7 +9,7 @@ namespace Kinetix.Search.Core.DocumentModel;
 public class DocumentDescriptor
 {
     private readonly Dictionary<Type, DocumentDefinition> _beanDefinitionDictionnary = [];
-    private readonly object _lockObj = new();
+    private readonly Lock _lockObj = new();
 
     /// <summary>
     /// Retourne la definition d'un document.
@@ -22,21 +22,11 @@ public class DocumentDescriptor
     }
 
     /// <summary>
-    /// Convertit une chaîne en camelCase.
-    /// </summary>
-    /// <param name="raw">Chaîne source.</param>
-    /// <returns>Chaîne en camelCase.</returns>
-    private static string ToCamelCase(string raw)
-    {
-        return string.IsNullOrEmpty(raw) ? raw : char.ToLower(raw[0]) + raw[1..];
-    }
-
-    /// <summary>
     /// Crée la collection des descripteurs de propriétés.
     /// </summary>
     /// <param name="beanType">Type du bean.</param>
     /// <returns>Collection.</returns>
-    private DocumentFieldDescriptorCollection CreateCollection(Type beanType)
+    private static DocumentFieldDescriptorCollection CreateCollection(Type beanType)
     {
         var coll = new DocumentFieldDescriptorCollection(beanType);
         foreach (var description in GetProperties(beanType))
@@ -57,27 +47,7 @@ public class DocumentDescriptor
         return coll;
     }
 
-    /// <summary>
-    /// Retourne la definition d'un bean.
-    /// </summary>
-    /// <param name="beanType">Type du bean.</param>
-    /// <returns>Description des propriétés.</returns>
-    private DocumentDefinition GetDefinitionInternal(Type beanType)
-    {
-        lock (_lockObj)
-        {
-            if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
-            {
-                var properties = CreateCollection(beanType);
-                definition = new DocumentDefinition(beanType, properties);
-                _beanDefinitionDictionnary[beanType] = definition;
-            }
-
-            return definition;
-        }
-    }
-
-    private IEnumerable<DocumentFieldDescriptor> GetProperties(
+    private static IEnumerable<DocumentFieldDescriptor> GetProperties(
         Type beanType,
         string? prefix = null,
         bool isMultiValued = false
@@ -91,7 +61,7 @@ public class DocumentDescriptor
                 Nullable.GetUnderlyingType(property.PropertyType)
                 ?? (property.PropertyType.IsArray ? property.PropertyType.GetElementType()! : property.PropertyType);
 
-            if (propertyType.GetProperties().Any(prop => prop.GetCustomAttribute<SearchFieldAttribute>() != null))
+            if (propertyType.GetProperties().Any(prop => Attribute.IsDefined(prop, typeof(SearchFieldAttribute))))
             {
                 foreach (
                     var subProperty in GetProperties(
@@ -132,6 +102,36 @@ public class DocumentDescriptor
                     )
                     : description;
             }
+        }
+    }
+
+    /// <summary>
+    /// Convertit une chaîne en camelCase.
+    /// </summary>
+    /// <param name="raw">Chaîne source.</param>
+    /// <returns>Chaîne en camelCase.</returns>
+    private static string ToCamelCase(string raw)
+    {
+        return string.IsNullOrEmpty(raw) ? raw : char.ToLower(raw[0]) + raw[1..];
+    }
+
+    /// <summary>
+    /// Retourne la definition d'un bean.
+    /// </summary>
+    /// <param name="beanType">Type du bean.</param>
+    /// <returns>Description des propriétés.</returns>
+    private DocumentDefinition GetDefinitionInternal(Type beanType)
+    {
+        lock (_lockObj)
+        {
+            if (!_beanDefinitionDictionnary.TryGetValue(beanType, out var definition))
+            {
+                var properties = CreateCollection(beanType);
+                definition = new DocumentDefinition(beanType, properties);
+                _beanDefinitionDictionnary[beanType] = definition;
+            }
+
+            return definition;
         }
     }
 }

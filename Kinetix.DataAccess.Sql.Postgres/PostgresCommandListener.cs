@@ -30,7 +30,7 @@ internal class PostgresCommandListener(
             return new SqlDataException(exception.Message, exception);
         }
 
-        SqlErrorMessage message = null;
+        SqlErrorMessage? message = null;
 
         Logger.LogError($"Error message:{sqlException.Message} file:{sqlException.File} source:{sqlException.Source}");
 

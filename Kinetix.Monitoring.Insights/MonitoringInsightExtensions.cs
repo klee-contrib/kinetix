@@ -16,6 +16,6 @@ public static class MonitoringInsightExtensions
     /// <returns>Config monitoring</returns>
     public static MonitoringConfig AddInsights(this MonitoringConfig config)
     {
-        return config.AddStore(p => new InsightMonitoringStore(p.GetService<TelemetryClient>()));
+        return config.AddStore(p => new InsightMonitoringStore(p.GetRequiredService<TelemetryClient>()));
     }
 }

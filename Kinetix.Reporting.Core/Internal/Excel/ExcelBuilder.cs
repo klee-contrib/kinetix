@@ -23,7 +23,7 @@ internal class ExcelBuilder(string fileName, IReferenceManager referenceManager)
     }
 
     /// <inheritdoc cref="IExcelBuilder.Build" />
-    public byte[] Build(Action<IXLWorkbook> preBuildAction = null)
+    public byte[] Build(Action<IXLWorkbook>? preBuildAction = null)
     {
         preBuildAction?.Invoke(_workbook);
 
