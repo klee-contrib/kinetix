@@ -13,8 +13,9 @@ public interface IWorksheetBuilder<T>
     /// Crée la Worksheet à partir de ce qui a été configuré.
     /// </summary>
     /// <param name="postBuildAction">Actions manuelles à effectuer sur la worksheet après construction.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>ExcelBuilder.</returns>
-    Task<IExcelBuilder> Build(Func<IXLWorksheet, Task>? postBuildAction = null);
+    Task<IExcelBuilder> Build(Func<IXLWorksheet, Task>? postBuildAction = null, CancellationToken ct = default);
 
     /// <summary>
     /// Configure une nouvelle colonne dans la Worksheet.

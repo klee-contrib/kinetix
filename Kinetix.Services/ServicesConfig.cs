@@ -11,12 +11,12 @@ public class ServicesConfig
     /// <summary>
     /// Permet de remplacer les intercepteurs posés par défaut.
     /// </summary>
-    public Func<Type, Action<InterceptionOptions>> InterceptionOptions { get; set; }
+    public Func<Type, Action<InterceptionOptions>>? InterceptionOptions { get; set; }
 
     /// <summary>
     /// Préfixe d'assembly dans lequel chercher les services à enregistrer.
     /// </summary>
-    internal string ServiceAssemblyPrefix { get; set; }
+    public required string ServiceAssemblyPrefix { get; set; }
 
     /// <summary>
     /// Assemblies dans lesquels chercher les services.
@@ -31,7 +31,7 @@ public class ServicesConfig
     /// <summary>
     /// Type a instancier pour notifier des flushs de liste de référence.
     /// </summary>
-    internal Type ReferenceNotifier { get; private set; }
+    internal Type? ReferenceNotifier { get; private set; }
 
     /// <summary>
     /// Enregistre des assemblies à parcourir pour enregistrer des services.

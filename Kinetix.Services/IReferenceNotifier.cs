@@ -8,13 +8,17 @@ public interface IReferenceNotifier : IDisposable
     /// <summary>
     /// Notifie un flush de liste de référence.
     /// </summary>
-    /// <param name="referenceName">Liste de référence.</param>
-    void NotifyFlush(string referenceName);
+    /// <param name="referenceName">Le nom de la liste de référence.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    Task NotifyFlushAsync(string referenceName, CancellationToken ct = default);
 
     /// <summary>
     /// Enregistre un flush de liste de référence.
     /// </summary>
-    /// <param name="referenceName">Liste de référence.</param>
+    /// <param name="referenceName">Le nom de la liste de référence.</param>
     /// <param name="flusher">Action qui flushe le cache mémoire.</param>
-    void RegisterFlush(string referenceName, Action flusher);
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    Task RegisterFlushAsync(string referenceName, Action flusher, CancellationToken ct = default);
 }

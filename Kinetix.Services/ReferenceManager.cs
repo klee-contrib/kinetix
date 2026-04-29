@@ -5,7 +5,7 @@ using Kinetix.Modeling;
 using Kinetix.Modeling.Exceptions;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Services;
@@ -13,43 +13,25 @@ namespace Kinetix.Services;
 /// <summary>
 /// Gestionnaire des données de références.
 /// </summary>
-public class ReferenceManager : IReferenceManager
+/// <param name="provider">Service provider.</param>
+/// <param name="cacheDuration">Durée du cache des listes de références.</param>
+public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration) : IReferenceManager
 {
-    private readonly TimeSpan _cacheDuration;
-    private readonly IDistributedCache _distributedCache;
-    private readonly IMemoryCache _memoryCache;
-    private readonly IServiceProvider _provider;
-    private readonly IDictionary<string, Accessor> _referenceAccessors = new Dictionary<string, Accessor>();
-    private readonly IReferenceNotifier _referenceNotifier;
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="provider">Service provider.</param>
-    /// <param name="cacheDuration">Durée du cache des listes de références.</param>
-    public ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
-    {
-        _cacheDuration = cacheDuration;
-        _provider = provider;
-
-        // Le double cache n'a de sens que si le cache distribué n'est pas lui aussi en mémoire.
-        var distributedCache = provider.GetService<IDistributedCache>();
-        if (distributedCache is not MemoryDistributedCache)
-        {
-            _distributedCache = distributedCache;
-        }
-
-        _memoryCache = provider.GetService<IMemoryCache>();
-        _referenceNotifier = provider.GetService<IReferenceNotifier>();
-    }
+    private readonly HybridCache _cache = provider.GetRequiredService<HybridCache>();
+    private readonly bool _hasDistributedCache =
+        provider.GetService<IDistributedCache>() is not null and not MemoryDistributedCache;
+    private readonly IDictionary<Type, ReferenceAccessor> _referenceAccessors =
+        new Dictionary<Type, ReferenceAccessor>();
+    private readonly IReferenceNotifier? _referenceNotifier = provider.GetService<IReferenceNotifier>();
 
     /// <inheritdoc />
-    public IEnumerable<string> ReferenceLists => _referenceAccessors.Values.Select(accessor => accessor.Name).Order();
+    public IEnumerable<string> ReferenceLists =>
+        _referenceAccessors.Values.Select(accessor => accessor.ReferenceType.Name).Order();
 
-    /// <inheritdoc cref="IReferenceManager.CheckReferenceKeys" />
-    public void CheckReferenceKeys(object bean)
+    /// <inheritdoc cref="IReferenceManager.CheckReferenceKeysAsync" />
+    public async Task CheckReferenceKeysAsync(object? bean, CancellationToken ct = default)
     {
-        var errors = CheckReferenceKeysInternal(bean);
+        var errors = await CheckReferenceKeysInternal(bean, ct);
         if (errors.Any())
         {
             throw new BusinessException(errors);
@@ -65,107 +47,267 @@ public class ReferenceManager : IReferenceManager
     /// <inheritdoc cref="IReferenceManager.FlushCache(string)" />
     public void FlushCache(string referenceName)
     {
-        var key = GetCacheKey(referenceName);
-
-        _memoryCache.Remove(key);
-        _distributedCache?.Remove(key);
-        _referenceNotifier?.NotifyFlush(referenceName);
+        FlushCacheAsync(referenceName, default).GetAwaiter().GetResult();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList(Type)" />
-    public ICollection<object> GetReferenceList(Type type)
+    /// <inheritdoc cref="IReferenceManager.FlushCacheAsync{T}(CancellationToken)" />
+    public Task FlushCacheAsync<T>(CancellationToken ct = default)
     {
-        return GetReferenceList(type.Name);
+        return FlushCacheAsync(typeof(T).Name, ct);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.FlushCacheAsync(string, CancellationToken)" />
+    public async Task FlushCacheAsync(string referenceName, CancellationToken ct = default)
+    {
+        var key = GetCacheKey(referenceName);
+        await _cache.RemoveAsync(key, ct);
+        if (_referenceNotifier != null)
+        {
+            await _referenceNotifier.NotifyFlushAsync(referenceName, ct);
+        }
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}()" />
+    public ICollection<T> GetReferenceList<T>()
+    {
+        return GetReferenceEntry<T>().Map.Values;
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(Func{T, bool})" />
+    public ICollection<T> GetReferenceList<T>(Func<T, bool> predicate)
+    {
+        return GetReferenceList<T>().Where(predicate).ToList();
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceList(string)" />
     public ICollection<object> GetReferenceList(string referenceName)
     {
         var type = GetTypeFromName(referenceName);
-        var getReferenceList = typeof(ReferenceManager).GetMethod(nameof(GetReferenceList), 1, [typeof(string)]);
-        var list = getReferenceList.MakeGenericMethod(type).Invoke(this, [referenceName]);
-        return ((IEnumerable)list).Cast<object>().ToList();
+        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceList), 1, []);
+        return Enumerable.Cast<object>((ICollection)genericMethod!.MakeGenericMethod(type).Invoke(this, [])!).ToList();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(string)" />
-    public ICollection<T> GetReferenceList<T>(string referenceName = null)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceListAsync{T}(CancellationToken)" />
+    public async Task<ICollection<T>> GetReferenceListAsync<T>(CancellationToken ct = default)
     {
-        return GetReferenceEntry<T>(referenceName ?? typeof(T).Name).Map.Values;
+        return (await GetReferenceEntryAsync<T>(ct)).Map.Values;
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(Func{T, bool}, string)" />
-    public ICollection<T> GetReferenceList<T>(Func<T, bool> predicate, string referenceName = null)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceListAsync{T}(Func{T, bool}, CancellationToken)" />
+    public async Task<ICollection<T>> GetReferenceListAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
     {
-        return GetReferenceList<T>(referenceName).Where(predicate).ToList();
+        return (await GetReferenceListAsync<T>(ct)).Where(predicate).ToList();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(T)" />
-    public ICollection<T> GetReferenceList<T>(T criteria)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceListAsync(string, CancellationToken)" />
+    public async Task<ICollection<object>> GetReferenceListAsync(string referenceName, CancellationToken ct = default)
     {
-        var beanPropertyDescriptorList = BeanDescriptor
-            .GetDefinition(criteria)
-            .Properties.Where(property => property.GetValue(criteria) != null);
-
-        return GetReferenceList<T>()
-            .Where(bean =>
-                beanPropertyDescriptorList.All(property => property.GetValue(criteria).Equals(property.GetValue(bean)))
-            )
+        var type = GetTypeFromName(referenceName);
+        var genericMethod = typeof(ReferenceManager).GetMethod(
+            nameof(GetReferenceListAsync),
+            1,
+            [typeof(CancellationToken)]
+        );
+        return (await genericMethod!.MakeGenericMethod(type).InvokeAsync<ICollection>(this, [ct]))
+            .Cast<object>()
             .ToList();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(object[])" />
-    public ICollection<T> GetReferenceList<T>(object[] primaryKeys)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceMap{T}()" />
+    public IDictionary<object, T> GetReferenceMap<T>()
     {
-        var definition = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList<T>().Where(bean => primaryKeys.Contains(definition.PrimaryKey.GetValue(bean))).ToList();
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(object)" />
-    public T GetReferenceObject<T>(object primaryKey)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceMap{T}(Func{T, bool})" />
+    public IDictionary<object, T> GetReferenceMap<T>(Func<T, bool> predicate)
+    {
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceMapAsync{T}(CancellationToken)" />
+    public async Task<IDictionary<object, T>> GetReferenceMapAsync<T>(CancellationToken ct = default)
+    {
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return (await GetReferenceListAsync<T>(ct)).ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceMapAsync{T}(Func{T, bool}, CancellationToken)" />
+    public async Task<IDictionary<object, T>> GetReferenceMapAsync<T>(
+        Func<T, bool> predicate,
+        CancellationToken ct = default
+    )
+    {
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return (await GetReferenceListAsync(predicate, ct)).ToDictionary(x => def.PrimaryKey.GetValue(x), x => x);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(object?)" />
+    public T? GetReferenceObject<T>(object? primaryKey)
     {
         if (primaryKey == null)
         {
             return default;
         }
 
-        return GetReferenceEntry<T>(typeof(T).Name).GetReferenceObject(primaryKey);
+        return GetReferenceEntry<T>().GetReferenceObject(primaryKey);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(Func{T, bool})" />
-    public T GetReferenceObject<T>(Func<T, bool> predicate)
+    public T? GetReferenceObject<T>(Func<T, bool> predicate)
     {
-        return GetReferenceEntry<T>(typeof(T).Name).GetReferenceObject(predicate);
+        return GetReferenceEntry<T>().GetReferenceObject(predicate);
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object)" />
-    public string GetReferenceValue<T>(object primaryKey)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceObject(string, object?)" />
+    public object? GetReferenceObject(string referenceName, object? primaryKey)
+    {
+        var type = GetTypeFromName(referenceName);
+        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceObject), 1, [typeof(object)]);
+        return genericMethod!.MakeGenericMethod(type).Invoke(this, [primaryKey]);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceObjectAsync{T}(object?, CancellationToken)" />
+    public async Task<T?> GetReferenceObjectAsync<T>(object? primaryKey, CancellationToken ct = default)
+    {
+        if (primaryKey == null)
+        {
+            return default;
+        }
+
+        return (await GetReferenceEntryAsync<T>(ct)).GetReferenceObject(primaryKey);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceObjectAsync{T}(Func{T, bool}, CancellationToken)" />
+    public async Task<T?> GetReferenceObjectAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+    {
+        return (await GetReferenceEntryAsync<T>(ct)).GetReferenceObject(predicate);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceObjectAsync(string, object?, CancellationToken)" />
+    public async Task<object?> GetReferenceObjectAsync(
+        string referenceName,
+        object? primaryKey,
+        CancellationToken ct = default
+    )
+    {
+        var type = GetTypeFromName(referenceName);
+        var genericMethod = typeof(ReferenceManager).GetMethod(
+            nameof(GetReferenceObjectAsync),
+            1,
+            [typeof(object), typeof(CancellationToken)]
+        );
+        return await genericMethod!.MakeGenericMethod(type).InvokeAsync<object>(this, [primaryKey, ct]);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object?)" />
+    public string? GetReferenceValue<T>(object? primaryKey)
     {
         return primaryKey == null ? null : GetReferenceValue(GetReferenceObject<T>(primaryKey));
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(Func{T, bool})" />
-    public string GetReferenceValue<T>(Func<T, bool> predicate)
+    public string? GetReferenceValue<T>(Func<T, bool> predicate)
     {
         return GetReferenceValue(GetReferenceObject(predicate));
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(T)" />
-    public string GetReferenceValue<T>(T reference)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValue(string, object?)" />
+    public string? GetReferenceValue(string referenceName, object? primaryKey)
     {
-        if (reference is null)
-        {
-            return null;
-        }
-
-        var definition = BeanDescriptor.GetDefinition(reference);
-        return definition.DefaultProperty.GetValue(reference).ToString();
+        var type = GetTypeFromName(referenceName);
+        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceValue), 1, [typeof(object)]);
+        return (string?)genericMethod!.MakeGenericMethod(type).Invoke(this, [primaryKey]);
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue(Type, object)" />
-    public string GetReferenceValue(Type type, object primaryKey)
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueAsync{T}(object?, CancellationToken)" />
+    public async Task<string?> GetReferenceValueAsync<T>(object? primaryKey, CancellationToken ct = default)
     {
-        var getReferenceValue = typeof(ReferenceManager).GetMethod(nameof(GetReferenceValue), 1, [typeof(object)]);
-        return (string)getReferenceValue.MakeGenericMethod(type).Invoke(this, [primaryKey]);
+        return primaryKey == null ? null : GetReferenceValue(await GetReferenceObjectAsync<T>(primaryKey, ct));
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueAsync{T}(Func{T, bool}, CancellationToken)" />
+    public async Task<string?> GetReferenceValueAsync<T>(Func<T, bool> predicate, CancellationToken ct = default)
+    {
+        return GetReferenceValue(await GetReferenceObjectAsync(predicate, ct));
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueAsync(string, object?, CancellationToken)" />
+    public async Task<string?> GetReferenceValueAsync(
+        string referenceName,
+        object? primaryKey,
+        CancellationToken ct = default
+    )
+    {
+        var type = GetTypeFromName(referenceName);
+        var genericMethod = typeof(ReferenceManager).GetMethod(
+            nameof(GetReferenceValueAsync),
+            1,
+            [typeof(object), typeof(CancellationToken)]
+        );
+        return await genericMethod!.MakeGenericMethod(type).InvokeAsync<string>(this, [primaryKey, ct]);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap{T}()" />
+    public IDictionary<object, string> GetReferenceValueMap<T>()
+    {
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x), GetRequiredReferenceValue);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap{T}(Func{T, bool})" />
+    public IDictionary<object, string> GetReferenceValueMap<T>(Func<T, bool> predicate)
+    {
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x), GetRequiredReferenceValue);
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap(string)" />
+    public IDictionary<object, string> GetReferenceValueMap(string referenceName)
+    {
+        var type = GetTypeFromName(referenceName);
+        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceValueMap), 1, []);
+        return (IDictionary<object, string>)genericMethod!.MakeGenericMethod(type).Invoke(this, [])!;
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMapAsync{T}(CancellationToken)" />
+    public async Task<IDictionary<object, string>> GetReferenceValueMapAsync<T>(CancellationToken ct = default)
+    {
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return (await GetReferenceListAsync<T>(ct)).ToDictionary(
+            x => def.PrimaryKey.GetValue(x),
+            GetRequiredReferenceValue
+        );
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMapAsync{T}(Func{T, bool}, CancellationToken)" />
+    public async Task<IDictionary<object, string>> GetReferenceValueMapAsync<T>(
+        Func<T, bool> predicate,
+        CancellationToken ct = default
+    )
+    {
+        var def = BeanDescriptor.GetDefinition(typeof(T));
+        return (await GetReferenceListAsync(predicate, ct)).ToDictionary(
+            x => def.PrimaryKey.GetValue(x),
+            GetRequiredReferenceValue
+        );
+    }
+
+    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMapAsync(string, CancellationToken)" />
+    public async Task<IDictionary<object, string>> GetReferenceValueMapAsync(
+        string referenceName,
+        CancellationToken ct = default
+    )
+    {
+        var type = GetTypeFromName(referenceName);
+        var genericMethod = typeof(ReferenceManager).GetMethod(
+            nameof(GetReferenceValueMapAsync),
+            1,
+            [typeof(CancellationToken)]
+        );
+        return await genericMethod!.MakeGenericMethod(type).InvokeAsync<IDictionary<object, string>>(this, [ct]);
     }
 
     /// <summary>
@@ -181,36 +323,59 @@ public class ReferenceManager : IReferenceManager
             var attribute = method.GetCustomAttribute<ReferenceAccessorAttribute>();
             if (attribute != null)
             {
+                var isAsync = returnType.GetGenericTypeDefinition() == typeof(Task<>);
+
                 if (
-                    !returnType.IsGenericType
-                    || !typeof(ICollection<>).Equals(returnType.GetGenericTypeDefinition())
-                        && returnType.GetGenericTypeDefinition().GetInterface(typeof(ICollection<>).Name) == null
+                    !(
+                        returnType.IsGenericType
+                        && (
+                            returnType.GetGenericTypeDefinition() == typeof(ICollection<>)
+                            || returnType.GetGenericTypeDefinition() == typeof(Task<>)
+                                && returnType.GetGenericArguments()[0].IsGenericType
+                                && returnType.GetGenericArguments()[0].GetGenericTypeDefinition()
+                                    == typeof(ICollection<>)
+                        )
+                    )
                 )
                 {
                     throw new NotSupportedException(
-                        $"L'accesseur {method.Name} doit retourner une ICollection générique."
+                        $"L'accesseur {method.Name} doit retourner une ICollection<T> ou une Task<ICollection<T>>"
                     );
                 }
 
-                if (method.GetParameters().Length != 0)
+                if (
+                    isAsync
+                    && (
+                        method.GetParameters().Length != 1
+                        || method.GetParameters()[0].ParameterType != typeof(CancellationToken)
+                    )
+                )
                 {
-                    throw new NotSupportedException($"L'accesseur {method.Name} ne doit pas prendre de paramètres.");
+                    throw new NotSupportedException(
+                        $"L'accesseur {method.Name} ne doit prendre qu'un CancellationToken en paramètre."
+                    );
+                }
+                else if (!isAsync && method.GetParameters().Length != 0)
+                {
+                    throw new NotSupportedException($"L'accesseur {method.Name} ne doit prendre aucun paramètre.");
                 }
 
-                var accessor = new Accessor
+                var accessor = new ReferenceAccessor
                 {
                     ContractType = contractType,
                     Method = method,
-                    ReferenceType = returnType.GetGenericArguments()[0],
-                    Name = attribute.Name ?? returnType.GetGenericArguments()[0].Name,
+                    IsAsync = isAsync,
+                    ReferenceType = isAsync
+                        ? returnType.GetGenericArguments()[0].GetGenericArguments()[0]
+                        : returnType.GetGenericArguments()[0],
                 };
 
-                if (_referenceAccessors.ContainsKey(accessor.Name))
+                if (_referenceAccessors.ContainsKey(accessor.ReferenceType))
                 {
                     throw new NotSupportedException();
                 }
 
-                _referenceAccessors.Add(accessor.Name, accessor);
+                _referenceAccessors.Add(accessor.ReferenceType, accessor);
             }
         }
     }
@@ -220,7 +385,24 @@ public class ReferenceManager : IReferenceManager
         return $"ReferenceManager_{CultureInfo.CurrentCulture.Name}_{referenceName}";
     }
 
-    private ErrorMessageCollection CheckReferenceKeysInternal(object bean)
+    private static string? GetReferenceValue<T>(T reference)
+    {
+        if (reference is null)
+        {
+            return null;
+        }
+
+        var definition = BeanDescriptor.GetDefinition(reference);
+        return definition.DefaultProperty.GetValue(reference).ToString();
+    }
+
+    private static string GetRequiredReferenceValue<T>(T reference)
+    {
+        var definition = BeanDescriptor.GetDefinition(reference);
+        return definition.DefaultProperty.GetValue(reference).ToString()!;
+    }
+
+    private async Task<ErrorMessageCollection> CheckReferenceKeysInternal(object? bean, CancellationToken ct = default)
     {
         var errors = new ErrorMessageCollection();
 
@@ -233,7 +415,7 @@ public class ReferenceManager : IReferenceManager
         {
             foreach (var item in list)
             {
-                foreach (var error in CheckReferenceKeysInternal(item))
+                foreach (var error in await CheckReferenceKeysInternal(item, ct))
                 {
                     errors.AddEntry(error);
                 }
@@ -254,13 +436,13 @@ public class ReferenceManager : IReferenceManager
                             var refDescriptor = BeanDescriptor.GetDefinition(property.ReferenceType);
                             if (refDescriptor.IsReference)
                             {
-                                var keyList = GetReferenceList(property.ReferenceType)
-                                    .Select(item => refDescriptor.PrimaryKey.GetValue(item).ToString());
-                                if (!keyList.Contains(value.ToString()))
+                                var keys = (await GetReferenceValueMapAsync(refDescriptor.BeanType.Name, ct)).Keys;
+
+                                if (!keys.Contains(value))
                                 {
                                     errors.AddEntry(
                                         new ErrorMessage(
-                                            $"La valeur '{value}' n'est pas valide pour la propriété '{property.PropertyName}'. Valeurs attendues : {string.Join(", ", keyList.Select(k => $"'{k}'"))}."
+                                            $"La valeur '{value}' n'est pas valide pour la propriété '{property.PropertyName}'. Valeurs attendues : {string.Join(", ", keys.Select(k => $"'{k}'"))}."
                                         )
                                     );
                                 }
@@ -268,7 +450,7 @@ public class ReferenceManager : IReferenceManager
                         }
                         else
                         {
-                            foreach (var error in CheckReferenceKeysInternal(value))
+                            foreach (var error in await CheckReferenceKeysInternal(value, ct))
                             {
                                 errors.AddEntry(error);
                             }
@@ -281,74 +463,89 @@ public class ReferenceManager : IReferenceManager
         return errors;
     }
 
+    private ReferenceEntry<T> GetReferenceEntry<T>()
+    {
+        return GetReferenceEntryAsync<T>(default).GetAwaiter().GetResult();
+    }
+
     /// <summary>
     /// Construit l'entrée du cache associé à la référence demandée.
     /// </summary>
-    /// <param name="referenceName">Nom de la liste.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>L'entrée de cache.</returns>
-    private ReferenceEntry<T> GetReferenceEntry<T>(string referenceName)
+    private async Task<ReferenceEntry<T>> GetReferenceEntryAsync<T>(CancellationToken ct = default)
     {
-        var key = GetCacheKey(referenceName);
+        var key = GetCacheKey(typeof(T).Name);
         return new ReferenceEntry<T>
         {
-            Map = _memoryCache.GetOrCreate(
+            Map = await _cache.GetOrCreateAsync(
                 key,
-                memOpt =>
+                async ct =>
                 {
-                    memOpt.AbsoluteExpirationRelativeToNow =
-                        _distributedCache != null ? TimeSpan.FromMinutes(1) : _cacheDuration;
-
-                    _referenceNotifier?.RegisterFlush(referenceName, () => _memoryCache.Remove(key));
-
-                    if (_distributedCache != null)
+                    if (_referenceNotifier != null)
                     {
-                        return _distributedCache.GetOrSet(
-                            key,
-                            distOpt =>
-                            {
-                                distOpt.AbsoluteExpirationRelativeToNow = _cacheDuration;
-
-                                var def = BeanDescriptor.GetDefinition(GetTypeFromName(referenceName));
-                                return InvokeReferenceAccessor<T>(referenceName)
-                                    .ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
-                            }
+                        await _referenceNotifier.RegisterFlushAsync(
+                            typeof(T).Name,
+                            async () =>
+                                await _cache.SetAsync(
+                                    key,
+                                    await _cache.GetOrCreateAsync<IDictionary<string, T>>(
+                                        key,
+                                        async ct => new Dictionary<string, T>(),
+                                        new()
+                                        {
+                                            Flags =
+                                                HybridCacheEntryFlags.DisableLocalCache
+                                                | HybridCacheEntryFlags.DisableDistributedCacheWrite,
+                                        }
+                                    ),
+                                    new()
+                                    {
+                                        LocalCacheExpiration = TimeSpan.Zero,
+                                        Expiration = _hasDistributedCache ? cacheDuration : TimeSpan.Zero,
+                                    }
+                                ),
+                            ct
                         );
                     }
-                    else
-                    {
-                        var def = BeanDescriptor.GetDefinition(GetTypeFromName(referenceName));
-                        return InvokeReferenceAccessor<T>(referenceName)
-                            .ToDictionary(r => def.PrimaryKey.GetValue(r).ToString(), r => r);
-                    }
-                }
+
+                    var def = BeanDescriptor.GetDefinition(typeof(T));
+                    return (await InvokeReferenceAccessor<T>(ct)).ToDictionary(
+                        r => def.PrimaryKey.GetValue(r).ToString()!,
+                        r => r
+                    );
+                },
+                new()
+                {
+                    Expiration = cacheDuration,
+                    LocalCacheExpiration = _hasDistributedCache ? TimeSpan.FromMinutes(1) : cacheDuration,
+                },
+                cancellationToken: ct
             ),
         };
     }
 
     private Type GetTypeFromName(string referenceName)
     {
-        return _referenceAccessors.Values.Single(r => r.Name == referenceName).ReferenceType;
+        return _referenceAccessors.Values.Single(r => r.ReferenceType.Name == referenceName).ReferenceType;
     }
 
     /// <summary>
     /// Récupère la liste de référence associée à la référence demandée, via son accesseur.
     /// </summary>
-    /// <param name="referenceName">Nom de la liste.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>La liste de référence.</returns>
-    private List<T> InvokeReferenceAccessor<T>(string referenceName)
+    private async Task<ICollection<T>> InvokeReferenceAccessor<T>(CancellationToken ct = default)
     {
-        if (!_referenceAccessors.TryGetValue(referenceName, out var accessor))
+        if (!_referenceAccessors.TryGetValue(typeof(T), out var accessor))
         {
-            throw new ArgumentException(
-                $"Pas d'accesseur disponible pour la liste {referenceName}",
-                nameof(referenceName)
-            );
+            throw new ArgumentException($"Pas d'accesseur disponible pour la liste {typeof(T).Name}", typeof(T).Name);
         }
 
-        var service = _provider.GetService(accessor.ContractType);
-        var list = accessor.Method.Invoke(service, parameters: null);
+        var service = provider.GetRequiredService(accessor.ContractType);
 
-        var coll = (ICollection)list;
-        return coll == null ? throw new NotSupportedException(list.GetType().Name) : coll.Cast<T>().ToList();
+        return accessor.IsAsync
+            ? await accessor.Method.InvokeAsync<ICollection<T>>(service, [ct])
+            : Enumerable.Cast<T>((ICollection)accessor.Method.Invoke(service, [])!).ToList();
     }
 }

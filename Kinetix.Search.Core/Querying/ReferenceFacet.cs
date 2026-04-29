@@ -69,6 +69,6 @@ public class ReferenceFacet<TDocument, T>(
     /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
     public override string ResolveLabel(string primaryKey)
     {
-        return referenceManager.GetReferenceValue<T>(primaryKey);
+        return referenceManager.GetReferenceValue<T>(primaryKey) ?? string.Empty;
     }
 }

@@ -30,7 +30,10 @@ internal class WorksheetBuilder<T>(
     private bool _transpose = false;
 
     /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
-    public async Task<IExcelBuilder> Build(Func<IXLWorksheet, Task>? postBuildAction = null)
+    public async Task<IExcelBuilder> Build(
+        Func<IXLWorksheet, Task>? postBuildAction = null,
+        CancellationToken ct = default
+    )
     {
         for (var i = 0; i < _columns.Count; i++)
         {
@@ -86,8 +89,8 @@ internal class WorksheetBuilder<T>(
                     }
                 }
 
-                return (Action<T, int>)(
-                    (item, j) =>
+                return (Func<T, int, Task>)(
+                    async (item, j) =>
                     {
                         var cell = _transpose ? worksheet.Cell(i + 1, j) : worksheet.Cell(j, i + 1);
 
@@ -95,7 +98,7 @@ internal class WorksheetBuilder<T>(
 
                         if (referenceType != null)
                         {
-                            cell.SetValue(referenceManager.GetReferenceValue(referenceType, value));
+                            cell.SetValue(await referenceManager.GetReferenceValueAsync(referenceType.Name, value));
                         }
                         else if (booleanFormat != default && value is bool b)
                         {
@@ -128,7 +131,7 @@ internal class WorksheetBuilder<T>(
                 j++;
                 foreach (var itemHandler in itemHandlers)
                 {
-                    itemHandler(item, j);
+                    await itemHandler(item, j);
                 }
 
                 if (j > _maxResults)
@@ -140,12 +143,12 @@ internal class WorksheetBuilder<T>(
         else if (_dataAsync != null)
         {
             var j = 1;
-            await foreach (var item in _dataAsync)
+            await foreach (var item in _dataAsync.WithCancellation(ct))
             {
                 j++;
                 foreach (var itemHandler in itemHandlers)
                 {
-                    itemHandler(item, j);
+                    await itemHandler(item, j);
                 }
 
                 if (j > _maxResults)

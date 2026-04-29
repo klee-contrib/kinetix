@@ -28,27 +28,35 @@ public static class ReferenceManagerExtensions
 
         group.MapGet(
             "{referenceName}",
-            (string referenceName, [FromServices] IReferenceManager referenceManager) =>
+            async (
+                string referenceName,
+                [FromServices] IReferenceManager referenceManager,
+                CancellationToken ct = default
+            ) =>
             {
                 if (!referenceManager.ReferenceLists.Contains(referenceName))
                 {
                     throw new BusinessException($"La liste de référence '{referenceName}' n'existe pas");
                 }
 
-                return referenceManager.GetReferenceList(referenceName);
+                return await referenceManager.GetReferenceListAsync(referenceName, ct);
             }
         );
 
         group.MapDelete(
             "{referenceName}",
-            (string referenceName, [FromServices] IReferenceManager referenceManager) =>
+            async (
+                string referenceName,
+                [FromServices] IReferenceManager referenceManager,
+                CancellationToken ct = default
+            ) =>
             {
                 if (!referenceManager.ReferenceLists.Contains(referenceName))
                 {
                     throw new BusinessException($"La liste de référence '{referenceName}' n'existe pas");
                 }
 
-                referenceManager.FlushCache(referenceName);
+                await referenceManager.FlushCacheAsync(referenceName, ct);
             }
         );
 

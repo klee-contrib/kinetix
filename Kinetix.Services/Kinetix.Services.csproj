@@ -1,6 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Nullable>disable</Nullable>
     <Version>8.0.4</Version>
     <Description>Module de gestion de services Kinetix.</Description>
   </PropertyGroup>

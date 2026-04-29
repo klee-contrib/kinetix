@@ -11,8 +11,8 @@ namespace Kinetix.Services;
 public class ServiceScope : IAsyncDisposable, IDisposable
 {
     private readonly ITransactionContext[] _contexts;
-    private readonly ILogger<ServiceScope> _logger;
-    private readonly TransactionScopeManager _manager;
+    private readonly ILogger<ServiceScope>? _logger;
+    private readonly TransactionScopeManager? _manager;
 
     internal ServiceScope()
     {
@@ -44,7 +44,7 @@ public class ServiceScope : IAsyncDisposable, IDisposable
     {
         var contexts = _contexts.OfType<ISyncTransactionContext>();
 
-        Exception onBeforeException = null;
+        Exception? onBeforeException = null;
 
         try
         {
@@ -55,7 +55,7 @@ public class ServiceScope : IAsyncDisposable, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(
+            _logger?.LogError(
                 ex,
                 "Une erreur est survenue lors de la préparation du commit de la transaction courante."
             );
@@ -87,7 +87,7 @@ public class ServiceScope : IAsyncDisposable, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
+            _logger?.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
         }
 
         foreach (var context in contexts)
@@ -109,7 +109,7 @@ public class ServiceScope : IAsyncDisposable, IDisposable
     /// <returns>Task.</returns>
     public async ValueTask DisposeAsync()
     {
-        Exception onBeforeException = null;
+        Exception? onBeforeException = null;
 
         var contexts = _contexts.Where(c => c.Status == TransactionContextStatus.Initialized);
 
@@ -130,7 +130,7 @@ public class ServiceScope : IAsyncDisposable, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(
+            _logger?.LogError(
                 ex,
                 "Une erreur est survenue lors de la préparation du commit de la transaction courante."
             );
@@ -178,7 +178,7 @@ public class ServiceScope : IAsyncDisposable, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
+            _logger?.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
         }
 
         foreach (var context in contexts)
@@ -192,7 +192,7 @@ public class ServiceScope : IAsyncDisposable, IDisposable
     /// </summary>
     /// <typeparam name="T">Type du contexte.</typeparam>
     /// <returns>Le contexte.</returns>
-    public T GetContext<T>()
+    public T? GetContext<T>()
         where T : ITransactionContext
     {
         return _contexts.OfType<T>().SingleOrDefault();

@@ -37,7 +37,7 @@ public static class ServiceExtensions
         }
 
         var assemblies = GetReferencedAssemblies(
-                config.ServiceAssemblies.Concat([Assembly.GetEntryAssembly()]).Where(a => a != null)
+                config.ServiceAssemblies.Concat([Assembly.GetEntryAssembly()!]).Where(a => a != null)
             )
             .Distinct();
 
@@ -96,21 +96,6 @@ public static class ServiceExtensions
             }
 
             return referenceManager;
-        });
-        services.TryAddScoped<IFileManager>(provider =>
-        {
-            var fileManager = new FileManager(provider);
-
-            foreach (
-                var interfaceType in services
-                    .Select(s => s.ServiceType)
-                    .Where(s => Attribute.IsDefined(s, typeof(RegisterContractAttribute)))
-            )
-            {
-                fileManager.RegisterAccessors(interfaceType);
-            }
-
-            return fileManager;
         });
 
         if (config.ReferenceNotifier != null)

@@ -46,7 +46,7 @@ public static class MethodBaseExtensions
         var attributeCollection = new Collection<object>();
         method.GetCustomAttributes(attributeType, inherit).Apply(attributeCollection.Add);
 
-        foreach (var interfaceType in method.DeclaringType.GetInterfaces())
+        foreach (var interfaceType in method.DeclaringType?.GetInterfaces() ?? [])
         {
             var interfaceMethod = interfaceType.GetMethod(method.Name);
             interfaceMethod?.GetCustomAttributes(attributeType, inherit).Apply(attributeCollection.Add);

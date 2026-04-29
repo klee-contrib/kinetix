@@ -3,27 +3,27 @@
 namespace Kinetix.Services;
 
 /// <summary>
-/// Accesseur sur une méthode.
+/// Accesseur de référence sur une méthode.
 /// </summary>
-public class Accessor
+internal class ReferenceAccessor
 {
     /// <summary>
-    /// Nom de l'accesseur.
+    /// Si l'accesseur est asynchrone.
     /// </summary>
-    public string Name { get; set; }
+    public required bool IsAsync { get; set; }
 
     /// <summary>
     /// Contrat.
     /// </summary>
-    public Type ContractType { get; set; }
+    public required Type ContractType { get; set; }
 
     /// <summary>
     /// Méthode.
     /// </summary>
-    public MethodInfo Method { get; set; }
+    public required MethodInfo Method { get; set; }
 
     /// <summary>
     /// Type de la liste de référence.
     /// </summary>
-    public Type ReferenceType { get; set; }
+    public required Type ReferenceType { get; set; }
 }

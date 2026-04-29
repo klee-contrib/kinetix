@@ -17,7 +17,7 @@ public class AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager anal
     [DebuggerNonUserCode]
     public void Intercept(IInvocation invocation)
     {
-        analytics.StartProcess($"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}", "Service");
+        analytics.StartProcess($"{invocation.Method.DeclaringType?.FullName}.{invocation.Method.Name}", "Service");
 
         if (invocation.Method.GetCustomAttributes<NoAnalyticsAttribute>(inherit: true).Length > 0)
         {
@@ -28,10 +28,10 @@ public class AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager anal
         {
             invocation.Proceed();
             var process = analytics.StopProcess();
-            if (!process.Disabled)
+            if (process != null && !process.Disabled)
             {
                 logger.LogInformation(
-                    $"{invocation.Method.DeclaringType.FullName}.{invocation.Method.Name} ({process.Duration} ms)"
+                    $"{invocation.Method.DeclaringType?.FullName}.{invocation.Method.Name} ({process.Duration} ms)"
                 );
             }
         }
@@ -42,15 +42,15 @@ public class AnalyticsInterceptor(ILogger<Service> logger, AnalyticsManager anal
 
             if (ex is AggregateException)
             {
-                ex = ex.InnerException;
+                ex = ex.InnerException!;
             }
 
             logger.LogError(
                 ex,
-                $"Erreur sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}"
+                $"Erreur sur le service {invocation.Method.DeclaringType?.FullName}.{invocation.Method.Name}"
             );
             throw new InterceptedException(
-                $"Une erreur est survenue sur le service {invocation.Method.DeclaringType.FullName}.{invocation.Method.Name}",
+                $"Une erreur est survenue sur le service {invocation.Method.DeclaringType?.FullName}.{invocation.Method.Name}",
                 ex
             );
         }

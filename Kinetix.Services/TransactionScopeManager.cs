@@ -16,7 +16,7 @@ public class TransactionScopeManager(
     /// Scope de transaction actif, avec ses contextes transactionnels.
     /// </summary>
     /// <remarks>(Un sous-scope créé par <see cref="EnsureTransaction"/> ou <see cref="EnsureTransactionAsync(CancellationToken)"/> n'est pas le scope actif)</remarks>
-    public ServiceScope ActiveScope => _scopes.Any() ? _scopes.Peek() : null;
+    public ServiceScope? ActiveScope => _scopes.Any() ? _scopes.Peek() : null;
 
     /// <summary>
     /// Débute une nouvelle transaction synchrone, indépendante d'une éventuelle transaction existante.

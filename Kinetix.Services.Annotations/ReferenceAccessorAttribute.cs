@@ -5,10 +5,4 @@
 /// liste de reférence.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class ReferenceAccessorAttribute : Attribute
-{
-    /// <summary>
-    /// Retourne le nom de l'accesseur.
-    /// </summary>
-    public required string Name { get; set; }
-}
+public sealed class ReferenceAccessorAttribute : Attribute { }

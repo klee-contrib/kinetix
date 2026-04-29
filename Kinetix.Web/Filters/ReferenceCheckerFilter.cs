@@ -13,7 +13,7 @@ public class ReferenceCheckerFilter(IReferenceManager referenceManager) : IEndpo
     {
         foreach (var parameter in context.Arguments)
         {
-            referenceManager.CheckReferenceKeys(parameter);
+            await referenceManager.CheckReferenceKeysAsync(parameter, context.HttpContext.RequestAborted);
         }
 
         return await next(context);
