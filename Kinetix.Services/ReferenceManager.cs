@@ -6,6 +6,7 @@ using Kinetix.Modeling.Exceptions;
 using Kinetix.Services.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kinetix.Services;
@@ -23,6 +24,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     private readonly IDictionary<Type, ReferenceAccessor> _referenceAccessors =
         new Dictionary<Type, ReferenceAccessor>();
     private readonly IReferenceNotifier? _referenceNotifier = provider.GetService<IReferenceNotifier>();
+    private readonly IMemoryCache _syncCache = provider.GetRequiredService<IMemoryCache>();
 
     /// <inheritdoc />
     public IEnumerable<string> ReferenceLists =>
@@ -48,7 +50,12 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     /// <inheritdoc cref="IReferenceManager.FlushCache(string)" />
     public void FlushCache(string referenceName)
     {
-        FlushCacheAsync(referenceName, default).GetAwaiter().GetResult();
+        var key = GetCacheKey(referenceName);
+        _syncCache.Remove(key);
+        if (_referenceNotifier is ISyncReferenceNotifier syncNotifier)
+        {
+            syncNotifier.NotifyFlush(referenceName);
+        }
     }
 
     /// <inheritdoc cref="IReferenceManager.FlushCacheAsync{T}(CancellationToken)" />
@@ -63,9 +70,13 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     {
         var key = GetCacheKey(referenceName);
         await _cache.RemoveAsync(key, ct);
-        if (_referenceNotifier != null)
+        if (_referenceNotifier is IAsyncReferenceNotifier asyncNotifier)
         {
-            await _referenceNotifier.NotifyFlushAsync(referenceName, ct);
+            await asyncNotifier.NotifyFlushAsync(referenceName, ct);
+        }
+        else if (_referenceNotifier is ISyncReferenceNotifier syncNotifier)
+        {
+            syncNotifier.NotifyFlush(referenceName);
         }
     }
 
@@ -486,10 +497,33 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         return errors;
     }
 
+    /// <summary>
+    /// Construit l'entrée du cache synchrone associé à la référence demandée.
+    /// </summary>
+    /// <returns>L'entrée de cache.</returns>
     private ReferenceEntry<T> GetReferenceEntry<T>()
         where T : notnull
     {
-        return GetReferenceEntryAsync<T>(default).GetAwaiter().GetResult();
+        var key = GetCacheKey(typeof(T).Name);
+        return new ReferenceEntry<T>
+        {
+            Map = _syncCache.GetOrCreate(
+                key,
+                memOpt =>
+                {
+                    memOpt.AbsoluteExpirationRelativeToNow = cacheDuration;
+
+                    if (_referenceNotifier is ISyncReferenceNotifier syncNotifier)
+                    {
+                        syncNotifier.RegisterFlush(typeof(T).Name, () => _syncCache.Remove(key));
+                    }
+
+                    var def = BeanDescriptor.GetDefinition(GetTypeFromName(typeof(T).Name));
+                    return InvokeReferenceAccessor<T>()
+                        .ToDictionary(r => def.PrimaryKey.GetValue(r)!.ToString()!, r => r);
+                }
+            )!,
+        };
     }
 
     /// <summary>
@@ -507,35 +541,41 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
                 key,
                 async ct =>
                 {
-                    if (_referenceNotifier != null)
-                    {
-                        await _referenceNotifier.RegisterFlushAsync(
-                            typeof(T).Name,
-                            async () =>
-                                await _cache.SetAsync(
-                                    key,
-                                    await _cache.GetOrCreateAsync<IDictionary<string, T>>(
-                                        key,
-                                        async ct => new Dictionary<string, T>(),
-                                        new()
-                                        {
-                                            Flags =
-                                                HybridCacheEntryFlags.DisableLocalCache
-                                                | HybridCacheEntryFlags.DisableDistributedCacheWrite,
-                                        }
-                                    ),
-                                    new()
-                                    {
-                                        LocalCacheExpiration = TimeSpan.Zero,
-                                        Expiration = _hasDistributedCache ? cacheDuration : TimeSpan.Zero,
-                                    }
-                                ),
-                            ct
+                    async Task Flusher() =>
+                        await _cache.SetAsync(
+                            key,
+                            await _cache.GetOrCreateAsync<IDictionary<string, T>>(
+                                key,
+                                async ct => new Dictionary<string, T>(),
+                                new()
+                                {
+                                    Flags =
+                                        HybridCacheEntryFlags.DisableLocalCache
+                                        | HybridCacheEntryFlags.DisableDistributedCacheWrite,
+                                },
+                                cancellationToken: ct
+                            ),
+                            new()
+                            {
+                                LocalCacheExpiration = TimeSpan.Zero,
+                                Expiration = _hasDistributedCache ? cacheDuration : TimeSpan.Zero,
+                            },
+                            cancellationToken: ct
                         );
+
+                    if (_referenceNotifier is IAsyncReferenceNotifier asyncNotifier)
+                    {
+                        await asyncNotifier.RegisterFlushAsync(typeof(T).Name, Flusher, ct);
+                    }
+                    else if (_referenceNotifier is ISyncReferenceNotifier syncNotifier)
+                    {
+#pragma warning disable CS4014
+                        syncNotifier.RegisterFlush(typeof(T).Name, () => Flusher());
+#pragma warning restore CS4014
                     }
 
                     var def = BeanDescriptor.GetDefinition(typeof(T));
-                    return (await InvokeReferenceAccessor<T>(ct)).ToDictionary(
+                    return (await InvokeReferenceAccessorAsync<T>(ct)).ToDictionary(
                         r => def.PrimaryKey.GetValue(r)!.ToString()!,
                         r => r
                     );
@@ -556,11 +596,31 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     }
 
     /// <summary>
+    /// Récupère la liste de référence associée à la référence demandée, via son accesseur synchrone.
+    /// </summary>
+    /// <returns>La liste de référence.</returns>
+    private List<T> InvokeReferenceAccessor<T>()
+        where T : notnull
+    {
+        if (!_referenceAccessors.TryGetValue(typeof(T), out var accessor) || accessor.IsAsync)
+        {
+            throw new ArgumentException(
+                $"Pas d'accesseur synchrone disponible pour la liste {typeof(T).Name}",
+                typeof(T).Name
+            );
+        }
+
+        var service = provider.GetRequiredService(accessor.ContractType);
+
+        return Enumerable.Cast<T>((ICollection)accessor.Method.Invoke(service, [])!).ToList();
+    }
+
+    /// <summary>
     /// Récupère la liste de référence associée à la référence demandée, via son accesseur.
     /// </summary>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>La liste de référence.</returns>
-    private async Task<ICollection<T>> InvokeReferenceAccessor<T>(CancellationToken ct = default)
+    private async Task<ICollection<T>> InvokeReferenceAccessorAsync<T>(CancellationToken ct = default)
         where T : notnull
     {
         if (!_referenceAccessors.TryGetValue(typeof(T), out var accessor))
