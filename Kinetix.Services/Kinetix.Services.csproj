@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>8.0.4</Version>
+    <Version>10.0.0-rc.0</Version>
     <Description>Module de gestion de services Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>

@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>8.0.1</Version>
+    <Version>10.0.0-rc.0</Version>
     <Description>Annotations de modèle pour le reporting Kinetix.</Description>
   </PropertyGroup>
 </Project>

@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>8.0.1</Version>
-    <Authors>JabX</Authors>
+    <Version>10.0.0-rc.0</Version>
     <Description>Module pour intégrer EF Core dans les transactions Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>
