@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Kinetix.Web.Filters;
 
@@ -17,9 +18,12 @@ public class ControllerActionFilter : IEndpointFilter
         var actionDescriptor = context.HttpContext.GetEndpoint()?.Metadata?.GetMetadata<ControllerActionDescriptor>();
         if (actionDescriptor != null)
         {
+            var pathParams = actionDescriptor
+                .Parameters.Where(p => p.BindingInfo?.BindingSource == BindingSource.Path)
+                .Select(p => p.Name);
             Activity.Current?.SetTag(
                 TagName,
-                $"{actionDescriptor.ControllerName}/{actionDescriptor.ActionName}{(actionDescriptor.Parameters.Count > 0 ? $" [{string.Join(", ", actionDescriptor.Parameters.Select(p => p.Name))}]" : string.Empty)}"
+                $"{actionDescriptor.ControllerName}/{actionDescriptor.ActionName}{(pathParams.Any() ? $" [{string.Join(", ", pathParams)}]" : string.Empty)}"
             );
         }
 
