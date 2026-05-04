@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using Kinetix.Services.DependencyInjection.Interceptors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
@@ -46,6 +47,9 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
         }
 
         result ??= DefaultExceptionHandler(exception, httpContext);
+
+        Activity.Current?.AddException(exception);
+        Activity.Current?.SetStatus(ActivityStatusCode.Error);
 
         await result.ExecuteAsync(httpContext);
 
