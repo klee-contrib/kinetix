@@ -10,13 +10,10 @@
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.0.1" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.5.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
-    <PackageVersion
-      Include="Microsoft.Extensions.DependencyInjection.Abstractions"
-      Version="10.0.7"
-    />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.7" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.203" />
     <PackageVersion Include="NEST.JsonNetSerializer" Version="7.17.5" />

@@ -80,7 +80,7 @@ public static class ServiceExtensions
             }
         }
 
-        services.AddMemoryCache();
+        services.AddHybridCache();
         services.TryAddScoped<TransactionScopeManager>();
         services.TryAddScoped<IReferenceManager>(provider =>
         {

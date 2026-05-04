@@ -45,18 +45,6 @@ public class ServicesConfig
     }
 
     /// <summary>
-    /// Spécifie une implémentation de notifier asynchrone de flush de liste de référence.
-    /// </summary>
-    /// <typeparam name="T">Type du notifier.</typeparam>
-    /// <returns>Config.</returns>
-    public ServicesConfig WithAsyncReferenceNotifier<T>()
-        where T : IAsyncReferenceNotifier
-    {
-        ReferenceNotifier = typeof(T);
-        return this;
-    }
-
-    /// <summary>
     /// Remplace les intercepteurs posés par défaut, en fonction du type de service.
     /// </summary>
     /// <param name="options">Fonction déterminant les intercepteurs à poser par type.</param>
@@ -79,12 +67,12 @@ public class ServicesConfig
     }
 
     /// <summary>
-    /// Spécifie une implémentation de notifier synchrone de flush de liste de référence.
+    /// Spécifie une implémentation de notifier asynchrone de flush de liste de référence.
     /// </summary>
     /// <typeparam name="T">Type du notifier.</typeparam>
     /// <returns>Config.</returns>
-    public ServicesConfig WithSyncReferenceNotifier<T>()
-        where T : ISyncReferenceNotifier
+    public ServicesConfig WithReferenceNotifier<T>()
+        where T : IReferenceNotifier
     {
         ReferenceNotifier = typeof(T);
         return this;

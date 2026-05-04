@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Kinetix.Web;
@@ -14,6 +17,22 @@ namespace Kinetix.Web;
 /// </summary>
 public static class ConfigurationExtensions
 {
+    /// <summary>
+    /// Ajoute le processeur pour appliquer des filtres de base sur les traces OpenTelemetry.
+    /// </summary>
+    /// <param name="builder">TracerProviterBuilder.</param>
+    /// <param name="configure">Configurateur pour le processeur.</param>
+    /// <returns>TracerProviterBuilder.</returns>
+    public static TracerProviderBuilder AddActivityFilterProcessor(
+        this TracerProviderBuilder builder,
+        Action<ActivityFilterProcessor>? configure = null
+    )
+    {
+        var processor = new ActivityFilterProcessor();
+        configure?.Invoke(processor);
+        return builder.AddProcessor(processor);
+    }
+
     /// <summary>
     /// Ajoute un convertisseur JSON dans les options.
     /// </summary>
@@ -69,17 +88,35 @@ public static class ConfigurationExtensions
     }
 
     /// <summary>
-    /// Ajoute le filtre de télémétrie par défaut.
+    /// Configure le service OpenTelemetry (nom, namespace, version, instanceId).
     /// </summary>
-    /// <param name="builder">TracerProviterBuilder.</param>
-    /// <param name="filteredRoutes">Routes à filtrer.</param>
-    /// <returns>TracerProviterBuilder.</returns>
-    public static TracerProviderBuilder AddTelemetryFilter(
-        this TracerProviderBuilder builder,
-        params IEnumerable<string> filteredRoutes
+    /// <param name="services">ServiceCollection.</param>
+    /// <param name="builder">Builder pour construire le service OpenTelemetry.</param>
+    /// <returns></returns>
+    public static IServiceCollection ConfigureOpenTelemetryService(
+        this IServiceCollection services,
+        Func<IHostEnvironment, OpenTelemetryService> builder
     )
     {
-        return builder.AddProcessor(new OpenTelemetryFilterProcessor(filteredRoutes));
+        void Configure(IServiceProvider provider, ResourceBuilder resourceBuilder)
+        {
+            var env = provider.GetRequiredService<IHostEnvironment>();
+            var service = builder(env);
+            resourceBuilder.AddService(
+                service.Name,
+                service.Namespace,
+                service.Version,
+                serviceInstanceId: service.InstanceId
+            );
+        }
+
+        return services
+            .ConfigureOpenTelemetryTracerProvider(
+                (provider, builder) => builder.ConfigureResource(r => Configure(provider, r))
+            )
+            .ConfigureOpenTelemetryLoggerProvider(
+                (provider, builder) => builder.ConfigureResource(r => Configure(provider, r))
+            );
     }
 
     /// <summary>

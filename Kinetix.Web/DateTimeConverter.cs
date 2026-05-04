@@ -4,6 +4,9 @@ using System.Text.Json.Serialization;
 
 namespace Kinetix.Web;
 
+/// <summary>
+/// Convertisseur JSON pour s'assurer que les dates lues (et écrites) sont toujours en UTC.
+/// </summary>
 public class DateTimeConverter : JsonConverter<DateTime>
 {
     /// <inheritdoc />

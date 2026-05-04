@@ -6,7 +6,7 @@ namespace Kinetix.EFCore.Npgsql;
 public static class NpgsqlDataSourceBuilderExtensions
 {
     /// <summary>
-    /// Configure les traces de Npgsql pour qu'elles apparaissent dans OpenTelemetry (à priori Application Insights).
+    /// Configure les traces de Npgsql pour qu'elles apparaissent proprement dans OpenTelemetry (filtres, nommage...).
     /// </summary>
     /// <param name="builder">DataSourceBuilder.</param>
     /// <returns>DataSourceBuilder.</returns>

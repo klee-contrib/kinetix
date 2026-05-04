@@ -4,6 +4,9 @@ using System.Text.Json.Serialization;
 
 namespace Kinetix.Web;
 
+/// <summary>
+/// Convertisseur JSON pour s'assurer de la bonne sérialisation des TimeSpans.
+/// </summary>
 public class TimeSpanConverter : JsonConverter<TimeSpan>
 {
     /// <inheritdoc />
