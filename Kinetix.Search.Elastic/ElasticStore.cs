@@ -293,6 +293,10 @@ public class ElasticStore(
             var bucket = res.Aggregations.Terms(groupFieldName);
             bucket ??= res.Aggregations.Filter(groupFieldName).Terms(groupFieldName);
 
+            var facetDef = facetDefList.First(f =>
+                f.Code == input.SearchCriteria.First(sc => !string.IsNullOrEmpty(sc.Group)).Group
+            );
+
             foreach (var group in bucket.Buckets)
             {
                 var list = group
@@ -300,19 +304,50 @@ public class ElasticStore(
                     .Hits<TDocument>()
                     .Select(d => documentMapper(d.Source, d.Highlight))
                     .ToList();
+
                 groupResultList.Add(
                     new GroupResult<TOutput>
                     {
                         Code = group.Key,
-                        Label = facetDefList
-                            .First(f =>
-                                f.Code == input.SearchCriteria.First(sc => !string.IsNullOrEmpty(sc.Group)).Group
-                            )
-                            .ResolveLabel(group.Key),
+                        Label = facetDef.ResolveLabel(group.Key),
                         List = list,
                         TotalCount = (int)(group.DocCount ?? 0),
                     }
                 );
+            }
+
+            // Gestion des modes spéciaux sur les facettes de référence.
+            if (
+                facetDef is ReferenceFacet<TDocument> rfDef
+                && (rfDef.ShowEmptyReferenceValues || rfDef.Ordering == FacetOrdering.ReferenceOrder)
+            )
+            {
+                var referenceValues = rfDef
+                    .GetReferenceList()
+                    .Select(r => new GroupResult<TOutput>
+                    {
+                        Code = r.Code,
+                        Label = r.Label,
+                        List = groupResultList.SingleOrDefault(g => g.Code == r.Code)?.List ?? [],
+                        TotalCount = groupResultList.SingleOrDefault(g => g.Code == r.Code)?.TotalCount ?? 0,
+                    })
+                    .ToList();
+
+                if (!rfDef.ShowEmptyReferenceValues)
+                {
+                    referenceValues = referenceValues.Where(rf => rf.TotalCount > 0).ToList();
+                }
+
+                // On est obligé de retrier par derrière.
+                groupResultList = facetDef.Ordering switch
+                {
+                    FacetOrdering.ReferenceOrder => referenceValues,
+                    FacetOrdering.CountAscending => referenceValues.OrderBy(fi => fi.TotalCount).ToList(),
+                    FacetOrdering.CountDescending => referenceValues.OrderByDescending(fi => fi.TotalCount).ToList(),
+                    FacetOrdering.KeyAscending => referenceValues.OrderBy(fi => fi.Code).ToList(),
+                    FacetOrdering.KeyDescending => referenceValues.OrderByDescending(fi => fi.Code).ToList(),
+                    _ => throw new InvalidOperationException(),
+                };
             }
 
             /* Groupe pour les valeurs missing. */

@@ -157,12 +157,39 @@ public static class AdvancedQueryUtil
                                     st =>
                                         st.Field(groupFieldName)
                                             .Size(50)
+                                            .Order(t =>
+                                                facetDefList
+                                                    ?.FirstOrDefault(f => f.FieldName == groupFieldName)
+                                                    ?.Ordering switch
+                                                {
+                                                    FacetOrdering.KeyAscending => t.KeyAscending(),
+                                                    FacetOrdering.KeyDescending => t.KeyDescending(),
+                                                    FacetOrdering.CountAscending => t.CountAscending(),
+                                                    _ => t.CountDescending(),
+                                                }
+                                            )
                                             .Aggregations(g =>
                                                 g.TopHits(
                                                     TopHitName,
                                                     x =>
                                                     {
-                                                        x.Size(input.GroupSize);
+                                                        x.Size(input.GroupSize)
+                                                            .Sort(x =>
+                                                            {
+                                                                if (sortDefs.Any())
+                                                                {
+                                                                    foreach (var sortDef in sortDefs)
+                                                                    {
+                                                                        sortDef(x);
+                                                                    }
+                                                                }
+                                                                else
+                                                                {
+                                                                    x.Field("_score", SortOrder.Descending);
+                                                                }
+
+                                                                return x;
+                                                            });
 
                                                         if (input.Highlights)
                                                         {
