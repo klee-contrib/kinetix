@@ -1,125 +1,51 @@
-﻿using System.Collections;
-using System.Globalization;
+﻿using System.Globalization;
 
 namespace Kinetix.Modeling.Exceptions;
 
 /// <summary>
 /// Pile d'erreur.
 /// </summary>
-public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
+public sealed class ErrorMessageCollection : List<ErrorMessage>
 {
-    private readonly List<ErrorMessage> _entryList = [];
-
     /// <summary>
     /// Constructeur.
     /// </summary>
-    public ErrorMessageCollection() { }
-
-    /// <summary>
-    /// Constructeur.
-    /// </summary>
-    /// <param name="erreurs">Liste d'erreurs.</param>
-    public ErrorMessageCollection(IEnumerable<string> erreurs)
-    {
-        foreach (var err in erreurs)
-        {
-            AddConstraintException(err);
-        }
-    }
+    public ErrorMessageCollection()
+        : base() { }
 
     /// <summary>
     /// Constructeur.
     /// </summary>
     /// <param name="erreurs">Liste d'erreurs.</param>
     public ErrorMessageCollection(IEnumerable<ErrorMessage> erreurs)
+        : base(erreurs) { }
+
+    /// <summary>
+    /// Constructeur.
+    /// </summary>
+    /// <param name="erreurs">Liste d'erreurs.</param>
+    public ErrorMessageCollection(IEnumerable<string> erreurs)
+        : base()
     {
-        _entryList.AddRange(erreurs);
+        foreach (var err in erreurs)
+        {
+            AddBusinessException(err);
+        }
     }
 
     /// <summary>
     /// Indique si la pile contient des erreurs.
     /// </summary>
-    public bool HasError => _entryList.Count > 0;
-
-    /// <summary>
-    /// Indique le nombre d'éléments dans la collection.
-    /// </summary>
-    int ICollection<ErrorMessage>.Count => _entryList.Count;
-
-    /// <summary>
-    /// Indique que la collection est en lecture seule.
-    /// </summary>
-    bool ICollection<ErrorMessage>.IsReadOnly => true;
-
-    /// <summary>
-    /// Ajoute un élément. Non supporté.
-    /// </summary>
-    /// <param name="item">Message.</param>
-    void ICollection<ErrorMessage>.Add(ErrorMessage item)
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Ajoute une exception à la liste des erreurs.
-    /// </summary>
-    /// <param name="ce">Exception.</param>
-    public void AddConstraintException(BusinessException ce)
-    {
-        ArgumentNullException.ThrowIfNull(ce);
-
-        if (ce.Errors != null)
-        {
-            AddErrorStack(string.Empty, ce.Errors);
-        }
-        else if (ce.Property != null)
-        {
-            AddEntry(ce.Property.PropertyName, ce.Message);
-        }
-        else
-        {
-            AddEntry(string.Empty, ce.Message);
-        }
-    }
-
-    /// <summary>
-    /// Ajoute une exception à la liste des erreurs.
-    /// </summary>
-    /// <param name="message">Le message de l'exception.</param>
-    public void AddConstraintException(string message)
-    {
-        AddConstraintException(new BusinessException(message));
-    }
-
-    /// <summary>
-    /// Ajoute des entrées à la pile d'erreur.
-    /// </summary>
-    /// <param name="errorMessages">Message d'erreur.</param>
-    public void AddEntries(ErrorMessageCollection errorMessages)
-    {
-        foreach (var message in errorMessages)
-        {
-            _entryList.Add(message);
-        }
-    }
-
-    /// <summary>
-    /// Ajoute une entrée à la pile d'erreur.
-    /// </summary>
-    /// <param name="errorMessage">Message d'erreur.</param>
-    public void AddEntry(ErrorMessage errorMessage)
-    {
-        _entryList.Add(errorMessage);
-    }
+    public bool HasError => Count > 0;
 
     /// <summary>
     /// Ajoute une entrée à la pile d'erreur.
     /// </summary>
     /// <param name="fieldName">Nom du champ.</param>
     /// <param name="errorMessage">Message d'erreur.</param>
-    public void AddEntry(string fieldName, string? errorMessage)
+    public void Add(string fieldName, string? errorMessage)
     {
-        _entryList.Add(new ErrorMessage(fieldName, errorMessage, code: null));
+        Add(new(fieldName, errorMessage, code: null));
     }
 
     /// <summary>
@@ -128,15 +54,40 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
     /// <param name="rownum">Numéro de la ligne en erreur.</param>
     /// <param name="fieldName">Nom du champ.</param>
     /// <param name="errorMessage">Message d'erreur.</param>
-    public void AddEntry(int rownum, string fieldName, string errorMessage)
+    public void Add(int rownum, string fieldName, string errorMessage)
     {
-        _entryList.Add(
-            new ErrorMessage(
-                "[" + rownum.ToString(CultureInfo.InvariantCulture) + "]." + fieldName,
-                errorMessage,
-                code: null
-            )
-        );
+        Add(new("[" + rownum.ToString(CultureInfo.InvariantCulture) + "]." + fieldName, errorMessage, code: null));
+    }
+
+    /// <summary>
+    /// Ajoute une exception à la liste des erreurs.
+    /// </summary>
+    /// <param name="ce">Exception.</param>
+    public void AddBusinessException(BusinessException ce)
+    {
+        ArgumentNullException.ThrowIfNull(ce);
+
+        if (ce.Errors.Any())
+        {
+            AddErrorStack(string.Empty, ce.Errors);
+        }
+        else if (ce.Property != null)
+        {
+            Add(ce.Property.PropertyName, ce.Message);
+        }
+        else
+        {
+            Add(string.Empty, ce.Message);
+        }
+    }
+
+    /// <summary>
+    /// Ajoute une exception à la liste des erreurs.
+    /// </summary>
+    /// <param name="message">Le message de l'exception.</param>
+    public void AddBusinessException(string message)
+    {
+        AddBusinessException(new BusinessException(message));
     }
 
     /// <summary>
@@ -150,68 +101,12 @@ public sealed class ErrorMessageCollection : ICollection<ErrorMessage>
 
         foreach (var entry in errorCollection)
         {
-            AddEntry(fieldPrefix + entry.FieldName, entry.Message);
+            Add(fieldPrefix + entry.FieldName, entry.Message);
         }
     }
 
     /// <summary>
-    /// Supprime tous les éléments de la liste. Non supporté.
-    /// </summary>
-    void ICollection<ErrorMessage>.Clear()
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Teste si la collection contient un item.
-    /// </summary>
-    /// <param name="item">Item.</param>
-    /// <returns>Non supporté.</returns>
-    bool ICollection<ErrorMessage>.Contains(ErrorMessage item)
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Copie la collection. Non supporté.
-    /// </summary>
-    /// <param name="array">Tableau de sortie.</param>
-    /// <param name="arrayIndex">Position d'écriture.</param>
-    void ICollection<ErrorMessage>.CopyTo(ErrorMessage[] array, int arrayIndex)
-    {
-        _entryList.CopyTo(array, arrayIndex);
-    }
-
-    /// <summary>
-    /// Retourne un énumérateur sur la collection.
-    /// </summary>
-    /// <returns>Enumérateur.</returns>
-    IEnumerator<ErrorMessage> IEnumerable<ErrorMessage>.GetEnumerator()
-    {
-        return _entryList.GetEnumerator();
-    }
-
-    /// <summary>
-    /// Retourne un énumérateur sur la collection.
-    /// </summary>
-    /// <returns>Enumérateur.</returns>
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return _entryList.GetEnumerator();
-    }
-
-    /// <summary>
-    /// Supprime un élément de la collection.
-    /// </summary>
-    /// <param name="item">Item.</param>
-    /// <returns>Non supporté.</returns>
-    bool ICollection<ErrorMessage>.Remove(ErrorMessage item)
-    {
-        throw new NotSupportedException();
-    }
-
-    /// <summary>
-    /// Léve une erreur si des erreurs ont été détectées.
+    /// Lève une erreur si des erreurs ont été détectées.
     /// </summary>
     public void Throw()
     {

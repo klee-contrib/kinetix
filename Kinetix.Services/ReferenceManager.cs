@@ -440,7 +440,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
             {
                 foreach (var error in await CheckReferenceKeysInternal(item, ct))
                 {
-                    errors.AddEntry(error);
+                    errors.Add(error);
                 }
             }
         }
@@ -463,7 +463,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
 
                                 if (!keys.Contains(value))
                                 {
-                                    errors.AddEntry(
+                                    errors.Add(
                                         new ErrorMessage(
                                             $"La valeur '{value}' n'est pas valide pour la propriété '{property.PropertyName}'. Valeurs attendues : {string.Join(", ", keys.Select(k => $"'{k}'"))}."
                                         )
@@ -475,7 +475,7 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
                         {
                             foreach (var error in await CheckReferenceKeysInternal(value, ct))
                             {
-                                errors.AddEntry(error);
+                                errors.Add(error);
                             }
                         }
                     }

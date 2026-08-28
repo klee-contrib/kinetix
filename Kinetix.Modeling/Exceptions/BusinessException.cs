@@ -30,7 +30,7 @@ public class BusinessException : Exception
     public BusinessException(IEnumerable<ErrorMessage> messageList, string? code = null)
         : base(string.Empty)
     {
-        Errors = new ErrorMessageCollection(messageList);
+        Errors = [.. messageList];
         Code = code;
     }
 
@@ -53,8 +53,7 @@ public class BusinessException : Exception
     public BusinessException(string fieldName, string? message)
         : base(string.Empty)
     {
-        Errors = new ErrorMessageCollection();
-        Errors.AddEntry(fieldName, message);
+        Errors = new ErrorMessageCollection { { fieldName, message } };
     }
 
     /// <summary>
@@ -73,7 +72,7 @@ public class BusinessException : Exception
     public BusinessException(IEnumerable<ErrorMessage> errors, Exception innerException)
         : base(string.Empty, innerException)
     {
-        Errors = new ErrorMessageCollection(errors);
+        Errors = [.. errors];
     }
 
     /// <summary>
@@ -124,7 +123,7 @@ public class BusinessException : Exception
     /// <summary>
     /// Retourne la pile des erreurs.
     /// </summary>
-    public ErrorMessageCollection Errors { get; private set; } = [];
+    public ErrorMessageCollection Errors { get; } = [];
 
     /// <summary>
     /// List of parameters to inject in the message describing the exception.

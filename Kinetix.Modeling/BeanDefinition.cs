@@ -118,7 +118,7 @@ public class BeanDefinition
             );
             foreach (var valRes in validationResults)
             {
-                errors.AddEntry(
+                errors.Add(
                     new ErrorMessage(property.PropertyName, valRes.ErrorMessage, code: null)
                     {
                         ModelName = BeanType.Name,
@@ -133,7 +133,7 @@ public class BeanDefinition
 
             foreach (var error in property.CheckDomain(property.GetValue(bean)))
             {
-                errors.AddEntry(error);
+                errors.Add(error);
             }
         }
 
