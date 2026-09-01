@@ -39,7 +39,7 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
                 .OrderByDescending(eh => eh.Priority)
         )
         {
-            result = await exceptionHandler.Handle(exception, httpContext, cancellationToken);
+            result = await exceptionHandler.HandleAsync(exception, httpContext, cancellationToken);
             if (result != null)
             {
                 break;

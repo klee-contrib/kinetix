@@ -17,8 +17,8 @@ internal class DbContextTransactionContext(DbContext dbContext) : IAsyncTransact
         dbContext.Database.BeginTransaction();
     }
 
-    /// <inheritdoc cref="IAsyncTransactionContext.Init" />
-    public async Task Init(CancellationToken ct = default)
+    /// <inheritdoc cref="IAsyncTransactionContext.InitAsync" />
+    public async Task InitAsync(CancellationToken ct = default)
     {
         await dbContext.Database.BeginTransactionAsync(ct);
     }
@@ -26,8 +26,8 @@ internal class DbContextTransactionContext(DbContext dbContext) : IAsyncTransact
     /// <inheritdoc cref="ISyncTransactionContext.OnAfterCommit" />
     public void OnAfterCommit() { }
 
-    /// <inheritdoc cref="IAsyncTransactionContext.OnAfterCommit" />
-    public Task OnAfterCommit(CancellationToken ct = default)
+    /// <inheritdoc cref="IAsyncTransactionContext.OnAfterCommitAsync" />
+    public Task OnAfterCommitAsync(CancellationToken ct = default)
     {
         return Task.CompletedTask;
     }
@@ -35,8 +35,8 @@ internal class DbContextTransactionContext(DbContext dbContext) : IAsyncTransact
     /// <inheritdoc cref="ISyncTransactionContext.OnBeforeCommit" />
     public void OnBeforeCommit() { }
 
-    /// <inheritdoc cref="IAsyncTransactionContext.OnBeforeCommit" />
-    public Task OnBeforeCommit(CancellationToken ct = default)
+    /// <inheritdoc cref="IAsyncTransactionContext.OnBeforeCommitAsync" />
+    public Task OnBeforeCommitAsync(CancellationToken ct = default)
     {
         return Task.CompletedTask;
     }
@@ -54,8 +54,8 @@ internal class DbContextTransactionContext(DbContext dbContext) : IAsyncTransact
         }
     }
 
-    /// <inheritdoc cref="IAsyncTransactionContext.OnCommit" />
-    public async Task OnCommit(CancellationToken ct = default)
+    /// <inheritdoc cref="IAsyncTransactionContext.OnCommitAsync" />
+    public async Task OnCommitAsync(CancellationToken ct = default)
     {
         if (Completed)
         {

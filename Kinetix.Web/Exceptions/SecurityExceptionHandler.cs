@@ -13,21 +13,8 @@ public class SecurityExceptionHandler(KinetixExceptionConfig config, ProblemDeta
     /// <inheritdoc />
     public int Priority => 1;
 
-    /// <inheritdoc cref="IKinetixExceptionHandler.Handle" />
-    public ValueTask<IResult?> Handle(Exception exception, HttpContext context, CancellationToken ct = default)
-    {
-        if (exception is not SecurityException)
-        {
-            return ValueTask.FromResult<IResult?>(null);
-        }
-
-        return ValueTask.FromResult<IResult?>(
-            Results.Json(new KinetixErrorResponse { Errors = [exception.Message] }, statusCode: 403)
-        );
-    }
-
-    /// <inheritdoc cref="IKinetixExceptionHandler.Handle" />
-    public ValueTask<IResult?> Handle(Exception exception, HttpContext context)
+    /// <inheritdoc cref="IKinetixExceptionHandler.HandleAsync" />
+    public ValueTask<IResult?> HandleAsync(Exception exception, HttpContext context, CancellationToken ct = default)
     {
         IResult? result = null;
 

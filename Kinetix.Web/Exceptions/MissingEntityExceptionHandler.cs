@@ -12,8 +12,8 @@ public class MissingEntityExceptionHandler(KinetixExceptionConfig config, Proble
     /// <inheritdoc />
     public int Priority => 1;
 
-    /// <inheritdoc cref="IKinetixExceptionHandler.Handle" />
-    public ValueTask<IResult?> Handle(Exception exception, HttpContext context, CancellationToken ct = default)
+    /// <inheritdoc cref="IKinetixExceptionHandler.HandleAsync" />
+    public ValueTask<IResult?> HandleAsync(Exception exception, HttpContext context, CancellationToken ct = default)
     {
         IResult? result = null;
 

@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿#pragma warning disable S3877
+
+using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Services;
 

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>10.0.1</Version>
+    <Version>10.0.2</Version>
     <Description>Module pour la configuration spécifique Npgsql pour EF Core.</Description>
   </PropertyGroup>
   <ItemGroup>

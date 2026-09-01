@@ -20,5 +20,5 @@ public interface IKinetixExceptionHandler
     /// <param name="context">HttpContext.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat si traité, null si ignoré.</returns>
-    ValueTask<IResult?> Handle(Exception exception, HttpContext context, CancellationToken ct = default);
+    ValueTask<IResult?> HandleAsync(Exception exception, HttpContext context, CancellationToken ct = default);
 }

@@ -54,7 +54,7 @@ public partial class ServiceScope : IAsyncDisposable
                 switch (context)
                 {
                     case IAsyncTransactionContext asyncContext:
-                        await asyncContext.OnBeforeCommit();
+                        await asyncContext.OnBeforeCommitAsync();
                         break;
                     case ISyncTransactionContext syncContext:
                         syncContext.OnBeforeCommit();
@@ -80,7 +80,7 @@ public partial class ServiceScope : IAsyncDisposable
             switch (context)
             {
                 case IAsyncTransactionContext asyncContext:
-                    await asyncContext.OnCommit();
+                    await asyncContext.OnCommitAsync();
                     break;
                 case ISyncTransactionContext syncContext:
                     syncContext.OnCommit();
@@ -102,7 +102,7 @@ public partial class ServiceScope : IAsyncDisposable
                 switch (context)
                 {
                     case IAsyncTransactionContext asyncContext:
-                        await asyncContext.OnAfterCommit();
+                        await asyncContext.OnAfterCommitAsync();
                         break;
                     case ISyncTransactionContext syncContext:
                         syncContext.OnAfterCommit();
@@ -139,7 +139,7 @@ public partial class ServiceScope : IAsyncDisposable
             switch (context)
             {
                 case IAsyncTransactionContext asyncContext:
-                    await asyncContext.Init(ct);
+                    await asyncContext.InitAsync(ct);
                     break;
                 case ISyncTransactionContext syncContext:
                     syncContext.Init();

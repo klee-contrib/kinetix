@@ -29,8 +29,8 @@ internal class WorksheetBuilder<T>(
     private int _maxResults;
     private bool _transpose = false;
 
-    /// <inheritdoc cref="IWorksheetBuilder{T}.Build" />
-    public async Task<IExcelBuilder> Build(
+    /// <inheritdoc cref="IWorksheetBuilder{T}.BuildAsync" />
+    public async Task<IExcelBuilder> BuildAsync(
         Func<IXLWorksheet, Task>? postBuildAction = null,
         CancellationToken ct = default
     )

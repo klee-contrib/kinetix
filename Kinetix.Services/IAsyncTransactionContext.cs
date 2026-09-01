@@ -9,26 +9,26 @@ public interface IAsyncTransactionContext : ITransactionContext
     /// Initialise le contexte.
     /// </summary>
     /// <param name="ct">CancellationToken.</param>
-    Task Init(CancellationToken ct = default);
+    Task InitAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Action a exécuter après le commit du scope courant.
     /// </summary>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Task.</returns>
-    Task OnAfterCommit(CancellationToken ct = default);
+    Task OnAfterCommitAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Action a exécuter avant le commit du scope courant.
     /// </summary>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Task.</returns>
-    Task OnBeforeCommit(CancellationToken ct = default);
+    Task OnBeforeCommitAsync(CancellationToken ct = default);
 
     /// <summary>
     /// Action a exécuter lors du commit du scope courant.
     /// </summary>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>Task.</returns>
-    Task OnCommit(CancellationToken ct = default);
+    Task OnCommitAsync(CancellationToken ct = default);
 }

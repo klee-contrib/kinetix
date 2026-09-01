@@ -31,7 +31,7 @@ public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheD
     /// <inheritdoc cref="IReferenceManager.CheckReferenceKeysAsync" />
     public async Task CheckReferenceKeysAsync(object? bean, CancellationToken ct = default)
     {
-        var errors = await CheckReferenceKeysInternal(bean, ct);
+        var errors = await CheckReferenceKeysInternalAsync(bean, ct);
         if (errors.Any())
         {
             throw new BusinessException(errors);
@@ -301,7 +301,10 @@ public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheD
         return definition.DefaultProperty?.GetValue(reference)?.ToString()!;
     }
 
-    private async Task<ErrorMessageCollection> CheckReferenceKeysInternal(object? bean, CancellationToken ct = default)
+    private async Task<ErrorMessageCollection> CheckReferenceKeysInternalAsync(
+        object? bean,
+        CancellationToken ct = default
+    )
     {
         var errors = new ErrorMessageCollection();
 
@@ -314,7 +317,7 @@ public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheD
         {
             foreach (var item in list)
             {
-                foreach (var error in await CheckReferenceKeysInternal(item, ct))
+                foreach (var error in await CheckReferenceKeysInternalAsync(item, ct))
                 {
                     errors.Add(error);
                 }
@@ -349,7 +352,7 @@ public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheD
                         }
                         else
                         {
-                            foreach (var error in await CheckReferenceKeysInternal(value, ct))
+                            foreach (var error in await CheckReferenceKeysInternalAsync(value, ct))
                             {
                                 errors.Add(error);
                             }
@@ -372,7 +375,7 @@ public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheD
                 key,
                 async ct =>
                 {
-                    async Task Flusher() =>
+                    async Task FlusherAsync() =>
                         await _cache.SetAsync(
                             key,
                             await _cache.GetOrCreateAsync<IDictionary<string, T>>(
@@ -396,7 +399,7 @@ public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheD
 
                     if (_referenceNotifier != null)
                     {
-                        await _referenceNotifier.RegisterFlushAsync(typeof(T).Name, Flusher, ct);
+                        await _referenceNotifier.RegisterFlushAsync(typeof(T).Name, FlusherAsync, ct);
                     }
 
                     var def = BeanDescriptor.GetDefinition(typeof(T));
