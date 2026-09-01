@@ -15,7 +15,7 @@ namespace Kinetix.Services;
 /// </summary>
 /// <param name="provider">Service provider.</param>
 /// <param name="cacheDuration">Durée du cache des listes de références.</param>
-public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration) : IReferenceManager
+public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration) : IReferenceManager
 {
     private readonly HybridCache _cache = provider.GetRequiredService<HybridCache>();
     private readonly bool _hasDistributedCache =
@@ -38,19 +38,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         }
     }
 
-    /// <inheritdoc cref="IReferenceManager.FlushCache{T}()" />
-    public void FlushCache<T>()
-        where T : notnull
-    {
-        FlushCache(typeof(T).Name);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.FlushCache(string)" />
-    public void FlushCache(string referenceName)
-    {
-        FlushCacheAsync(referenceName, CancellationToken.None).Wait(CancellationToken.None);
-    }
-
     /// <inheritdoc cref="IReferenceManager.FlushCacheAsync{T}(CancellationToken)" />
     public Task FlushCacheAsync<T>(CancellationToken ct = default)
         where T : notnull
@@ -67,28 +54,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         {
             await _referenceNotifier.NotifyFlushAsync(referenceName, ct);
         }
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}()" />
-    public ICollection<T> GetReferenceList<T>()
-        where T : notnull
-    {
-        return GetReferenceEntry<T>().Map.Values;
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList{T}(Func{T, bool})" />
-    public ICollection<T> GetReferenceList<T>(Func<T, bool> predicate)
-        where T : notnull
-    {
-        return GetReferenceList<T>().Where(predicate).ToList();
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceList(string)" />
-    public ICollection<object> GetReferenceList(string referenceName)
-    {
-        var type = GetTypeFromName(referenceName);
-        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceList), 1, []);
-        return Enumerable.Cast<object>((ICollection)genericMethod!.MakeGenericMethod(type).Invoke(this, [])!).ToList();
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceListAsync{T}(CancellationToken)" />
@@ -119,22 +84,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
             .ToList();
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceMap{T}()" />
-    public IDictionary<object, T> GetReferenceMap<T>()
-        where T : notnull
-    {
-        var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x)!, x => x);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceMap{T}(Func{T, bool})" />
-    public IDictionary<object, T> GetReferenceMap<T>(Func<T, bool> predicate)
-        where T : notnull
-    {
-        var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x)!, x => x);
-    }
-
     /// <inheritdoc cref="IReferenceManager.GetReferenceMapAsync{T}(CancellationToken)" />
     public async Task<IDictionary<object, T>> GetReferenceMapAsync<T>(CancellationToken ct = default)
         where T : notnull
@@ -152,33 +101,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
         return (await GetReferenceListAsync(predicate, ct)).ToDictionary(x => def.PrimaryKey.GetValue(x)!, x => x);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(object?)" />
-    public T? GetReferenceObject<T>(object? primaryKey)
-        where T : notnull
-    {
-        if (primaryKey == null)
-        {
-            return default;
-        }
-
-        return GetReferenceEntry<T>().GetReferenceObject(primaryKey);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceObject{T}(Func{T, bool})" />
-    public T? GetReferenceObject<T>(Func<T, bool> predicate)
-        where T : notnull
-    {
-        return GetReferenceEntry<T>().GetReferenceObject(predicate);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceObject(string, object?)" />
-    public object? GetReferenceObject(string referenceName, object? primaryKey)
-    {
-        var type = GetTypeFromName(referenceName);
-        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceObject), 1, [typeof(object)]);
-        return genericMethod!.MakeGenericMethod(type).Invoke(this, [primaryKey]);
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceObjectAsync{T}(object?, CancellationToken)" />
@@ -216,28 +138,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         return await genericMethod!.MakeGenericMethod(type).InvokeAsync<object>(this, [primaryKey, ct]);
     }
 
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(object?)" />
-    public string? GetReferenceValue<T>(object? primaryKey)
-        where T : notnull
-    {
-        return primaryKey == null ? null : GetReferenceValue(GetReferenceObject<T>(primaryKey));
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue{T}(Func{T, bool})" />
-    public string? GetReferenceValue<T>(Func<T, bool> predicate)
-        where T : notnull
-    {
-        return GetReferenceValue(GetReferenceObject(predicate));
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValue(string, object?)" />
-    public string? GetReferenceValue(string referenceName, object? primaryKey)
-    {
-        var type = GetTypeFromName(referenceName);
-        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceValue), 1, [typeof(object)]);
-        return (string?)genericMethod!.MakeGenericMethod(type).Invoke(this, [primaryKey]);
-    }
-
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueAsync{T}(object?, CancellationToken)" />
     public async Task<string?> GetReferenceValueAsync<T>(object? primaryKey, CancellationToken ct = default)
         where T : notnull
@@ -266,30 +166,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
             [typeof(object), typeof(CancellationToken)]
         );
         return await genericMethod!.MakeGenericMethod(type).InvokeAsync<string>(this, [primaryKey, ct]);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap{T}()" />
-    public IDictionary<object, string> GetReferenceValueMap<T>()
-        where T : notnull
-    {
-        var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList<T>().ToDictionary(x => def.PrimaryKey.GetValue(x)!, GetRequiredReferenceValue);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap{T}(Func{T, bool})" />
-    public IDictionary<object, string> GetReferenceValueMap<T>(Func<T, bool> predicate)
-        where T : notnull
-    {
-        var def = BeanDescriptor.GetDefinition(typeof(T));
-        return GetReferenceList(predicate).ToDictionary(x => def.PrimaryKey.GetValue(x)!, GetRequiredReferenceValue);
-    }
-
-    /// <inheritdoc cref="IReferenceManager.GetReferenceValueMap(string)" />
-    public IDictionary<object, string> GetReferenceValueMap(string referenceName)
-    {
-        var type = GetTypeFromName(referenceName);
-        var genericMethod = typeof(ReferenceManager).GetMethod(nameof(GetReferenceValueMap), 1, []);
-        return (IDictionary<object, string>)genericMethod!.MakeGenericMethod(type).Invoke(this, [])!;
     }
 
     /// <inheritdoc cref="IReferenceManager.GetReferenceValueMapAsync{T}(CancellationToken)" />
@@ -486,21 +362,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         return errors;
     }
 
-    /// <summary>
-    /// Construit l'entrée du cache synchrone associé à la référence demandée.
-    /// </summary>
-    /// <returns>L'entrée de cache.</returns>
-    private ReferenceEntry<T> GetReferenceEntry<T>()
-        where T : notnull
-    {
-        return GetReferenceEntryAsync<T>(default).GetAwaiter().GetResult();
-    }
-
-    /// <summary>
-    /// Construit l'entrée du cache associé à la référence demandée.
-    /// </summary>
-    /// <param name="ct">CancellationToken.</param>
-    /// <returns>L'entrée de cache.</returns>
     private async Task<ReferenceEntry<T>> GetReferenceEntryAsync<T>(CancellationToken ct = default)
         where T : notnull
     {
@@ -559,11 +420,6 @@ public class ReferenceManager(IServiceProvider provider, TimeSpan cacheDuration)
         return _referenceAccessors.Values.Single(r => r.ReferenceType.Name == referenceName).ReferenceType;
     }
 
-    /// <summary>
-    /// Récupère la liste de référence associée à la référence demandée, via son accesseur.
-    /// </summary>
-    /// <param name="ct">CancellationToken.</param>
-    /// <returns>La liste de référence.</returns>
     private async Task<ICollection<T>> InvokeReferenceAccessorAsync<T>(CancellationToken ct = default)
         where T : notnull
     {

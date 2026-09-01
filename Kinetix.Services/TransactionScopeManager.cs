@@ -5,10 +5,10 @@ namespace Kinetix.Services;
 /// <summary>
 /// Manager de transactions.
 /// </summary>
-public class TransactionScopeManager(
+public partial class TransactionScopeManager(
     IEnumerable<ITransactionContextProvider> contextProviders,
     ILogger<ServiceScope> logger
-) : IAsyncDisposable, IDisposable
+) : IAsyncDisposable
 {
     private readonly Stack<ServiceScope> _scopes = new();
 
@@ -17,21 +17,6 @@ public class TransactionScopeManager(
     /// </summary>
     /// <remarks>(Un sous-scope créé par <see cref="EnsureTransaction"/> ou <see cref="EnsureTransactionAsync(CancellationToken)"/> n'est pas le scope actif)</remarks>
     public ServiceScope? ActiveScope => _scopes.Any() ? _scopes.Peek() : null;
-
-    /// <summary>
-    /// Débute une nouvelle transaction synchrone, indépendante d'une éventuelle transaction existante.
-    /// <br />
-    /// <br />
-    /// Cette transaction gérera ces propres contextes, comme ses connections en BDD par exemple.
-    /// </summary>
-    /// <remarks>Cette transaction ne pourra gérer que des contextes transactionnels synchrones, et devra être libérée avec <see cref="Dispose"/>. Si vous souhaitez gérer des contextes transactionnels asynchrones, utilisez <see cref="BeginNewTransactionAsync"/> à la place.</remarks>
-    /// <returns>Scope de la transaction.</returns>
-    public ServiceScope BeginNewTransaction()
-    {
-        var scope = CreateScope();
-        scope.Init();
-        return scope;
-    }
 
     /// <summary>
     /// Débute une nouvelle transaction synchrone, indépendante d'une éventuelle transaction existante.
@@ -51,17 +36,6 @@ public class TransactionScopeManager(
     /// <summary>
     /// Libére tous les scopes de transactions (s'ils n'ont pas déjà été libérés).
     /// </summary>
-    public void Dispose()
-    {
-        foreach (var scope in _scopes.ToList())
-        {
-            scope.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Libére tous les scopes de transactions (s'ils n'ont pas déjà été libérés).
-    /// </summary>
     /// <returns>Task.</returns>
     public async ValueTask DisposeAsync()
     {
@@ -69,16 +43,6 @@ public class TransactionScopeManager(
         {
             await scope.DisposeAsync();
         }
-    }
-
-    /// <summary>
-    /// Vérifie la présence d'une transaction pré-existante, et la crée le cas échéant.
-    /// </summary>
-    /// <remarks>Cette transaction ne pourra gérer que des contextes transactionnels synchrones, et devra être libérée avec <see cref="Dispose"/>. Si vous souhaitez gérer des contextes transactionnels asynchrones, utilisez <see cref="EnsureTransactionAsync(CancellationToken)"/> à la place.</remarks>
-    /// <returns>Scope de la transaction (actif si la transaction a été créee).</returns>
-    public ServiceScope EnsureTransaction()
-    {
-        return ActiveScope != null ? new ServiceScope() : BeginNewTransaction();
     }
 
     /// <summary>
