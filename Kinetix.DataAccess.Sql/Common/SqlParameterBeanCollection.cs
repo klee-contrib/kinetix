@@ -1,6 +1,4 @@
-﻿#pragma warning disable S1699
-
-using System.Data;
+﻿using System.Data;
 using System.Text;
 using Kinetix.Modeling;
 
@@ -10,7 +8,7 @@ namespace Kinetix.DataAccess.Sql.Common;
 /// Contient les informations nécéssaires à l'insertion et la mise à jour ensembliste des données.
 /// </summary>
 /// <typeparam name="T">Type du store.</typeparam>
-public abstract class SqlParameterBeanCollection<T>
+public abstract partial class SqlParameterBeanCollection<T>
     where T : class, new()
 {
     private readonly ConnectionPool? _connectionPool;
@@ -80,8 +78,13 @@ public abstract class SqlParameterBeanCollection<T>
     /// </summary>
     /// <param name="commandName">Nom de la commande.</param>
     /// <param name="dataSourceName">Nom de la dataSource.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Liste d'objet insérés.</returns>
-    public ICollection<T> ExecuteInsert(string commandName, string dataSourceName)
+    public async Task<ICollection<T>> ExecuteInsertAsync(
+        string commandName,
+        string dataSourceName,
+        CancellationToken ct = default
+    )
     {
         if (_connectionPool != null && SbInsert != null)
         {
@@ -89,7 +92,7 @@ public abstract class SqlParameterBeanCollection<T>
             CreateParameter(command);
             command.CommandTimeout = 0;
             var primaryKey = BeanDefinition.PrimaryKey;
-            using var reader = command.ExecuteReader();
+            using var reader = await command.ExecuteReaderAsync(ct);
             while (reader.Read())
             {
                 var source = Index![reader.GetInt32(1)!.Value];

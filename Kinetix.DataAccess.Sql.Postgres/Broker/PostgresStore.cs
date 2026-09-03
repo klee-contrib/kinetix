@@ -16,8 +16,11 @@ namespace Kinetix.DataAccess.Sql.Postgres.Broker;
 /// <param name="dataSourceName">Nom de la chaine de base de données.</param>
 /// <param name="connectionPool">Pool de connexions.</param>
 /// <param name="logger">Logger.</param>
-internal class PostgresStore<T>(string dataSourceName, ConnectionPool connectionPool, ILogger<BrokerManager> logger)
-    : SqlStore<T>(dataSourceName, connectionPool, logger)
+internal partial class PostgresStore<T>(
+    string dataSourceName,
+    ConnectionPool connectionPool,
+    ILogger<BrokerManager> logger
+) : SqlStore<T>(dataSourceName, connectionPool, logger)
     where T : class, new()
 {
     /// <inheritdoc />
@@ -77,17 +80,17 @@ internal class PostgresStore<T>(string dataSourceName, ConnectionPool connection
     }
 
     /// <inheritdoc />
-    protected override ICollection<T> InsertAll(
+    protected override async Task<ICollection<T>> InsertAllAsync(
         string commandName,
         ICollection<T> collection,
-        BeanDefinition beanDefinition
+        BeanDefinition beanDefinition,
+        CancellationToken ct = default
     )
     {
         ArgumentNullException.ThrowIfNull(collection);
-
         ArgumentNullException.ThrowIfNull(beanDefinition);
 
         var collectionStore = new PostgresParameterBeanCollection<T>(ConnectionPool, collection, isInsert: true);
-        return collectionStore.ExecuteInsert(commandName, DataSourceName);
+        return await collectionStore.ExecuteInsertAsync(commandName, DataSourceName, ct);
     }
 }

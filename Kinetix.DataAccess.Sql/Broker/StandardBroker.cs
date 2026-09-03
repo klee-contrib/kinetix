@@ -12,52 +12,47 @@ namespace Kinetix.DataAccess.Sql.Broker;
 /// </remarks>
 /// <param name="transactionScopeManager">Manager de transactions.</param>
 /// <param name="store">Store.</param>
-public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, IStore<T> store) : IBroker<T>
+public partial class StandardBroker<T>(TransactionScopeManager transactionScopeManager, IStore<T> store) : IBroker<T>
     where T : class, new()
 {
-    /// <summary>
-    /// Vérifie si au moins un objet dans la collection est utilisé.
-    /// </summary>
-    /// <param name="primaryKeys">Clés primaires des objets à vérifier.</param>
-    /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
-    /// <returns>True si au moins un objet est utilisé.</returns>
-    public bool AreUsed(ICollection<int> primaryKeys, ICollection<string>? tablesToIgnore = null)
-    {
-        return store.AreUsed(primaryKeys, tablesToIgnore);
-    }
-
-    /// <summary>
-    /// Supprime un bean à partir de sa clef primaire.
-    /// </summary>
-    /// <param name="primaryKey">Clef primaire de l'objet.</param>
-    public virtual void Delete(object primaryKey)
-    {
-        ArgumentNullException.ThrowIfNull(primaryKey);
-
-        using var tx = transactionScopeManager.EnsureTransaction();
-        store.Remove(primaryKey);
-        tx.Complete();
-    }
-
     /// <summary>
     /// Supprimé tous les objets correspondant aux critères.
     /// </summary>
     /// <param name="bean">Critères de suppression.</param>
-    public void DeleteAllByCriteria(T bean)
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public async Task DeleteAllByCriteriaAsync(T bean, CancellationToken ct = default)
     {
-        DeleteAllByCriteria(new FilterCriteria(bean));
+        await DeleteAllByCriteriaAsync(new FilterCriteria(bean), ct);
     }
 
     /// <summary>
     /// Supprimé tous les objets correspondant aux critères.
     /// </summary>
     /// <param name="criteria">Critères de suppression.</param>
-    public virtual void DeleteAllByCriteria(FilterCriteria criteria)
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public virtual async Task DeleteAllByCriteriaAsync(FilterCriteria criteria, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
-        using var tx = transactionScopeManager.EnsureTransaction();
-        store.RemoveAllByCriteria(criteria);
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        await store.RemoveAllByCriteriaAsync(criteria, ct);
+        tx.Complete();
+    }
+
+    /// <summary>
+    /// Supprime un bean à partir de sa clef primaire.
+    /// </summary>
+    /// <param name="primaryKey">Clef primaire de l'objet.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public virtual async Task DeleteAsync(object primaryKey, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(primaryKey);
+
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        await store.RemoveAsync(primaryKey, ct);
         tx.Complete();
     }
 
@@ -65,40 +60,31 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// Supprime plusieurs beans à partir de leur clé primaire.
     /// </summary>
     /// <param name="primaryKeys">Clef primaires des objets.</param>
-    public virtual void DeleteCollection(ICollection<int> primaryKeys)
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public virtual async Task DeleteCollectionAsync(ICollection<int> primaryKeys, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(primaryKeys);
 
         foreach (object primaryKey in primaryKeys)
         {
-            Delete(primaryKey);
+            await DeleteAsync(primaryKey, ct);
         }
-    }
-
-    /// <summary>
-    /// Retourne un bean à partir de sa clef primaire.
-    /// </summary>
-    /// <param name="primaryKey">Valeur de la clef primaire.</param>
-    /// <returns>Bean.</returns>
-    public virtual T? Get(object primaryKey)
-    {
-        ArgumentNullException.ThrowIfNull(primaryKey);
-
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var bean = store.Load(primaryKey);
-        tx.Complete();
-        return bean;
     }
 
     /// <summary>
     /// Retourne tous les beans pour un type.
     /// </summary>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Collection.</returns>
-    public virtual IList<T> GetAll(QueryParameter? queryParameter = null)
+    public virtual async Task<IList<T>> GetAllAsync(
+        QueryParameter? queryParameter = null,
+        CancellationToken ct = default
+    )
     {
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var coll = store.LoadAll(queryParameter);
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var coll = await store.LoadAllAsync(queryParameter, ct);
         tx.Complete();
         return coll;
     }
@@ -109,31 +95,57 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// </summary>
     /// <param name="criteria">Critères de sélection.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Collection.</returns>
-    public virtual IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter? queryParameter = null)
+    public virtual async Task<IList<T>> GetAllByCriteriaAsync(
+        FilterCriteria criteria,
+        QueryParameter? queryParameter = null,
+        CancellationToken ct = default
+    )
     {
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var coll = store.LoadAllByCriteria(criteria, queryParameter);
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var coll = await store.LoadAllByCriteriaAsync(criteria, queryParameter, ct);
         tx.Complete();
         return coll;
     }
 
-    /// <inheritdoc cref="IBroker{T}.GetAllByCriteria(T, QueryParameter?)" />
-    public IList<T> GetAllByCriteria(T bean, QueryParameter? queryParameter = null)
+    /// <inheritdoc cref="IBroker{T}.GetAllByCriteriaAsync(T, QueryParameter?, CancellationToken)" />
+    public Task<IList<T>> GetAllByCriteriaAsync(
+        T bean,
+        QueryParameter? queryParameter = null,
+        CancellationToken ct = default
+    )
     {
-        return GetAllByCriteria(new FilterCriteria(bean), queryParameter);
+        return GetAllByCriteriaAsync(new FilterCriteria(bean), queryParameter, ct);
+    }
+
+    /// <summary>
+    /// Retourne un bean à partir de sa clef primaire.
+    /// </summary>
+    /// <param name="primaryKey">Valeur de la clef primaire.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Bean.</returns>
+    public virtual async Task<T?> GetAsync(object primaryKey, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(primaryKey);
+
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var bean = await store.LoadAsync(primaryKey, ct);
+        tx.Complete();
+        return bean;
     }
 
     /// <summary>
     /// Retourne un bean à partir d'un critère de recherche.
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Bean.</returns>
     /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
-    public virtual T? GetByCriteria(FilterCriteria criteria)
+    public virtual async Task<T?> GetByCriteriaAsync(FilterCriteria criteria, CancellationToken ct = default)
     {
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var value = store.LoadByCriteria(criteria);
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var value = await store.LoadByCriteriaAsync(criteria, ct);
         tx.Complete();
         return value;
     }
@@ -142,65 +154,40 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// Retourne un bean à partir d'un critère de recherche.
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Bean.</returns>
     /// <exception cref="NotSupportedException">Si la recherche renvoie plus d'un élément.</exception>
-    public virtual T? GetByCriteria(T criteria)
+    public virtual async Task<T?> GetByCriteriaAsync(T criteria, CancellationToken ct = default)
     {
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var value = store.LoadByCriteria(new FilterCriteria(criteria));
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var value = await store.LoadByCriteriaAsync(new FilterCriteria(criteria), ct);
         tx.Complete();
         return value;
-    }
-
-    /// <inheritdoc cref="IBroker{T}.Insert" />
-    public object Insert(T bean, ColumnSelector? columnSelector = null)
-    {
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var result = store.Put(bean, forceInsert: true, columnSelector);
-        tx.Complete();
-        return result;
     }
 
     /// <summary>
     /// Insére l'ensemble des éléments.
     /// </summary>
     /// <param name="values">Valeurs à insérer.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Valeurs insérées.</returns>
-    public ICollection<T> InsertAll(ICollection<T> values)
+    public async Task<ICollection<T>> InsertAllAsync(ICollection<T> values, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(values);
 
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var result = store.PutAll(values);
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var result = await store.PutAllAsync(values, ct);
         tx.Complete();
         return result;
     }
 
-    /// <summary>
-    /// Vérifie si l'objet est utilisé.
-    /// </summary>
-    /// <param name="primaryKey">Clé primaire de l'objet à vérifier.</param>
-    /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
-    /// <returns>True si l'objet est utilisé.</returns>
-    public bool IsUsed(object primaryKey, ICollection<string>? tablesToIgnore = null)
+    /// <inheritdoc cref="IBroker{T}.InsertAsync" />
+    public async Task<object> InsertAsync(T bean, ColumnSelector? columnSelector = null, CancellationToken ct = default)
     {
-        return store.IsUsed(primaryKey, tablesToIgnore);
-    }
-
-    /// <summary>
-    /// Sauvegarde un bean.
-    /// </summary>
-    /// <param name="bean">Bean à enregistrer.</param>
-    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou ignorer.</param>
-    /// <returns>Clef primaire.</returns>
-    public virtual object Save(T bean, ColumnSelector? columnSelector = null)
-    {
-        ArgumentNullException.ThrowIfNull(bean);
-
-        using var tx = transactionScopeManager.EnsureTransaction();
-        var primaryKey = store.Put(bean, forceInsert: false, columnSelector);
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var result = await store.PutAsync(bean, forceInsert: true, columnSelector, ct: ct);
         tx.Complete();
-        return primaryKey;
+        return result;
     }
 
     /// <summary>
@@ -208,17 +195,44 @@ public class StandardBroker<T>(TransactionScopeManager transactionScopeManager, 
     /// </summary>
     /// <param name="values">Les valeurs à ajouter via associations.</param>
     /// <param name="columnSelector">Sélecteur de colonnes à mettre à jour.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <exception cref="ArgumentException">Si la collection n'est pas composée d'objets implémentant l'interface IBeanState.</exception>
-    public virtual void SaveAll(ICollection<T> values, ColumnSelector? columnSelector = null)
+    /// <returns>Task.</returns>
+    public virtual async Task SaveAllAsync(
+        ICollection<T> values,
+        ColumnSelector? columnSelector = null,
+        CancellationToken ct = default
+    )
     {
         ArgumentNullException.ThrowIfNull(values);
 
-        using var tx = transactionScopeManager.EnsureTransaction();
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
         foreach (var value in values)
         {
-            store.Put(value, forceInsert: false, columnSelector);
+            await store.PutAsync(value, forceInsert: false, columnSelector, ct: ct);
         }
 
         tx.Complete();
+    }
+
+    /// <summary>
+    /// Sauvegarde un bean.
+    /// </summary>
+    /// <param name="bean">Bean à enregistrer.</param>
+    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour ou ignorer.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Clef primaire.</returns>
+    public virtual async Task<object> SaveAsync(
+        T bean,
+        ColumnSelector? columnSelector = null,
+        CancellationToken ct = default
+    )
+    {
+        ArgumentNullException.ThrowIfNull(bean);
+
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
+        var primaryKey = await store.PutAsync(bean, forceInsert: false, columnSelector, ct: ct);
+        tx.Complete();
+        return primaryKey;
     }
 }

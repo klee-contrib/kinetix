@@ -1,14 +1,9 @@
 ﻿using System.Data;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Kinetix.DataAccess.Sql.Common;
 
 namespace Kinetix.DataAccess.Sql;
 
-/// <summary>
-/// Constructeur de collection.
-/// </summary>
-/// <typeparam name="T">Type de collection à construire.</typeparam>
 public static partial class CollectionBuilder<T>
     where T : class, new()
 {
@@ -16,18 +11,14 @@ public static partial class CollectionBuilder<T>
     /// Parse un DataReader et énumère les éléments.
     /// </summary>
     /// <param name="cmd">Commande a executer.</param>
-    /// <param name="ct">CancellationToken.</param>
     /// <returns>Les éléments.</returns>
-    public static async IAsyncEnumerable<T> ParseCommandAsync(
-        BaseSqlCommand cmd,
-        [EnumeratorCancellation] CancellationToken ct = default
-    )
+    public static IEnumerable<T> ParseCommand(BaseSqlCommand cmd)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         cmd.QueryParameters?.RemapSortColumn(typeof(T));
 
-        using var reader = await cmd.ExecuteReaderAsync(ct) ?? throw new ArgumentNullException(nameof(cmd));
+        using var reader = cmd.ExecuteReader() ?? throw new ArgumentNullException(nameof(cmd));
         IDataRecordAdapter<T>? adapter = null;
 
         while (reader.Read())
@@ -42,19 +33,14 @@ public static partial class CollectionBuilder<T>
     /// </summary>
     /// <param name="cmd">Commande a executer.</param>
     /// <param name="returnNullIfZeroRow">Indique si une valeur nulle doit être retournée si il n'y a aucune ligne.</param>
-    /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet.</returns>
-    public static async Task<T?> ParseCommandForSingleObjectAsync(
-        BaseSqlCommand cmd,
-        bool returnNullIfZeroRow = false,
-        CancellationToken ct = default
-    )
+    public static T? ParseCommandForSingleObject(BaseSqlCommand cmd, bool returnNullIfZeroRow = false)
     {
         ArgumentNullException.ThrowIfNull(cmd);
 
         try
         {
-            using var reader = await cmd.ExecuteReaderAsync(ct);
+            using var reader = cmd.ExecuteReader();
 
             IDataRecordAdapter<T>? adapter = null;
             T? destination = null;

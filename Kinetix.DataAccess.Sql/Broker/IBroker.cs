@@ -9,54 +9,48 @@ public interface IBroker { }
 /// Interface de définition d'un broker d'accès aux données.
 /// </summary>
 /// <typeparam name="T">Type du bean à manipuler.</typeparam>
-public interface IBroker<T> : IBroker
+public partial interface IBroker<T> : IBroker
     where T : new()
 {
-    /// <summary>
-    /// Vérifie si au moins un objet dans la collection est utilisé.
-    /// </summary>
-    /// <param name="primaryKeys">Clés primaires des objets à vérifier.</param>
-    /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
-    /// <returns>True si au moins un objet est utilisé.</returns>
-    bool AreUsed(ICollection<int> primaryKeys, ICollection<string>? tablesToIgnore = null);
-
-    /// <summary>
-    /// Supprime un bean à partir de sa clef primaire.
-    /// </summary>
-    /// <param name="primaryKey">Clef primaire de l'objet.</param>
-    void Delete(object primaryKey);
-
     /// <summary>
     /// Supprime tous les objets correspondant aux critères.
     /// </summary>
     /// <param name="criteria">Critères de suppression.</param>
-    void DeleteAllByCriteria(FilterCriteria criteria);
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    Task DeleteAllByCriteriaAsync(FilterCriteria criteria, CancellationToken ct = default);
 
     /// <summary>
     /// Supprime tous les objets correspondant aux critères.
     /// </summary>
     /// <param name="bean">Critères de suppression.</param>
-    void DeleteAllByCriteria(T bean);
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    Task DeleteAllByCriteriaAsync(T bean, CancellationToken ct = default);
+
+    /// <summary>
+    /// Supprime un bean à partir de sa clef primaire.
+    /// </summary>
+    /// <param name="primaryKey">Clef primaire de l'objet.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    Task DeleteAsync(object primaryKey, CancellationToken ct = default);
 
     /// <summary>
     /// Supprime plusieurs beans à partir de leur clé primaire.
     /// </summary>
     /// <param name="primaryKeys">Clef primaires des objets.</param>
-    void DeleteCollection(ICollection<int> primaryKeys);
-
-    /// <summary>
-    /// Retourne un bean à partir de sa clef primaire.
-    /// </summary>
-    /// <param name="primaryKey">Valeur de la clef primaire.</param>
-    /// <returns>Bean.</returns>
-    T? Get(object primaryKey);
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    Task DeleteCollectionAsync(ICollection<int> primaryKeys, CancellationToken ct = default);
 
     /// <summary>
     /// Retourne tous les beans pour un type.
     /// </summary>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Collection.</returns>
-    IList<T> GetAll(QueryParameter? queryParameter = null);
+    Task<IList<T>> GetAllAsync(QueryParameter? queryParameter = null, CancellationToken ct = default);
 
     /// <summary>
     /// Retourne tous les beans pour un type suivant
@@ -64,8 +58,13 @@ public interface IBroker<T> : IBroker
     /// </summary>
     /// <param name="criteria">Liste des critères.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Collection.</returns>
-    IList<T> GetAllByCriteria(FilterCriteria criteria, QueryParameter? queryParameter = null);
+    Task<IList<T>> GetAllByCriteriaAsync(
+        FilterCriteria criteria,
+        QueryParameter? queryParameter = null,
+        CancellationToken ct = default
+    );
 
     /// <summary>
     /// Retourne tous les beans pour un type suivant
@@ -73,58 +72,66 @@ public interface IBroker<T> : IBroker
     /// </summary>
     /// <param name="bean">Bean de critère.</param>
     /// <param name="queryParameter">Paramètres de tri et de limite (vide par défaut).</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Collection.</returns>
-    IList<T> GetAllByCriteria(T bean, QueryParameter? queryParameter = null);
+    Task<IList<T>> GetAllByCriteriaAsync(T bean, QueryParameter? queryParameter = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Retourne un bean à partir de sa clef primaire.
+    /// </summary>
+    /// <param name="primaryKey">Valeur de la clef primaire.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Bean.</returns>
+    Task<T?> GetAsync(object primaryKey, CancellationToken ct = default);
 
     /// <summary>
     /// Retourne un bean à partir de critères de recherches.
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Bean.</returns>
-    T? GetByCriteria(FilterCriteria criteria);
+    Task<T?> GetByCriteriaAsync(FilterCriteria criteria, CancellationToken ct = default);
 
     /// <summary>
     /// Retourne un bean à partir de critères de recherches.
     /// </summary>
     /// <param name="criteria">Le critère de recherche.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Bean.</returns>
-    T? GetByCriteria(T criteria);
+    Task<T?> GetByCriteriaAsync(T criteria, CancellationToken ct = default);
+
+    /// <summary>
+    /// Insére l'ensemble des éléments.
+    /// </summary>
+    /// <param name="values">Valeurs à insérer.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Valeurs insérées.</returns>
+    Task<ICollection<T>> InsertAllAsync(ICollection<T> values, CancellationToken ct = default);
 
     /// <summary>
     /// Insère un élément.
     /// </summary>
     /// <param name="bean">Bean à enregistrer.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Clef primaire de l'objet.</returns>
-    object Insert(T bean, ColumnSelector? columnSelector = null);
-
-    /// <summary>
-    /// Insére l'ensemble des éléments.
-    /// </summary>
-    /// <param name="values">Valeurs à insérer.</param>
-    /// <returns>Valeurs insérées.</returns>
-    ICollection<T> InsertAll(ICollection<T> values);
-
-    /// <summary>
-    /// Vérifie si l'objet est utilisé.
-    /// </summary>
-    /// <param name="primaryKey">Clé primaire de l'objet à vérifier.</param>
-    /// <param name="tablesToIgnore">Tables dépendantes à ignorer</param>
-    /// <returns>True si l'objet est utilisé.</returns>
-    bool IsUsed(object primaryKey, ICollection<string>? tablesToIgnore = null);
-
-    /// <summary>
-    /// Sauvegarde un bean (update si PK renseignée, insert sinon).
-    /// </summary>
-    /// <param name="bean">Bean à enregistrer.</param>
-    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
-    /// <returns>Clef primaire de l'objet.</returns>
-    object Save(T bean, ColumnSelector? columnSelector = null);
+    Task<object> InsertAsync(T bean, ColumnSelector? columnSelector = null, CancellationToken ct = default);
 
     /// <summary>
     /// Sauvegarde l'ensemble des éléments d'une association n-n.
     /// </summary>
     /// <param name="values">Les valeurs à ajouter via associations.</param>
     /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
-    void SaveAll(ICollection<T> values, ColumnSelector? columnSelector = null);
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    Task SaveAllAsync(ICollection<T> values, ColumnSelector? columnSelector = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Sauvegarde un bean (update si PK renseignée, insert sinon).
+    /// </summary>
+    /// <param name="bean">Bean à enregistrer.</param>
+    /// <param name="columnSelector">Selecteur de colonnes à mettre à jour.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Clef primaire de l'objet.</returns>
+    Task<object> SaveAsync(T bean, ColumnSelector? columnSelector = null, CancellationToken ct = default);
 }

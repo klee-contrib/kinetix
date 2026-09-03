@@ -8,10 +8,9 @@ namespace Kinetix.DataAccess.Sql.Common;
 /// <summary>
 /// Commande d'appel à SQL.
 /// </summary>
-public abstract class BaseSqlCommand : IDisposable
+public abstract partial class BaseSqlCommand : IDisposable
 {
     private readonly string? _parserKey;
-    private SqlParameterCollection? _parameterColl;
 
     /// <summary>
     /// Constructeur.
@@ -142,7 +141,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <summary>
     /// Retourne la liste des paramétres de la commande.
     /// </summary>
-    public SqlParameterCollection Parameters => _parameterColl ??= GetSqlParameterCollection();
+    public SqlParameterCollection Parameters => field ??= GetSqlParameterCollection();
 
     /// <summary>
     /// Obtient ou définit les paramètres de la requête (limit, offset, tri).
@@ -152,7 +151,7 @@ public abstract class BaseSqlCommand : IDisposable
     /// <summary>
     /// Commande SQL.
     /// </summary>
-    public IDbCommand InnerCommand { get; private set; }
+    public DbCommand InnerCommand { get; private set; }
 
     /// <summary>
     /// Parser de commande.
@@ -266,34 +265,17 @@ public abstract class BaseSqlCommand : IDisposable
     /// <summary>
     /// Exécute la commande de mise à jour de données.
     /// </summary>
-    /// <returns>Nombre de ligne impactées.</returns>
-    public int ExecuteNonQuery()
-    {
-        var listener = GetSqlCommandListener();
-        try
-        {
-            CommandParser.ParseCommand(InnerCommand, _parserKey, queryParameter: null);
-            return InnerCommand.ExecuteNonQuery();
-        }
-        catch (DbException sqle)
-        {
-            throw listener.HandleException(sqle);
-        }
-        finally
-        {
-            listener.Dispose();
-        }
-    }
-
-    /// <summary>
-    /// Exécute la commande de mise à jour de données.
-    /// </summary>
     /// <param name="minRowsAffected">Nombre minimum de lignes affectées.</param>
     /// <param name="maxRowsAffected">Nombre maximum de lignes affectées.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Nombre de ligne impactées.</returns>
-    public int ExecuteNonQuery(int minRowsAffected, int maxRowsAffected)
+    public async Task<int> ExecuteNonQueryAsync(
+        int minRowsAffected,
+        int maxRowsAffected,
+        CancellationToken ct = default
+    )
     {
-        var rowsAffected = ExecuteNonQuery();
+        var rowsAffected = await ExecuteNonQueryAsync(ct);
         if (rowsAffected < minRowsAffected)
         {
             throw rowsAffected == 0
@@ -314,16 +296,40 @@ public abstract class BaseSqlCommand : IDisposable
     }
 
     /// <summary>
+    /// Exécute la commande de mise à jour de données.
+    /// </summary>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Nombre de ligne impactées.</returns>
+    public async Task<int> ExecuteNonQueryAsync(CancellationToken ct = default)
+    {
+        var listener = GetSqlCommandListener();
+        try
+        {
+            CommandParser.ParseCommand(InnerCommand, _parserKey, queryParameter: null);
+            return await InnerCommand.ExecuteNonQueryAsync(ct);
+        }
+        catch (DbException sqle)
+        {
+            throw listener.HandleException(sqle);
+        }
+        finally
+        {
+            listener.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Exécute une commande de selection et retourne un dataReader.
     /// </summary>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>DataReader.</returns>
-    public SqlDataReader ExecuteReader()
+    public async Task<SqlDataReader> ExecuteReaderAsync(CancellationToken ct = default)
     {
         var listener = GetSqlCommandListener();
         try
         {
             CommandParser.ParseCommand(InnerCommand, _parserKey, QueryParameters);
-            return new SqlDataReader(InnerCommand.ExecuteReader(), QueryParameters);
+            return new SqlDataReader(await InnerCommand.ExecuteReaderAsync(ct), QueryParameters);
         }
         catch (DbException sqle)
         {
@@ -339,15 +345,16 @@ public abstract class BaseSqlCommand : IDisposable
     /// Exécute une requête de select et retourne la première valeur
     /// de la première ligne.
     /// </summary>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Retourne la valeur ou null.</returns>
-    public object? ExecuteScalar()
+    public async Task<object?> ExecuteScalarAsync(CancellationToken ct = default)
     {
         var listener = GetSqlCommandListener();
         try
         {
             CommandParser.ParseCommand(InnerCommand, _parserKey, queryParameter: null);
-            var value = InnerCommand.ExecuteScalar();
-            return value == DBNull.Value ? null : value;
+            var value = await InnerCommand.ExecuteScalarAsync(ct);
+            return (value == DBNull.Value) ? null : value;
         }
         catch (DbException sqle)
         {
@@ -365,10 +372,15 @@ public abstract class BaseSqlCommand : IDisposable
     /// </summary>
     /// <param name="minRowsAffected">Nombre minimum de lignes affectées.</param>
     /// <param name="maxRowsAffected">Nombre maximum de lignes affectées.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Retourne la valeur ou null.</returns>
-    public object? ExecuteScalar(int minRowsAffected, int maxRowsAffected)
+    public async Task<object?> ExecuteScalarAsync(
+        int minRowsAffected,
+        int maxRowsAffected,
+        CancellationToken ct = default
+    )
     {
-        using var reader = ExecuteReader();
+        using var reader = await ExecuteReaderAsync(ct);
         if (reader.Read())
         {
             var rowsAffected = reader.RecordsAffected;

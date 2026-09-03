@@ -11,11 +11,10 @@ public static partial class SqlCommandExtensions
     /// Exécute une commande et lit le booléen.
     /// </summary>
     /// <param name="cmd">Commande à exécuter.</param>
-    /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet.</returns>
-    public static async Task<bool> ReadBooleanAsync(this BaseSqlCommand cmd, CancellationToken ct = default)
+    public static bool ReadBoolean(this BaseSqlCommand cmd)
     {
-        return Convert.ToBoolean(await cmd.ExecuteScalarAsync(ct));
+        return Convert.ToBoolean(cmd.ExecuteScalar());
     }
 
     /// <summary>
@@ -23,12 +22,11 @@ public static partial class SqlCommandExtensions
     /// </summary>
     /// <typeparam name="T">Type de l'élément.</typeparam>
     /// <param name="cmd">Commande à exécuter.</param>
-    /// <param name="ct">CancellationToken.</param>
     /// <returns>Liste d'éléments.</returns>
-    public static IAsyncEnumerable<T> ReadEnumerableAsync<T>(this BaseSqlCommand cmd, CancellationToken ct = default)
+    public static IEnumerable<T> ReadEnumerable<T>(this BaseSqlCommand cmd)
         where T : class, new()
     {
-        return CollectionBuilder<T>.ParseCommandAsync(cmd, ct);
+        return CollectionBuilder<T>.ParseCommand(cmd);
     }
 
     /// <summary>
@@ -36,12 +34,11 @@ public static partial class SqlCommandExtensions
     /// </summary>
     /// <typeparam name="T">Type de l'élement.</typeparam>
     /// <param name="cmd">Commande à exécuter.</param>
-    /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet.</returns>
-    public static Task<T?> ReadItemAsync<T>(this BaseSqlCommand cmd, CancellationToken ct = default)
+    public static T? ReadItem<T>(this BaseSqlCommand cmd)
         where T : class, new()
     {
-        return CollectionBuilder<T>.ParseCommandForSingleObjectAsync(cmd, ct: ct);
+        return CollectionBuilder<T>.ParseCommandForSingleObject(cmd);
     }
 
     /// <summary>
@@ -49,12 +46,11 @@ public static partial class SqlCommandExtensions
     /// </summary>
     /// <typeparam name="T">Type de l'élément.</typeparam>
     /// <param name="cmd">Commande à exécuter.</param>
-    /// <param name="ct">CancellationToken.</param>
     /// <returns>Liste d'éléments.</returns>
-    public static async Task<IList<T>> ReadListAsync<T>(this BaseSqlCommand cmd, CancellationToken ct = default)
+    public static IList<T> ReadList<T>(this BaseSqlCommand cmd)
         where T : class, new()
     {
-        return await CollectionBuilder<T>.ParseCommandAsync(cmd, ct).ToListAsync(cancellationToken: ct);
+        return CollectionBuilder<T>.ParseCommand(cmd).ToList();
     }
 
     /// <summary>
@@ -62,11 +58,10 @@ public static partial class SqlCommandExtensions
     /// </summary>
     /// <typeparam name="T">Type de l'élement.</typeparam>
     /// <param name="cmd">Commande à exécuter.</param>
-    /// <param name="ct">CancellationToken.</param>
     /// <returns>Objet.</returns>
-    public static async Task<T?> ReadScalarAsync<T>(this BaseSqlCommand cmd, CancellationToken ct = default)
+    public static T? ReadScalar<T>(this BaseSqlCommand cmd)
     {
-        var value = await cmd.ExecuteScalarAsync(ct);
+        var value = cmd.ExecuteScalar();
 
         /* Valeur non nulle : on la cast et on la renvoie. */
         if (value != null)
