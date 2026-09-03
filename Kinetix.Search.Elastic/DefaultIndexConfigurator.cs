@@ -1,4 +1,4 @@
-﻿using Nest;
+﻿using Elastic.Clients.Elasticsearch.IndexManagement;
 
 namespace Kinetix.Search.Elastic;
 
@@ -8,9 +8,9 @@ namespace Kinetix.Search.Elastic;
 public class DefaultIndexConfigurator : IIndexConfigurator
 {
     /// <inheritdoc cref="IIndexConfigurator.ConfigureIndex" />
-    public ICreateIndexRequest ConfigureIndex(CreateIndexDescriptor descriptor)
+    public void ConfigureIndex(CreateIndexRequestDescriptor descriptor)
     {
-        return descriptor.Settings(s =>
+        descriptor.Settings(s =>
             s.Analysis(a =>
                 a.CharFilters(c =>
                         c.PatternReplace("unsignificant", p => p.Pattern("[\\.()]").Replacement(string.Empty))
@@ -19,20 +19,17 @@ public class DefaultIndexConfigurator : IIndexConfigurator
                             .PatternReplace("spaces", p => p.Pattern("[- ']+").Replacement(" "))
                     )
                     .TokenFilters(t => t.EdgeNGram("edgengram", e => e.MinGram(1).MaxGram(50)))
-                    .Tokenizers(t => t.CharGroup("chargroup", c => c.TokenizeOnCharacters(" ", "-", "'")))
+                    .Tokenizers(t => t.CharGroup("chargroup", c => c.TokenizeOnChars(" ", "-", "'")))
                     .Analyzers(a =>
-                        a.Custom(
-                                "text",
-                                c => c.Tokenizer("chargroup").Filters("edgengram", "asciifolding", "lowercase")
-                            )
-                            .Custom("search_text", c => c.Tokenizer("chargroup").Filters("asciifolding", "lowercase"))
+                        a.Custom("text", c => c.Tokenizer("chargroup").Filter("edgengram", "asciifolding", "lowercase"))
+                            .Custom("search_text", c => c.Tokenizer("chargroup").Filter("asciifolding", "lowercase"))
                     )
                     .Normalizers(n =>
                         n.Custom(
                             "keyword",
                             c =>
-                                c.CharFilters("unsignificant", "start", "end", "spaces")
-                                    .Filters("asciifolding", "lowercase")
+                                c.CharFilter("unsignificant", "start", "end", "spaces")
+                                    .Filter("asciifolding", "lowercase")
                         )
                     )
             )

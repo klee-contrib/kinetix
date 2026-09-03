@@ -1,27 +1,26 @@
-﻿using Elasticsearch.Net;
+﻿using Elastic.Clients.Elasticsearch;
 using Kinetix.Monitoring.Core;
 using Kinetix.Search.Core;
 using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
 public class ElasticBulkDescriptor : ISearchBulkDescriptor
 {
     private readonly AnalyticsManager _analytics;
-    private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor()
+    private readonly BulkRequestDescriptor _bulkDescriptor = new BulkRequestDescriptor()
         .Timeout(TimeSpan.FromMinutes(1))
         .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(1)));
 
-    private readonly ElasticClient _client;
+    private readonly ElasticsearchClient _client;
     private readonly DocumentDescriptor _documentDescriptor;
     private readonly ILogger<ElasticStore> _logger;
     private int _operationCount = 0;
 
     internal ElasticBulkDescriptor(
         DocumentDescriptor documentDescriptor,
-        ElasticClient client,
+        ElasticsearchClient client,
         ILogger<ElasticStore> logger,
         AnalyticsManager analytics
     )
@@ -48,7 +47,12 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-        _bulkDescriptor.DeleteMany<TDocument>(keys.Select(def.PrimaryKey.GetValueFromKeyObject));
+
+        foreach (var key in keys)
+        {
+            _bulkDescriptor.Delete<TDocument>(o => o.Id(def.PrimaryKey.GetValueFromKeyObject(key)));
+        }
+
         _operationCount++;
 
         return this;
@@ -60,7 +64,7 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         var id = def.PrimaryKey.GetValueFromDocument(document);
-        _bulkDescriptor.Index<TDocument>(y => y.Document(document).Id(id));
+        _bulkDescriptor.Index(document, y => y.Id(id));
         _operationCount++;
 
         return this;

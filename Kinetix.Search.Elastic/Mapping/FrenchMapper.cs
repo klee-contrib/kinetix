@@ -1,6 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Models.Annotations;
-using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping;
 
@@ -9,20 +9,18 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// </summary>
 public class FrenchMapper : IElasticMapper<string>
 {
-    /// <inheritdoc cref="IElasticMapper.Map{TDocument}" />
-    public PropertiesDescriptor<TDocument> Map<TDocument>(
-        PropertiesDescriptor<TDocument> selector,
-        DocumentFieldDescriptor field
-    )
-        where TDocument : class
+    /// <inheritdoc cref="IElasticMapper.Map" />
+    public Properties Map(Properties properties, DocumentFieldDescriptor field)
     {
         if (field.Indexing == SearchFieldIndexing.FullText)
         {
-            return selector.Text(x => x.Name(field.FieldName).Analyzer("french"));
+            properties.Add(field.FieldName, new TextProperty { Analyzer = "french" });
         }
         else
         {
             throw new NotSupportedException();
         }
+
+        return properties;
     }
 }

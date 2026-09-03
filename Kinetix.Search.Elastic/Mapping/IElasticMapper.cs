@@ -1,7 +1,7 @@
 ﻿#pragma warning disable S2326
 
+using Elastic.Clients.Elasticsearch.Mapping;
 using Kinetix.Search.Core.DocumentModel;
-using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping;
 
@@ -19,13 +19,8 @@ public interface IElasticMapper
     /// <summary>
     /// Définit le mapping pour le type..
     /// </summary>
-    /// <param name="selector">Descripteur des propriétés.</param>
+    /// <param name="properties">Descripteur des propriétés.</param>
     /// <param name="field">Catégorie de champ.</param>
     /// <returns>Mapping de champ.</returns>
-    /// <typeparam name="TDocument">Type du document.</typeparam>
-    PropertiesDescriptor<TDocument> Map<TDocument>(
-        PropertiesDescriptor<TDocument> selector,
-        DocumentFieldDescriptor field
-    )
-        where TDocument : class;
+    Properties Map(Properties properties, DocumentFieldDescriptor field);
 }

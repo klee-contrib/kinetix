@@ -1,5 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
-using Nest;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.QueryDsl;
+using Kinetix.Search.Core.DocumentModel;
 
 namespace Kinetix.Search.Elastic;
 
@@ -13,14 +14,14 @@ public static class ElasticQueryBuilder
     /// </summary>
     /// <param name="subQueries">Sous-requêtes.</param>
     /// <returns>Requête.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildAndQuery<TDocument>(
-        params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries
+    public static Action<QueryDescriptor<TDocument>> BuildAndQuery<TDocument>(
+        params Action<QueryDescriptor<TDocument>>[] subQueries
     )
         where TDocument : class
     {
         return subQueries.Length switch
         {
-            0 => q => q,
+            0 => q => { },
             1 => subQueries[0],
             _ => q => q.Bool(b => b.Filter(subQueries)),
         };
@@ -33,14 +34,14 @@ public static class ElasticQueryBuilder
     /// <param name="value">Valeur.</param>
     /// <param name="invert">Inverse le filtre.</param>
     /// <returns>Requête.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildFilter<TDocument>(
+    public static Action<QueryDescriptor<TDocument>> BuildFilter<TDocument>(
         string field,
         string value,
         bool invert = false
     )
         where TDocument : class
     {
-        QueryContainer Query(QueryContainerDescriptor<TDocument> q) => q.Term(t => t.Field(field).Value(value));
+        void Query(QueryDescriptor<TDocument> q) => q.Term(t => t.Field(field).Value(value));
 
         return invert ? (q => q.Bool(b => b.MustNot(Query))) : Query;
     }
@@ -51,13 +52,10 @@ public static class ElasticQueryBuilder
     /// <param name="field">Champ.</param>
     /// <param name="invert">Inverse le filtre.</param>
     /// <returns>Requête.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMissingField<TDocument>(
-        string field,
-        bool invert = false
-    )
+    public static Action<QueryDescriptor<TDocument>> BuildMissingField<TDocument>(string field, bool invert = false)
         where TDocument : class
     {
-        QueryContainer Query(QueryContainerDescriptor<TDocument> q) => q.Exists(t => t.Field(field));
+        void Query(QueryDescriptor<TDocument> q) => q.Exists(t => t.Field(field));
 
         return invert ? Query : (q => q.Bool(b => b.MustNot(Query)));
     }
@@ -68,7 +66,7 @@ public static class ElasticQueryBuilder
     /// <param name="text">Texte de recherche.</param>
     /// <param name="fields">Champs de recherche.</param>
     /// <returns>Requête.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMultiMatchQuery<TDocument>(
+    public static Action<QueryDescriptor<TDocument>> BuildMultiMatchQuery<TDocument>(
         string text,
         params DocumentFieldDescriptor[] fields
     )
@@ -88,14 +86,14 @@ public static class ElasticQueryBuilder
     /// </summary>
     /// <param name="subQueries">Sous-requêtes.</param>
     /// <returns>Requête.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildMustQuery<TDocument>(
-        params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries
+    public static Action<QueryDescriptor<TDocument>> BuildMustQuery<TDocument>(
+        params Action<QueryDescriptor<TDocument>>[] subQueries
     )
         where TDocument : class
     {
         return subQueries.Length switch
         {
-            0 => q => q,
+            0 => q => { },
             1 => subQueries[0],
             _ => q => q.Bool(b => b.Must(subQueries)),
         };
@@ -106,14 +104,14 @@ public static class ElasticQueryBuilder
     /// </summary>
     /// <param name="subQueries">Sous-requêtes.</param>
     /// <returns>Requête.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> BuildOrQuery<TDocument>(
-        params Func<QueryContainerDescriptor<TDocument>, QueryContainer>[] subQueries
+    public static Action<QueryDescriptor<TDocument>> BuildOrQuery<TDocument>(
+        params Action<QueryDescriptor<TDocument>>[] subQueries
     )
         where TDocument : class
     {
         return subQueries.Length switch
         {
-            0 => q => q,
+            0 => q => { },
             1 => subQueries[0],
             _ => q => q.Bool(b => b.Should(subQueries).MinimumShouldMatch(1)),
         };

@@ -4,8 +4,8 @@
     <Description>Implémentation ElasticSearch du module de recherche avancée Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Elastic.Clients.Elasticsearch" />
     <PackageReference Include="Microsoft.Extensions.Options" />
-    <PackageReference Include="NEST.JsonNetSerializer" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kinetix.Search.Core\Kinetix.Search.Core.csproj" />

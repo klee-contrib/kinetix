@@ -1,9 +1,12 @@
 ﻿#pragma warning disable S3241
 
+using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Aggregations;
+using Elastic.Clients.Elasticsearch.Fluent;
+using Elastic.Clients.Elasticsearch.QueryDsl;
 using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -28,7 +31,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
     /// <param name="facetDef">Définition de facette.</param>
     /// <param name="isMultiValued">Si multi valué.</param>
     /// <returns>QueryDescriptor.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer>? BuildMultiSelectableFilter<TDocument>(
+    public static Action<QueryDescriptor<TDocument>>? BuildMultiSelectableFilter<TDocument>(
         FacetInput input,
         IFacetDefinition<TDocument> facetDef,
         bool isMultiValued
@@ -61,7 +64,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
     /// <param name="exclude">Exclut les valeurs pour lesquelles la facette correspond au lieu de les inclure.</param>
     /// <param name="facetDef">Définition de la facette.</param>
     /// <returns>QueryDescriptor.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> CreateFacetSubQuery<TDocument>(
+    public static Action<QueryDescriptor<TDocument>> CreateFacetSubQuery<TDocument>(
         string facet,
         bool exclude,
         IFacetDefinition<TDocument> facetDef
@@ -86,7 +89,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
     /// <param name="facetList">Définitions de toutes les facettes.</param>
     /// <param name="inputFacetsList">Facettes sélectionnées, pour filtrer (si plusieurs, combinées en "ou").</param>
     public void DefineAggregation<TDocument>(
-        AggregationContainerDescriptor<TDocument> agg,
+        FluentDictionaryOfStringAggregation<TDocument> agg,
         IFacetDefinition<TDocument> facet,
         ICollection<IFacetDefinition<TDocument>> facetList,
         IEnumerable<IDictionary<string, FacetInput>> inputFacetsList
@@ -95,42 +98,43 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
     {
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
-        AggregationContainerDescriptor<TDocument> AggDescriptor(AggregationContainerDescriptor<TDocument> aa)
+        void AggDescriptor(FluentDictionaryOfStringAggregation<TDocument> aa)
         {
             /* Crée une agrégation sur les valeurs discrètes du champ. */
             if (facet is ExistsFacet<TDocument>)
             {
-                aa.Filter(facet.Code, f => f.Filter(ff => ff.Exists(e => e.Field(facet.Field))));
+                aa.Add(facet.Code, f => f.Filter(ff => ff.Exists(e => e.Field(facet.Field))));
             }
             else
             {
-                aa.Terms(
+                aa.Add(
                     facet.Code,
                     st =>
-                        st.Field(facet.Field)
-                            .Size(200)
-                            .Order(t =>
-                                facet.Ordering switch
+                        st.Terms(i =>
+                            i.Field(facet.Field)
+                                .Size(200)
+                                .Order(t =>
                                 {
-                                    FacetOrdering.KeyAscending => t.KeyAscending(),
-                                    FacetOrdering.KeyDescending => t.KeyDescending(),
-                                    FacetOrdering.CountAscending => t.CountAscending(),
-                                    _ => t.CountDescending(),
-                                }
-                            )
+                                    _ = facet.Ordering switch
+                                    {
+                                        FacetOrdering.KeyAscending => t.Add(facet.Field, SortOrder.Asc),
+                                        FacetOrdering.KeyDescending => t.Add(facet.Field, SortOrder.Desc),
+                                        FacetOrdering.CountAscending => t.Add("_count", SortOrder.Asc),
+                                        _ => t.Add("_count", SortOrder.Desc),
+                                    };
+                                })
+                        )
                 );
             }
 
             /* Crée une agrégation pour les valeurs non renseignées du champ. */
             if (facet.HasMissing)
             {
-                aa.Filter(
+                aa.Add(
                     facet.Code + MissingFacetPrefix,
                     f => f.Filter(ff => ff.Bool(b => b.MustNot(ee => ee.Exists(e => e.Field(facet.Field)))))
                 );
             }
-
-            return aa;
         }
 
         /* On construit la requête de filtrage sur les autres facettes multi-sélectionnables. */
@@ -167,7 +171,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
         }
         else
         {
-            agg.Filter(
+            agg.Add(
                 facet.Code,
                 f =>
                     f
@@ -201,18 +205,18 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
         /* Valeurs renseignées. */
         if (facetDef is ExistsFacet<TDocument>)
         {
-            var bucket = aggs.Filter(facetDef.Code);
+            var bucket = aggs.GetFilter(facetDef.Code);
 
             // Si on a un filtre sur la facette, alors le premier bucket qu'on a récupère c'est celui là.
             // Celui qui nous intéresse (avec les vrais résultats) c'est donc le sous-bucket.
             // On distingue les cas en regardant s'il y a un sous-bucket ou non.
-            var subBucket = bucket.Filter(facetDef.Code);
+            var subBucket = bucket?.Aggregations?.GetFilter(facetDef.Code);
             if (subBucket != null)
             {
                 bucket = subBucket;
             }
 
-            if (bucket.DocCount > 0)
+            if (bucket!.DocCount > 0)
             {
                 facetOutput.Add(
                     new FacetItem
@@ -226,22 +230,22 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
         }
         else
         {
-            var bucket = aggs.Terms(facetDef.Code);
-            bucket ??= aggs.Filter(facetDef.Code).Terms(facetDef.Code);
+            var bucket = aggs.GetStringTerms(facetDef.Code);
+            bucket ??= aggs.GetFilter(facetDef.Code)?.Aggregations?.GetStringTerms(facetDef.Code);
 
-            foreach (var b in bucket.Buckets)
+            foreach (var b in bucket!.Buckets)
             {
                 // Pour une raison inconnue, ES renvoie un timestamp au lieu de la date dans son format original...
                 var code = isDate
-                    ? DateTime.UnixEpoch.AddMilliseconds(long.Parse(b.Key)).ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    ? DateTime.UnixEpoch.AddMilliseconds(long.Parse(b.Key.ToString())).ToString("yyyy-MM-ddTHH:mm:ssZ")
                     : b.Key;
 
                 facetOutput.Add(
                     new FacetItem
                     {
-                        Code = code,
-                        Label = await facetDef.ResolveLabelAsync(code, ct),
-                        Count = b.DocCount ?? 0,
+                        Code = code.ToString(),
+                        Label = await facetDef.ResolveLabelAsync(code.ToString(), ct),
+                        Count = b.DocCount,
                     }
                 );
             }
@@ -250,10 +254,10 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
         /* Valeurs non renseignées. */
         if (facetDef.HasMissing)
         {
-            var bucket = aggs.Filter(facetDef.Code + MissingFacetPrefix);
-            bucket ??= aggs.Filter(facetDef.Code).Filter(facetDef.Code + MissingFacetPrefix);
+            var bucket = aggs.GetFilter(facetDef.Code + MissingFacetPrefix);
+            bucket ??= aggs.GetFilter(facetDef.Code)?.Aggregations?.GetFilter(facetDef.Code + MissingFacetPrefix);
 
-            if (bucket.DocCount > 0)
+            if (bucket!.DocCount > 0)
             {
                 facetOutput.Add(
                     new FacetItem

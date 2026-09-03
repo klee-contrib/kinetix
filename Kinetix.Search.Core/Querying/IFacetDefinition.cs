@@ -20,7 +20,7 @@ public interface IFacetDefinition<TDocument>
     /// <summary>
     /// Champ sur lequel on facette.
     /// </summary>
-    Expression<Func<TDocument, object>> Field { get; }
+    Expression<Func<TDocument, object?>> Field { get; }
 
     /// <summary>
     /// Nom du champ sur lequel on facette.

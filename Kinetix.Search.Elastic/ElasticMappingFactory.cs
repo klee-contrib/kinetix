@@ -1,7 +1,7 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Elastic.Mapping;
 using Microsoft.Extensions.DependencyInjection;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -13,18 +13,16 @@ public sealed class ElasticMappingFactory(IServiceProvider provider)
     /// <summary>
     /// Effectue le mapping pour un champ d'un document.
     /// </summary>
-    /// <param name="selector">Descripteur des propriétés.</param>
+    /// <param name="properties">Descripteur des propriétés.</param>
     /// <param name="field">Le champ.</param>
     /// <returns>Mapping de champ.</returns>
-    /// <typeparam name="T">Type du document.</typeparam>
-    public PropertiesDescriptor<T> AddField<T>(PropertiesDescriptor<T> selector, DocumentFieldDescriptor field)
-        where T : class
+    public Properties AddField(Properties properties, DocumentFieldDescriptor field)
     {
         var mapperType = field.OtherAttributes.OfType<ElasticMapperAttribute>().FirstOrDefault()?.MapperType;
 
         if (mapperType != null)
         {
-            return ((IElasticMapper)Activator.CreateInstance(mapperType)!).Map(selector, field);
+            return ((IElasticMapper)Activator.CreateInstance(mapperType)!).Map(properties, field);
         }
 
         if (
@@ -35,27 +33,22 @@ public sealed class ElasticMappingFactory(IServiceProvider provider)
             mapper = provider.GetRequiredService<IElasticMapper<string>>();
         }
 
-        return mapper.Map(selector, field);
+        return mapper.Map(properties, field);
     }
 
     /// <summary>
     /// Effectue le mapping pour les champs d'un document.
     /// </summary>
-    /// <param name="selector">Descripteur des propriétés.</param>
+    /// <param name="properties">Descripteur des propriétés.</param>
     /// <param name="fields">Les champs.</param>
     /// <returns>Mapping de champ.</returns>
-    /// <typeparam name="T">Type du document.</typeparam>
-    public PropertiesDescriptor<T> AddFields<T>(
-        PropertiesDescriptor<T> selector,
-        DocumentFieldDescriptorCollection fields
-    )
-        where T : class
+    public Properties AddFields(Properties properties, DocumentFieldDescriptorCollection fields)
     {
         foreach (var field in fields.OrderBy(field => field.FieldName))
         {
-            AddField(selector, field);
+            AddField(properties, field);
         }
 
-        return selector;
+        return properties;
     }
 }

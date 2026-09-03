@@ -1,7 +1,9 @@
-﻿using Kinetix.Search.Core;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Fluent;
+using Elastic.Clients.Elasticsearch.QueryDsl;
+using Kinetix.Search.Core;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -25,8 +27,8 @@ public static class ElasticStoreExtensions
         this ISearchStore store,
         AdvancedQueryInput<TDocument, TCriteria> input,
         Func<TDocument, TOutput> documentMapper,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
-        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        Action<QueryDescriptor<TDocument>>? filter = null,
+        IEnumerable<Action<SortOptionsDescriptor<TDocument>>>? sorts = null,
         bool sortsAfter = false,
         CancellationToken ct = default
     )
@@ -58,8 +60,8 @@ public static class ElasticStoreExtensions
         this ISearchStore store,
         AdvancedQueryInput<TDocument, TCriteria> input,
         Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
-        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        Action<QueryDescriptor<TDocument>>? filter = null,
+        IEnumerable<Action<SortOptionsDescriptor<TDocument>>>? sorts = null,
         bool sortsAfter = false,
         CancellationToken ct = default
     )
@@ -85,10 +87,10 @@ public static class ElasticStoreExtensions
         this ISearchStore store,
         AdvancedQueryInput<TDocument, TCriteria> input,
         Func<TDocument, TOutput> documentMapper,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
-        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        Action<QueryDescriptor<TDocument>>? filter = null,
+        IEnumerable<Action<SortOptionsDescriptor<TDocument>>>? sorts = null,
         bool sortsAfter = false,
-        Action<AggregationContainerDescriptor<TDocument>>? aggs = null,
+        Action<FluentDictionaryOfStringAggregation<TDocument>>? aggs = null,
         CancellationToken ct = default
     )
         where TDocument : class
@@ -121,10 +123,10 @@ public static class ElasticStoreExtensions
         this ISearchStore store,
         AdvancedQueryInput<TDocument, TCriteria> input,
         Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
-        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        Action<QueryDescriptor<TDocument>>? filter = null,
+        IEnumerable<Action<SortOptionsDescriptor<TDocument>>>? sorts = null,
         bool sortsAfter = false,
-        Action<AggregationContainerDescriptor<TDocument>>? aggs = null,
+        Action<FluentDictionaryOfStringAggregation<TDocument>>? aggs = null,
         CancellationToken ct = default
     )
         where TDocument : class

@@ -1,10 +1,9 @@
-﻿using Elasticsearch.Net;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Serialization;
+using Elastic.Transport;
 using Kinetix.Search.Core;
 using Kinetix.Search.Core.Config;
 using Microsoft.Extensions.DependencyInjection;
-using Nest;
-using Nest.JsonNetSerializer;
-using Newtonsoft.Json;
 
 namespace Kinetix.Search.Elastic;
 
@@ -27,19 +26,14 @@ public static class ServiceExtensions
             .AddSingleton(provider =>
             {
                 var server = searchConfig.GetServer(ElasticConfigBuilder.ServerName);
-                var node = new Uri(server.NodeUri);
-                var settings = new ConnectionSettings(
-                    new SingleNodeConnectionPool(node),
-                    (b, s) =>
-                        new JsonNetSerializer(
-                            b,
-                            s,
-                            () =>
+                var node = new SingleNodePool(new Uri(server.NodeUri));
+                var settings = new ElasticsearchClientSettings(
+                    node,
+                    (_, settings) =>
+                        new DefaultSourceSerializer(
+                            settings,
+                            js =>
                             {
-                                var js = new JsonSerializerSettings
-                                {
-                                    DateFormatString = "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'",
-                                };
                                 if (config.JsonConverters != null)
                                 {
                                     foreach (var converter in config.JsonConverters)
@@ -47,11 +41,9 @@ public static class ServiceExtensions
                                         js.Converters.Add(converter);
                                     }
                                 }
-
-                                return js;
                             }
                         )
-                ).DisableDirectStreaming().EnableApiVersioningHeader();
+                ).DisableDirectStreaming();
 
                 foreach (var documentType in config.DocumentTypes)
                 {
@@ -62,12 +54,12 @@ public static class ServiceExtensions
                     );
                 }
 
-                if (!string.IsNullOrEmpty(server.Login))
+                if (!string.IsNullOrEmpty(server.Login) && !string.IsNullOrEmpty(server.Password))
                 {
-                    settings.BasicAuthentication(server.Login, server.Password);
+                    settings.Authentication(new BasicAuthentication(server.Login, server.Password));
                 }
 
-                return new ElasticClient(settings);
+                return new ElasticsearchClient(settings);
             })
             .AddSingleton(searchConfig)
             .AddSingleton<ElasticMappingFactory>()

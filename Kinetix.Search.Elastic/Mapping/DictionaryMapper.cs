@@ -1,6 +1,5 @@
-﻿using Kinetix.Search.Core.DocumentModel;
-using Kinetix.Search.Models.Annotations;
-using Nest;
+﻿using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Search.Core.DocumentModel;
 
 namespace Kinetix.Search.Elastic.Mapping;
 
@@ -9,17 +8,10 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// </summary>
 public class DictionaryMapper : IElasticMapper<Dictionary<string, string>>
 {
-    /// <inheritdoc cref="IElasticMapper.Map{TDocument}" />
-    public PropertiesDescriptor<TDocument> Map<TDocument>(
-        PropertiesDescriptor<TDocument> selector,
-        DocumentFieldDescriptor field
-    )
-        where TDocument : class
+    /// <inheritdoc cref="IElasticMapper.Map" />
+    public Properties Map(Properties properties, DocumentFieldDescriptor field)
     {
-        return field.Indexing switch
-        {
-            SearchFieldIndexing.None => selector.Object<object>(x => x.Name(field.FieldName)),
-            _ => throw new NotSupportedException(),
-        };
+        properties.Add(field.FieldName, new ObjectProperty());
+        return properties;
     }
 }

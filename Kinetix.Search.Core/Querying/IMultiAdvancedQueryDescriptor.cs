@@ -44,6 +44,7 @@ public interface IMultiAdvancedQueryDescriptor
     /// <summary>
     /// Effectue la requête.
     /// </summary>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>QueryOutput.</returns>
-    QueryOutput Search();
+    Task<QueryOutput> SearchAsync(CancellationToken ct = default);
 }

@@ -1,6 +1,6 @@
-﻿using Kinetix.Monitoring.Core;
+﻿using Elastic.Transport.Products.Elasticsearch;
+using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
-using Nest;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Kinetix.Search.Elastic;
@@ -26,7 +26,7 @@ internal static class ElasticExtensions
         Func<CancellationToken, Task<T>> esCall,
         CancellationToken ct = default
     )
-        where T : IResponse
+        where T : ElasticsearchResponse
     {
         analytics.StartProcess($"ElasticSearch.{context}", "Search");
         var response = await esCall(ct);
@@ -36,18 +36,18 @@ internal static class ElasticExtensions
             logger.LogDebug(response.DebugInformation);
         }
 
-        if (!response.ApiCall.Success)
+        if (!response.ApiCallDetails.HasSuccessfulStatusCode && response.TryGetOriginalException(out var e))
         {
             analytics.MarkProcessInError();
             analytics.StopProcess();
-            throw new ElasticException($"Error in {context}", response.DebugInformation, response.OriginalException);
+            throw new ElasticException($"Error in {context}", response.DebugInformation, e!);
         }
 
         var process = analytics.StopProcess();
         if (process != null && !process.Disabled)
         {
             logger.LogInformation(
-                $"{context} ({response.ApiCall.HttpMethod} {response.ApiCall.Uri}) {response.ApiCall.HttpStatusCode} ({process.Duration} ms)"
+                $"{context} ({response.ApiCallDetails.HttpMethod} {response.ApiCallDetails.Uri}) {response.ApiCallDetails.HttpStatusCode} ({process.Duration} ms)"
             );
         }
 

@@ -1,6 +1,6 @@
-﻿using Kinetix.Search.Core.DocumentModel;
+﻿using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Models.Annotations;
-using Nest;
 
 namespace Kinetix.Search.Elastic.Mapping;
 
@@ -9,24 +9,15 @@ namespace Kinetix.Search.Elastic.Mapping;
 /// </summary>
 public class IntMapper : IElasticMapper<int>
 {
-    /// <inheritdoc cref="IElasticMapper.Map{TDocument}" />
-    public PropertiesDescriptor<TDocument> Map<TDocument>(
-        PropertiesDescriptor<TDocument> selector,
-        DocumentFieldDescriptor field
-    )
-        where TDocument : class
+    /// <inheritdoc cref="IElasticMapper.Map" />
+    public Properties Map(Properties properties, DocumentFieldDescriptor field)
     {
-        switch (field.Indexing)
-        {
-            case SearchFieldIndexing.FullText:
-                return selector.Text(x => x.Name(field.FieldName).Analyzer("text").SearchAnalyzer("search_text"));
-            case SearchFieldIndexing.Term:
-            case SearchFieldIndexing.Sort:
-                return selector.Number(x => x.Name(field.FieldName).Type(NumberType.Integer));
-            case SearchFieldIndexing.None:
-                return selector.Number(x => x.Name(field.FieldName).Type(NumberType.Integer).Index(index: false));
-            default:
-                throw new NotSupportedException();
-        }
+        properties.Add(
+            field.FieldName,
+            field.Indexing == SearchFieldIndexing.FullText
+                ? new TextProperty { Analyzer = "text", SearchAnalyzer = "search_text" }
+                : new IntegerNumberProperty { Index = field.Indexing != SearchFieldIndexing.None }
+        );
+        return properties;
     }
 }

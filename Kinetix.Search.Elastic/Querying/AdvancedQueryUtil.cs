@@ -1,10 +1,13 @@
 ﻿#pragma warning disable S3241
 
+using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Core.Search;
+using Elastic.Clients.Elasticsearch.Fluent;
+using Elastic.Clients.Elasticsearch.QueryDsl;
 using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
 using Kinetix.Search.Models;
 using Kinetix.Search.Models.Annotations;
-using Nest;
 
 namespace Kinetix.Search.Elastic.Querying;
 
@@ -30,14 +33,14 @@ public static class AdvancedQueryUtil
     /// <param name="pitId">Id du PIT, si recheche paginée.</param>
     /// <param name="searchAfter">Id du dernier élément retourné, si paginé.</param>
     /// <returns>Le descripteur.</returns>
-    public static Func<SearchDescriptor<TDocument>, ISearchRequest> GetAdvancedQueryDescriptor<TDocument, TCriteria>(
+    public static Action<SearchRequestDescriptor<TDocument>> ConfigureAdvancedQueryDescriptor<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
         FacetHandler facetHandler,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null,
-        IEnumerable<Action<SortDescriptor<TDocument>>>? sorts = null,
+        Action<QueryDescriptor<TDocument>>? filter = null,
+        IEnumerable<Action<SortOptionsDescriptor<TDocument>>>? sorts = null,
         bool sortsAfter = false,
-        Action<AggregationContainerDescriptor<TDocument>>? aggs = null,
+        Action<FluentDictionaryOfStringAggregation<TDocument>>? aggs = null,
         ICollection<IFacetDefinition<TDocument>>? facetDefList = null,
         string? groupFieldName = null,
         string? pitId = null,
@@ -81,21 +84,21 @@ public static class AdvancedQueryUtil
 
             if (sourceFields.Length != 0)
             {
-                s.Source(src => src.Includes(f => f.Fields(sourceFields)));
+                s.Source(src => src.Filter(f => f.Includes(sourceFields)));
             }
 
             /* Pagination */
             if (pitId == null)
             {
-                s.From(skip).Size(size).TrackTotalHits();
+                s.From(skip).Size(size).TrackTotalHits(value: true);
             }
             else
             {
-                s.Size(10000).PointInTime(pitId, p => p.KeepAlive("1m"));
+                s.Size(10000).Pit(pitId, p => p.KeepAlive("1m"));
 
                 if (searchAfter != null)
                 {
-                    s.SearchAfter(searchAfter);
+                    s.SearchAfter(searchAfter.Select(FieldValue.FromValue).ToList());
                 }
             }
 
@@ -111,19 +114,18 @@ public static class AdvancedQueryUtil
                 }
                 else
                 {
-                    x.Field("_score", SortOrder.Descending);
+                    x.Field("_score", SortOrder.Desc);
                 }
-
-                return x;
             });
 
-            IHighlight HighlightSelector(HighlightDescriptor<TDocument> h) =>
-                h.Fields(
-                    def.SearchFields.Select(f =>
-                            (Func<HighlightFieldDescriptor<TDocument>, IHighlightField>)(h => h.Field(f.FieldName))
-                        )
-                        .ToArray()
-                );
+            void HighlightSelector(HighlightDescriptor<TDocument> h) =>
+                h.Fields(f =>
+                {
+                    foreach (var field in def.SearchFields)
+                    {
+                        f.Add(field.FieldName);
+                    }
+                });
 
             /* Aggrégations. */
             if (hasFacet || hasGroup)
@@ -146,80 +148,86 @@ public static class AdvancedQueryUtil
 
                     if (hasGroup)
                     {
-                        AggregationContainerDescriptor<TDocument> AggDescriptor(
-                            AggregationContainerDescriptor<TDocument> aa
-                        )
+                        void AggDescriptor(FluentDictionaryOfStringAggregation<TDocument> aa)
                         {
-                            return aa
+                            aa
                             /* Groupement. */
-                            .Terms(
-                                    groupFieldName,
+                            .Add(
+                                    groupFieldName!,
                                     st =>
-                                        st.Field(groupFieldName)
-                                            .Size(50)
-                                            .Order(t =>
-                                                facetDefList
-                                                    ?.FirstOrDefault(f => f.FieldName == groupFieldName)
-                                                    ?.Ordering switch
-                                                {
-                                                    FacetOrdering.KeyAscending => t.KeyAscending(),
-                                                    FacetOrdering.KeyDescending => t.KeyDescending(),
-                                                    FacetOrdering.CountAscending => t.CountAscending(),
-                                                    _ => t.CountDescending(),
-                                                }
+                                        st.Terms(f =>
+                                                f.Field(groupFieldName!)
+                                                    .Size(50)
+                                                    .Order(t =>
+                                                    {
+                                                        _ = facetDefList
+                                                            ?.FirstOrDefault(f => f.FieldName == groupFieldName)
+                                                            ?.Ordering switch
+                                                        {
+                                                            FacetOrdering.KeyAscending => t.Add(
+                                                                groupFieldName!,
+                                                                SortOrder.Asc
+                                                            ),
+                                                            FacetOrdering.KeyDescending => t.Add(
+                                                                groupFieldName!,
+                                                                SortOrder.Desc
+                                                            ),
+                                                            FacetOrdering.CountAscending => t.Add(
+                                                                "_count",
+                                                                SortOrder.Asc
+                                                            ),
+                                                            _ => t.Add("_count", SortOrder.Desc),
+                                                        };
+                                                    })
                                             )
                                             .Aggregations(g =>
-                                                g.TopHits(
+                                                g.Add(
                                                     TopHitName,
                                                     x =>
-                                                    {
-                                                        x.Size(input.GroupSize)
-                                                            .Sort(x =>
-                                                            {
-                                                                if (sortDefs.Any())
-                                                                {
-                                                                    foreach (var sortDef in sortDefs)
-                                                                    {
-                                                                        sortDef(x);
-                                                                    }
-                                                                }
-                                                                else
-                                                                {
-                                                                    x.Field("_score", SortOrder.Descending);
-                                                                }
-
-                                                                return x;
-                                                            });
-
-                                                        if (input.Highlights)
+                                                        x.TopHits(h =>
                                                         {
-                                                            x.Highlight(HighlightSelector);
-                                                        }
+                                                            h.Size(input.GroupSize)
+                                                                .Sort(x =>
+                                                                {
+                                                                    if (sortDefs.Any())
+                                                                    {
+                                                                        foreach (var sortDef in sortDefs)
+                                                                        {
+                                                                            sortDef(x);
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        x.Field("_score", SortOrder.Desc);
+                                                                    }
+                                                                });
 
-                                                        return x;
-                                                    }
+                                                            if (input.Highlights)
+                                                            {
+                                                                h.Highlight(HighlightSelector);
+                                                            }
+                                                        })
                                                 )
                                             )
                                 )
                                 /* Groupement pour les valeurs nulles */
-                                .Missing(
+                                .Add(
                                     groupFieldName + MissingGroupPrefix,
                                     st =>
-                                        st.Field(groupFieldName)
+                                        st.Missing(m => m.Field(groupFieldName!))
                                             .Aggregations(g =>
-                                                g.TopHits(
+                                                g.Add(
                                                     TopHitName,
-                                                    x =>
-                                                    {
-                                                        x.Size(input.GroupSize);
-
-                                                        if (input.Highlights)
+                                                    h =>
+                                                        h.TopHits(x =>
                                                         {
-                                                            x.Highlight(HighlightSelector);
-                                                        }
+                                                            x.Size(input.GroupSize);
 
-                                                        return x;
-                                                    }
+                                                            if (input.Highlights)
+                                                            {
+                                                                x.Highlight(HighlightSelector);
+                                                            }
+                                                        })
                                                 )
                                             )
                                 );
@@ -228,7 +236,7 @@ public static class AdvancedQueryUtil
                         if (hasPostFilter)
                         {
                             /* Critère de post-filtrage répété sur les groupes, puisque ce sont des agrégations qui par définition ne sont pas affectées par le post-filtrage. */
-                            a.Filter(groupFieldName, f => f.Filter(postFilterQuery).Aggregations(AggDescriptor));
+                            a.Add(groupFieldName!, f => f.Filter(postFilterQuery).Aggregations(AggDescriptor));
                         }
                         else
                         {
@@ -237,8 +245,6 @@ public static class AdvancedQueryUtil
                     }
 
                     aggs?.Invoke(a);
-
-                    return a;
                 });
             }
 
@@ -246,8 +252,6 @@ public static class AdvancedQueryUtil
             {
                 s.Highlight(HighlightSelector);
             }
-
-            return s;
         };
     }
 
@@ -257,10 +261,10 @@ public static class AdvancedQueryUtil
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
     /// <returns>QueryDescriptor.</returns>
-    public static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterAndPostFilterQuery<
-        TDocument,
-        TCriteria
-    >(DocumentDefinition def, AdvancedQueryInput<TDocument, TCriteria> input)
+    public static Action<QueryDescriptor<TDocument>> GetFilterAndPostFilterQuery<TDocument, TCriteria>(
+        DocumentDefinition def,
+        AdvancedQueryInput<TDocument, TCriteria> input
+    )
         where TDocument : class
         where TCriteria : ICriteria
     {
@@ -300,10 +304,10 @@ public static class AdvancedQueryUtil
     /// <param name="input">Input de la recherche.</param>
     /// <param name="filter">Filtre NEST additionnel.</param>
     /// <returns>Requête de filtrage.</returns>
-    private static Func<QueryContainerDescriptor<TDocument>, QueryContainer> GetFilterQuery<TDocument, TCriteria>(
+    private static Action<QueryDescriptor<TDocument>> GetFilterQuery<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer>? filter = null
+        Action<QueryDescriptor<TDocument>>? filter = null
     )
         where TDocument : class
         where TCriteria : ICriteria
@@ -326,7 +330,7 @@ public static class AdvancedQueryUtil
                 ? BuildOrQuery(
                     input.Security.Select(s => BuildFilter<TDocument>(def.SecurityField!.FieldName, s)).ToArray()
                 )
-                : q => q;
+                : q => { };
 
         var isMultiCriteria = input.SearchCriteria.Count() > 1;
 
@@ -354,12 +358,12 @@ public static class AdvancedQueryUtil
                     var textSubQuery =
                         criteria?.Query != null && (criteria.SearchFields?.Any() ?? true)
                             ? BuildMultiMatchQuery<TDocument>(criteria.Query, searchFields)
-                            : q => q;
+                            : q => { };
 
                     /* Gestion des filtres additionnels. */
                     var criteriaProperties = typeof(TCriteria).GetProperties();
 
-                    var filterList = new List<Func<QueryContainerDescriptor<TDocument>, QueryContainer>>();
+                    var filterList = new List<Action<QueryDescriptor<TDocument>>>();
 
                     foreach (var field in def.Fields)
                     {
@@ -447,19 +451,16 @@ public static class AdvancedQueryUtil
     /// <param name="input">Input de la recherche.</param>
     /// <param name="docDef">Document.</param>
     /// <returns>Sous-requête.</returns>
-    private static (
-        bool HasPostFilter,
-        Func<QueryContainerDescriptor<TDocument>, QueryContainer> Query
-    ) GetPostFilterSubQuery<TDocument, TCriteria>(
-        AdvancedQueryInput<TDocument, TCriteria> input,
-        DocumentDefinition docDef
-    )
+    private static (bool HasPostFilter, Action<QueryDescriptor<TDocument>> Query) GetPostFilterSubQuery<
+        TDocument,
+        TCriteria
+    >(AdvancedQueryInput<TDocument, TCriteria> input, DocumentDefinition docDef)
         where TDocument : class
         where TCriteria : ICriteria
     {
         if (input.SearchCriteria.Count() > 1)
         {
-            return (false, q => q);
+            return (false, q => { });
         }
 
         /* Créé une sous-requête par facette */
@@ -495,7 +496,7 @@ public static class AdvancedQueryUtil
     /// <param name="def">Document.</param>
     /// <param name="input">Input de la recherche.</param>
     /// <returns>Définition du tri.</returns>
-    private static IEnumerable<Action<SortDescriptor<TDocument>>> GetSortDefinitions<TDocument, TCriteria>(
+    private static IEnumerable<Action<SortOptionsDescriptor<TDocument>>> GetSortDefinitions<TDocument, TCriteria>(
         DocumentDefinition def,
         AdvancedQueryInput<TDocument, TCriteria> input
     )
@@ -526,10 +527,7 @@ public static class AdvancedQueryUtil
             }
 
             yield return x =>
-                x.Field(
-                    def.Fields[sort.FieldName].FieldName,
-                    sort.SortDesc ? SortOrder.Descending : SortOrder.Ascending
-                );
+                x.Field(def.Fields[sort.FieldName].FieldName, sort.SortDesc ? SortOrder.Desc : SortOrder.Asc);
         }
     }
 }

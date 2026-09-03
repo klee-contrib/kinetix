@@ -1,8 +1,9 @@
-﻿using Kinetix.Monitoring.Core;
+﻿using Elastic.Clients.Elasticsearch;
+using Elastic.Clients.Elasticsearch.Mapping;
+using Kinetix.Monitoring.Core;
 using Kinetix.Search.Core.Config;
 using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
-using Nest;
 
 namespace Kinetix.Search.Elastic;
 
@@ -15,7 +16,7 @@ namespace Kinetix.Search.Elastic;
 public sealed class ElasticManager(
     ILogger<ElasticManager> logger,
     SearchConfig config,
-    ElasticClient client,
+    ElasticsearchClient client,
     AnalyticsManager analytics,
     DocumentDescriptor documentDescriptor
 )
@@ -31,10 +32,7 @@ public sealed class ElasticManager(
             analytics,
             nameof(DeleteIndexAsync),
             (ct) =>
-                client.Indices.DeleteAsync(
-                    config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                    ct: ct
-                ),
+                client.Indices.DeleteAsync(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)), ct),
             ct
         );
     }
@@ -49,7 +47,7 @@ public sealed class ElasticManager(
         var response = await logger.LogQueryAsync(
             analytics,
             nameof(DeleteIndexesAsync),
-            (ct) => client.Indices.DeleteAsync($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*", ct: ct),
+            (ct) => client.Indices.DeleteAsync($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*", ct),
             ct
         );
         return response.Acknowledged;
@@ -67,7 +65,7 @@ public sealed class ElasticManager(
             await logger.LogQueryAsync(
                 analytics,
                 nameof(ExistIndexAsync),
-                (ct) => client.Indices.ExistsAsync(indexName, ct: ct),
+                (ct) => client.Indices.ExistsAsync(indexName, ct),
                 ct
             )
         ).Exists;
@@ -76,13 +74,10 @@ public sealed class ElasticManager(
     /// <summary>
     /// Initialise un index pour le document donné avec la configuration Analyser/Tokenizer.
     /// </summary>
-    /// <param name="typeMapping">Mapping à comparer avec l'existant, pour ne pas recréer si identique.</param>
+    /// <param name="properties">Mapping à comparer avec l'existant, pour ne pas recréer si identique.</param>
     /// <param name="ct">CancellationToken.</param>
     /// <returns>True si l'index a bien été (re)créé.</returns>
-    public async Task<bool> InitIndexAsync<T, TIndexConfigurator>(
-        ITypeMapping typeMapping,
-        CancellationToken ct = default
-    )
+    public async Task<bool> InitIndexAsync<T, TIndexConfigurator>(Properties properties, CancellationToken ct = default)
         where T : class
         where TIndexConfigurator : IIndexConfigurator, new()
     {
@@ -93,35 +88,33 @@ public sealed class ElasticManager(
 
         if (!shouldCreate)
         {
-            var properties = typeMapping.Properties;
-            var oldProperties = (await client.Indices.GetMappingAsync<T>(ct: ct))
-                .Indices.FirstOrDefault()
-                .Value?.Mappings.Properties;
+            var oldProperties = (await client.Indices.GetMappingAsync<T>(ct)).Mappings;
 
             var mappingExists =
                 oldProperties != null
-                && properties.Count == oldProperties.Count
+                && properties.Count() == oldProperties.Count
                 && oldProperties
                     .Zip(
                         properties,
                         (o, n) =>
                         {
-                            return o.Key == n.Key
-                                && (o.Value, n.Value) switch
-                                {
-                                    (IKeywordProperty okp, IKeywordProperty nkp) => okp.Name == nkp.Name
-                                        && okp.Index == nkp.Index,
-                                    (ITextProperty otp, ITextProperty ntp) => otp.Name == ntp.Name
-                                        && otp.Analyzer == ntp.Analyzer
-                                        && otp.SearchAnalyzer == ntp.SearchAnalyzer,
-                                    (INumberProperty onp, INumberProperty nnp) => onp.Name == nnp.Name
-                                        && onp.Type == nnp.Type
-                                        && onp.Index == nnp.Index,
-                                    (IDateProperty odp, IDateProperty ndp) => odp.Name == ndp.Name
-                                        && odp.Index == ndp.Index
-                                        && odp.Format == ndp.Format,
-                                    _ => false,
-                                };
+                            return false;
+
+                            // TODO : Comparaison.
+                            ////return o.Key == n.Key
+                            ////    && (o.Value, n.Value) switch
+                            ////    {
+                            ////        (DynamicMapping okp, KeywordProperty nkp) => okp.Index == nkp.Index,
+                            ////        (ITextProperty otp, TextProperty ntp) => otp.Analyzer == ntp.Analyzer
+                            ////            && otp.SearchAnalyzer == ntp.SearchAnalyzer,
+                            ////        (INumberProperty onp, FloatNumberProperty nnp) => onp.Type == nnp.Type
+                            ////            && onp.Index == nnp.Index,
+                            ////        (INumberProperty onp, IntegerNumberProperty nnp) => onp.Type == nnp.Type
+                            ////            && onp.Index == nnp.Index,
+                            ////        (IDateProperty odp, DateProperty ndp) => odp.Index == ndp.Index
+                            ////            && odp.Format == ndp.Format,
+                            ////        _ => false,
+                            ////    };
                         }
                     )
                     .All(res => res);
@@ -167,9 +160,9 @@ public sealed class ElasticManager(
             analytics,
             nameof(OptimizeIndexForReindexAsync),
             (ct) =>
-                client.Indices.UpdateSettingsAsync(
+                client.Indices.PutSettingsAsync(
                     config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                    d => d.IndexSettings(i => i.RefreshInterval(30_000).NumberOfReplicas(0)),
+                    d => d.Settings(i => i.RefreshInterval(30_000).NumberOfReplicas(0)),
                     ct
                 ),
             ct
@@ -183,7 +176,7 @@ public sealed class ElasticManager(
     /// <returns>Task.</returns>
     public async Task PingNodeAsync(CancellationToken ct = default)
     {
-        await logger.LogQueryAsync(analytics, nameof(PingNodeAsync), (ct) => client.PingAsync(ct: ct), ct);
+        await logger.LogQueryAsync(analytics, nameof(PingNodeAsync), (ct) => client.PingAsync(ct), ct);
     }
 
     /// <summary>
@@ -197,9 +190,9 @@ public sealed class ElasticManager(
             analytics,
             nameof(RevertOptimizeIndexForReindexAsync),
             (ct) =>
-                client.Indices.UpdateSettingsAsync(
+                client.Indices.PutSettingsAsync(
                     config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                    d => d.IndexSettings(i => i.RefreshInterval(1_000).NumberOfReplicas(1)),
+                    d => d.Settings(i => i.RefreshInterval(1_000).NumberOfReplicas(1)),
                     ct
                 ),
             ct
