@@ -89,16 +89,20 @@ internal class IndexManager(
         return this;
     }
 
-    /// <inheritdoc cref="IIndexManager.RebuildIndex{TDocument}" />
-    public int RebuildIndex<TDocument>(ILogger? rebuildLogger = null, bool forcePartialRebuild = false)
+    /// <inheritdoc cref="IIndexManager.RebuildIndexAsync{TDocument}" />
+    public async Task<int> RebuildIndexAsync<TDocument>(
+        ILogger? rebuildLogger = null,
+        bool forcePartialRebuild = false,
+        CancellationToken ct = default
+    )
         where TDocument : class
     {
-        using var tx = transactionScopeManager.EnsureTransaction();
+        await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
 
         var indexName = SearchConfig.GetTypeNameForIndex(typeof(TDocument));
 
         rebuildLogger?.LogInformation($"Index {indexName} rebuild started...");
-        var indexCreated = searchStore.EnsureIndex<TDocument>();
+        var indexCreated = await searchStore.EnsureIndexAsync<TDocument>(ct);
         if (indexCreated)
         {
             rebuildLogger?.LogInformation($"Index {indexName} (re)created.");
@@ -110,10 +114,10 @@ internal class IndexManager(
 
         var loader = provider.GetRequiredService<IDocumentLoader<TDocument>>();
 
-        var documents = loader.GetAll(partialRebuild);
+        var documents = loader.GetAllAsync(partialRebuild, ct);
         rebuildLogger?.LogInformation($"Data for index {indexName} loaded.");
 
-        return searchStore.ResetIndex(documents, partialRebuild, rebuildLogger);
+        return await searchStore.ResetIndexAsync(documents, partialRebuild, rebuildLogger, ct);
     }
 
     private IndexingTransactionContext GetContext()

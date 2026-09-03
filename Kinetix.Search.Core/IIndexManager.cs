@@ -60,7 +60,12 @@ public interface IIndexManager
     /// </summary>
     /// <param name="rebuildLogger">Logger custom pour suivre l'avancement de la réindexation.</param>
     /// <param name="forcePartialRebuild">Force la réindexation partielle, même si l'index n'existait pas avant.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Le nombre de documents.</returns>
-    int RebuildIndex<TDocument>(ILogger? rebuildLogger = null, bool forcePartialRebuild = false)
+    Task<int> RebuildIndexAsync<TDocument>(
+        ILogger? rebuildLogger = null,
+        bool forcePartialRebuild = false,
+        CancellationToken ct = default
+    )
         where TDocument : class;
 }

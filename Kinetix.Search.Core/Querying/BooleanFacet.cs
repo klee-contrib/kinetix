@@ -24,9 +24,11 @@ public class BooleanFacet<TDocument>(string code, string label, Expression<Func<
     /// <inheritdoc />
     public override FacetOrdering Ordering => FacetOrdering.KeyDescending;
 
-    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
-    public override string ResolveLabel(string primaryKey)
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabelAsync" />
+    public override Task<string> ResolveLabelAsync(string primaryKey, CancellationToken ct = default)
     {
-        return primaryKey == "1" || primaryKey == "true" ? "focus.search.results.yes" : "focus.search.results.no";
+        return Task.FromResult(
+            primaryKey == "1" || primaryKey == "true" ? "focus.search.results.yes" : "focus.search.results.no"
+        );
     }
 }

@@ -15,9 +15,9 @@ namespace Kinetix.Search.Core.Querying;
 public class DateFacet<TDocument>(string code, string label, Expression<Func<TDocument, object>> field)
     : TermFacet<TDocument>(code, label, field)
 {
-    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
-    public override string ResolveLabel(string primaryKey)
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabelAsync" />
+    public override Task<string> ResolveLabelAsync(string primaryKey, CancellationToken ct = default)
     {
-        return DateTime.Parse(primaryKey).ToString("dd/MM/yyyy");
+        return Task.FromResult(DateTime.Parse(primaryKey).ToString("dd/MM/yyyy"));
     }
 }

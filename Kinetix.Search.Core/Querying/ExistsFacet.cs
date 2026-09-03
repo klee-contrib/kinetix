@@ -24,9 +24,9 @@ public class ExistsFacet<TDocument>(string code, string label, Expression<Func<T
     /// <inheritdoc />
     public override bool HasMissing => true;
 
-    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
-    public override string ResolveLabel(string primaryKey)
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabelAsync" />
+    public override Task<string> ResolveLabelAsync(string primaryKey, CancellationToken ct = default)
     {
-        return "focus.search.results.yes";
+        return Task.FromResult("focus.search.results.yes");
     }
 }

@@ -10,25 +10,28 @@ public interface IDocumentLoader<TDocument>
     where TDocument : class
 {
     /// <summary>
-    /// Charge un document pour indexation.
-    /// </summary>
-    /// <param name="id">Id du document.</param>
-    /// <returns>Le document.</returns>
-    TDocument Get(object id);
-
-    /// <summary>
     /// Charge tous les documents pour indexation.
     /// </summary>
     /// <param name="partialRebuild">Indique que l'on veut un rebuild partiel, donc certains documents peuvent être ignorés.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Les documents.</returns>
-    IEnumerable<TDocument> GetAll(bool partialRebuild);
+    IAsyncEnumerable<TDocument> GetAllAsync(bool partialRebuild, CancellationToken ct = default);
+
+    /// <summary>
+    /// Charge un document pour indexation.
+    /// </summary>
+    /// <param name="id">Id du document.</param>
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Le document.</returns>
+    Task<TDocument> GetAsync(object id, CancellationToken ct = default);
 
     /// <summary>
     /// Charge plusieurs documents pour indexation.
     /// </summary>
     /// <param name="ids">Ids des documents.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Les documents.</returns>
-    IEnumerable<TDocument> GetMany(IEnumerable<object> ids);
+    IAsyncEnumerable<TDocument> GetManyAsync(IEnumerable<object> ids, CancellationToken ct = default);
 }
 
 /// <summary>
@@ -39,32 +42,34 @@ public interface IDocumentLoader<TDocument>
 public abstract class DocumentLoader<TDocument, TKey> : IDocumentLoader<TDocument>
     where TDocument : class
 {
-    /// <inheritdoc cref="IDocumentLoader{TDocument}.Get" />
-    public TDocument Get(object id)
+    /// <inheritdoc cref="IDocumentLoader{TDocument}.GetAllAsync" />
+    public abstract IAsyncEnumerable<TDocument> GetAllAsync(bool partialRebuild, CancellationToken ct = default);
+
+    /// <inheritdoc cref="IDocumentLoader{TDocument}.GetAsync" />
+    public Task<TDocument> GetAsync(object id, CancellationToken ct = default)
     {
-        return Get((TKey)id);
+        return GetAsync((TKey)id, ct);
     }
 
     /// <summary>
     /// Charge un document pour indexation.
     /// </summary>
     /// <param name="id">Id du document.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Le document.</returns>
-    public abstract TDocument Get(TKey id);
-
-    /// <inheritdoc cref="IDocumentLoader{TDocument}.GetAll" />
-    public abstract IEnumerable<TDocument> GetAll(bool partialRebuild);
-
-    /// <inheritdoc cref="IDocumentLoader{TDocument}.GetMany" />
-    public IEnumerable<TDocument> GetMany(IEnumerable<object> ids)
-    {
-        return GetMany(ids.Cast<TKey>());
-    }
+    public abstract Task<TDocument> GetAsync(TKey id, CancellationToken ct = default);
 
     /// <summary>
     /// Charge plusieurs documents pour indexation.
     /// </summary>
     /// <param name="ids">Ids des documents.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Les documents.</returns>
-    public abstract IEnumerable<TDocument> GetMany(IEnumerable<TKey> ids);
+    public abstract IAsyncEnumerable<TDocument> GetMany(IEnumerable<TKey> ids, CancellationToken ct = default);
+
+    /// <inheritdoc cref="IDocumentLoader{TDocument}.GetManyAsync" />
+    public IAsyncEnumerable<TDocument> GetManyAsync(IEnumerable<object> ids, CancellationToken ct = default)
+    {
+        return GetMany(ids.Cast<TKey>(), ct);
+    }
 }

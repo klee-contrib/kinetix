@@ -45,10 +45,10 @@ public class TermFacet<TDocument>(string code, string label, Expression<Func<TDo
     /// <inheritdoc />
     public virtual FacetOrdering Ordering { get; set; } = FacetOrdering.CountDescending;
 
-    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
-    public virtual string ResolveLabel(string primaryKey)
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabelAsync" />
+    public virtual Task<string> ResolveLabelAsync(string primaryKey, CancellationToken ct = default)
     {
-        return primaryKey;
+        return Task.FromResult(primaryKey);
     }
 
     private static string HandleMember(MemberExpression me)

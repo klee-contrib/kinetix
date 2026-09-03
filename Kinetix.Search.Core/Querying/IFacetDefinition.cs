@@ -51,6 +51,7 @@ public interface IFacetDefinition<TDocument>
     /// Résout le libellé de la facette.
     /// </summary>
     /// <param name="primaryKey">Code ou libellé.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Le libellé de la facette.</returns>
-    string ResolveLabel(string primaryKey);
+    Task<string> ResolveLabelAsync(string primaryKey, CancellationToken ct = default);
 }

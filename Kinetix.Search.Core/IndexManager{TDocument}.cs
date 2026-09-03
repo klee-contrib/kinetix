@@ -72,9 +72,14 @@ public class IndexManager<TDocument>(IIndexManager indexManager)
     /// </summary>
     /// <param name="rebuildLogger">Logger custom pour suivre l'avancement de la réindexation.</param>
     /// <param name="forcePartialRebuild">Force la réindexation partielle, même si l'index n'existait pas avant.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Le nombre de documents.</returns>
-    public int RebuildIndex(ILogger? rebuildLogger = null, bool forcePartialRebuild = false)
+    public Task<int> RebuildIndexAsync(
+        ILogger? rebuildLogger = null,
+        bool forcePartialRebuild = false,
+        CancellationToken ct = default
+    )
     {
-        return indexManager.RebuildIndex<TDocument>(rebuildLogger, forcePartialRebuild);
+        return indexManager.RebuildIndexAsync<TDocument>(rebuildLogger, forcePartialRebuild, ct);
     }
 }

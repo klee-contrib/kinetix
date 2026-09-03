@@ -24,14 +24,16 @@ public static class SearchStoreExtensions
     /// </summary>
     /// <param name="store">Store de recherche.</param>
     /// <param name="queryInput">Query input.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat.</returns>
-    public static (IEnumerable<TDocument> Data, int TotalCount) Query<TDocument>(
+    public static Task<(IEnumerable<TDocument> Data, int TotalCount)> QueryAsync<TDocument>(
         this ISearchStore store,
-        BasicQueryInput<TDocument> queryInput
+        BasicQueryInput<TDocument> queryInput,
+        CancellationToken ct = default
     )
         where TDocument : class
     {
-        return store.Query(queryInput, x => x);
+        return store.QueryAsync(queryInput, x => x, ct: ct);
     }
 
     /// <summary>
@@ -40,15 +42,17 @@ public static class SearchStoreExtensions
     /// <param name="store">Store de recherche.</param>
     /// <param name="queryInput">Query input.</param>
     /// <param name="documentMapper">Mapper de document.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat.</returns>
-    public static (IEnumerable<TOutput> Data, int TotalCount) Query<TDocument, TOutput>(
+    public static Task<(IEnumerable<TOutput> Data, int TotalCount)> QueryAsync<TDocument, TOutput>(
         this ISearchStore store,
         BasicQueryInput<TDocument> queryInput,
-        Func<TDocument, TOutput> documentMapper
+        Func<TDocument, TOutput> documentMapper,
+        CancellationToken ct = default
     )
         where TDocument : class
     {
-        return store.Query(queryInput, (d, _) => documentMapper(d));
+        return store.QueryAsync(queryInput, (d, _) => documentMapper(d), ct: ct);
     }
 
     /// <summary>
@@ -57,15 +61,17 @@ public static class SearchStoreExtensions
     /// <param name="store">Store de recherche.</param>
     /// <param name="queryInput">Query input.</param>
     /// <param name="documentMapper">Mapper de document.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat.</returns>
-    public static (IEnumerable<TOutput> Data, int TotalCount) Query<TDocument, TOutput>(
+    public static Task<(IEnumerable<TOutput> Data, int TotalCount)> QueryAsync<TDocument, TOutput>(
         this ISearchStore store,
         BasicQueryInput<TDocument> queryInput,
-        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
+        CancellationToken ct = default
     )
         where TDocument : class
     {
-        return store.Query(queryInput, new DefaultCriteria { Query = queryInput.Query }, documentMapper);
+        return store.QueryAsync(queryInput, new DefaultCriteria { Query = queryInput.Query }, documentMapper, ct: ct);
     }
 
     /// <summary>
@@ -74,16 +80,18 @@ public static class SearchStoreExtensions
     /// <param name="store">Store de recherche.</param>
     /// <param name="criteria">Critère de recherche.</param>
     /// <param name="documentMapper">Mapper de document.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat.</returns>
-    public static (IEnumerable<TOutput> Data, int TotalCount) Query<TDocument, TCriteria, TOutput>(
+    public static Task<(IEnumerable<TOutput> Data, int TotalCount)> QueryAsync<TDocument, TCriteria, TOutput>(
         this ISearchStore store,
         TCriteria criteria,
-        Func<TDocument, TOutput> documentMapper
+        Func<TDocument, TOutput> documentMapper,
+        CancellationToken ct = default
     )
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return store.Query(queryInput: null, criteria, documentMapper);
+        return store.QueryAsync(queryInput: null, criteria, documentMapper, ct: ct);
     }
 
     /// <summary>
@@ -92,16 +100,18 @@ public static class SearchStoreExtensions
     /// <param name="store">Store de recherche.</param>
     /// <param name="criteria">Critère de recherche.</param>
     /// <param name="documentMapper">Mapper de document.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat.</returns>
-    public static (IEnumerable<TOutput> Data, int TotalCount) Query<TDocument, TCriteria, TOutput>(
+    public static Task<(IEnumerable<TOutput> Data, int TotalCount)> QueryAsync<TDocument, TCriteria, TOutput>(
         this ISearchStore store,
         TCriteria criteria,
-        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
+        CancellationToken ct = default
     )
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return store.Query(queryInput: null, criteria, documentMapper);
+        return store.QueryAsync(queryInput: null, criteria, documentMapper, ct: ct);
     }
 
     /// <summary>
@@ -111,17 +121,19 @@ public static class SearchStoreExtensions
     /// <param name="queryInput">Query input.</param>
     /// <param name="criteria">Critère de recherche.</param>
     /// <param name="documentMapper">Mapper de document.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat.</returns>
-    public static (IEnumerable<TOutput> Data, int TotalCount) Query<TDocument, TCriteria, TOutput>(
+    public static Task<(IEnumerable<TOutput> Data, int TotalCount)> QueryAsync<TDocument, TCriteria, TOutput>(
         this ISearchStore store,
         BasicQueryInput<TDocument>? queryInput,
         TCriteria criteria,
-        Func<TDocument, TOutput> documentMapper
+        Func<TDocument, TOutput> documentMapper,
+        CancellationToken ct = default
     )
         where TDocument : class
         where TCriteria : ICriteria
     {
-        return store.Query(queryInput, criteria, (d, _) => documentMapper(d));
+        return store.QueryAsync(queryInput, criteria, (d, _) => documentMapper(d), ct: ct);
     }
 
     /// <summary>
@@ -131,12 +143,14 @@ public static class SearchStoreExtensions
     /// <param name="queryInput">Query input.</param>
     /// <param name="criteria">Critère de recherche.</param>
     /// <param name="documentMapper">Mapper de document.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Résultat.</returns>
-    public static (IEnumerable<TOutput> Data, int TotalCount) Query<TDocument, TCriteria, TOutput>(
+    public static async Task<(IEnumerable<TOutput> Data, int TotalCount)> QueryAsync<TDocument, TCriteria, TOutput>(
         this ISearchStore store,
         BasicQueryInput<TDocument>? queryInput,
         TCriteria criteria,
-        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper
+        Func<TDocument, IReadOnlyDictionary<string, IReadOnlyCollection<string>>, TOutput> documentMapper,
+        CancellationToken ct = default
     )
         where TDocument : class
         where TCriteria : ICriteria
@@ -161,7 +175,7 @@ public static class SearchStoreExtensions
             AdditionalCriteria = queryInput?.Criteria,
         };
 
-        var output = store.AdvancedQuery(input, documentMapper);
+        var output = await store.AdvancedQueryAsync(input, documentMapper, ct);
         return (output.List!, output.TotalCount);
     }
 }

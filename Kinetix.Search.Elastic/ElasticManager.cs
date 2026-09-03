@@ -23,25 +23,34 @@ public sealed class ElasticManager(
     /// <summary>
     /// Supprime l'index pour le document donné.
     /// </summary>
-    public void DeleteIndex<T>()
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public async Task DeleteIndexAsync<T>(CancellationToken ct = default)
     {
-        logger.LogQuery(
+        await logger.LogQueryAsync(
             analytics,
-            nameof(DeleteIndex),
-            () => client.Indices.Delete(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))
+            nameof(DeleteIndexAsync),
+            (ct) =>
+                client.Indices.DeleteAsync(
+                    config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
+                    ct: ct
+                ),
+            ct
         );
     }
 
     /// <summary>
     /// Supprime tous les index.
     /// </summary>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Ok.</returns>
-    public bool DeleteIndexes()
+    public async Task<bool> DeleteIndexesAsync(CancellationToken ct = default)
     {
-        var response = logger.LogQuery(
+        var response = await logger.LogQueryAsync(
             analytics,
-            nameof(DeleteIndexes),
-            () => client.Indices.Delete($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*")
+            nameof(DeleteIndexesAsync),
+            (ct) => client.Indices.DeleteAsync($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*", ct: ct),
+            ct
         );
         return response.Acknowledged;
     }
@@ -50,30 +59,44 @@ public sealed class ElasticManager(
     /// Indique si un index existe.
     /// </summary>
     /// <param name="indexName">Nom de l'index.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns><code>True</code> si l'index existe.</returns>
-    public bool ExistIndex(string indexName)
+    public async Task<bool> ExistIndexAsync(string indexName, CancellationToken ct = default)
     {
-        return logger.LogQuery(analytics, nameof(ExistIndex), () => client.Indices.Exists(indexName)).Exists;
+        return (
+            await logger.LogQueryAsync(
+                analytics,
+                nameof(ExistIndexAsync),
+                (ct) => client.Indices.ExistsAsync(indexName, ct: ct),
+                ct
+            )
+        ).Exists;
     }
 
     /// <summary>
     /// Initialise un index pour le document donné avec la configuration Analyser/Tokenizer.
     /// </summary>
     /// <param name="typeMapping">Mapping à comparer avec l'existant, pour ne pas recréer si identique.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>True si l'index a bien été (re)créé.</returns>
-    public bool InitIndex<T, TIndexConfigurator>(ITypeMapping typeMapping)
+    public async Task<bool> InitIndexAsync<T, TIndexConfigurator>(
+        ITypeMapping typeMapping,
+        CancellationToken ct = default
+    )
         where T : class
         where TIndexConfigurator : IIndexConfigurator, new()
     {
         var indexName = config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T));
-        var indexExists = ExistIndex(indexName);
+        var indexExists = await ExistIndexAsync(indexName, ct);
         var def = documentDescriptor.GetDefinition(typeof(T));
         var shouldCreate = !indexExists || def.IgnoreOnPartialRebuild == null;
 
         if (!shouldCreate)
         {
             var properties = typeMapping.Properties;
-            var oldProperties = client.Indices.GetMapping<T>().Indices.FirstOrDefault().Value?.Mappings.Properties;
+            var oldProperties = (await client.Indices.GetMappingAsync<T>(ct: ct))
+                .Indices.FirstOrDefault()
+                .Value?.Mappings.Properties;
 
             var mappingExists =
                 oldProperties != null
@@ -110,17 +133,19 @@ public sealed class ElasticManager(
         {
             if (indexExists)
             {
-                DeleteIndex<T>();
+                await DeleteIndexAsync<T>(ct);
             }
 
-            logger.LogQuery(
+            await logger.LogQueryAsync(
                 analytics,
-                nameof(InitIndex),
-                () =>
-                    client.Indices.Create(
+                nameof(InitIndexAsync),
+                (ct) =>
+                    client.Indices.CreateAsync(
                         config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                        new TIndexConfigurator().ConfigureIndex
-                    )
+                        new TIndexConfigurator().ConfigureIndex,
+                        ct
+                    ),
+                ct
             );
         }
         else
@@ -134,40 +159,50 @@ public sealed class ElasticManager(
     /// <summary>
     /// Optimise l'index pour une réindexation totale.
     /// </summary>
-    public void OptimizeIndexForReindex<T>()
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public async Task OptimizeIndexForReindexAsync<T>(CancellationToken ct = default)
     {
-        logger.LogQuery(
+        await logger.LogQueryAsync(
             analytics,
-            nameof(OptimizeIndexForReindex),
-            () =>
-                client.Indices.UpdateSettings(
+            nameof(OptimizeIndexForReindexAsync),
+            (ct) =>
+                client.Indices.UpdateSettingsAsync(
                     config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                    d => d.IndexSettings(i => i.RefreshInterval(30_000).NumberOfReplicas(0))
-                )
+                    d => d.IndexSettings(i => i.RefreshInterval(30_000).NumberOfReplicas(0)),
+                    ct
+                ),
+            ct
         );
     }
 
     /// <summary>
     /// Ping un node ES.
     /// </summary>
-    public void PingNode()
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public async Task PingNodeAsync(CancellationToken ct = default)
     {
-        logger.LogQuery(analytics, nameof(PingNode), () => client.Ping());
+        await logger.LogQueryAsync(analytics, nameof(PingNodeAsync), (ct) => client.PingAsync(ct: ct), ct);
     }
 
     /// <summary>
     /// Rétabli les paramètres par défaut de l'index après une réindexation totale.
     /// </summary>
-    public void RevertOptimizeIndexForReindex<T>()
+    /// <param name="ct">CancellationToken.</param>
+    /// <returns>Task.</returns>
+    public async Task RevertOptimizeIndexForReindexAsync<T>(CancellationToken ct = default)
     {
-        logger.LogQuery(
+        await logger.LogQueryAsync(
             analytics,
-            nameof(RevertOptimizeIndexForReindex),
-            () =>
-                client.Indices.UpdateSettings(
+            nameof(RevertOptimizeIndexForReindexAsync),
+            (ct) =>
+                client.Indices.UpdateSettingsAsync(
                     config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                    d => d.IndexSettings(i => i.RefreshInterval(1_000).NumberOfReplicas(1))
-                )
+                    d => d.IndexSettings(i => i.RefreshInterval(1_000).NumberOfReplicas(1)),
+                    ct
+                ),
+            ct
         );
     }
 }

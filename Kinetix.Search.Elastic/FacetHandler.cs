@@ -184,10 +184,12 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
     /// <typeparam name="TDocument">Type de document.</typeparam>
     /// <param name="aggs">Aggrégations Elastic.</param>
     /// <param name="facetDef">Définition de la facette.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Sortie des facettes.</returns>
-    public ICollection<FacetItem> ExtractFacetItemList<TDocument>(
+    public async Task<ICollection<FacetItem>> ExtractFacetItemListAsync<TDocument>(
         AggregateDictionary aggs,
-        IFacetDefinition<TDocument> facetDef
+        IFacetDefinition<TDocument> facetDef,
+        CancellationToken ct = default
     )
     {
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
@@ -238,7 +240,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
                     new FacetItem
                     {
                         Code = code,
-                        Label = facetDef.ResolveLabel(code),
+                        Label = await facetDef.ResolveLabelAsync(code, ct),
                         Count = b.DocCount ?? 0,
                     }
                 );
@@ -270,7 +272,7 @@ public class FacetHandler(DocumentDescriptor documentDescriptor)
             && (rfDef.ShowEmptyReferenceValues || rfDef.Ordering == FacetOrdering.ReferenceOrder)
         )
         {
-            var referenceValues = rfDef.GetReferenceList();
+            var referenceValues = await rfDef.GetReferenceListAsync(ct);
 
             foreach (var facet in facetOutput)
             {

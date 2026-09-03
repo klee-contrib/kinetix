@@ -77,15 +77,16 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         return this;
     }
 
-    /// <inheritdoc cref="ISearchBulkDescriptor.Run" />
-    public int Run(bool refresh = true)
+    /// <inheritdoc cref="ISearchBulkDescriptor.RunAsync" />
+    public async Task<int> RunAsync(bool refresh = true, CancellationToken ct = default)
     {
         if (_operationCount > 0)
         {
-            _logger.LogQuery(
+            await _logger.LogQueryAsync(
                 _analytics,
                 $"Index {_operationCount}",
-                () => _client.Bulk(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False))
+                (ct) => _client.BulkAsync(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False), ct),
+                ct
             );
         }
 

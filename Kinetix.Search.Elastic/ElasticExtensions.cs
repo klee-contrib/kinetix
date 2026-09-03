@@ -17,12 +17,19 @@ internal static class ElasticExtensions
     /// <param name="analytics">Analytics.</param>
     /// <param name="context">Contexte pour le message.</param>
     /// <param name="esCall">Appel ES.</param>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Ce que la requête retourne.</returns>
-    public static T LogQuery<T>(this ILogger logger, AnalyticsManager analytics, string context, Func<T> esCall)
+    public static async Task<T> LogQueryAsync<T>(
+        this ILogger logger,
+        AnalyticsManager analytics,
+        string context,
+        Func<CancellationToken, Task<T>> esCall,
+        CancellationToken ct = default
+    )
         where T : IResponse
     {
         analytics.StartProcess($"ElasticSearch.{context}", "Search");
-        var response = esCall();
+        var response = await esCall(ct);
 
         if (logger.IsEnabled(LogLevel.Debug))
         {

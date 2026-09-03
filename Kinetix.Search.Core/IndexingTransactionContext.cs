@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Kinetix.Search.Core;
 
-internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTransactionContext
+internal class IndexingTransactionContext(IServiceProvider provider) : IAsyncTransactionContext
 {
     private readonly Dictionary<Type, IIndexingDocumentState> _indexors = [];
 
@@ -20,14 +20,20 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
     /// </summary>
     internal bool WaitForRefresh { get; set; } = true;
 
-    /// <inheritdoc cref="ISyncTransactionContext.Init" />
-    public void Init() { }
+    /// <inheritdoc cref="IAsyncTransactionContext.InitAsync" />
+    public Task InitAsync(CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
+    }
 
-    /// <inheritdoc cref="ISyncTransactionContext.OnAfterCommit" />
-    public void OnAfterCommit() { }
+    /// <inheritdoc cref="IAsyncTransactionContext.OnAfterCommitAsync" />
+    public Task OnAfterCommitAsync(CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
+    }
 
-    /// <inheritdoc cref="ISyncTransactionContext.OnBeforeCommit" />
-    public void OnBeforeCommit()
+    /// <inheritdoc cref="IAsyncTransactionContext.OnBeforeCommitAsync" />
+    public async Task OnBeforeCommitAsync(CancellationToken ct = default)
     {
         if (Completed && _indexors.Count != 0)
         {
@@ -35,7 +41,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
             var transactionScopeManager = provider.GetRequiredService<TransactionScopeManager>();
             var logger = provider.GetRequiredService<ILogger<IndexingTransactionContext>>();
 
-            using var tx = transactionScopeManager.EnsureTransaction();
+            await using var tx = await transactionScopeManager.EnsureTransactionAsync(ct);
 
             var bulk = searchStore.Bulk();
 
@@ -44,13 +50,17 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
                 foreach (var indexor in _indexors)
                 {
                     logger.LogInformation($"Prepare {indexor.Key.Name}");
-                    typeof(IndexingTransactionContext)
-                        .GetMethod(nameof(PrepareBulkDescriptor), BindingFlags.Static | BindingFlags.NonPublic)!
-                        .MakeGenericMethod(indexor.Key)
-                        .Invoke(null, [provider, bulk, indexor.Value]);
+                    await (Task<ISearchBulkDescriptor>)
+                        typeof(IndexingTransactionContext)
+                            .GetMethod(
+                                nameof(PrepareBulkDescriptorAsync),
+                                BindingFlags.Static | BindingFlags.NonPublic
+                            )!
+                            .MakeGenericMethod(indexor.Key)
+                            .Invoke(null, [provider, bulk, indexor.Value, ct])!;
                 }
 
-                bulk.Run(WaitForRefresh);
+                await bulk.RunAsync(WaitForRefresh, ct);
             }
 #pragma warning disable S2139
             catch (Exception e)
@@ -65,8 +75,11 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
         }
     }
 
-    /// <inheritdoc cref="ISyncTransactionContext.OnCommit" />
-    public void OnCommit() { }
+    /// <inheritdoc cref="IAsyncTransactionContext.OnCommitAsync" />
+    public Task OnCommitAsync(CancellationToken ct = default)
+    {
+        return Task.CompletedTask;
+    }
 
     internal void IndexAll<TDocument>()
         where TDocument : class
@@ -86,10 +99,11 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
         return GetState<TDocument>().RegisterIndex(id);
     }
 
-    private static ISearchBulkDescriptor PrepareBulkDescriptor<TDocument>(
+    private static async Task<ISearchBulkDescriptor> PrepareBulkDescriptorAsync<TDocument>(
         IServiceProvider provider,
         ISearchBulkDescriptor bulk,
-        IIndexingDocumentState state1
+        IIndexingDocumentState state1,
+        CancellationToken ct = default
     )
         where TDocument : class
     {
@@ -99,7 +113,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
 
         if (state.Reindex)
         {
-            var docs = loader.GetAll(partialRebuild: false).ToList();
+            var docs = await loader.GetAllAsync(partialRebuild: false, ct).ToListAsync(ct);
             return docs.Count != 0 ? bulk.IndexMany(docs) : bulk;
         }
         else
@@ -115,7 +129,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
 
             if (state.IdsToIndex.Count == 1)
             {
-                var doc = loader.Get(state.IdsToIndex.Single());
+                var doc = await loader.GetAsync(state.IdsToIndex.Single(), ct);
                 if (doc != null)
                 {
                     bulk.Index(doc);
@@ -123,7 +137,7 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
             }
             else if (state.IdsToIndex.Count > 1)
             {
-                var docs = loader.GetMany(state.IdsToIndex).ToList();
+                var docs = await loader.GetManyAsync(state.IdsToIndex, ct).ToListAsync(cancellationToken: ct);
 
                 if (docs.Count != 0)
                 {

@@ -26,8 +26,9 @@ public abstract class ReferenceFacet<TDocument>(string code, string label, Expre
     /// <summary>
     /// Récupère la liste de référence associée à la facette.
     /// </summary>
+    /// <param name="ct">CancellationToken.</param>
     /// <returns>Liste de référence.</returns>
-    public abstract IList<FacetItem> GetReferenceList();
+    public abstract Task<IList<FacetItem>> GetReferenceListAsync(CancellationToken ct = default);
 }
 
 /// <summary>
@@ -51,11 +52,10 @@ public class ReferenceFacet<TDocument, T>(
     where T : notnull
 {
     /// <inheritdoc />
-    public override IList<FacetItem> GetReferenceList()
+    public override async Task<IList<FacetItem>> GetReferenceListAsync(CancellationToken ct = default)
     {
         var def = BeanDescriptor.GetDefinition(typeof(T));
-        return referenceManager
-            .GetReferenceList<T>()
+        return (await referenceManager.GetReferenceListAsync<T>(ct: ct))
             .Select(item => new FacetItem
             {
                 Code = def.PrimaryKey.GetValue(item)!.ToString()!,
@@ -65,9 +65,9 @@ public class ReferenceFacet<TDocument, T>(
             .ToList();
     }
 
-    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabel" />
-    public override string ResolveLabel(string primaryKey)
+    /// <inheritdoc cref="IFacetDefinition{TDocument}.ResolveLabelAsync" />
+    public override async Task<string> ResolveLabelAsync(string primaryKey, CancellationToken ct = default)
     {
-        return referenceManager.GetReferenceValue<T>(primaryKey) ?? string.Empty;
+        return (await referenceManager.GetReferenceValueAsync<T>(primaryKey, ct)) ?? string.Empty;
     }
 }
