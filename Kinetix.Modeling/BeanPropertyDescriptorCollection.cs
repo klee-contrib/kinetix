@@ -6,7 +6,6 @@ namespace Kinetix.Modeling;
 /// Collection des descriptions de propriété d'un objet.
 /// La clef utilisé est le nom de la propriété.
 /// </summary>
-[Serializable]
 public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyDescriptor>
 {
     private readonly Type _beanType;

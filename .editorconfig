@@ -130,6 +130,7 @@ dotnet_diagnostic.S3881.severity = none
 dotnet_diagnostic.S3925.severity = none
 dotnet_diagnostic.S3963.severity = none
 dotnet_diagnostic.S4456.severity = none
+dotnet_diagnostic.S6444.severity = none
 dotnet_diagnostic.S6562.severity = none
 dotnet_diagnostic.S6580.severity = none
 dotnet_diagnostic.S6667.severity = none
@@ -137,6 +138,7 @@ dotnet_diagnostic.S6672.severity = none
 dotnet_diagnostic.S6934.severity = none
 dotnet_diagnostic.S6961.severity = none
 dotnet_diagnostic.S6967.severity = none
+dotnet_diagnostic.S8969.severity = none
 
 dotnet_diagnostic.SYSLIB1045.severity = none
 

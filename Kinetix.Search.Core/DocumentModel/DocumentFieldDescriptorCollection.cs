@@ -6,7 +6,6 @@ namespace Kinetix.Search.Core.DocumentModel;
 /// Collection des descriptions de propriété d'un objet.
 /// La clef utilisé est le nom de la propriété.
 /// </summary>
-[Serializable]
 public sealed class DocumentFieldDescriptorCollection : IEnumerable<DocumentFieldDescriptor>
 {
     private readonly Type _beanType;

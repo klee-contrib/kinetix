@@ -9,7 +9,6 @@ public partial interface IReferenceManager
     /// Vide le cache de référence.
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence à vider.</typeparam>
-    /// <returns>Task.</returns>
     void FlushCache<T>()
         where T : notnull;
 
@@ -17,7 +16,6 @@ public partial interface IReferenceManager
     /// Vide le cache de référence.
     /// </summary>
     /// <param name="referenceName">Le nom de la liste de référence.</param>
-    /// <returns>Task.</returns>
     void FlushCache(string referenceName);
 
     /// <summary>

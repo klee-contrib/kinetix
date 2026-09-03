@@ -98,7 +98,7 @@ internal class WorksheetBuilder<T>(
 
                         if (referenceType != null)
                         {
-                            cell.SetValue(await referenceManager.GetReferenceValueAsync(referenceType.Name, value));
+                            cell.SetValue(await referenceManager.GetReferenceValueAsync(referenceType.Name, value, ct));
                         }
                         else if (booleanFormat != default && value is bool b)
                         {
