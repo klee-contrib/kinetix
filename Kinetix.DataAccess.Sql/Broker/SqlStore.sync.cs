@@ -98,7 +98,6 @@ public partial class SqlStore<T>
     {
         ArgumentNullException.ThrowIfNull(primaryKey);
 
-        Definition.PrimaryKey.CheckValueType(primaryKey);
         var commandName = ServiceDelete + "_" + Definition.ContractName;
 
         // On charge l'objet à partir d'un seul critère

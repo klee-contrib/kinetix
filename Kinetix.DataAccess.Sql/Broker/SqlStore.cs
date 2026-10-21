@@ -50,7 +50,7 @@ public abstract partial class SqlStore<T> : IStore<T>
         try
         {
             // Charge la définition de l'objet donné T.
-            Definition = BeanDescriptor.GetDefinition(typeof(T), ignoreCustomTypeDesc: true);
+            Definition = BeanDescriptor.GetDefinition(typeof(T));
             ConnectionPool = connectionPool;
 
             var attrs = typeof(T).GetCustomAttributes(typeof(TableAttribute), inherit: true);
@@ -224,7 +224,6 @@ public abstract partial class SqlStore<T> : IStore<T>
     {
         ArgumentNullException.ThrowIfNull(primaryKey);
 
-        Definition.PrimaryKey.CheckValueType(primaryKey);
         var commandName = ServiceDelete + "_" + Definition.ContractName;
 
         // On charge l'objet à partir d'un seul critère
@@ -366,8 +365,6 @@ public abstract partial class SqlStore<T> : IStore<T>
     private BaseSqlCommand GetLoadCommand(object primaryKey)
     {
         ArgumentNullException.ThrowIfNull(primaryKey);
-
-        Definition.PrimaryKey.CheckValueType(primaryKey);
 
         var commandName = ServiceSelect + "_" + Definition.ContractName;
 

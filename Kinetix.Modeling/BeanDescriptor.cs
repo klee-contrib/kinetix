@@ -1,9 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Globalization;
 using System.Reflection;
 using Kinetix.Modeling.Annotations;
 using Kinetix.Modeling.Exceptions;
@@ -32,85 +30,34 @@ public static class BeanDescriptor
     {
         if (bean != null)
         {
-            GetDefinition(bean)?.Check(bean, propertiesToCheck);
+            GetDefinition(bean.GetType())?.Check(bean, propertiesToCheck);
         }
-    }
-
-    /// <summary>
-    /// Retourne la definition des beans d'une collection générique.
-    /// </summary>
-    /// <param name="collection">Collection générique de bean.</param>
-    /// <returns>Description des propriétés des beans.</returns>
-    public static BeanDefinition GetCollectionDefinition(object collection)
-    {
-        ArgumentNullException.ThrowIfNull(collection);
-
-        var collectionType = collection.GetType();
-        if (collectionType.IsArray)
-        {
-            return GetDefinition(collectionType.GetElementType()!);
-        }
-
-        if (!collectionType.IsGenericType)
-        {
-            throw new ArgumentException(
-                string.Format(CultureInfo.CurrentCulture, SR.ExceptionTypeDescription, collection.GetType().FullName),
-                nameof(collection)
-            );
-        }
-
-        var genericDefinition = collectionType.GetGenericTypeDefinition();
-        if (genericDefinition.GetInterface(typeof(ICollection<>).Name) == null)
-        {
-            throw new NotSupportedException(
-                string.Format(CultureInfo.CurrentCulture, SR.ExceptionNotSupportedGeneric, genericDefinition.Name)
-            );
-        }
-
-        var objectType = collectionType.GetGenericArguments()[0];
-        var coll = (ICollection)collection;
-        if (typeof(ICustomTypeDescriptor).IsAssignableFrom(objectType) && coll.Count != 0)
-        {
-            var customObject = coll.Cast<object>().First();
-            return GetDefinition(customObject);
-        }
-
-        if (coll.Count > 0)
-        {
-            objectType = coll.Cast<object>().First().GetType();
-        }
-
-        return GetDefinition(objectType, ignoreCustomTypeDesc: true);
-    }
-
-    /// <summary>
-    /// Retourne la definition d'un bean.
-    /// </summary>
-    /// <param name="bean">Objet.</param>
-    /// <returns>Description des propriétés.</returns>
-    public static BeanDefinition GetDefinition(object bean)
-    {
-        ArgumentNullException.ThrowIfNull(bean);
-
-        return GetDefinitionInternal(bean.GetType(), bean);
     }
 
     /// <summary>
     /// Retourne la definition d'un bean.
     /// </summary>
     /// <param name="beanType">Type du bean.</param>
-    /// <param name="ignoreCustomTypeDesc">Si true, retourne un définition même si le type implémente ICustomTypeDescriptor.</param>
     /// <returns>Description des propriétés.</returns>
-    public static BeanDefinition GetDefinition(Type beanType, bool ignoreCustomTypeDesc = false)
+    public static BeanDefinition GetDefinition(Type beanType)
     {
-        ArgumentNullException.ThrowIfNull(beanType);
+        var descriptionType = beanType;
 
-        if (!ignoreCustomTypeDesc && typeof(ICustomTypeDescriptor).IsAssignableFrom(beanType))
+        if (!_beanDefinitionDictionnary.TryGetValue(descriptionType, out var definition))
         {
-            throw new NotSupportedException(SR.ExceptionICustomTypeDescriptorNotSupported);
+            var properties = CreateBeanPropertyCollection(beanType);
+            var table = beanType.GetCustomAttribute<TableAttribute>();
+            var contractName = table?.Name;
+
+            var reference = beanType.GetCustomAttribute<ReferenceAttribute>();
+            var isReference = reference != null;
+
+            definition = new BeanDefinition(beanType, properties, contractName, isReference);
+
+            _beanDefinitionDictionnary.TryAdd(descriptionType, definition);
         }
 
-        return GetDefinitionInternal(beanType, bean: null);
+        return definition;
     }
 
     /// <summary>
@@ -123,11 +70,11 @@ public static class BeanDescriptor
     {
         if (bean != null)
         {
-            return GetDefinition(bean)?.GetErrors(bean, propertiesToCheck) ?? [];
+            return GetDefinition(bean.GetType())?.GetErrors(bean, propertiesToCheck) ?? [];
         }
         else
         {
-            return new ErrorMessageCollection();
+            return [];
         }
     }
 
@@ -135,25 +82,12 @@ public static class BeanDescriptor
     /// Retourne la description des propriétés d'un objet sous forme d'une collection.
     /// </summary>
     /// <param name="beanType">Type du bean.</param>
-    /// <param name="bean">Bean dynamic.</param>
     /// <returns>Description des propriétés.</returns>
-    private static BeanPropertyDescriptorCollection CreateBeanPropertyCollection(Type beanType, object? bean)
+    private static BeanPropertyDescriptorCollection CreateBeanPropertyCollection(Type beanType)
     {
-        PropertyDescriptor? defaultProperty;
-        PropertyDescriptorCollection properties;
-
-        if (bean is ICustomTypeDescriptor)
-        {
-            properties = TypeDescriptor.GetProperties(bean);
-            defaultProperty = TypeDescriptor.GetDefaultProperty(bean);
-        }
-        else
-        {
-            properties = TypeDescriptor.GetProperties(beanType);
-            defaultProperty = TypeDescriptor.GetDefaultProperty(beanType);
-        }
-
-        return CreateCollection(properties, defaultProperty, beanType);
+        var properties = TypeDescriptor.GetProperties(beanType);
+        var defaultProperty = TypeDescriptor.GetDefaultProperty(beanType);
+        return CreateCollection(properties, defaultProperty);
     }
 
     /// <summary>
@@ -161,15 +95,13 @@ public static class BeanDescriptor
     /// </summary>
     /// <param name="properties">PropertyDescriptors.</param>
     /// <param name="defaultProperty">Propriété par défaut.</param>
-    /// <param name="beanType">Type du bean.</param>
     /// <returns>Collection.</returns>
     private static BeanPropertyDescriptorCollection CreateCollection(
         PropertyDescriptorCollection properties,
-        PropertyDescriptor? defaultProperty,
-        Type beanType
+        PropertyDescriptor? defaultProperty
     )
     {
-        var coll = new BeanPropertyDescriptorCollection(beanType);
+        var coll = new BeanPropertyDescriptorCollection();
         for (var i = 0; i < properties.Count; i++)
         {
             var property = properties[i];
@@ -178,8 +110,19 @@ public static class BeanDescriptor
             var displayAttr = (DisplayAttribute?)property.Attributes[typeof(DisplayAttribute)];
             var attr = (ReferencedTypeAttribute?)property.Attributes[typeof(ReferencedTypeAttribute)];
             var colAttr = (ColumnAttribute?)property.Attributes[typeof(ColumnAttribute)];
-            var domainAttr = (DomainAttribute?)property.Attributes[typeof(DomainAttribute)];
             var requiredAttr = (RequiredAttribute?)property.Attributes[typeof(RequiredAttribute)];
+
+            var extraAttributes = property
+                .Attributes.Cast<Attribute>()
+                .Where(a =>
+                    a
+                        is not KeyAttribute
+                            and not DisplayAttribute
+                            and not ReferencedTypeAttribute
+                            and not ColumnAttribute
+                            and not RequiredAttribute
+                )
+                .ToList();
 
             string? display = null;
             if (displayAttr != null)
@@ -210,7 +153,6 @@ public static class BeanDescriptor
             var memberName = colAttr?.Name;
             var isPrimaryKey = keyAttr != null;
             var isRequired = requiredAttr != null;
-            var domainName = domainAttr?.Name;
             var isDefault =
                 property.Equals(defaultProperty)
                 || DefaultPropertyDefaultName.Equals(property.Name) && defaultProperty == null;
@@ -223,48 +165,18 @@ public static class BeanDescriptor
                 memberName,
                 property.PropertyType,
                 display,
-                domainName,
                 isPrimaryKey,
                 isDefault,
                 isRequired,
                 referenceType,
                 isReadonly,
-                isBrowsable
+                isBrowsable,
+                extraAttributes
             );
 
             coll.Add(description);
         }
 
         return coll;
-    }
-
-    /// <summary>
-    /// Retourne la definition d'un bean.
-    /// </summary>
-    /// <param name="beanType">Type du bean.</param>
-    /// <param name="bean">Bean.</param>
-    /// <returns>Description des propriétés.</returns>
-    private static BeanDefinition GetDefinitionInternal(Type beanType, object? bean)
-    {
-        var descriptionType = beanType;
-
-        if (!_beanDefinitionDictionnary.TryGetValue(descriptionType, out var definition))
-        {
-            var properties = CreateBeanPropertyCollection(beanType, bean);
-            var table = beanType.GetCustomAttribute<TableAttribute>();
-            var contractName = table?.Name;
-
-            var reference = beanType.GetCustomAttribute<ReferenceAttribute>();
-            var isReference = reference != null;
-            var isStatic = reference?.IsStatic ?? false;
-
-            definition = new BeanDefinition(beanType, properties, contractName, isReference, isStatic);
-            if (bean == null && !typeof(ICustomTypeDescriptor).IsAssignableFrom(beanType))
-            {
-                _beanDefinitionDictionnary.TryAdd(descriptionType, definition);
-            }
-        }
-
-        return definition;
     }
 }

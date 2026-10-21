@@ -6,17 +6,4 @@
   <ItemGroup>
     <PackageReference Include="System.ComponentModel.Annotations" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Update="SR.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>SR.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="SR.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>SR.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
 </Project>

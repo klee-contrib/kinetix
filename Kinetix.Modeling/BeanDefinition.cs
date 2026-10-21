@@ -16,20 +16,18 @@ public class BeanDefinition
     /// <param name="properties">Collection de propriétés.</param>
     /// <param name="contractName">Nom du contrat (table).</param>
     /// <param name="isReference"><code>True</code> si le bean correspond à une liste de référence, <code>False</code> sinon.</param>
-    /// <param name="isStatic"><code>True</code> si le bean correspond à une liste de référence statique, <code>False</code> sinon.</param>
     internal BeanDefinition(
         Type beanType,
         BeanPropertyDescriptorCollection properties,
         string? contractName,
-        bool isReference,
-        bool isStatic
+        bool isReference
     )
     {
         BeanType = beanType;
         Properties = properties;
         ContractName = contractName;
         IsReference = isReference;
-        IsStatic = isStatic;
+
         foreach (var property in properties)
         {
             if (property.IsPrimaryKey && PrimaryKey == null)
@@ -60,11 +58,6 @@ public class BeanDefinition
     /// Retourne <code>True</code> si le bean est une liste de référence, <code>False</code> sinon.
     /// </summary>
     public bool IsReference { get; private set; }
-
-    /// <summary>
-    /// Retourne <code>True</code> si le Bean est une liste statique, <code>False</code> sinon.
-    /// </summary>
-    public bool IsStatic { get; private set; }
 
     /// <summary>
     /// Retourne la propriété par défaut si elle existe.
@@ -124,16 +117,6 @@ public class BeanDefinition
                         ModelName = BeanType.Name,
                     }
                 );
-            }
-
-            if (property.DomainName == null || property.IsReadOnly)
-            {
-                continue;
-            }
-
-            foreach (var error in property.CheckDomain(property.GetValue(bean)))
-            {
-                errors.Add(error);
             }
         }
 

@@ -23,7 +23,7 @@ public abstract partial class SqlParameterBeanCollection<T>
     {
         _connectionPool = connectionPool;
         Collection = collection;
-        BeanDefinition = BeanDescriptor.GetDefinition(typeof(T), ignoreCustomTypeDesc: true);
+        BeanDefinition = BeanDescriptor.GetDefinition(typeof(T));
 
         Init();
         PopulateParamList(isInsert);

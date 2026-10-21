@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Data;
-using Kinetix.Modeling;
 
 namespace Kinetix.DataAccess.Sql.Common;
 
@@ -471,11 +470,6 @@ public abstract class SqlParameterCollection(IDbCommand command) : IDataParamete
         else if (t == typeof(System.Data.SqlTypes.SqlDateTime))
         {
             param.DbType = DbType.DateTime2;
-            return true;
-        }
-        else if (t == typeof(ChangeAction))
-        {
-            param.DbType = DbType.String;
             return true;
         }
         else if (t == typeof(char))

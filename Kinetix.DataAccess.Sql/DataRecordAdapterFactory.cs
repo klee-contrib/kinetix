@@ -213,7 +213,7 @@ internal class DataRecordAdapterFactory
 
         // Création d'un dictionnaire d'accès aux propriétés du bean.
         PropertyInfo? prop;
-        var definition = BeanDescriptor.GetDefinition(t, ignoreCustomTypeDesc: true);
+        var definition = BeanDescriptor.GetDefinition(t);
         var dic = new Dictionary<string, PropertyInfo>();
         foreach (var property in definition.Properties)
         {

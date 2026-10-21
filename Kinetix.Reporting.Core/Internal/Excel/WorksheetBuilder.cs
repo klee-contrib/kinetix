@@ -1,5 +1,4 @@
 ﻿using System.Linq.Expressions;
-using System.Reflection;
 using ClosedXML.Excel;
 using Kinetix.Modeling;
 using Kinetix.Modeling.Annotations;
@@ -73,17 +72,13 @@ internal class WorksheetBuilder<T>(
 
                     var property = def.Properties.SingleOrDefault(p => p.PropertyName == me.Member.Name);
                     booleanFormat =
-                        property?.Domain?.ExtraAttributes.OfType<BooleanFormatAttribute>().SingleOrDefault()?.Format
-                        ?? default;
-                    dateFormat = property
-                        ?.Domain?.ExtraAttributes.OfType<DateFormatAttribute>()
-                        .SingleOrDefault()
-                        ?.Format;
-                    numberFormat = property
-                        ?.Domain?.ExtraAttributes.OfType<NumberFormatAttribute>()
-                        .SingleOrDefault()
-                        ?.Format;
-                    if (property?.ReferenceType?.GetCustomAttributes<ReferenceAttribute>().Any() ?? false)
+                        property?.ExtraAttributes.OfType<BooleanFormatAttribute>().SingleOrDefault()?.Format ?? default;
+                    dateFormat = property?.ExtraAttributes.OfType<DateFormatAttribute>().SingleOrDefault()?.Format;
+                    numberFormat = property?.ExtraAttributes.OfType<NumberFormatAttribute>().SingleOrDefault()?.Format;
+                    if (
+                        property?.ReferenceType != null
+                        && Attribute.IsDefined(property.ReferenceType, typeof(ReferenceAttribute))
+                    )
                     {
                         referenceType = property.ReferenceType;
                     }

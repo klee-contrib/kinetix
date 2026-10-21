@@ -292,7 +292,7 @@ public class FilterCriteria
     /// <param name="expressionIndex">Index des expressions à appliquer.</param>
     private void AddAllCriteria(object criteria, IDictionary<string, Expression>? expressionIndex)
     {
-        var definition = BeanDescriptor.GetDefinition(criteria);
+        var definition = BeanDescriptor.GetDefinition(criteria.GetType());
         foreach (var property in definition.Properties)
         {
             if (property.MemberName == null)

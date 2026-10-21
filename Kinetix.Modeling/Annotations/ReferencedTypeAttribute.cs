@@ -13,5 +13,6 @@ public sealed class ReferencedTypeAttribute(Type referenceType) : Attribute
     /// <summary>
     /// Obtient le type de l'objet de référence associé à la propriété.
     /// </summary>
-    public Type ReferenceType { get; private set; } = referenceType ?? throw new ArgumentNullException("referenceType");
+    public Type ReferenceType { get; private set; } =
+        referenceType ?? throw new ArgumentNullException(nameof(referenceType));
 }

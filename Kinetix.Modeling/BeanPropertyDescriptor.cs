@@ -1,6 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Globalization;
-using Kinetix.Modeling.Exceptions;
 
 namespace Kinetix.Modeling;
 
@@ -9,8 +7,6 @@ namespace Kinetix.Modeling;
 /// </summary>
 public sealed class BeanPropertyDescriptor
 {
-    private Domain? _domainChecker;
-
     /// <summary>
     /// Crée une nouvelle instance.
     /// </summary>
@@ -18,72 +14,77 @@ public sealed class BeanPropertyDescriptor
     /// <param name="memberName">Nom du membre (DataMemberAttribute).</param>
     /// <param name="propertyType">Type de la propriété.</param>
     /// <param name="description">Description de la propriété.</param>
-    /// <param name="domainName">Domaine de la propriété.</param>
     /// <param name="isPrimaryKey">True si la propriété correspond à la clef primaire.</param>
     /// <param name="isDefault">True si la propriété est la propriété par défaut de l'objet.</param>
     /// <param name="isRequired">True si la propriété doit être renseignée.</param>
     /// <param name="referenceType">Type de la liste de référence associée à la propriété.</param>
     /// <param name="isReadOnly"><code>True</code> si la propriété est en lecture seule, <code>False</code> sinon.</param>
     /// <param name="isBrowsable">Indique si la propriété est affichable.</param>
+    /// <param name="extraAttributes">Attributes supplémentaires.</param>
     internal BeanPropertyDescriptor(
         string propertyName,
         string? memberName,
         Type propertyType,
         string? description,
-        Enum? domainName,
         bool isPrimaryKey,
         bool isDefault,
         bool isRequired,
         Type? referenceType,
         bool isReadOnly,
-        bool isBrowsable
+        bool isBrowsable,
+        IList<Attribute> extraAttributes
     )
     {
         PropertyName = propertyName;
         MemberName = memberName;
         PropertyType = propertyType;
         Description = description;
-        DomainName = domainName;
         IsPrimaryKey = isPrimaryKey;
         IsDefault = isDefault;
         IsRequired = isRequired;
         ReferenceType = referenceType;
         IsReadOnly = isReadOnly;
         IsBrowsable = isBrowsable;
+        ExtraAttributes = extraAttributes;
 
-        InitPrimitiveType();
-        CheckPropertyTypeForReference();
+        if (PropertyType.IsGenericType && PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+        {
+            PrimitiveType = PropertyType.GetGenericArguments()[0];
+        }
+        else if (
+            PropertyType.IsValueType
+            || PropertyType == typeof(string)
+            || PropertyType.GetInterface("ICollection") != null
+        )
+        {
+            PrimitiveType = PropertyType;
+        }
     }
 
     /// <summary>
     /// Obtient la description de la valeur.
     /// </summary>
-    public string? Description { get; private set; }
-
-    /// <summary>
-    /// Obtient le nom du domaine.
-    /// </summary>
-    public Enum? DomainName { get; private set; }
+    public string? Description { get; }
 
     /// <summary>
     /// Indique si la propriété est affichable à l'écran.
     /// </summary>
-    public bool IsBrowsable { get; private set; }
+    public bool IsBrowsable { get; }
 
     /// <summary>
     /// Indique si la propriété est la propriété par défaut de l'objet.
     /// </summary>
-    public bool IsDefault { get; private set; }
+    public bool IsDefault { get; }
 
     /// <summary>
     /// Indique si la propriété correspond à la clef primaire.
     /// </summary>
-    public bool IsPrimaryKey { get; private set; }
+    public bool IsPrimaryKey { get; }
 
     /// <summary>
     /// Indique si la valeur est obligatoire.
     /// </summary>
-    public bool IsRequired { get; private set; }
+    public bool IsRequired { get; }
 
     /// <summary>
     /// Indique si la colonne est traduisible (dans le cas d'une liste de référence).
@@ -96,90 +97,39 @@ public sealed class BeanPropertyDescriptor
     /// de la colonne base de données. Pour des objets issus
     /// d'un service Web, il s'agit du nom Soap de la propriété.
     /// </summary>
-    public string? MemberName { get; private set; }
+    public string? MemberName { get; }
 
     /// <summary>
     /// Retourne le type primitif de la propriété.
     /// Si PropertyType vaut Nullable&lt;int&gt;, PrimitiveType vaut int.
     /// </summary>
-    public Type? PrimitiveType { get; private set; }
+    public Type? PrimitiveType { get; }
 
     /// <summary>
     /// Obtient le nom de la propriété.
     /// </summary>
-    public string PropertyName { get; private set; }
+    public string PropertyName { get; }
 
     /// <summary>
     /// Obtient le type de la propriété.
     /// </summary>
-    public Type PropertyType { get; private set; }
+    public Type PropertyType { get; }
 
     /// <summary>
     /// Obtient le type de l'objet de référence
     /// associé à la propriété.
     /// </summary>
-    public Type? ReferenceType { get; private set; }
+    public Type? ReferenceType { get; }
 
     /// <summary>
     /// Retourne si la propriété est en lecture seule.
     /// </summary>
-    public bool IsReadOnly { get; private set; }
+    public bool IsReadOnly { get; }
 
     /// <summary>
-    /// Retourne le domaine associé à la propriété.
+    /// Attributs supplémentaires sur la propriété (hors attributs par défaut).
     /// </summary>
-    public Domain? Domain
-    {
-        get
-        {
-            _domainChecker ??= DomainManager.GetDomain(this);
-            return _domainChecker;
-        }
-    }
-
-    /// <summary>
-    /// Vérifie que le type d'une valeur correspond bien au type
-    /// de la propriété.
-    /// </summary>
-    /// <param name="value">Valeur à tester.</param>
-    public void CheckValueType(object value)
-    {
-        if (value == null)
-        {
-            return;
-        }
-
-        var valueType = value.GetType();
-        if (
-            valueType.IsPrimitive
-            || typeof(decimal).Equals(valueType)
-            || typeof(Guid).Equals(valueType)
-            || typeof(string).Equals(valueType)
-            || typeof(DateTime).Equals(valueType)
-            || typeof(byte[]).Equals(valueType)
-            || typeof(TimeSpan).Equals(valueType)
-        )
-        {
-            if (!valueType.Equals(PrimitiveType))
-            {
-                throw new InvalidCastException(
-                    string.Format(
-                        CultureInfo.CurrentCulture,
-                        SR.ExceptionInvalidValueType,
-                        valueType,
-                        PropertyType,
-                        PropertyName
-                    )
-                );
-            }
-
-            return;
-        }
-
-        throw new NotSupportedException(
-            string.Format(CultureInfo.CurrentUICulture, SR.ExceptionTypeDescription, PropertyType)
-        );
-    }
+    public IList<Attribute> ExtraAttributes { get; }
 
     /// <summary>
     /// Retourne la valeur de la propriété pour un objet.
@@ -209,61 +159,5 @@ public sealed class BeanPropertyDescriptor
     public override string ToString()
     {
         return PropertyName;
-    }
-
-    /// <summary>
-    /// Valide les contraintes de domaine pour une propriété.
-    /// </summary>
-    /// <param name="value">Valeur de la propriété.</param>
-    /// <returns>Erreurs.</returns>
-    internal ErrorMessageCollection CheckDomain(object? value)
-    {
-        return Domain?.CheckValue(value, this) ?? [];
-    }
-
-    /// <summary>
-    /// Vérifie la cohérence du type de la propriété si elle est associée
-    /// à une liste de référence.
-    /// </summary>
-    private void CheckPropertyTypeForReference()
-    {
-        if (
-            MemberName != null
-            && ReferenceType != null
-            && PrimitiveType != null
-            && PrimitiveType != typeof(int)
-            && PrimitiveType != typeof(string)
-            && PrimitiveType != typeof(Guid)
-            && !PrimitiveType.IsEnum
-        )
-        {
-            throw new NotSupportedException(
-                string.Format(CultureInfo.CurrentCulture, SR.ExceptionTypeInt32Required, PropertyType, PropertyName)
-            );
-        }
-    }
-
-    /// <summary>
-    /// Initialise le type primitif de la propriété.
-    /// </summary>
-    private void InitPrimitiveType()
-    {
-        if (PropertyType.IsGenericType && PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-        {
-            PrimitiveType = PropertyType.GetGenericArguments()[0];
-            return;
-        }
-
-        if (
-            PropertyType.IsValueType
-            || PropertyType == typeof(string)
-            || PropertyType.GetInterface("ICollection") != null
-        )
-        {
-            PrimitiveType = PropertyType;
-            return;
-        }
-
-        PrimitiveType = null;
     }
 }

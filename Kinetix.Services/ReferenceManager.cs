@@ -290,14 +290,14 @@ public partial class ReferenceManager(IServiceProvider provider, TimeSpan cacheD
             return null;
         }
 
-        var definition = BeanDescriptor.GetDefinition(reference);
+        var definition = BeanDescriptor.GetDefinition(reference.GetType());
         return definition.DefaultProperty?.GetValue(reference)?.ToString();
     }
 
     private static string GetRequiredReferenceValue<T>(T reference)
         where T : notnull
     {
-        var definition = BeanDescriptor.GetDefinition(reference);
+        var definition = BeanDescriptor.GetDefinition(reference.GetType());
         return definition.DefaultProperty?.GetValue(reference)?.ToString()!;
     }
 

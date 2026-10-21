@@ -8,19 +8,7 @@ namespace Kinetix.Modeling;
 /// </summary>
 public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyDescriptor>
 {
-    private readonly Type _beanType;
-    private readonly Dictionary<string, BeanPropertyDescriptor> _properties;
-
-    /// <summary>
-    /// Crée une nouvelle instance.
-    /// </summary>
-    /// <param name="beanType">Type du bean.</param>
-    /// <exception cref="ArgumentNullException">Si bean type est null.</exception>
-    internal BeanPropertyDescriptorCollection(Type beanType)
-    {
-        _beanType = beanType ?? throw new ArgumentNullException(nameof(beanType));
-        _properties = [];
-    }
+    private readonly Dictionary<string, BeanPropertyDescriptor> _properties = [];
 
     /// <summary>
     /// Retourne le nombre d'élément de la collection.
@@ -42,23 +30,7 @@ public sealed class BeanPropertyDescriptorCollection : ICollection<BeanPropertyD
     /// </summary>
     /// <param name="propertyName">Nom de la propriété.</param>
     /// <returns>Description de la propriété.</returns>
-    public BeanPropertyDescriptor this[string propertyName]
-    {
-        get
-        {
-            try
-            {
-                return _properties[propertyName];
-            }
-            catch (KeyNotFoundException)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(propertyName),
-                    "Propriété " + propertyName + " non trouvée pour le type " + _beanType.FullName + "."
-                );
-            }
-        }
-    }
+    public BeanPropertyDescriptor this[string propertyName] => _properties[propertyName];
 
     /// <summary>
     /// Ajoute une nouvelle propriété à la collection.

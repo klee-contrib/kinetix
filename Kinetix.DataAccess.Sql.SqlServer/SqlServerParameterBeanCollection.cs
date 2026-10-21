@@ -79,10 +79,7 @@ internal class SqlServerParameterBeanCollection<T>(
                 }
                 else if (property.PrimitiveType == typeof(string))
                 {
-                    metaData =
-                        property.Domain?.Length != null
-                            ? new SqlMetaData(property.MemberName, SqlDbType.NVarChar, property.Domain.Length.Value)
-                            : new SqlMetaData(property.MemberName, SqlDbType.Text);
+                    metaData = new SqlMetaData(property.MemberName, SqlDbType.Text);
                 }
                 else if (property.PrimitiveType == typeof(DateTime))
                 {
@@ -96,7 +93,7 @@ internal class SqlServerParameterBeanCollection<T>(
                 {
                     metaData = new SqlMetaData(property.MemberName, SqlDbType.Image);
                 }
-                else if (property.PrimitiveType == typeof(System.Guid))
+                else if (property.PrimitiveType == typeof(Guid))
                 {
                     metaData = new SqlMetaData(property.MemberName, SqlDbType.UniqueIdentifier);
                 }

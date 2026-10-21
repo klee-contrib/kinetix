@@ -322,9 +322,12 @@ public abstract class CommandParser(SqlManager sqlManager)
             var isNull = IsNull(parameters["@" + expression]);
             return checkNull ? isNull : !isNull;
         }
-        catch (KeyNotFoundException)
+        catch (KeyNotFoundException e)
         {
-            throw new NotSupportedException("Aucun paramétre du nom @" + expression + " n'existe pour cette commande");
+            throw new NotSupportedException(
+                "Aucun paramétre du nom @" + expression + " n'existe pour cette commande",
+                e
+            );
         }
     }
 
