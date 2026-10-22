@@ -4,13 +4,11 @@
     <Description>Module de gestion de services Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Castle.Core" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kinetix.Modeling\Kinetix.Modeling.csproj" />
-    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
     <ProjectReference Include="..\Kinetix.Services.Annotations\Kinetix.Services.Annotations.csproj" />
   </ItemGroup>
 </Project>

@@ -8,6 +8,7 @@
     <PackageReference Include="NEST.JsonNetSerializer" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
     <ProjectReference Include="..\Kinetix.Search.Core\Kinetix.Search.Core.csproj" />
   </ItemGroup>
 </Project>

@@ -4,6 +4,7 @@
     <Description>Module ORM Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
     <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
   </ItemGroup>
   <ItemGroup>

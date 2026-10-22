@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using Kinetix.Services.Annotations;
-using Kinetix.Services.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -51,24 +50,7 @@ public static class ServiceExtensions
                 {
                     if (Attribute.IsDefined(interfaceType, typeof(RegisterContractAttribute)))
                     {
-                        var iOptions =
-                            config.InterceptionOptions != null ? config.InterceptionOptions(interfaceType) : null;
-
-                        if (iOptions != null)
-                        {
-                            services.TryAddIntercepted(
-                                interfaceType,
-                                type,
-                                lifetime => ServiceDescriptor.Describe(type, type, lifetime),
-                                iOptions,
-                                registerImplAttribute.Lifetime
-                            );
-                        }
-                        else
-                        {
-                            services.TryAdd(new ServiceDescriptor(interfaceType, type, registerImplAttribute.Lifetime));
-                        }
-
+                        services.TryAdd(new ServiceDescriptor(interfaceType, type, registerImplAttribute.Lifetime));
                         hasContract = true;
                     }
                 }

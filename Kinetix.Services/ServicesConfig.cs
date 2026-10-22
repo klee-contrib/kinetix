@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Kinetix.Services.DependencyInjection;
 
 namespace Kinetix.Services;
 
@@ -8,11 +7,6 @@ namespace Kinetix.Services;
 /// </summary>
 public class ServicesConfig
 {
-    /// <summary>
-    /// Permet de remplacer les intercepteurs posés par défaut.
-    /// </summary>
-    public Func<Type, Action<InterceptionOptions>>? InterceptionOptions { get; set; }
-
     /// <summary>
     /// Préfixe d'assembly dans lequel chercher les services à enregistrer.
     /// </summary>
@@ -41,17 +35,6 @@ public class ServicesConfig
     public ServicesConfig AddAssemblies(params Assembly[] assemblies)
     {
         ServiceAssemblies.AddRange(assemblies);
-        return this;
-    }
-
-    /// <summary>
-    /// Remplace les intercepteurs posés par défaut, en fonction du type de service.
-    /// </summary>
-    /// <param name="options">Fonction déterminant les intercepteurs à poser par type.</param>
-    /// <returns>Config.</returns>
-    public ServicesConfig WithInterceptors(Func<Type, Action<InterceptionOptions>> options)
-    {
-        InterceptionOptions = options;
         return this;
     }
 

@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
-using Kinetix.Services.DependencyInjection.Interceptors;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -21,12 +20,11 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
         CancellationToken cancellationToken
     )
     {
-        while (exception is TargetInvocationException || exception is InterceptedException)
+        while (exception is TargetInvocationException)
         {
             exception = exception switch
             {
                 TargetInvocationException tex => tex.InnerException!,
-                InterceptedException iex => iex.InnerException!,
                 _ => exception,
             };
         }

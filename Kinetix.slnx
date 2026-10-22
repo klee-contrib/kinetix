@@ -19,6 +19,7 @@
   <Project Path="Kinetix.Search.Elastic/Kinetix.Search.Elastic.csproj" />
   <Project Path="Kinetix.Search.Models/Kinetix.Search.Models.csproj" />
   <Project Path="Kinetix.Services.Annotations/Kinetix.Services.Annotations.csproj" />
+  <Project Path="Kinetix.Services.DependencyInjection/Kinetix.Services.DependencyInjection.csproj" Id="02d998cb-a71c-4f1e-bb5b-3a9035aa7826" />
   <Project Path="Kinetix.Services/Kinetix.Services.csproj" />
   <Project Path="Kinetix.User/Kinetix.User.csproj" />
   <Project Path="Kinetix.Web/Kinetix.Web.csproj" />

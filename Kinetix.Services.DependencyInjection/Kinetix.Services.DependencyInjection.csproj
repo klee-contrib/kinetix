@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>10.0.0</Version>
+    <Description>Injection de dépendances avec interception pour Kinetix.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="AspectCore.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
+    <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
+  </ItemGroup>
+</Project>
