@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nest;
 using Nest.JsonNetSerializer;
 using Newtonsoft.Json;
+using OpenTelemetry.Trace;
 
 namespace Kinetix.Search.Elastic;
 
@@ -74,5 +75,15 @@ public static class ServiceExtensions
             .AddSingleton<FacetHandler>()
             .AddScoped<ElasticManager>()
             .AddScoped<ISearchStore, ElasticStore>();
+    }
+
+    /// <summary>
+    /// Enregistre les traces de ElasticSearch dans OpenTelemetry.
+    /// </summary>
+    /// <param name="builder">TracerProviderBuilder.</param>
+    /// <returns>TracerProviderBuilder.</returns>
+    public static TracerProviderBuilder AddElasticSearch(this TracerProviderBuilder builder)
+    {
+        return builder.AddSource(ElasticExtensions.ActivitySourceName);
     }
 }

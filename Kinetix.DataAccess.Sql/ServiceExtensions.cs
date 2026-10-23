@@ -1,7 +1,9 @@
 ﻿using System.Reflection;
 using System.Transactions;
+using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Services;
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Trace;
 
 namespace Kinetix.DataAccess.Sql;
 
@@ -29,6 +31,16 @@ public static class ServiceExtensions
             .AddSingleton(config)
             .AddSingleton<SqlManager>()
             .AddSingleton<ITransactionContextProvider, SqlTransactionContextProvider>();
+    }
+
+    /// <summary>
+    /// Enregistre les requêtes SQL dans OpenTelemetry.
+    /// </summary>
+    /// <param name="builder">TracerProviderBuilder.</param>
+    /// <returns>TracerProviderBuilder.</returns>
+    public static TracerProviderBuilder AddSql(this TracerProviderBuilder builder)
+    {
+        return builder.AddSource(SqlCommandListener.ActivitySourceName);
     }
 
     /// <summary>

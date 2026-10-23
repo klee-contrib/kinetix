@@ -6,9 +6,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="NEST.JsonNetSerializer" />
+    <PackageReference Include="OpenTelemetry.Api" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
     <ProjectReference Include="..\Kinetix.Search.Core\Kinetix.Search.Core.csproj" />
   </ItemGroup>
 </Project>

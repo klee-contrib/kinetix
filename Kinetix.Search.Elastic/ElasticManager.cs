@@ -1,5 +1,4 @@
-﻿using Kinetix.Monitoring.Core;
-using Kinetix.Search.Core.Config;
+﻿using Kinetix.Search.Core.Config;
 using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
 using Nest;
@@ -16,7 +15,6 @@ public sealed class ElasticManager(
     ILogger<ElasticManager> logger,
     SearchConfig config,
     ElasticClient client,
-    AnalyticsManager analytics,
     DocumentDescriptor documentDescriptor
 )
 {
@@ -26,7 +24,6 @@ public sealed class ElasticManager(
     public void DeleteIndex<T>()
     {
         logger.LogQuery(
-            analytics,
             nameof(DeleteIndex),
             () => client.Indices.Delete(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))
         );
@@ -39,7 +36,6 @@ public sealed class ElasticManager(
     public bool DeleteIndexes()
     {
         var response = logger.LogQuery(
-            analytics,
             nameof(DeleteIndexes),
             () => client.Indices.Delete($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*")
         );
@@ -53,7 +49,7 @@ public sealed class ElasticManager(
     /// <returns><code>True</code> si l'index existe.</returns>
     public bool ExistIndex(string indexName)
     {
-        return logger.LogQuery(analytics, nameof(ExistIndex), () => client.Indices.Exists(indexName)).Exists;
+        return logger.LogQuery(nameof(ExistIndex), () => client.Indices.Exists(indexName)).Exists;
     }
 
     /// <summary>
@@ -114,7 +110,6 @@ public sealed class ElasticManager(
             }
 
             logger.LogQuery(
-                analytics,
                 nameof(InitIndex),
                 () =>
                     client.Indices.Create(
@@ -137,7 +132,6 @@ public sealed class ElasticManager(
     public void OptimizeIndexForReindex<T>()
     {
         logger.LogQuery(
-            analytics,
             nameof(OptimizeIndexForReindex),
             () =>
                 client.Indices.UpdateSettings(
@@ -152,7 +146,7 @@ public sealed class ElasticManager(
     /// </summary>
     public void PingNode()
     {
-        logger.LogQuery(analytics, nameof(PingNode), () => client.Ping());
+        logger.LogQuery(nameof(PingNode), () => client.Ping());
     }
 
     /// <summary>
@@ -161,7 +155,6 @@ public sealed class ElasticManager(
     public void RevertOptimizeIndexForReindex<T>()
     {
         logger.LogQuery(
-            analytics,
             nameof(RevertOptimizeIndexForReindex),
             () =>
                 client.Indices.UpdateSettings(

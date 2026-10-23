@@ -1,7 +1,6 @@
 ﻿using System.Data.Common;
 using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Modeling.Exceptions;
-using Kinetix.Monitoring.Core;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
@@ -14,13 +13,9 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// Crée une nouvelle instance.
 /// </remarks>
 /// <param name="command">Commande.</param>
-/// <param name="analytics">AnalyticsManager.</param>
 /// <param name="logger">Logger.</param>
-internal class SqlServerCommandListener(
-    BaseSqlCommand command,
-    AnalyticsManager analytics,
-    ILogger<BaseSqlCommand> logger
-) : SqlCommandListener(command, analytics, logger)
+internal class SqlServerCommandListener(BaseSqlCommand command, ILogger<BaseSqlCommand> logger)
+    : SqlCommandListener(command, logger)
 {
     private const byte TimeOutErrorClass = 11;
     private const int TimeOutErrorCode1 = -2146232060;
@@ -69,7 +64,7 @@ internal class SqlServerCommandListener(
             }
         }
 
-        Analytics.MarkProcessInError();
+        RecordException(exception);
         return message != null
             ? new BusinessException(message.Message, message.Code, exception)
             : new SqlDataException(exception.Message, exception);

@@ -1,8 +1,8 @@
-﻿#pragma warning disable S2094
+﻿#pragma warning disable S2094,IDE0130
 
-namespace Kinetix.Services.DependencyInjection;
+namespace Kinetix;
 
 /// <summary>
-/// Catégorie pour les logs de AnalyticsInterceptor.
+/// Catégorie de log pour les traces de service.
 /// </summary>
 public class Service;

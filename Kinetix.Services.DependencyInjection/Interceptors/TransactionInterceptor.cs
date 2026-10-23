@@ -6,16 +6,15 @@ using AspectCore.DynamicProxy;
 namespace Kinetix.Services.DependencyInjection.Interceptors;
 
 /// <summary>
-/// Intercepteur posant un contexte transactionnel.
+/// Intercepteur pour poser une transaction autour des appels de service.
 /// </summary>
-public class TransactionInterceptorAttribute(TransactionScopeManager transactionScopeManager)
-    : AbstractInterceptorAttribute
+public class TransactionInterceptor(TransactionScopeManager transactionScopeManager) : AbstractInterceptor
 {
     /// <inheritdoc cref="IInterceptor.Invoke" />
     [DebuggerNonUserCode]
     public override async Task Invoke(AspectContext context, AspectDelegate next)
     {
-        if (IsDefined(context.ImplementationMethod, typeof(NoAnalyticsAttribute), inherit: true))
+        if (Attribute.IsDefined(context.ImplementationMethod, typeof(NoTransactionAttribute), inherit: true))
         {
             await next(context);
             return;

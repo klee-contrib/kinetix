@@ -4,7 +4,9 @@
     <Description>Module ORM Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
+    <PackageReference Include="OpenTelemetry.Api" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
   </ItemGroup>
   <ItemGroup>

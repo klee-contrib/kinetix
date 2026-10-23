@@ -1,7 +1,6 @@
 ﻿using System.Data.Common;
 using Kinetix.DataAccess.Sql.Common;
 using Kinetix.Modeling.Exceptions;
-using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
@@ -14,13 +13,9 @@ namespace Kinetix.DataAccess.Sql.Postgres;
 /// Crée une nouvelle instance.
 /// </remarks>
 /// <param name="command">Commande.</param>
-/// <param name="analytics">AnalyticsManager.</param>
 /// <param name="logger">Logger.</param>
-internal class PostgresCommandListener(
-    BaseSqlCommand command,
-    AnalyticsManager analytics,
-    ILogger<BaseSqlCommand> logger
-) : SqlCommandListener(command, analytics, logger)
+internal class PostgresCommandListener(BaseSqlCommand command, ILogger<BaseSqlCommand> logger)
+    : SqlCommandListener(command, logger)
 {
     /// <inheritdoc />
     public override Exception HandleException(DbException exception)
@@ -41,7 +36,7 @@ internal class PostgresCommandListener(
                 ?? HandleUniqueConstraintException(sqlException.ConstraintName);
         }
 
-        Analytics.MarkProcessInError();
+        RecordException(exception);
         return message != null
             ? new BusinessException(message.Message, message.Code, exception)
             : new SqlDataException(exception.Message, exception);

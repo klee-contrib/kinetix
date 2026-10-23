@@ -2,7 +2,6 @@
 using System.Data.Common;
 using System.Reflection;
 using Kinetix.DataAccess.Sql.Common;
-using Kinetix.Monitoring.Core;
 using Kinetix.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
@@ -16,13 +15,11 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// Constructeur.
 /// </remarks>
 /// <param name="transactionScopeManager">Composant injecté.</param>
-/// <param name="analytics">Composant injecté.</param>
 /// <param name="commandParser">Composant injecté.</param>
 /// <param name="config">Composant injecté.</param>
 /// <param name="logger">Composant injecté.</param>
 internal class SqlServerConnectionPool(
     TransactionScopeManager transactionScopeManager,
-    AnalyticsManager analytics,
     CommandParser commandParser,
     ILogger<SqlServerCommand> logger,
     SqlConfig config
@@ -34,7 +31,7 @@ internal class SqlServerConnectionPool(
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string procName)
     {
-        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, analytics, procName)
+        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, procName)
         {
             CommandTimeout = _defaultCommandTimeout,
         };
@@ -47,7 +44,6 @@ internal class SqlServerConnectionPool(
             GetConnection(connectionName),
             logger,
             commandParser,
-            analytics,
             assembly,
             resourcePath
         )
@@ -63,7 +59,6 @@ internal class SqlServerConnectionPool(
             GetConnection(connectionName),
             logger,
             commandParser,
-            analytics,
             commandName,
             commandText
         )
@@ -79,7 +74,6 @@ internal class SqlServerConnectionPool(
             GetConnection(connectionName),
             logger,
             commandParser,
-            analytics,
             commandName,
             commandType
         )

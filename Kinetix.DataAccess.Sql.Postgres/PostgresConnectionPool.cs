@@ -2,7 +2,6 @@
 using System.Data.Common;
 using System.Reflection;
 using Kinetix.DataAccess.Sql.Common;
-using Kinetix.Monitoring.Core;
 using Kinetix.Services;
 using Microsoft.Extensions.Logging;
 using Npgsql;
@@ -16,13 +15,11 @@ namespace Kinetix.DataAccess.Sql.Postgres;
 /// Constructeur.
 /// </remarks>
 /// <param name="transactionScopeManager">Composant injecté.</param>
-/// <param name="analytics">Composant injecté.</param>
 /// <param name="commandParser">Composant injecté.</param>
 /// <param name="config">Composant injecté.</param>
 /// <param name="logger">Composant injecté.</param>
 internal class PostgresConnectionPool(
     TransactionScopeManager transactionScopeManager,
-    AnalyticsManager analytics,
     CommandParser commandParser,
     ILogger<PostgresCommand> logger,
     SqlConfig config
@@ -34,7 +31,7 @@ internal class PostgresConnectionPool(
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string procName)
     {
-        return new PostgresCommand(GetConnection(connectionName), logger, commandParser, analytics, procName)
+        return new PostgresCommand(GetConnection(connectionName), logger, commandParser, procName)
         {
             CommandTimeout = _defaultCommandTimeout,
         };
@@ -47,7 +44,6 @@ internal class PostgresConnectionPool(
             GetConnection(connectionName),
             logger,
             commandParser,
-            analytics,
             assembly,
             resourcePath
         )
@@ -63,7 +59,6 @@ internal class PostgresConnectionPool(
             GetConnection(connectionName),
             logger,
             commandParser,
-            analytics,
             commandName,
             commandText
         )
@@ -79,7 +74,6 @@ internal class PostgresConnectionPool(
             GetConnection(connectionName),
             logger,
             commandParser,
-            analytics,
             commandName,
             commandType
         )

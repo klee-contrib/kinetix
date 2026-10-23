@@ -1,5 +1,4 @@
-﻿using Kinetix.Monitoring.Core;
-using Kinetix.Search.Core;
+﻿using Kinetix.Search.Core;
 using Kinetix.Search.Core.Config;
 using Kinetix.Search.Core.DocumentModel;
 using Kinetix.Search.Core.Querying;
@@ -22,7 +21,6 @@ public class ElasticStore(
     ElasticMappingFactory factory,
     ILogger<ElasticStore> logger,
     FacetHandler facetHandler,
-    AnalyticsManager analytics,
     SearchConfig config
 ) : ISearchStore
 {
@@ -38,7 +36,7 @@ public class ElasticStore(
         /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
         var filterQuery = GetFilterAndPostFilterQuery(def, input);
         return logger
-            .LogQuery(analytics, "AdvancedCount", () => client.Count<TDocument>(s => s.Query(filterQuery)))
+            .LogQuery("AdvancedCount", () => client.Count<TDocument>(s => s.Query(filterQuery)))
             .Count;
     }
 
@@ -74,7 +72,7 @@ public class ElasticStore(
     /// <inheritdoc cref="ISearchStore.Bulk" />
     public ISearchBulkDescriptor Bulk()
     {
-        return new ElasticBulkDescriptor(documentDescriptor, client, logger, analytics);
+        return new ElasticBulkDescriptor(documentDescriptor, client, logger);
     }
 
     /// <inheritdoc cref="ISearchStore.Delete{TDocument}" />
@@ -97,7 +95,7 @@ public class ElasticStore(
 
         if (indexCreated)
         {
-            logger.LogQuery(analytics, "Map", () => client.Map<TDocument>(_ => mapping));
+            logger.LogQuery("Map", () => client.Map<TDocument>(_ => mapping));
         }
 
         return indexCreated;
@@ -110,7 +108,6 @@ public class ElasticStore(
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
         return logger
             .LogQuery(
-                analytics,
                 "Get",
                 () => client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValueFromDocument(id)))
             )
@@ -150,7 +147,6 @@ public class ElasticStore(
             rebuildLogger?.LogInformation($"Partial rebuild. Deleting recent documents for {indexName}...");
 
             var deleteRes = logger.LogQuery(
-                analytics,
                 "DeleteAllByQuery",
                 () =>
                     client.DeleteByQuery<TDocument>(d =>
@@ -220,7 +216,6 @@ public class ElasticStore(
         var hasGroup = groupFieldName != null;
 
         var res = logger.LogQuery(
-            analytics,
             "AdvancedQuery",
             () =>
                 client.Search(
@@ -406,7 +401,6 @@ public class ElasticStore(
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
         var pit = logger.LogQuery(
-            analytics,
             "CreatePit",
             () =>
                 client.OpenPointInTime(
@@ -424,7 +418,6 @@ public class ElasticStore(
             do
             {
                 var res = logger.LogQuery(
-                    analytics,
                     $"AdvancedQueryWithPit",
                     () =>
                         client.Search(
@@ -458,7 +451,7 @@ public class ElasticStore(
         }
         finally
         {
-            logger.LogQuery(analytics, "DeletePit", () => client.ClosePointInTime(p => p.Id(pitId)));
+            logger.LogQuery("DeletePit", () => client.ClosePointInTime(p => p.Id(pitId)));
         }
     }
 }

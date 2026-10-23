@@ -6,9 +6,9 @@
   <ItemGroup>
     <PackageReference Include="AspectCore.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="OpenTelemetry.Api" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kinetix.Monitoring.Core\Kinetix.Monitoring.Core.csproj" />
     <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
   </ItemGroup>
 </Project>

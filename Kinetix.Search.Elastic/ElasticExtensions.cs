@@ -1,4 +1,4 @@
-﻿using Kinetix.Monitoring.Core;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Nest;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -10,18 +10,23 @@ namespace Kinetix.Search.Elastic;
 /// </summary>
 internal static class ElasticExtensions
 {
+    public const string ActivitySourceName = "Kinetix.Search.Elastic";
+
+    private static readonly ActivitySource Source = new(ActivitySourceName);
+
     /// <summary>
     /// Effectue la requête demandée, traite les exceptions et log le tout.
     /// </summary>
     /// <param name="logger">Logger.</param>
-    /// <param name="analytics">Analytics.</param>
     /// <param name="context">Contexte pour le message.</param>
     /// <param name="esCall">Appel ES.</param>
     /// <returns>Ce que la requête retourne.</returns>
-    public static T LogQuery<T>(this ILogger logger, AnalyticsManager analytics, string context, Func<T> esCall)
+    public static T LogQuery<T>(this ILogger logger, string context, Func<T> esCall)
         where T : IResponse
     {
-        analytics.StartProcess($"ElasticSearch.{context}", "Search");
+        using var activity = Source.StartActivity($"ElasticSearch.{context}", ActivityKind.Client);
+        var start = Stopwatch.GetTimestamp();
+
         var response = esCall();
 
         if (logger.IsEnabled(LogLevel.Debug))
@@ -31,18 +36,23 @@ internal static class ElasticExtensions
 
         if (!response.ApiCall.Success)
         {
-            analytics.MarkProcessInError();
-            analytics.StopProcess();
-            throw new ElasticException($"Error in {context}", response.DebugInformation, response.OriginalException);
+            var ex = new ElasticException($"Error in {context}", response.DebugInformation, response.OriginalException);
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.type", ex.GetType().FullName);
+            activity?.AddException(ex);
+
+            throw ex;
         }
 
-        var process = analytics.StopProcess();
-        if (process != null && !process.Disabled)
-        {
-            logger.LogInformation(
-                $"{context} ({response.ApiCall.HttpMethod} {response.ApiCall.Uri}) {response.ApiCall.HttpStatusCode} ({process.Duration} ms)"
-            );
-        }
+        logger.LogInformation(
+            "{Context} ({HttpMethod} {Uri}) {StatusCode} ({Duration} ms)",
+            context,
+            response.ApiCall.HttpMethod,
+            response.ApiCall.Uri,
+            response.ApiCall.HttpStatusCode,
+            Stopwatch.GetElapsedTime(start).TotalMilliseconds
+        );
 
         return response;
     }

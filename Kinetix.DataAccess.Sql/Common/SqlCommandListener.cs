@@ -1,7 +1,7 @@
 ﻿using System.Data.Common;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
-using Kinetix.Monitoring.Core;
 using Microsoft.Extensions.Logging;
 
 namespace Kinetix.DataAccess.Sql.Common;
@@ -11,31 +11,42 @@ namespace Kinetix.DataAccess.Sql.Common;
 /// </summary>
 public abstract class SqlCommandListener : IDisposable
 {
+    public const string ActivitySourceName = "Kinetix.DataAccess.Sql";
+
     private const string CheckConstraintPattern = "CK_[A-Z_]*";
     private const string ForeignKeyConstraintPattern = "FK_[A-Z_]*";
     private const string UniqueKeyConstraintPattern = "UK_[A-Z_]*";
 
+    private static readonly ActivitySource Source = new(ActivitySourceName);
+    private readonly Activity? _activity;
+
     private readonly BaseSqlCommand _command;
+    private readonly long _start = Stopwatch.GetTimestamp();
+    private bool _disposed;
 
     /// <summary>
     /// Crée une nouvelle instance.
     /// </summary>
     /// <param name="command">Commande.</param>
-    /// <param name="analytics">AnalyticsManager.</param>
     /// <param name="logger">Logger.</param>
-    protected SqlCommandListener(BaseSqlCommand command, AnalyticsManager analytics, ILogger<BaseSqlCommand> logger)
+    protected SqlCommandListener(BaseSqlCommand command, ILogger<BaseSqlCommand> logger)
     {
         _command = command;
-        Analytics = analytics;
         Logger = logger;
 
-        Analytics.StartProcess(_command.CommandName, "Database", _command.Connection.Database);
+        _activity = Source.StartActivity(
+            command.CommandName,
+            ActivityKind.Client,
+            parentContext: default,
+            tags: new ActivityTagsCollection
+            {
+                { "db.system.name", "sql" },
+                { "db.namespace", command.Connection.Database },
+                { "db.query.summary", command.CommandName },
+                { "server.address", command.Connection.DataSource },
+            }
+        );
     }
-
-    /// <summary>
-    /// Analytics.
-    /// </summary>
-    protected AnalyticsManager Analytics { get; }
 
     /// <summary>
     /// Logger.
@@ -47,10 +58,19 @@ public abstract class SqlCommandListener : IDisposable
     /// </summary>
     public void Dispose()
     {
-        var process = Analytics.StopProcess();
-        if (process != null && !process.Disabled)
+        if (_disposed)
         {
-            Logger.LogInformation($"{_command.CommandName} ({process.Duration} ms)");
+            return;
+        }
+
+        _disposed = true;
+        try
+        {
+            Logger.LogInformation(
+                "{CommandName} ({Duration} ms)",
+                _command.CommandName,
+                Stopwatch.GetElapsedTime(_start).TotalMilliseconds
+            );
             Logger.LogDebug(_command.InnerCommand.CommandText);
             foreach (var parameter in _command.Parameters)
             {
@@ -66,8 +86,11 @@ public abstract class SqlCommandListener : IDisposable
                 }
             }
         }
-
-        GC.SuppressFinalize(this);
+        finally
+        {
+            _activity?.Dispose();
+            GC.SuppressFinalize(this);
+        }
     }
 
     /// <summary>
@@ -115,6 +138,17 @@ public abstract class SqlCommandListener : IDisposable
             _command.CommandParser.GetConstraintMessage(index, SqlConstraintViolation.Unique),
             index
         );
+    }
+
+    /// <summary>
+    /// Enregistre l'échec de la commande dans l'activité courante de la commande.
+    /// </summary>
+    /// <param name="exception">Exception.</param>
+    protected void RecordException(DbException exception)
+    {
+        _activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
+        _activity?.SetTag("error.type", exception.GetType().FullName);
+        _activity?.AddException(exception);
     }
 
     /// <summary>
