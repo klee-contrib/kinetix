@@ -2,7 +2,7 @@
 using Kinetix.Web.Filters;
 using OpenTelemetry;
 
-namespace Kinetix.Web;
+namespace Kinetix.Web.ActivityProcessors;
 
 /// <summary>
 /// Processeur pour appliquer des filtres de base sur les traces OpenTelemetry.

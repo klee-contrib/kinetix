@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Kinetix.Web.ActivityProcessors;
 using Kinetix.Web.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -18,19 +19,19 @@ namespace Kinetix.Web;
 public static class ConfigurationExtensions
 {
     /// <summary>
-    /// Ajoute le processeur pour appliquer des filtres de base sur les traces OpenTelemetry.
+    /// Ajoute les processeurs pour appliquer des filtres de base sur les traces OpenTelemetry et pour annuler l'obfuscation des paramètres de query.
     /// </summary>
     /// <param name="builder">TracerProviterBuilder.</param>
-    /// <param name="configure">Configurateur pour le processeur.</param>
+    /// <param name="configureFilter">Configurateur pour le filtre.</param>
     /// <returns>TracerProviterBuilder.</returns>
-    public static TracerProviderBuilder AddActivityFilterProcessor(
+    public static TracerProviderBuilder AddActivityProcessors(
         this TracerProviderBuilder builder,
-        Action<ActivityFilterProcessor>? configure = null
+        Action<ActivityFilterProcessor>? configureFilter = null
     )
     {
         var processor = new ActivityFilterProcessor();
-        configure?.Invoke(processor);
-        return builder.AddProcessor(processor);
+        configureFilter?.Invoke(processor);
+        return builder.AddProcessor(processor).AddProcessor<UnredactQueryParamsProcessor>();
     }
 
     /// <summary>
