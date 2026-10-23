@@ -5,4 +5,4 @@
 /// liste de reférence.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class ReferenceAccessorAttribute : Attribute { }
+public sealed class ReferenceAccessorAttribute : Attribute;
