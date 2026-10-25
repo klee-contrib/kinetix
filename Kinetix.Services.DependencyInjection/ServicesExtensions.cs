@@ -1,5 +1,7 @@
-﻿using AspectCore.Configuration;
+﻿using System.Reflection;
+using AspectCore.Configuration;
 using AspectCore.Extensions.DependencyInjection;
+using Kinetix.Services.Annotations;
 using Kinetix.Services.DependencyInjection.Interceptors;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Trace;
@@ -21,8 +23,8 @@ public static class ServicesExtensions
         services.AddScoped<TransactionInterceptor>();
         return services.ConfigureDynamicProxy(o =>
         {
-            o.Interceptors.AddServiced<ServiceTraceInterceptor>();
-            o.Interceptors.AddServiced<TransactionInterceptor>();
+            o.Interceptors.AddServiced<ServiceTraceInterceptor>(ShouldInterceptMethod);
+            o.Interceptors.AddServiced<TransactionInterceptor>(ShouldInterceptMethod);
         });
     }
 
@@ -34,5 +36,11 @@ public static class ServicesExtensions
     public static TracerProviderBuilder AddService(this TracerProviderBuilder builder)
     {
         return builder.AddSource(ServiceTraceInterceptor.ActivitySourceName);
+    }
+
+    private static bool ShouldInterceptMethod(MethodInfo method)
+    {
+        return method.DeclaringType?.IsInterface == true
+            && Attribute.IsDefined(method.DeclaringType, typeof(RegisterContractAttribute));
     }
 }

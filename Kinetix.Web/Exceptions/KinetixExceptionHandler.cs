@@ -20,13 +20,13 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
         CancellationToken cancellationToken
     )
     {
-        while (exception is TargetInvocationException)
+        while (
+            exception
+                is TargetInvocationException { InnerException: not null }
+                    or AggregateException { InnerException: not null }
+        )
         {
-            exception = exception switch
-            {
-                TargetInvocationException tex => tex.InnerException!,
-                _ => exception,
-            };
+            exception = exception.InnerException;
         }
 
         IResult? result = null;
@@ -46,7 +46,11 @@ internal class KinetixExceptionHandler(KinetixExceptionConfig config, ProblemDet
 
         result ??= DefaultExceptionHandler(exception, httpContext);
 
-        Activity.Current?.AddException(exception);
+        if (exception.Data["logged"] == null)
+        {
+            Activity.Current?.AddException(exception);
+        }
+
         Activity.Current?.SetStatus(ActivityStatusCode.Error);
 
         await result.ExecuteAsync(httpContext);

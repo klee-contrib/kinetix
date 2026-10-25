@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
 using AspectCore.DynamicProxy;
 using Microsoft.Extensions.Logging;
 
@@ -18,12 +17,8 @@ public class ServiceTraceInterceptor(ILogger<Service> logger) : AbstractIntercep
     [DebuggerNonUserCode]
     public override async Task Invoke(AspectContext context, AspectDelegate next)
     {
-        var name = $"{context.ImplementationMethod.DeclaringType?.FullName}.{context.ImplementationMethod.Name}";
-        var disabled = Attribute.IsDefined(
-            context.ImplementationMethod,
-            typeof(NoServiceTraceAttribute),
-            inherit: true
-        );
+        var name = $"{context.ServiceMethod.DeclaringType?.Name}.{context.ServiceMethod.Name}";
+        var disabled = Attribute.IsDefined(context.ServiceMethod, typeof(NoServiceTraceAttribute), inherit: true);
         using var activity = disabled ? null : Source.StartActivity(name);
         var start = Stopwatch.GetTimestamp();
 
@@ -41,17 +36,20 @@ public class ServiceTraceInterceptor(ILogger<Service> logger) : AbstractIntercep
         }
         catch (Exception ex)
         {
-            if (ex is AggregateException)
+            while (ex is AggregateException { InnerException: not null })
             {
-                ex = ex.InnerException!;
+                ex = ex.InnerException;
             }
 
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.SetTag("error.type", ex.GetType().FullName);
-            activity?.AddException(ex);
 
-            logger.LogError(ex, $"Erreur sur le service {name}");
-            throw new TargetInvocationException($"Une erreur est survenue sur le service {name}", ex);
+            if (ex.Data["logged"] == null)
+            {
+                activity?.AddException(ex);
+                ex.Data["logged"] = true;
+            }
+
+            throw;
         }
     }
 }

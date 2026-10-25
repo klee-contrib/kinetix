@@ -39,7 +39,6 @@ internal static class ElasticExtensions
             var ex = new ElasticException($"Error in {context}", response.DebugInformation, response.OriginalException);
 
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.SetTag("error.type", ex.GetType().FullName);
             activity?.AddException(ex);
 
             throw ex;

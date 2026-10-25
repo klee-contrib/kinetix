@@ -147,7 +147,6 @@ public abstract class SqlCommandListener : IDisposable
     protected void RecordException(DbException exception)
     {
         _activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
-        _activity?.SetTag("error.type", exception.GetType().FullName);
         _activity?.AddException(exception);
     }
 

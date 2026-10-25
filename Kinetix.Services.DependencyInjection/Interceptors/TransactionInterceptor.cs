@@ -14,7 +14,7 @@ public class TransactionInterceptor(TransactionScopeManager transactionScopeMana
     [DebuggerNonUserCode]
     public override async Task Invoke(AspectContext context, AspectDelegate next)
     {
-        if (Attribute.IsDefined(context.ImplementationMethod, typeof(NoTransactionAttribute), inherit: true))
+        if (Attribute.IsDefined(context.ServiceMethod, typeof(NoTransactionAttribute), inherit: true))
         {
             await next(context);
             return;
