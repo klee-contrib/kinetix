@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using Kinetix.Search.Core.Config;
 using Microsoft.Extensions.Logging;
 using Nest;
+using OpenTelemetry;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Kinetix.Search.Elastic;
@@ -18,16 +20,36 @@ internal static class ElasticExtensions
     /// Effectue la requête demandée, traite les exceptions et log le tout.
     /// </summary>
     /// <param name="logger">Logger.</param>
-    /// <param name="context">Contexte pour le message.</param>
+    /// <param name="method">Nom de la méthode.</param>
+    /// <param name="indexType">Type de l'index concerné.</param>
     /// <param name="esCall">Appel ES.</param>
     /// <returns>Ce que la requête retourne.</returns>
-    public static T LogQuery<T>(this ILogger logger, string context, Func<T> esCall)
+    public static T LogQuery<T>(this ILogger logger, string method, Type? indexType, Func<T> esCall)
         where T : IResponse
     {
-        using var activity = Source.StartActivity($"ElasticSearch.{context}", ActivityKind.Client);
+        using var activity = Source.StartActivity(
+            indexType != null ? $"{method}: {SearchConfig.GetTypeNameForIndex(indexType)}" : method,
+            ActivityKind.Client,
+            parentContext: default,
+            new ActivityTagsCollection() { ["db.system.name"] = "es" }
+        );
         var start = Stopwatch.GetTimestamp();
 
-        var response = esCall();
+        T response;
+
+        if (Source.HasListeners())
+        {
+            using (SuppressInstrumentationScope.Begin())
+            {
+                response = esCall();
+            }
+        }
+        else
+        {
+            response = esCall();
+        }
+
+        activity?.SetTag("server.address", response.ApiCall.Uri?.Host);
 
         if (logger.IsEnabled(LogLevel.Debug))
         {
@@ -36,7 +58,7 @@ internal static class ElasticExtensions
 
         if (!response.ApiCall.Success)
         {
-            var ex = new ElasticException($"Error in {context}", response.DebugInformation, response.OriginalException);
+            var ex = new ElasticException($"Error in {method}", response.DebugInformation, response.OriginalException);
 
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity?.AddException(ex);
@@ -46,7 +68,7 @@ internal static class ElasticExtensions
 
         logger.LogInformation(
             "{Context} ({HttpMethod} {Uri}) {StatusCode} ({Duration} ms)",
-            context,
+            method,
             response.ApiCall.HttpMethod,
             response.ApiCall.Uri,
             response.ApiCall.HttpStatusCode,

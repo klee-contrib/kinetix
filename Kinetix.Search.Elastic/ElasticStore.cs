@@ -36,7 +36,7 @@ public class ElasticStore(
         /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
         var filterQuery = GetFilterAndPostFilterQuery(def, input);
         return logger
-            .LogQuery("AdvancedCount", () => client.Count<TDocument>(s => s.Query(filterQuery)))
+            .LogQuery("AdvancedCount", typeof(TDocument), () => client.Count<TDocument>(s => s.Query(filterQuery)))
             .Count;
     }
 
@@ -95,7 +95,7 @@ public class ElasticStore(
 
         if (indexCreated)
         {
-            logger.LogQuery("Map", () => client.Map<TDocument>(_ => mapping));
+            logger.LogQuery("Map", typeof(TDocument), () => client.Map<TDocument>(_ => mapping));
         }
 
         return indexCreated;
@@ -108,7 +108,8 @@ public class ElasticStore(
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
         return logger
             .LogQuery(
-                "Get",
+                nameof(Get),
+                typeof(TDocument),
                 () => client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValueFromDocument(id)))
             )
             .Source;
@@ -148,6 +149,7 @@ public class ElasticStore(
 
             var deleteRes = logger.LogQuery(
                 "DeleteAllByQuery",
+                typeof(TDocument),
                 () =>
                     client.DeleteByQuery<TDocument>(d =>
                         d.Query(q =>
@@ -216,7 +218,8 @@ public class ElasticStore(
         var hasGroup = groupFieldName != null;
 
         var res = logger.LogQuery(
-            "AdvancedQuery",
+            nameof(AdvancedQuery),
+            typeof(TDocument),
             () =>
                 client.Search(
                     GetAdvancedQueryDescriptor(
@@ -402,6 +405,7 @@ public class ElasticStore(
 
         var pit = logger.LogQuery(
             "CreatePit",
+            typeof(TDocument),
             () =>
                 client.OpenPointInTime(
                     config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(TDocument)),
@@ -418,7 +422,8 @@ public class ElasticStore(
             do
             {
                 var res = logger.LogQuery(
-                    $"AdvancedQueryWithPit",
+                    "AdvancedQueryWithPit",
+                    typeof(TDocument),
                     () =>
                         client.Search(
                             GetAdvancedQueryDescriptor(
@@ -451,7 +456,7 @@ public class ElasticStore(
         }
         finally
         {
-            logger.LogQuery("DeletePit", () => client.ClosePointInTime(p => p.Id(pitId)));
+            logger.LogQuery("DeletePit", typeof(TDocument), () => client.ClosePointInTime(p => p.Id(pitId)));
         }
     }
 }

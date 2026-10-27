@@ -45,6 +45,5 @@ public interface ISearchBulkDescriptor
     /// Effectue la requête.
     /// </summary>
     /// <param name="refresh">Attends ou non la réindexation.</param>
-    /// <returns>Le nombre de documents indexés et supprimés.</returns>
-    int Run(bool refresh = true);
+    void Run(bool refresh = true);
 }

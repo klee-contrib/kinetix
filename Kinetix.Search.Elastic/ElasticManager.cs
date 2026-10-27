@@ -25,6 +25,7 @@ public sealed class ElasticManager(
     {
         logger.LogQuery(
             nameof(DeleteIndex),
+            typeof(T),
             () => client.Indices.Delete(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))
         );
     }
@@ -37,6 +38,7 @@ public sealed class ElasticManager(
     {
         var response = logger.LogQuery(
             nameof(DeleteIndexes),
+            indexType: null,
             () => client.Indices.Delete($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*")
         );
         return response.Acknowledged;
@@ -45,11 +47,16 @@ public sealed class ElasticManager(
     /// <summary>
     /// Indique si un index existe.
     /// </summary>
-    /// <param name="indexName">Nom de l'index.</param>
     /// <returns><code>True</code> si l'index existe.</returns>
-    public bool ExistIndex(string indexName)
+    public bool ExistIndex<T>()
     {
-        return logger.LogQuery(nameof(ExistIndex), () => client.Indices.Exists(indexName)).Exists;
+        return logger
+            .LogQuery(
+                nameof(ExistIndex),
+                typeof(T),
+                () => client.Indices.Exists(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))
+            )
+            .Exists;
     }
 
     /// <summary>
@@ -61,15 +68,17 @@ public sealed class ElasticManager(
         where T : class
         where TIndexConfigurator : IIndexConfigurator, new()
     {
-        var indexName = config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T));
-        var indexExists = ExistIndex(indexName);
+        var indexExists = ExistIndex<T>();
         var def = documentDescriptor.GetDefinition(typeof(T));
         var shouldCreate = !indexExists || def.IgnoreOnPartialRebuild == null;
 
         if (!shouldCreate)
         {
             var properties = typeMapping.Properties;
-            var oldProperties = client.Indices.GetMapping<T>().Indices.FirstOrDefault().Value?.Mappings.Properties;
+            var oldProperties = logger
+                .LogQuery("GetMapping", typeof(T), () => client.Indices.GetMapping<T>())
+                .Indices.FirstOrDefault()
+                .Value?.Mappings.Properties;
 
             var mappingExists =
                 oldProperties != null
@@ -102,6 +111,7 @@ public sealed class ElasticManager(
             shouldCreate = !mappingExists;
         }
 
+        var indexName = config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T));
         if (shouldCreate)
         {
             if (indexExists)
@@ -111,11 +121,8 @@ public sealed class ElasticManager(
 
             logger.LogQuery(
                 nameof(InitIndex),
-                () =>
-                    client.Indices.Create(
-                        config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
-                        new TIndexConfigurator().ConfigureIndex
-                    )
+                typeof(T),
+                () => client.Indices.Create(indexName, new TIndexConfigurator().ConfigureIndex)
             );
         }
         else
@@ -133,6 +140,7 @@ public sealed class ElasticManager(
     {
         logger.LogQuery(
             nameof(OptimizeIndexForReindex),
+            typeof(T),
             () =>
                 client.Indices.UpdateSettings(
                     config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),
@@ -146,7 +154,7 @@ public sealed class ElasticManager(
     /// </summary>
     public void PingNode()
     {
-        logger.LogQuery(nameof(PingNode), () => client.Ping());
+        logger.LogQuery(nameof(PingNode), indexType: null, () => client.Ping());
     }
 
     /// <summary>
@@ -156,6 +164,7 @@ public sealed class ElasticManager(
     {
         logger.LogQuery(
             nameof(RevertOptimizeIndexForReindex),
+            typeof(T),
             () =>
                 client.Indices.UpdateSettings(
                     config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)),

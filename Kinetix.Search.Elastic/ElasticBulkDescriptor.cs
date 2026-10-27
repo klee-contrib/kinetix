@@ -1,5 +1,6 @@
 ﻿using Elasticsearch.Net;
 using Kinetix.Search.Core;
+using Kinetix.Search.Core.Config;
 using Kinetix.Search.Core.DocumentModel;
 using Microsoft.Extensions.Logging;
 using Nest;
@@ -14,8 +15,8 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
 
     private readonly ElasticClient _client;
     private readonly DocumentDescriptor _documentDescriptor;
+    private readonly Dictionary<Type, int> _indexTypes = [];
     private readonly ILogger<ElasticStore> _logger;
-    private int _operationCount = 0;
 
     internal ElasticBulkDescriptor(
         DocumentDescriptor documentDescriptor,
@@ -34,7 +35,7 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         _bulkDescriptor.Delete<TDocument>(o => o.Id(def.PrimaryKey.GetValueFromKeyObject(key)));
-        _operationCount++;
+        AddOperationCount<TDocument>(1);
 
         return this;
     }
@@ -44,9 +45,9 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         where TDocument : class
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
-        _bulkDescriptor.DeleteMany<TDocument>(keys.Select(def.PrimaryKey.GetValueFromKeyObject));
-        _operationCount++;
-
+        var values = keys.Select(def.PrimaryKey.GetValueFromKeyObject).ToList();
+        _bulkDescriptor.DeleteMany<TDocument>(values);
+        AddOperationCount<TDocument>(values.Count);
         return this;
     }
 
@@ -57,7 +58,7 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         var id = def.PrimaryKey.GetValueFromDocument(document);
         _bulkDescriptor.Index<TDocument>(y => y.Document(document).Id(id));
-        _operationCount++;
+        AddOperationCount<TDocument>(1);
 
         return this;
     }
@@ -68,22 +69,34 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
     {
         var def = _documentDescriptor.GetDefinition(typeof(TDocument));
         _bulkDescriptor.IndexMany(documents, (b, document) => b.Id(def.PrimaryKey.GetValueFromDocument(document)));
-        _operationCount++;
-
+        AddOperationCount<TDocument>(documents.Count);
         return this;
     }
 
     /// <inheritdoc cref="ISearchBulkDescriptor.Run" />
-    public int Run(bool refresh = true)
+    public void Run(bool refresh = true)
     {
-        if (_operationCount > 0)
+        if (_indexTypes.Count > 0)
         {
             _logger.LogQuery(
-                $"Index {_operationCount}",
+                $"Index: {string.Join(", ", _indexTypes.Select(kv => $"{kv.Value} {SearchConfig.GetTypeNameForIndex(kv.Key)}"))}",
+                indexType: null,
                 () => _client.Bulk(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False))
             );
         }
+    }
 
-        return _operationCount;
+    private void AddOperationCount<TDocument>(int count)
+        where TDocument : class
+    {
+        var type = typeof(TDocument);
+        if (_indexTypes.ContainsKey(type))
+        {
+            _indexTypes[type] += count;
+        }
+        else
+        {
+            _indexTypes[type] = count;
+        }
     }
 }
