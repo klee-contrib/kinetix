@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using OpenTelemetry;
 
-namespace Kinetix.Web.ActivityProcessors;
+namespace Kinetix.Web.OpenTelemetry;
 
 /// <summary>
 /// Un processeur qui annule l'obfuscation des paramètres de la query dans l'URL par OpenTelemetry.

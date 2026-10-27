@@ -20,5 +20,6 @@
   <Project Path="Kinetix.Services.DependencyInjection/Kinetix.Services.DependencyInjection.csproj" Id="02d998cb-a71c-4f1e-bb5b-3a9035aa7826" />
   <Project Path="Kinetix.Services/Kinetix.Services.csproj" />
   <Project Path="Kinetix.User/Kinetix.User.csproj" />
+  <Project Path="Kinetix.Web.OpenTelemetry/Kinetix.Web.OpenTelemetry.csproj" Id="4a3b9f73-e222-49cf-8b90-2b098d318383" />
   <Project Path="Kinetix.Web/Kinetix.Web.csproj" />
 </Solution>

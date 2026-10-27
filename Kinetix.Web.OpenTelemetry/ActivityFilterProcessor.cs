@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
-using Kinetix.Web.Filters;
 using OpenTelemetry;
 
-namespace Kinetix.Web.ActivityProcessors;
+namespace Kinetix.Web.OpenTelemetry;
 
 /// <summary>
 /// Processeur pour appliquer des filtres de base sur les traces OpenTelemetry.
@@ -10,6 +9,8 @@ namespace Kinetix.Web.ActivityProcessors;
 /// <remarks>Ce processeur s'occupe aussi de la propagation du tag d'action du contrôleur.</remarks>
 public class ActivityFilterProcessor : BaseProcessor<Activity>
 {
+    public const string ControllerTagName = "aspnet.controller.action";
+
     /// <summary>
     /// Durée minimale d'une dépendance en succès pour être conservée.
     /// </summary>
@@ -49,7 +50,8 @@ public class ActivityFilterProcessor : BaseProcessor<Activity>
     {
         if (
             data.Kind != ActivityKind.Server
-            && data.Duration <= TimeSpan.FromMilliseconds(MinDependencyDuration)
+            && data.Kind != ActivityKind.Consumer
+            && (data.Duration <= TimeSpan.FromMilliseconds(MinDependencyDuration) || data.ParentSpanId == default)
             && data.Status != ActivityStatusCode.Error
         )
         {
@@ -92,10 +94,10 @@ public class ActivityFilterProcessor : BaseProcessor<Activity>
     public override void OnStart(Activity activity)
     {
         // Propage le tag de l'action du contrôleur sur les dépendances enfantes.
-        var actionTag = activity.Parent?.Tags.FirstOrDefault(t => t.Key == ControllerActionFilter.TagName).Value;
+        var actionTag = activity.Parent?.Tags.FirstOrDefault(t => t.Key == ControllerTagName).Value;
         if (actionTag != null)
         {
-            activity.SetTag(ControllerActionFilter.TagName, actionTag);
+            activity.SetTag(ControllerTagName, actionTag);
         }
     }
 }

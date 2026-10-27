@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Version>10.1.1</Version>
+    <Description>Utilitaires Kinetix OpenTelemetry pour ASP.NET Core.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="OpenTelemetry" />
+  </ItemGroup>
+</Project>

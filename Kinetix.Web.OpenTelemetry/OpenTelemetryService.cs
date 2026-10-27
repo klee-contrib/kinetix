@@ -1,4 +1,4 @@
-﻿namespace Kinetix.Web;
+﻿namespace Kinetix.Web.OpenTelemetry;
 
 /// <summary>
 /// Description de service pour OpenTelemetry.
