@@ -37,12 +37,18 @@ Divisé en trois modules :
 
 - Abstraction pour accéder à l'utilisateur connecté (pour ne pas toujours devoir utilisé celui de `HttpContext.User`)
 
-## `Kinetix.Web` [![NuGet](https://badgen.net/nuget/v/Kinetix.Web)](https://www.nuget.org/packages/Kinetix.Web)
+## `Kinetix.Web`
 
-- Filtres d'endpoint (culture, transaction, vérification des références, dates UTC)
-- Gestion centralisée des exceptions,
-- Configuration JSON
-- Utilitaires OpenTelemetry.
+Divisé en deux modules :
+
+- [`Kinetix.Web`](https://www.nuget.org/packages/Kinetix.Web) [![NuGet](https://badgen.net/nuget/v/Kinetix.Web)](https://www.nuget.org/packages/Kinetix.Web) - utilitaires ASP.NET Core :
+  - Filtres d'endpoint (culture, transaction, vérification des références, dates UTC)
+  - Gestion centralisée des exceptions
+  - Configuration JSON
+  - Exposition du ReferenceManager
+- [`Kinetix.Web.OpenTelemetry`](https://www.nuget.org/packages/Kinetix.Web.OpenTelemetry) [![NuGet](https://badgen.net/nuget/v/Kinetix.Web.OpenTelemetry)](https://www.nuget.org/packages/Kinetix.Web.OpenTelemetry) - configuration OpenTelemetry de base
+
+_Remarque : le module `OpenTelemetry` est indépendant des autres modules Kinetix._
 
 ## `Kinetix.EFCore`
 
