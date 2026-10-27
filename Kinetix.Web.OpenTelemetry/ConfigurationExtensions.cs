@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
@@ -24,20 +22,6 @@ public static class ConfigurationExtensions
         var processor = new ActivityFilterProcessor();
         configureFilter?.Invoke(processor);
         return builder.AddProcessor(processor).AddProcessor<UnredactQueryParamsProcessor>();
-    }
-
-    /// <summary>
-    /// Enregistre un filtre de type <typeparamref name="TFilter" /> sur tous les contrôleurs.
-    /// </summary>
-    /// <param name="builder">Builder d'endpoint de contrôleurs.</param>
-    /// <typeparam name="TFilter">Type du filter.</typeparam>
-    /// <returns>this.</returns>
-    public static ControllerActionEndpointConventionBuilder AddEndpointFilter<TFilter>(
-        this ControllerActionEndpointConventionBuilder builder
-    )
-        where TFilter : IEndpointFilter
-    {
-        return builder.AddEndpointFilter<ControllerActionEndpointConventionBuilder, TFilter>();
     }
 
     /// <summary>

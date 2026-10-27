@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using Kinetix.Web.Exceptions;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +24,20 @@ public static class ConfigurationExtensions
     {
         options.Converters.Add(new T());
         return options;
+    }
+
+    /// <summary>
+    /// Enregistre un filtre de type <typeparamref name="TFilter" /> sur tous les contrôleurs.
+    /// </summary>
+    /// <param name="builder">Builder d'endpoint de contrôleurs.</param>
+    /// <typeparam name="TFilter">Type du filter.</typeparam>
+    /// <returns>this.</returns>
+    public static ControllerActionEndpointConventionBuilder AddEndpointFilter<TFilter>(
+        this ControllerActionEndpointConventionBuilder builder
+    )
+        where TFilter : IEndpointFilter
+    {
+        return builder.AddEndpointFilter<ControllerActionEndpointConventionBuilder, TFilter>();
     }
 
     /// <summary>
