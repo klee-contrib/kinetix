@@ -58,15 +58,7 @@ public class ActivityFilterProcessor : BaseProcessor<Activity>
             data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
         }
 
-        if (
-            data.Kind == ActivityKind.Server
-            && FilteredRoutes.Any(route =>
-                data.DisplayName.StartsWith(
-                    $"{route.Method.Method} {route.Route}",
-                    StringComparison.InvariantCultureIgnoreCase
-                )
-            )
-        )
+        if (IsFilteredRoute(data) && data.Status != ActivityStatusCode.Error)
         {
             data.ActivityTraceFlags &= ~ActivityTraceFlags.Recorded;
         }
@@ -99,5 +91,26 @@ public class ActivityFilterProcessor : BaseProcessor<Activity>
         {
             activity.SetTag(ControllerTagName, actionTag);
         }
+    }
+
+    private bool IsFilteredRoute(Activity data)
+    {
+        var serverData = data;
+        while (serverData.Kind != ActivityKind.Server && serverData.Parent != null)
+        {
+            serverData = serverData.Parent;
+        }
+
+        return serverData.Kind == ActivityKind.Server
+            && FilteredRoutes.Any(route =>
+                serverData
+                    .GetTagItem("url.path")
+                    ?.ToString()
+                    ?.StartsWith(route.Route, StringComparison.InvariantCultureIgnoreCase) == true
+                && serverData
+                    .GetTagItem("http.request.method")
+                    ?.ToString()
+                    ?.Equals(route.Method.Method, StringComparison.InvariantCultureIgnoreCase) == true
+            );
     }
 }
