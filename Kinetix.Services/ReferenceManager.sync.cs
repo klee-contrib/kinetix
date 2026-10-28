@@ -5,6 +5,12 @@ namespace Kinetix.Services;
 
 public partial class ReferenceManager
 {
+    /// <inheritdoc cref="IReferenceManager.CheckReferenceKeys" />
+    public void CheckReferenceKeys(object? bean)
+    {
+        CheckReferenceKeysAsync(bean, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
     /// <inheritdoc cref="IReferenceManager.FlushCache{T}()" />
     public void FlushCache<T>()
         where T : notnull

@@ -6,6 +6,12 @@
 public partial interface IReferenceManager
 {
     /// <summary>
+    /// Vérifie que les valeurs de propriétés de réference d'un bean sont valides.
+    /// </summary>
+    /// <param name="bean">Le bean.</param>
+    void CheckReferenceKeys(object? bean);
+
+    /// <summary>
     /// Vide le cache de référence.
     /// </summary>
     /// <typeparam name="T">Le type de la liste de référence à vider.</typeparam>
