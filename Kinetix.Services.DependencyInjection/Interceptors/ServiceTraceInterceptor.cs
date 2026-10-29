@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using AspectCore.DynamicProxy;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 
 namespace Kinetix.Services.DependencyInjection.Interceptors;
 
@@ -17,22 +18,34 @@ public class ServiceTraceInterceptor(ILogger<Service> logger) : AbstractIntercep
     [DebuggerNonUserCode]
     public override async Task Invoke(AspectContext context, AspectDelegate next)
     {
+        if (Sdk.SuppressInstrumentation)
+        {
+            await next(context);
+            return;
+        }
+        else if (Attribute.IsDefined(context.ServiceMethod, typeof(NoTraceAttribute), inherit: true))
+        {
+            using (SuppressInstrumentationScope.Begin())
+            {
+                await next(context);
+            }
+
+            return;
+        }
+
         var name = $"{context.ServiceMethod.DeclaringType?.Name}.{context.ServiceMethod.Name}";
-        var disabled = Attribute.IsDefined(context.ServiceMethod, typeof(NoServiceTraceAttribute), inherit: true);
-        using var activity = disabled ? null : Source.StartActivity(name);
+
+        using var activity = Source.StartActivity(name);
         var start = Stopwatch.GetTimestamp();
 
         try
         {
             await next(context);
-            if (!disabled)
-            {
-                logger.LogInformation(
-                    "{ServiceMethod} ({Duration} ms)",
-                    name,
-                    Stopwatch.GetElapsedTime(start).TotalMilliseconds
-                );
-            }
+            logger.LogInformation(
+                "{ServiceMethod} ({Duration} ms)",
+                name,
+                Stopwatch.GetElapsedTime(start).TotalMilliseconds
+            );
         }
         catch (Exception ex)
         {

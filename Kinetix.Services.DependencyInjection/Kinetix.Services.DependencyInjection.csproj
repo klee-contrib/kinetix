@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>10.1.0</Version>
+    <Version>10.1.1</Version>
     <Description>Injection de dépendances avec interception pour Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="AspectCore.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    <PackageReference Include="OpenTelemetry.Api" />
+    <PackageReference Include="OpenTelemetry" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kinetix.Services\Kinetix.Services.csproj" />
