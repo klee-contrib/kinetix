@@ -11,13 +11,6 @@ namespace Kinetix.DataAccess.Sql.SqlServer;
 /// <summary>
 /// Pool de connections SQL Server.
 /// </summary>
-/// <remarks>
-/// Constructeur.
-/// </remarks>
-/// <param name="transactionScopeManager">Composant injecté.</param>
-/// <param name="commandParser">Composant injecté.</param>
-/// <param name="config">Composant injecté.</param>
-/// <param name="logger">Composant injecté.</param>
 internal class SqlServerConnectionPool(
     TransactionScopeManager transactionScopeManager,
     CommandParser commandParser,
@@ -31,60 +24,109 @@ internal class SqlServerConnectionPool(
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string procName)
     {
-        return new SqlServerCommand(GetConnection(connectionName), logger, commandParser, procName)
-        {
-            CommandTimeout = _defaultCommandTimeout,
-        };
+        return CreateSqlCommand(GetConnection(connectionName), procName);
     }
 
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, Assembly assembly, string resourcePath)
     {
-        return new SqlServerCommand(
-            GetConnection(connectionName),
-            logger,
-            commandParser,
-            assembly,
-            resourcePath
-        )
-        {
-            CommandTimeout = _defaultCommandTimeout,
-        };
+        return CreateSqlCommand(GetConnection(connectionName), assembly, resourcePath);
     }
 
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string commandName, string commandText)
     {
-        return new SqlServerCommand(
-            GetConnection(connectionName),
-            logger,
-            commandParser,
-            commandName,
-            commandText
-        )
-        {
-            CommandTimeout = _defaultCommandTimeout,
-        };
+        return CreateSqlCommand(GetConnection(connectionName), commandName, commandText);
     }
 
     /// <inheritdoc />
     public override BaseSqlCommand GetSqlCommand(string connectionName, string commandName, CommandType commandType)
     {
-        return new SqlServerCommand(
-            GetConnection(connectionName),
-            logger,
-            commandParser,
-            commandName,
-            commandType
-        )
-        {
-            CommandTimeout = _defaultCommandTimeout,
-        };
+        return CreateSqlCommand(GetConnection(connectionName), commandName, commandType);
+    }
+
+    /// <inheritdoc />
+    public override async Task<BaseSqlCommand> GetSqlCommandAsync(
+        string connectionName,
+        string procName,
+        CancellationToken ct = default
+    )
+    {
+        return CreateSqlCommand(await GetConnectionAsync(connectionName, ct), procName);
+    }
+
+    /// <inheritdoc />
+    public override async Task<BaseSqlCommand> GetSqlCommandAsync(
+        string connectionName,
+        Assembly assembly,
+        string resourcePath,
+        CancellationToken ct = default
+    )
+    {
+        return CreateSqlCommand(await GetConnectionAsync(connectionName, ct), assembly, resourcePath);
+    }
+
+    /// <inheritdoc />
+    public override async Task<BaseSqlCommand> GetSqlCommandAsync(
+        string connectionName,
+        string commandName,
+        string commandText,
+        CancellationToken ct = default
+    )
+    {
+        return CreateSqlCommand(await GetConnectionAsync(connectionName, ct), commandName, commandText);
+    }
+
+    /// <inheritdoc />
+    public override async Task<BaseSqlCommand> GetSqlCommandAsync(
+        string connectionName,
+        string commandName,
+        CommandType commandType,
+        CancellationToken ct = default
+    )
+    {
+        return CreateSqlCommand(await GetConnectionAsync(connectionName, ct), commandName, commandType);
     }
 
     /// <inheritdoc />
     protected override DbConnection GetNewConnection(string datasourceName)
     {
         return new SqlConnection(_connectionSettings[datasourceName]);
+    }
+
+    private SqlServerCommand CreateSqlCommand(DbConnection connection, string procName)
+    {
+        return new SqlServerCommand(connection, logger, commandParser, procName)
+        {
+            CommandTimeout = _defaultCommandTimeout,
+            InnerCommand = { Transaction = GetTransaction(connection) },
+        };
+    }
+
+    private SqlServerCommand CreateSqlCommand(DbConnection connection, Assembly assembly, string resourcePath)
+    {
+        return new SqlServerCommand(connection, logger, commandParser, assembly, resourcePath)
+        {
+            CommandTimeout = _defaultCommandTimeout,
+            InnerCommand = { Transaction = GetTransaction(connection) },
+        };
+    }
+
+    private SqlServerCommand CreateSqlCommand(DbConnection connection, string commandName, string commandText)
+    {
+        return new SqlServerCommand(connection, logger, commandParser, commandName, commandText)
+        {
+            CommandTimeout = _defaultCommandTimeout,
+            InnerCommand = { Transaction = GetTransaction(connection) },
+        };
+    }
+
+    private SqlServerCommand CreateSqlCommand(DbConnection connection, string commandName, CommandType commandType)
+    {
+        return new SqlServerCommand(connection, logger, commandParser, commandName, commandType)
+        {
+            CommandTimeout = _defaultCommandTimeout,
+            InnerCommand = { Transaction = GetTransaction(connection) },
+        };
     }
 }

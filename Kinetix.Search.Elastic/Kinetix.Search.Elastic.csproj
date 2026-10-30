@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>10.1.0</Version>
+    <Version>10.1.1</Version>
     <Description>Implémentation ElasticSearch du module de recherche avancée Kinetix.</Description>
   </PropertyGroup>
   <ItemGroup>

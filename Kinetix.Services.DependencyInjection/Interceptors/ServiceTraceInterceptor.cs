@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Reflection;
 using AspectCore.DynamicProxy;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
@@ -8,7 +9,8 @@ namespace Kinetix.Services.DependencyInjection.Interceptors;
 /// <summary>
 /// Intercepteur pour tracer les appels de service via OpenTelemetry.
 /// </summary>
-public class ServiceTraceInterceptor(ILogger<Service> logger) : AbstractInterceptor
+public class ServiceTraceInterceptor(ILogger<Service> logger, Func<MethodInfo, bool>? serviceFilter)
+    : AbstractInterceptor
 {
     public const string ActivitySourceName = $"{nameof(Kinetix)}.{nameof(Service)}";
 
@@ -30,6 +32,11 @@ public class ServiceTraceInterceptor(ILogger<Service> logger) : AbstractIntercep
                 await next(context);
             }
 
+            return;
+        }
+        else if (serviceFilter != null && !serviceFilter(context.ServiceMethod))
+        {
+            await next(context);
             return;
         }
 

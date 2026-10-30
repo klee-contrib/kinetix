@@ -36,7 +36,12 @@ public class ElasticStore(
         /* Requête de filtrage, qui inclus ici le filtre et le post-filtre puisqu'on ne fait pas d'aggrégations. */
         var filterQuery = GetFilterAndPostFilterQuery(def, input);
         return logger
-            .LogQuery("AdvancedCount", typeof(TDocument), () => client.Count<TDocument>(s => s.Query(filterQuery)))
+            .LogQuery(
+                config,
+                "AdvancedCount",
+                typeof(TDocument),
+                () => client.Count<TDocument>(s => s.Query(filterQuery))
+            )
             .Count;
     }
 
@@ -72,7 +77,7 @@ public class ElasticStore(
     /// <inheritdoc cref="ISearchStore.Bulk" />
     public ISearchBulkDescriptor Bulk()
     {
-        return new ElasticBulkDescriptor(documentDescriptor, client, logger);
+        return new ElasticBulkDescriptor(config, documentDescriptor, client, logger);
     }
 
     /// <inheritdoc cref="ISearchStore.Delete{TDocument}" />
@@ -95,7 +100,7 @@ public class ElasticStore(
 
         if (indexCreated)
         {
-            logger.LogQuery("Map", typeof(TDocument), () => client.Map<TDocument>(_ => mapping));
+            logger.LogQuery(config, "Map", typeof(TDocument), () => client.Map<TDocument>(_ => mapping));
         }
 
         return indexCreated;
@@ -108,6 +113,7 @@ public class ElasticStore(
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
         return logger
             .LogQuery(
+                config,
                 nameof(Get),
                 typeof(TDocument),
                 () => client.Get(new DocumentPath<TDocument>(def.PrimaryKey.GetValueFromDocument(id)))
@@ -148,6 +154,7 @@ public class ElasticStore(
             rebuildLogger?.LogInformation($"Partial rebuild. Deleting recent documents for {indexName}...");
 
             var deleteRes = logger.LogQuery(
+                config,
                 "DeleteAllByQuery",
                 typeof(TDocument),
                 () =>
@@ -218,6 +225,7 @@ public class ElasticStore(
         var hasGroup = groupFieldName != null;
 
         var res = logger.LogQuery(
+            config,
             nameof(AdvancedQuery),
             typeof(TDocument),
             () =>
@@ -404,6 +412,7 @@ public class ElasticStore(
         var def = documentDescriptor.GetDefinition(typeof(TDocument));
 
         var pit = logger.LogQuery(
+            config,
             "CreatePit",
             typeof(TDocument),
             () =>
@@ -422,6 +431,7 @@ public class ElasticStore(
             do
             {
                 var res = logger.LogQuery(
+                    config,
                     "AdvancedQueryWithPit",
                     typeof(TDocument),
                     () =>
@@ -456,7 +466,7 @@ public class ElasticStore(
         }
         finally
         {
-            logger.LogQuery("DeletePit", typeof(TDocument), () => client.ClosePointInTime(p => p.Id(pitId)));
+            logger.LogQuery(config, "DeletePit", typeof(TDocument), () => client.ClosePointInTime(p => p.Id(pitId)));
         }
     }
 }

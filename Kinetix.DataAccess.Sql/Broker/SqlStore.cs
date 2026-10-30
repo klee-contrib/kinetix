@@ -138,7 +138,13 @@ public abstract partial class SqlStore<T> : IStore<T>
     /// <inheritdoc cref="IStore{T}.LoadAsync" />
     public async Task<T?> LoadAsync(object primaryKey, CancellationToken ct = default)
     {
-        return await CollectionBuilder<T>.ParseCommandForSingleObjectAsync(GetLoadCommand(primaryKey), ct: ct);
+        var criteria = CreatePrimaryKeyCriteria(primaryKey);
+        var commandName = ServiceSelect + "_" + Definition.ContractName;
+
+        var command = await ConnectionPool.GetSqlCommandAsync(DataSourceName, commandName, CommandType.Text, ct);
+        ConfigureCommand(command, Definition.ContractName!, criteria, queryParameter: null);
+
+        return await CollectionBuilder<T>.ParseCommandForSingleObjectAsync(command, ct: ct);
     }
 
     /// <inheritdoc cref="IStore{T}.LoadByCriteriaAsync" />
@@ -147,8 +153,10 @@ public abstract partial class SqlStore<T> : IStore<T>
         ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceSelect + "_LIKE_" + Definition.ContractName;
-        var cmd = GetCommand(commandName, Definition.ContractName!, criteria, queryParameter: null);
-        return await CollectionBuilder<T>.ParseCommandForSingleObjectAsync(cmd, ct: ct);
+        var command = await ConnectionPool.GetSqlCommandAsync(DataSourceName, commandName, CommandType.Text, ct);
+
+        ConfigureCommand(command, Definition.ContractName!, criteria, queryParameter: null);
+        return await CollectionBuilder<T>.ParseCommandForSingleObjectAsync(command, ct: ct);
     }
 
     /// <inheritdoc cref="IStore{T}.PutAllAsync" />
@@ -173,30 +181,12 @@ public abstract partial class SqlStore<T> : IStore<T>
         CancellationToken ct = default
     )
     {
-        ArgumentNullException.ThrowIfNull(bean);
+        var (value, commandName) = PreparePut(bean, forceInsert, columnSelector);
+        var command = await ConnectionPool.GetSqlCommandAsync(DataSourceName, commandName, CommandType.Text, ct);
+        ConfigurePutCommand(command, bean, value, forceInsert, columnSelector);
+        using var reader = await command.ExecuteReaderAsync(ct);
 
-        BeanDescriptor.Check(
-            bean,
-            columnSelector != null
-                ? Definition
-                    .Properties.Where(p => columnSelector.ColumnList.Contains(p.MemberName!))
-                    .Select(p => p.PropertyName)
-                : null
-        );
-
-        var value = Definition.PrimaryKey.GetValue(bean);
-
-        using var reader = await GetPutCommand(bean, value, forceInsert, columnSelector).ExecuteReaderAsync(ct);
-
-        if (reader.RecordsAffected == 0)
-        {
-            throw new BrokerException("Zero record affected");
-        }
-
-        if (reader.RecordsAffected > 1)
-        {
-            throw new BrokerException("Too many records affected");
-        }
+        ValidatePutResult(reader.RecordsAffected);
 
         // Dans le cas d'un update, il n'y a plus de select
         // qui compte le nombre de lignes mises à jour, donc
@@ -222,24 +212,11 @@ public abstract partial class SqlStore<T> : IStore<T>
     /// <inheritdoc cref="IStore{T}.RemoveAsync" />
     public async Task RemoveAsync(object primaryKey, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(primaryKey);
-
+        var criteria = CreatePrimaryKeyCriteria(primaryKey);
         var commandName = ServiceDelete + "_" + Definition.ContractName;
 
-        // On charge l'objet à partir d'un seul critère
-        // correspondant à sa clé primaire
-        var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName!, Expression.Equals, primaryKey);
-
         var rowsAffected = await InternalDeleteAllByCriteriaAsync(commandName, Definition.ContractName!, criteria, ct);
-        if (rowsAffected == 0)
-        {
-            throw new BrokerException("Zero row deleted");
-        }
-
-        if (rowsAffected > 1)
-        {
-            throw new BrokerException("Too many rows deleted");
-        }
+        ValidateDeleteResult(rowsAffected);
     }
 
     /// <summary>
@@ -270,14 +247,39 @@ public abstract partial class SqlStore<T> : IStore<T>
         CancellationToken ct = default
     );
 
-    private BaseSqlCommand GetCommand(
-        string commandName,
+    private static void ValidateDeleteResult(int rowsAffected)
+    {
+        if (rowsAffected == 0)
+        {
+            throw new BrokerException("Zero row deleted");
+        }
+
+        if (rowsAffected > 1)
+        {
+            throw new BrokerException("Too many rows deleted");
+        }
+    }
+
+    private static void ValidatePutResult(int recordsAffected)
+    {
+        if (recordsAffected == 0)
+        {
+            throw new BrokerException("Zero record affected");
+        }
+
+        if (recordsAffected > 1)
+        {
+            throw new BrokerException("Too many records affected");
+        }
+    }
+
+    private void ConfigureCommand(
+        BaseSqlCommand command,
         string tableName,
         FilterCriteria criteria,
         QueryParameter? queryParameter
     )
     {
-        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
         command.QueryParameters = queryParameter;
 
         var commandText = new StringBuilder("select ");
@@ -327,17 +329,14 @@ public abstract partial class SqlStore<T> : IStore<T>
 
         if (_logger.IsEnabled(LogLevel.Debug))
         {
-            _logger.LogDebug($"Exécution de la requête '{commandName}' : {command.CommandText}");
+            _logger.LogDebug($"Exécution de la requête '{command.CommandName}' : {command.CommandText}");
         }
-
-        return command;
     }
 
-    private BaseSqlCommand GetDeleteCommand(string commandName, string tableName, FilterCriteria criteria)
+    private void ConfigureDeleteCommand(BaseSqlCommand command, string tableName, FilterCriteria criteria)
     {
         ArgumentNullException.ThrowIfNull(criteria);
 
-        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
         command.CommandTimeout = 0;
         var commandText = new StringBuilder(CurrentUserStatementLog);
         commandText.Append("delete from ");
@@ -348,43 +347,31 @@ public abstract partial class SqlStore<T> : IStore<T>
         }
 
         command.CommandText = commandText.ToString();
-        return command;
     }
 
-    private BaseSqlCommand GetLoadAllCommand(
-        string commandName,
+    private void ConfigureLoadAllCommand(
+        BaseSqlCommand command,
         QueryParameter? queryParameter,
         FilterCriteria criteria
     )
     {
         // Définition du tri à partir de la requete.
         queryParameter?.RemapSortColumn(typeof(T));
-        return GetCommand(commandName, Definition.ContractName!, criteria, queryParameter);
+        ConfigureCommand(command, Definition.ContractName!, criteria, queryParameter);
     }
 
-    private BaseSqlCommand GetLoadCommand(object primaryKey)
-    {
-        ArgumentNullException.ThrowIfNull(primaryKey);
-
-        var commandName = ServiceSelect + "_" + Definition.ContractName;
-
-        // On charge l'objet à partir d'un seul critère correspondant à sa clé primaire
-        var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName!, Expression.Equals, primaryKey);
-
-        return GetCommand(commandName, Definition.ContractName!, criteria, queryParameter: null);
-    }
-
-    private BaseSqlCommand GetPutCommand(
+    private void ConfigurePutCommand(
+        BaseSqlCommand command,
         T bean,
         object? primaryKeyValue,
         bool forceInsert,
         ColumnSelector? columnSelector
     )
     {
+        command.CommandTimeout = 0;
+
         if (!forceInsert && primaryKeyValue != null)
         {
-            var commandName = ServiceUpdate + "_" + Definition.ContractName;
-
             var sbUpdate = new StringBuilder(CurrentUserStatementLog);
             sbUpdate.Append("update ");
 
@@ -427,10 +414,7 @@ public abstract partial class SqlStore<T> : IStore<T>
             }
 
             sbUpdate.Append(sbUpdateSet).Append(sbUpdateWhere);
-            var sql = sbUpdate.ToString();
-
-            var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
-            command.CommandTimeout = 0;
+            command.CommandText = sbUpdate.ToString();
 
             foreach (var property in Definition.Properties)
             {
@@ -458,15 +442,10 @@ public abstract partial class SqlStore<T> : IStore<T>
                     parameter.DbType = DbType.Binary;
                 }
             }
-
-            return command;
         }
         else
         {
-            var commandName = ServiceInsert + "_" + Definition.ContractName;
-            var sql = BuildInsertQuery(Definition, primaryKeyValue == null, columnSelector);
-            var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, sql);
-            command.CommandTimeout = 0;
+            command.CommandText = BuildInsertQuery(Definition, primaryKeyValue == null, columnSelector);
 
             foreach (var property in Definition.Properties)
             {
@@ -492,9 +471,14 @@ public abstract partial class SqlStore<T> : IStore<T>
                     parameter.DbType = DbType.Binary;
                 }
             }
-
-            return command;
         }
+    }
+
+    private FilterCriteria CreatePrimaryKeyCriteria(object primaryKey)
+    {
+        ArgumentNullException.ThrowIfNull(primaryKey);
+
+        return new FilterCriteria(Definition.PrimaryKey.MemberName!, Expression.Equals, primaryKey);
     }
 
     private async Task<int> InternalDeleteAllByCriteriaAsync(
@@ -504,7 +488,9 @@ public abstract partial class SqlStore<T> : IStore<T>
         CancellationToken ct = default
     )
     {
-        return await GetDeleteCommand(commandName, tableName, criteria).ExecuteNonQueryAsync(ct);
+        var command = await ConnectionPool.GetSqlCommandAsync(DataSourceName, commandName, CommandType.Text, ct);
+        ConfigureDeleteCommand(command, tableName, criteria);
+        return await command.ExecuteNonQueryAsync(ct);
     }
 
     private async Task<List<T>> InternalLoadAllAsync(
@@ -514,9 +500,9 @@ public abstract partial class SqlStore<T> : IStore<T>
         CancellationToken ct = default
     )
     {
-        return await CollectionBuilder<T>
-            .ParseCommandAsync(GetLoadAllCommand(commandName, queryParameter, criteria), ct)
-            .ToListAsync(cancellationToken: ct);
+        var command = await ConnectionPool.GetSqlCommandAsync(DataSourceName, commandName, CommandType.Text, ct);
+        ConfigureLoadAllCommand(command, queryParameter, criteria);
+        return await CollectionBuilder<T>.ParseCommandAsync(command, ct).ToListAsync(cancellationToken: ct);
     }
 
     private void PrepareFilterCriteria(FilterCriteria filter, BaseSqlCommand command, StringBuilder commandText)
@@ -597,5 +583,28 @@ public abstract partial class SqlStore<T> : IStore<T>
             );
             ++pos;
         }
+    }
+
+    private (object? PrimaryKey, string CommandName) PreparePut(
+        T bean,
+        bool forceInsert,
+        ColumnSelector? columnSelector
+    )
+    {
+        ArgumentNullException.ThrowIfNull(bean);
+
+        BeanDescriptor.Check(
+            bean,
+            columnSelector != null
+                ? Definition
+                    .Properties.Where(p => columnSelector.ColumnList.Contains(p.MemberName!))
+                    .Select(p => p.PropertyName)
+                : null
+        );
+
+        var value = Definition.PrimaryKey.GetValue(bean);
+        var commandName =
+            (!forceInsert && value != null ? ServiceUpdate : ServiceInsert) + "_" + Definition.ContractName;
+        return (value, commandName);
     }
 }

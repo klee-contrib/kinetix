@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
 
 namespace Kinetix.DataAccess.Sql.Common;
 
@@ -34,16 +35,21 @@ public abstract class SqlCommandListener : IDisposable
         _command = command;
         Logger = logger;
 
+        var name = command.CommandName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase)
+            ? string.Join('.', command.CommandName.Split('.').TakeLast(2))
+            : command.CommandName;
+        var serverAddress =
+            $"{command.Connection.DataSource.Replace(".postgres.database.azure.com:5432", string.Empty)}@{command.Connection.Database}";
+
         _activity = Source.StartActivity(
-            command.CommandName,
+            name,
             ActivityKind.Client,
             parentContext: default,
             tags: new ActivityTagsCollection
             {
                 { "db.system.name", "sql" },
-                { "db.namespace", command.Connection.Database },
-                { "db.query.summary", command.CommandName },
-                { "server.address", command.Connection.DataSource },
+                { "db.query.text", command.CommandText },
+                { "server.address", serverAddress },
             }
         );
     }
@@ -66,23 +72,26 @@ public abstract class SqlCommandListener : IDisposable
         _disposed = true;
         try
         {
-            Logger.LogInformation(
-                "{CommandName} ({Duration} ms)",
-                _command.CommandName,
-                Stopwatch.GetElapsedTime(_start).TotalMilliseconds
-            );
-            Logger.LogDebug(_command.InnerCommand.CommandText);
-            foreach (var parameter in _command.Parameters)
+            if (!Sdk.SuppressInstrumentation)
             {
-                if (parameter.Value is byte[] dataArray)
+                Logger.LogInformation(
+                    "{CommandName} ({Duration} ms)",
+                    _command.CommandName,
+                    Convert.ToInt32(Stopwatch.GetElapsedTime(_start).TotalMilliseconds)
+                );
+                Logger.LogDebug(_command.InnerCommand.CommandText);
+                foreach (var parameter in _command.Parameters)
                 {
-                    Logger.LogDebug($"{parameter.ParameterName} : byte[{dataArray.Length}]");
-                }
-                else
-                {
-                    Logger.LogDebug(
-                        $"{parameter.ParameterName}: {Convert.ToString(parameter.Value, CultureInfo.InvariantCulture)}"
-                    );
+                    if (parameter.Value is byte[] dataArray)
+                    {
+                        Logger.LogDebug($"{parameter.ParameterName} : byte[{dataArray.Length}]");
+                    }
+                    else
+                    {
+                        Logger.LogDebug(
+                            $"{parameter.ParameterName}: {Convert.ToString(parameter.Value, CultureInfo.InvariantCulture)}"
+                        );
+                    }
                 }
             }
         }

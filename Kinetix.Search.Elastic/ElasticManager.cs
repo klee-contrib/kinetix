@@ -24,6 +24,7 @@ public sealed class ElasticManager(
     public void DeleteIndex<T>()
     {
         logger.LogQuery(
+            config,
             nameof(DeleteIndex),
             typeof(T),
             () => client.Indices.Delete(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))
@@ -37,6 +38,7 @@ public sealed class ElasticManager(
     public bool DeleteIndexes()
     {
         var response = logger.LogQuery(
+            config,
             nameof(DeleteIndexes),
             indexType: null,
             () => client.Indices.Delete($"{config.Servers[ElasticConfigBuilder.ServerName].IndexName}*")
@@ -52,6 +54,7 @@ public sealed class ElasticManager(
     {
         return logger
             .LogQuery(
+                config,
                 nameof(ExistIndex),
                 typeof(T),
                 () => client.Indices.Exists(config.GetIndexNameForType(ElasticConfigBuilder.ServerName, typeof(T)))
@@ -76,7 +79,7 @@ public sealed class ElasticManager(
         {
             var properties = typeMapping.Properties;
             var oldProperties = logger
-                .LogQuery("GetMapping", typeof(T), () => client.Indices.GetMapping<T>())
+                .LogQuery(config, "GetMapping", typeof(T), () => client.Indices.GetMapping<T>())
                 .Indices.FirstOrDefault()
                 .Value?.Mappings.Properties;
 
@@ -120,6 +123,7 @@ public sealed class ElasticManager(
             }
 
             logger.LogQuery(
+                config,
                 nameof(InitIndex),
                 typeof(T),
                 () => client.Indices.Create(indexName, new TIndexConfigurator().ConfigureIndex)
@@ -139,6 +143,7 @@ public sealed class ElasticManager(
     public void OptimizeIndexForReindex<T>()
     {
         logger.LogQuery(
+            config,
             nameof(OptimizeIndexForReindex),
             typeof(T),
             () =>
@@ -154,7 +159,7 @@ public sealed class ElasticManager(
     /// </summary>
     public void PingNode()
     {
-        logger.LogQuery(nameof(PingNode), indexType: null, () => client.Ping());
+        logger.LogQuery(config, nameof(PingNode), indexType: null, () => client.Ping());
     }
 
     /// <summary>
@@ -163,6 +168,7 @@ public sealed class ElasticManager(
     public void RevertOptimizeIndexForReindex<T>()
     {
         logger.LogQuery(
+            config,
             nameof(RevertOptimizeIndexForReindex),
             typeof(T),
             () =>

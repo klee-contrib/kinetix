@@ -12,19 +12,21 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
     private readonly BulkDescriptor _bulkDescriptor = new BulkDescriptor()
         .Timeout(TimeSpan.FromMinutes(1))
         .RequestConfiguration(r => r.RequestTimeout(TimeSpan.FromMinutes(1)));
-
     private readonly ElasticClient _client;
+    private readonly SearchConfig _config;
     private readonly DocumentDescriptor _documentDescriptor;
     private readonly Dictionary<Type, int> _indexTypes = [];
     private readonly ILogger<ElasticStore> _logger;
 
     internal ElasticBulkDescriptor(
+        SearchConfig config,
         DocumentDescriptor documentDescriptor,
         ElasticClient client,
         ILogger<ElasticStore> logger
     )
     {
         _client = client;
+        _config = config;
         _documentDescriptor = documentDescriptor;
         _logger = logger;
     }
@@ -79,6 +81,7 @@ public class ElasticBulkDescriptor : ISearchBulkDescriptor
         if (_indexTypes.Count > 0)
         {
             _logger.LogQuery(
+                _config,
                 $"Index: {string.Join(", ", _indexTypes.Select(kv => $"{kv.Value} {SearchConfig.GetTypeNameForIndex(kv.Key)}"))}",
                 indexType: null,
                 () => _client.Bulk(_bulkDescriptor.Refresh(refresh ? Refresh.WaitFor : Refresh.False))

@@ -20,18 +20,30 @@ internal static class ElasticExtensions
     /// Effectue la requête demandée, traite les exceptions et log le tout.
     /// </summary>
     /// <param name="logger">Logger.</param>
+    /// <param name="config">Config ES.</param>
     /// <param name="method">Nom de la méthode.</param>
     /// <param name="indexType">Type de l'index concerné.</param>
     /// <param name="esCall">Appel ES.</param>
     /// <returns>Ce que la requête retourne.</returns>
-    public static T LogQuery<T>(this ILogger logger, string method, Type? indexType, Func<T> esCall)
+    public static T LogQuery<T>(
+        this ILogger logger,
+        SearchConfig config,
+        string method,
+        Type? indexType,
+        Func<T> esCall
+    )
         where T : IResponse
     {
+        var server = config.GetServer(ElasticConfigBuilder.ServerName);
         using var activity = Source.StartActivity(
             indexType != null ? $"{method}: {SearchConfig.GetTypeNameForIndex(indexType)}" : method,
             ActivityKind.Client,
             parentContext: default,
-            new ActivityTagsCollection() { ["db.system.name"] = "es" }
+            new ActivityTagsCollection()
+            {
+                ["db.system.name"] = "es",
+                ["server.address"] = $"{server.NodeUri}@{server.IndexName}",
+            }
         );
         var start = Stopwatch.GetTimestamp();
 
@@ -48,8 +60,6 @@ internal static class ElasticExtensions
         {
             response = esCall();
         }
-
-        activity?.SetTag("server.address", response.ApiCall.Uri?.Host);
 
         if (logger.IsEnabled(LogLevel.Debug))
         {

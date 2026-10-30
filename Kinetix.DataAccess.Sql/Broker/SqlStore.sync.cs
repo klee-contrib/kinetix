@@ -8,7 +8,12 @@ public partial class SqlStore<T>
     /// <inheritdoc cref="IStore{T}.Load" />
     public T? Load(object primaryKey)
     {
-        return CollectionBuilder<T>.ParseCommandForSingleObject(GetLoadCommand(primaryKey));
+        var criteria = CreatePrimaryKeyCriteria(primaryKey);
+        var commandName = ServiceSelect + "_" + Definition.ContractName;
+
+        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
+        ConfigureCommand(command, Definition.ContractName!, criteria, queryParameter: null);
+        return CollectionBuilder<T>.ParseCommandForSingleObject(command);
     }
 
     /// <inheritdoc cref="IStore{T}.LoadAll" />
@@ -35,37 +40,20 @@ public partial class SqlStore<T>
         ArgumentNullException.ThrowIfNull(criteria);
 
         var commandName = ServiceSelect + "_LIKE_" + Definition.ContractName;
-        var cmd = GetCommand(commandName, Definition.ContractName!, criteria, queryParameter: null);
-        return CollectionBuilder<T>.ParseCommandForSingleObject(cmd);
+        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
+        ConfigureCommand(command, Definition.ContractName!, criteria, queryParameter: null);
+        return CollectionBuilder<T>.ParseCommandForSingleObject(command);
     }
 
     /// <inheritdoc cref="IStore{T}.Put" />
     public object Put(T bean, bool forceInsert, ColumnSelector? columnSelector = null)
     {
-        ArgumentNullException.ThrowIfNull(bean);
+        var (value, commandName) = PreparePut(bean, forceInsert, columnSelector);
+        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
+        ConfigurePutCommand(command, bean, value, forceInsert, columnSelector);
+        using var reader = command.ExecuteReader();
 
-        BeanDescriptor.Check(
-            bean,
-            columnSelector != null
-                ? Definition
-                    .Properties.Where(p => columnSelector.ColumnList.Contains(p.MemberName!))
-                    .Select(p => p.PropertyName)
-                : null
-        );
-
-        var value = Definition.PrimaryKey.GetValue(bean);
-
-        using var reader = GetPutCommand(bean, value, forceInsert, columnSelector).ExecuteReader();
-
-        if (reader.RecordsAffected == 0)
-        {
-            throw new BrokerException("Zero record affected");
-        }
-
-        if (reader.RecordsAffected > 1)
-        {
-            throw new BrokerException("Too many records affected");
-        }
+        ValidatePutResult(reader.RecordsAffected);
 
         // Dans le cas d'un update, il n'y a plus de select
         // qui compte le nombre de lignes mises à jour, donc
@@ -96,24 +84,11 @@ public partial class SqlStore<T>
     /// <inheritdoc cref="IStore{T}.Remove" />
     public void Remove(object primaryKey)
     {
-        ArgumentNullException.ThrowIfNull(primaryKey);
-
+        var criteria = CreatePrimaryKeyCriteria(primaryKey);
         var commandName = ServiceDelete + "_" + Definition.ContractName;
 
-        // On charge l'objet à partir d'un seul critère
-        // correspondant à sa clé primaire
-        var criteria = new FilterCriteria(Definition.PrimaryKey.MemberName!, Expression.Equals, primaryKey);
-
         var rowsAffected = InternalDeleteAllByCriteria(commandName, Definition.ContractName!, criteria);
-        if (rowsAffected == 0)
-        {
-            throw new BrokerException("Zero row deleted");
-        }
-
-        if (rowsAffected > 1)
-        {
-            throw new BrokerException("Too many rows deleted");
-        }
+        ValidateDeleteResult(rowsAffected);
     }
 
     /// <inheritdoc cref="IStore{T}.RemoveAllByCriteria" />
@@ -139,11 +114,15 @@ public partial class SqlStore<T>
 
     private int InternalDeleteAllByCriteria(string commandName, string tableName, FilterCriteria criteria)
     {
-        return GetDeleteCommand(commandName, tableName, criteria).ExecuteNonQuery();
+        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
+        ConfigureDeleteCommand(command, tableName, criteria);
+        return command.ExecuteNonQuery();
     }
 
     private List<T> InternalLoadAll(string commandName, QueryParameter? queryParameter, FilterCriteria criteria)
     {
-        return CollectionBuilder<T>.ParseCommand(GetLoadAllCommand(commandName, queryParameter, criteria)).ToList();
+        var command = ConnectionPool.GetSqlCommand(DataSourceName, commandName, CommandType.Text);
+        ConfigureLoadAllCommand(command, queryParameter, criteria);
+        return CollectionBuilder<T>.ParseCommand(command).ToList();
     }
 }

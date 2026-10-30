@@ -88,7 +88,12 @@ public abstract partial class SqlParameterBeanCollection<T>
     {
         if (_connectionPool != null && SbInsert != null)
         {
-            var command = _connectionPool.GetSqlCommand(dataSourceName, commandName, SbInsert.ToString());
+            var command = await _connectionPool.GetSqlCommandAsync(
+                dataSourceName,
+                commandName,
+                SbInsert.ToString(),
+                ct
+            );
             CreateParameter(command);
             command.CommandTimeout = 0;
             var primaryKey = BeanDefinition.PrimaryKey;

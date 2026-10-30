@@ -6,7 +6,6 @@
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Npgsql.OpenTelemetry" />
-    <PackageReference Include="OpenTelemetry.Api" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kinetix.EFCore\Kinetix.EFCore.csproj" />
