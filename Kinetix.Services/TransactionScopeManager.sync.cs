@@ -13,6 +13,7 @@ public partial class TransactionScopeManager : IDisposable
     public ServiceScope BeginNewTransaction()
     {
         var scope = CreateScope();
+        scope.Sync = true;
         scope.Init();
         return scope;
     }
@@ -35,6 +36,6 @@ public partial class TransactionScopeManager : IDisposable
     /// <returns>Scope de la transaction (actif si la transaction a été créee).</returns>
     public ServiceScope EnsureTransaction()
     {
-        return ActiveScope != null ? new ServiceScope() : BeginNewTransaction();
+        return ActiveScope != null ? new ServiceScope { Sync = true } : BeginNewTransaction();
     }
 }

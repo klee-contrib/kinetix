@@ -6,14 +6,14 @@ namespace Kinetix.Services;
 
 public partial class ServiceScope : IDisposable
 {
-    private bool _sync;
+    public bool Sync { get; set; }
 
     /// <summary>
     /// Libère le scope.
     /// </summary>
     public void Dispose()
     {
-        if (!_sync)
+        if (!Sync)
         {
             throw new NotSupportedException(
                 "Ce scope a été initialisé via une transaction asynchrone mais disposé de manière synchrone. Veuillez utiliser `DisposeAsync`/`await using` à la place."
@@ -71,8 +71,6 @@ public partial class ServiceScope : IDisposable
 
     public void Init()
     {
-        _sync = true;
-
         var syncContexts = _contexts.OfType<ISyncTransactionContext>();
 
         var asyncOnlyContexts = _contexts.Except(syncContexts);
