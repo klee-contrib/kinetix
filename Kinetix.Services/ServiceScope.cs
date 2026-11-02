@@ -14,6 +14,8 @@ public partial class ServiceScope : IAsyncDisposable
     private readonly ILogger<ServiceScope>? _logger;
     private readonly TransactionScopeManager? _manager;
 
+    private bool _disposed;
+
     internal ServiceScope()
     {
         _contexts = [];
@@ -43,6 +45,11 @@ public partial class ServiceScope : IAsyncDisposable
     /// <returns>Task.</returns>
     public async ValueTask DisposeAsync()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         Exception? onBeforeException = null;
 
         try
@@ -112,6 +119,8 @@ public partial class ServiceScope : IAsyncDisposable
         {
             _logger?.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
         }
+
+        _disposed = true;
     }
 
     /// <summary>

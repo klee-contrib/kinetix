@@ -13,10 +13,15 @@ public partial class ServiceScope : IDisposable
     /// </summary>
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         if (!Sync)
         {
             throw new NotSupportedException(
-                "Ce scope a été initialisé via une transaction asynchrone mais disposé de manière synchrone. Veuillez utiliser `DisposeAsync`/`await using` à la place."
+                "Ce scope a été initialisé via une transaction asynchrone mais libéré de manière synchrone. Vérifiez que vous utilisez `DisposeAsync`/`await using`, et que votre scope de dépendances a été créé avec `CreateAsyncScope()`."
             );
         }
 
@@ -67,6 +72,8 @@ public partial class ServiceScope : IDisposable
         {
             _logger?.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
         }
+
+        _disposed = true;
     }
 
     public void Init()
