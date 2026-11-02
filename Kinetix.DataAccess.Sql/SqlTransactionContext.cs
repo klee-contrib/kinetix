@@ -11,9 +11,6 @@ internal class SqlTransactionContext : ISyncTransactionContext, IAsyncTransactio
     /// <inheritdoc />
     public bool Completed { get; set; }
 
-    /// <inheritdoc />
-    public TransactionContextStatus Status { get; set; }
-
     /// <summary>
     /// Connections.
     /// </summary>

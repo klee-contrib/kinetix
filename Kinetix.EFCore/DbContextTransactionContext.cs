@@ -8,9 +8,6 @@ internal class DbContextTransactionContext(DbContext dbContext) : IAsyncTransact
     /// <inheritdoc />
     public bool Completed { get; set; }
 
-    /// <inheritdoc />
-    public TransactionContextStatus Status { get; set; }
-
     /// <inheritdoc cref="ISyncTransactionContext.Init" />
     public void Init()
     {

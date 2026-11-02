@@ -12,9 +12,6 @@ internal class IndexingTransactionContext(IServiceProvider provider) : ISyncTran
     /// <inheritdoc />
     public bool Completed { get; set; }
 
-    /// <inheritdoc />
-    public TransactionContextStatus Status { get; set; }
-
     /// <summary>
     /// Attends le refresh de l'index lors du commit ou non. Par défaut: true.
     /// </summary>

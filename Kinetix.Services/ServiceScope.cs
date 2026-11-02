@@ -45,11 +45,9 @@ public partial class ServiceScope : IAsyncDisposable
     {
         Exception? onBeforeException = null;
 
-        var contexts = _contexts.Where(c => c.Status == TransactionContextStatus.Initialized);
-
         try
         {
-            foreach (var context in contexts)
+            foreach (var context in _contexts)
             {
                 switch (context)
                 {
@@ -69,13 +67,13 @@ public partial class ServiceScope : IAsyncDisposable
                 "Une erreur est survenue lors de la préparation du commit de la transaction courante."
             );
             onBeforeException = ex;
-            foreach (var context in contexts)
+            foreach (var context in _contexts)
             {
                 context.Completed = false;
             }
         }
 
-        foreach (var context in contexts)
+        foreach (var context in _contexts)
         {
             switch (context)
             {
@@ -97,7 +95,7 @@ public partial class ServiceScope : IAsyncDisposable
 
         try
         {
-            foreach (var context in contexts)
+            foreach (var context in _contexts)
             {
                 switch (context)
                 {
@@ -113,11 +111,6 @@ public partial class ServiceScope : IAsyncDisposable
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Une erreur est survenue lors d'une action après commit de la transaction courante.");
-        }
-
-        foreach (var context in contexts)
-        {
-            context.Status = TransactionContextStatus.Handled;
         }
     }
 
@@ -145,7 +138,6 @@ public partial class ServiceScope : IAsyncDisposable
                     syncContext.Init();
                     break;
             }
-            context.Status = TransactionContextStatus.Initialized;
         }
     }
 }

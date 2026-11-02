@@ -9,9 +9,4 @@ public interface ITransactionContext
     /// Marque la transaction comme étant valide.
     /// </summary>
     bool Completed { get; set; }
-
-    /// <summary>
-    /// Statut du contexte transactionnel, pour savoir s'il a été initialisé et traité dans la transaction.
-    /// </summary>
-    TransactionContextStatus Status { get; set; }
 }
